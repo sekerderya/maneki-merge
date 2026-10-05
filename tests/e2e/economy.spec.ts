@@ -100,7 +100,8 @@ test('settings, records, stats and hints persist', async ({ page }) => {
   await expect(page.getByTestId('game-over')).toBeVisible();
 
   await page.reload();
-  await expect(page.getByTestId('records')).toHaveText(`Best ${score} · Stage 1`);
+  await expect(page.getByTestId('best-score')).toHaveText(String(score));
+  await expect(page.getByTestId('best-stage')).toHaveText('1');
   await expect(page.getByTestId('sound-toggle')).toHaveAttribute('aria-pressed', 'false');
   const saved = await page.evaluate(
     (key) => JSON.parse(localStorage.getItem(key) ?? '{}'),
