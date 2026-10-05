@@ -87,7 +87,12 @@ export default defineConfig({
     environment: 'node',
     coverage: {
       provider: 'v8',
-      include: ['src/core/**', 'src/physics/**', 'src/run/**'],
+      include: ['src/config/**', 'src/core/**', 'src/physics/**', 'src/run/**'],
+      reporter: ['text', 'html'],
+      // ROADMAP M3: the pure rules stay at least 90% covered.
+      thresholds: {
+        'src/core/**': { lines: 90 },
+      },
     },
   },
 });
