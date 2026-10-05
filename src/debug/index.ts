@@ -1,5 +1,7 @@
 import { stageInfo, STAGE_COUNT } from '../config/stages';
-import { MAX_TIER } from '../config/tiers';
+import { MAX_TIER, tierRadius } from '../config/tiers';
+import { AudioEngine } from '../audio';
+import type { SoundName } from '../audio';
 import { UPGRADE_IDS, UPGRADES } from '../config/upgrades';
 import type { UpgradeId } from '../config/upgrades';
 import type { UrlFlags } from '../core/urlFlags';
@@ -12,6 +14,7 @@ export interface DebugContext {
   readonly flags: UrlFlags;
   readonly session: GameSession;
   readonly game: GameView;
+  readonly audio: AudioEngine;
   screen(): ScreenId;
   /** Pretends a new service worker is waiting, to test the update badge policy. */
   simulateUpdateReady(): void;
@@ -65,6 +68,18 @@ export interface GameHooks {
   /** Sets the run score; the stage locks still apply. */
   setScore(score: number): void;
   spawnTier(tier: number, x?: number, golden?: boolean): void;
+  /**
+   * Places `pairs` touching pairs of `tier` cats in rows on the jar floor, so they all merge on
+   * the next physics step (M9: many simultaneous merges).
+   */
+  mergeBurst(pairs?: number, tier?: number): void;
+  /** The audio context's state and the output's current peak (0–1; ≥ 1 clips). */
+  audio(): { readonly state: string; readonly peak: number };
+  /**
+   * Renders `merges` simultaneous merges (pops, chings and rising combo notes) offline through
+   * the real mixer and returns the output peak (≥ 1 would clip).
+   */
+  renderPeak(merges: number): Promise<number>;
   forceGameOver(): void;
   /** Acts as if the danger timer ran out: a Lucky Save if one is left, else game over. */
   forceDangerTimeout(): void;
@@ -127,6 +142,32 @@ export function installDebugHooks(ctx: DebugContext): GameHooks {
       const run = session.run;
       if (!run || tier < 1 || tier > MAX_TIER) return;
       run.spawnBall(tier, x, undefined, golden);
+    },
+    mergeBurst(pairs = 10, tier = 1) {
+      const run = session.run;
+      if (!run || tier < 1 || tier >= MAX_TIER) return;
+      const r = tierRadius(tier);
+      const half = run.geometry.halfWidth;
+      const slot = 4 * r + 16;
+      const perRow = Math.max(1, Math.floor((2 * half) / slot));
+      for (let i = 0; i < pairs; i++) {
+        const row = Math.floor(i / perRow);
+        const x = -half + slot * ((i % perRow) + 0.5);
+        const y = -r - row * (2 * r + 12);
+        run.spawnBall(tier, x - r + 1, y);
+        run.spawnBall(tier, x + r - 1, y);
+      }
+    },
+    audio() {
+      return ctx.audio.debugMeter();
+    },
+    renderPeak(merges) {
+      const sounds: [SoundName, number][] = [];
+      for (let i = 0; i < merges; i++) {
+        sounds.push(['merge', 2 + (i % 12)], ['coin', 0], ['combo', i + 2]);
+      }
+      sounds.push(['jackpot', 0], ['whoosh', 0], ['chime', 0]);
+      return AudioEngine.renderPeak(sounds);
     },
     forceGameOver() {
       session.run?.forceGameOver();
@@ -208,6 +249,7 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
       tier,
       golden,
       action('Spawn tier', () => hooks.spawnTier(Number(tier.value), 0, golden.checked)),
+      action('Merge ×10', () => hooks.mergeBurst(10, Number(tier.value))),
     ),
     row(
       score,

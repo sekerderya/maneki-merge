@@ -201,6 +201,7 @@ async function boot(): Promise<void> {
       flags,
       session,
       game,
+      audio,
       screen: () => screens?.screen ?? 'menu',
       simulateUpdateReady: () => gate.markReady(),
     });

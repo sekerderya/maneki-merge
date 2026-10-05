@@ -25,6 +25,9 @@ export class AudioEngine implements Sfx {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
   private noise: AudioBuffer | null = null;
+  private limiter: DynamicsCompressorNode | null = null;
+  private meter: AnalyserNode | null = null;
+  private meterData: Float32Array<ArrayBuffer> | null = null;
   private enabled = true;
   private hidden = false;
   private readonly throttle = new VoiceThrottle();
@@ -40,7 +43,8 @@ export class AudioEngine implements Sfx {
   /** The sound setting. Turning it on from a tap also unlocks audio. */
   setEnabled(on: boolean): void {
     this.enabled = on;
-    if (on) this.unlock();
+    // Only inside a tap (the sound toggle): a context made without one starts blocked and warns.
+    if (on && (this.ctx || userActive())) this.unlock();
     else void this.ctx?.suspend().catch(() => undefined);
   }
 
@@ -75,10 +79,32 @@ export class AudioEngine implements Sfx {
   }
 
   play(name: SoundName, value = 0): void {
+    if (!this.enabled || this.ctx?.state !== 'running') return;
+    this.schedule(name, value);
+  }
+
+  /**
+   * Debug only (`window.__game.renderPeak()`, M9 acceptance): renders sounds that all start at
+   * once through the same throttle, mixer and limiter into an OfflineAudioContext, and returns
+   * the output's peak (≥ 1 would clip). Deterministic and needs no audio device.
+   */
+  static async renderPeak(sounds: readonly (readonly [SoundName, number])[]): Promise<number> {
+    const rate = 44100;
+    const offline = new OfflineAudioContext(1, Math.ceil(rate * 1.5), rate);
+    const engine = new AudioEngine(() => offline as unknown as AudioContext);
+    engine.build();
+    for (const [name, value] of sounds) engine.schedule(name, value);
+    const buffer = await offline.startRendering();
+    let peak = 0;
+    for (const sample of buffer.getChannelData(0)) peak = Math.max(peak, Math.abs(sample));
+    return peak;
+  }
+
+  private schedule(name: SoundName, value: number): void {
     const ctx = this.ctx;
     const master = this.master;
     const noise = this.noise;
-    if (!this.enabled || !ctx || !master || !noise || ctx.state !== 'running') return;
+    if (!ctx || !master || !noise) return;
     if (!this.throttle.allow(name, ctx.currentTime * 1000)) return;
     const out = ctx.createGain();
     out.gain.value = SOUNDS[name].volume;
@@ -89,6 +115,26 @@ export class AudioEngine implements Sfx {
       // A broken audio stack never breaks the game.
     }
     window.setTimeout(() => out.disconnect(), SOUNDS[name].durationMs + 500);
+  }
+
+  /**
+   * Debug only (`window.__game.audio()`): the context's state and the output's peak over the
+   * last ~46 ms. The meter taps the limiter output on first use.
+   */
+  debugMeter(): { state: string; peak: number } {
+    const ctx = this.ctx;
+    if (!ctx || !this.limiter) return { state: ctx?.state ?? 'none', peak: 0 };
+    if (!this.meter) {
+      this.meter = ctx.createAnalyser();
+      this.meter.fftSize = 2048;
+      this.meterData = new Float32Array(this.meter.fftSize);
+      this.limiter.connect(this.meter);
+    }
+    const data = this.meterData as Float32Array<ArrayBuffer>;
+    this.meter.getFloatTimeDomainData(data);
+    let peak = 0;
+    for (const sample of data) peak = Math.max(peak, Math.abs(sample));
+    return { state: ctx.state, peak };
   }
 
   private build(): void {
@@ -110,10 +156,19 @@ export class AudioEngine implements Sfx {
     for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
 
     this.ctx = ctx;
+    this.limiter = limiter;
     this.master = master;
     this.noise = noise;
     this.throttle.reset();
   }
+}
+
+/** Whether the page is handling a user gesture right now (unknown counts as no). */
+function userActive(): boolean {
+  return (
+    (navigator as Navigator & { userActivation?: { isActive: boolean } }).userActivation
+      ?.isActive ?? false
+  );
 }
 
 function defaultContext(): AudioContext | null {
