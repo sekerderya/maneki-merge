@@ -54,6 +54,9 @@ describe('FixedStepper', () => {
     expect(stepper.stepMs).toBe(PHYSICS_STEP_MS);
     expect(stepper.maxSteps).toBe(PHYSICS_MAX_SUBSTEPS);
     expect(stepper.advance(1000 / 60, () => {})).toBe(2);
+    // Floating-point noise must not lose a step: 5 × (1000/120) ms is 5 steps.
+    expect(stepper.advance(5 * PHYSICS_STEP_MS, () => {})).toBe(5);
+    expect(stepper.advance(PHYSICS_STEP_MS, () => {})).toBe(1);
   });
 });
 

@@ -38,7 +38,8 @@ src/
   main.ts            boot order: fonts → save → UI → Phaser → service worker
   config/            pure data: app, platform, tiers, stages, upgrades, economy, physics, timings
   core/              pure rules: rng, dropQueue, economy, upgrades, progression, save, events
-  physics/           matter-js wrapper: PhysicsWorld, balls, merges, danger
+  physics/           matter-js wrapper: PhysicsWorld (+ FixedStepper), balls, merges, danger,
+                     geometry (jar per stage), circleCollision (exact circle contacts)
   run/               RunController: the whole run, headless (drop, cooldown, queue, combo,
                      expansion timeline, cash-out, jackpot, Lucky Save, game over)
   game/              Phaser: GameScene, camera fit and zoom, dropper + aim line, skins/, fx/
@@ -77,6 +78,11 @@ Data flow: pointer input (game) → `RunController.drop(x)` → PhysicsWorld ste
 - The screen is split into bands: HUD (safe-area top + about 72 CSS px), the play band, and the safe-area bottom.
 - Camera fit: show [jar W + 2 × side margin] × [jar H + dropper headroom (0.18 W) + floor margin] inside the play band, letterboxed, with the floor near the bottom.
 - The RunController owns the expansion timeline: progress goes from 0 to 1 over a configured duration, instantly in the simulator. Every frame, the scene derives camera zoom and scroll plus the wall and rim visuals from that progress, so visuals and physics never drift apart.
+  - `run.expansion` is `{ from, to, elapsedMs, progress (0–1 over EXPANSION_DURATION_MS), zoomProgress (0–1 over EXPANSION_ZOOM_MS), phase }`, or null outside an expansion. It counts fixed ticks, like everything else in the run.
+  - Start: the state becomes `expanding`, the physics world pauses (time stop), the danger timer resets, `expansionStarted` fires.
+  - End of the zoom: phase `reveal`. The cash-out pops cats below the new stage's smallest drop tier (`catPopped`, reason `cashOut`, oldest first), then the walls move to the new stage, gravity and speed limits scale, and the drop queue re-rolls cats outside the new pool.
+  - End: physics resumes, the danger timer resets again, `expansionFinished { stage, newTiers }` fires (`newTiers` = the tiers the new cap allows, e.g. 8 and 9 at stage 2), and `dropReady` announces the dropper's cat. If the score already passed the next threshold, the next expansion starts right away: one stage at a time.
+  - `instantExpansion` (tests, simulator) runs the whole sequence inside one tick.
 - Resize or rotation re-fits the camera immediately, without a tween.
 
 ## 5. Physics

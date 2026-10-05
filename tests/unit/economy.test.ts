@@ -133,4 +133,25 @@ describe('RunEconomy', () => {
     expect(e.combo).toBe(1);
     expect(e.coins).toBe(2 + 12);
   });
+
+  it('reports the combo as it stands at a time', () => {
+    const e = new RunEconomy({ coinMultiplier: 1, comboCharmLevel: 0 });
+    expect(e.comboAt(0)).toBe(0);
+    e.merge(1, false, 100);
+    e.merge(1, false, 600);
+    expect(e.comboAt(1500)).toBe(2);
+    expect(e.comboAt(1601)).toBe(0);
+    expect(e.combo).toBe(2);
+  });
+
+  it('lets debug tools set the score', () => {
+    const e = new RunEconomy({ coinMultiplier: 1, comboCharmLevel: 0 });
+    e.setScore(2_999);
+    expect(e.score).toBe(2_999);
+    e.merge(1, false, 0);
+    expect(e.score).toBe(3_001);
+    expect(() => e.setScore(-1)).toThrow(RangeError);
+    expect(() => e.setScore(1.5)).toThrow(RangeError);
+    expect(e.coins).toBe(1);
+  });
 });

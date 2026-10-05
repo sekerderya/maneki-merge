@@ -65,11 +65,13 @@ export interface WorldPoint {
 
 /**
  * The game's events. Payload coins are already banked in the wallet by the time the event fires.
- * M4 (RunController) is the main producer and may extend this list.
+ * RunController (src/run) is the producer.
  */
 export interface GameEvents {
   runStarted: { readonly seed: number; readonly stage: number };
   catDropped: { readonly tier: number; readonly golden: boolean; readonly x: number };
+  /** The cooldown is over and the dropper holds the next cat (also after an expansion). */
+  dropReady: { readonly tier: number; readonly golden: boolean };
   merged: {
     readonly tier: number;
     readonly newTier: number;

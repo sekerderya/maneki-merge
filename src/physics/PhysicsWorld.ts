@@ -53,13 +53,16 @@ export class FixedStepper {
   /** Adds a frame's time and calls `tick` once per whole step. Returns the number of steps. */
   advance(frameMs: number, tick: () => void): number {
     if (!Number.isFinite(frameMs) || frameMs <= 0) return 0;
-    this.accumulator = Math.min(this.accumulator + frameMs, this.maxSteps * this.stepMs);
-    let steps = 0;
-    while (this.accumulator >= this.stepMs) {
-      this.accumulator -= this.stepMs;
-      steps++;
-      tick();
+    this.accumulator += frameMs;
+    // Divide instead of subtracting step by step: 5 × (1000/120) ms must give 5 steps, not 4.
+    let steps = Math.floor(this.accumulator / this.stepMs + 1e-9);
+    if (steps > this.maxSteps) {
+      steps = this.maxSteps;
+      this.accumulator = 0;
+    } else {
+      this.accumulator = Math.max(0, this.accumulator - steps * this.stepMs);
     }
+    for (let i = 0; i < steps; i++) tick();
     return steps;
   }
 

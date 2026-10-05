@@ -121,6 +121,11 @@ export class RunEconomy {
     return this.comboCounter.combo;
   }
 
+  /** The combo as it stands at `timeMs`: 0 once the combo window has passed. */
+  comboAt(timeMs: number): number {
+    return this.comboCounter.activeAt(timeMs);
+  }
+
   get merges(): number {
     return this.mergeCount;
   }
@@ -145,6 +150,12 @@ export class RunEconomy {
   jackpot(capTier: number, golden: boolean, timeMs: number): Payout {
     this.jackpotCount++;
     return this.pay(jackpotScore(capTier), jackpotBaseCoins(capTier), golden, timeMs);
+  }
+
+  /** Debug and test hook (`?debug=1`, TECH_SPEC §11): sets the run score directly. */
+  setScore(score: number): void {
+    if (!Number.isInteger(score) || score < 0) throw new RangeError(`Invalid score: ${score}`);
+    this.scoreTotal = score;
   }
 
   /** A single cat popped into coins (cash-out or Lucky Save). */
