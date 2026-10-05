@@ -14,29 +14,29 @@ Hosting: GitHub Pages from the public repo `sekerderya/maneki-merge`. It's free 
 
 ## 2. Stack
 
-| Concern                 | Choice                                                                 | Notes                                                                                              |
-| ----------------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| Language                | TypeScript 6.0, `strict: true`                                         | Pinned to `~6.0` until typescript-eslint supports TypeScript 7.                                    |
-| Build and dev server    | Vite                                                                   | `base` = `/maneki-merge/` for Pages builds                                                         |
-| Rendering               | **Phaser 4** (latest 4.x)                                              | Rendering, cameras, tweens, particles, input. Ships agent skills in `node_modules/phaser/skills/`. |
-| Physics                 | **matter-js** (standalone)                                             | Not Phaser's Matter plugin, so physics runs headless in Node.                                      |
-| UI                      | Vanilla DOM + CSS                                                      | Menu, shop, HUD and overlays. No UI framework.                                                     |
-| PWA                     | `vite-plugin-pwa` (Workbox `generateSW`), `@vite-pwa/assets-generator` | Precaches everything; icons generated from one SVG.                                                |
-| Font                    | `@fontsource/fredoka`                                                  | Bundled for offline use. OFL license.                                                              |
-| Audio                   | Web Audio API, procedural SFX                                          | No audio files until M13 (optional music).                                                         |
-| Unit and headless tests | Vitest                                                                 |                                                                                                    |
-| E2E tests               | Playwright: Chromium + WebKit with phone device profiles               |                                                                                                    |
-| Lint and format         | ESLint (flat config, typescript-eslint) + Prettier                     |                                                                                                    |
-| CI/CD                   | GitHub Actions → GitHub Pages                                          |                                                                                                    |
-| Art pipeline (M13)      | `sharp` + a small MIT texture packer                                   |                                                                                                    |
-| Optional (M14)          | Capacitor → Android APK                                                |                                                                                                    |
+| Concern                 | Choice                                                                 | Notes                                                                                                |
+| ----------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Language                | TypeScript 6.0, `strict: true`                                         | Pinned to `~6.0` until typescript-eslint supports TypeScript 7.                                      |
+| Build and dev server    | Vite                                                                   | `base` = `/maneki-merge/` for Pages builds                                                           |
+| Rendering               | **Phaser 4** (latest 4.x)                                              | Rendering, cameras, tweens, particles, input. Ships agent skills in `node_modules/phaser/skills/`.   |
+| Physics                 | **matter-js** (standalone)                                             | Not Phaser's Matter plugin, so physics runs headless in Node.                                        |
+| UI                      | Vanilla DOM + CSS                                                      | Menu, shop, HUD and overlays. No UI framework.                                                       |
+| PWA                     | `vite-plugin-pwa` (Workbox `generateSW`), `@vite-pwa/assets-generator` | Precaches everything; icons generated from one SVG (`npm run icons`, output committed in `public/`). |
+| Font                    | `@fontsource/fredoka`                                                  | Bundled for offline use. OFL license.                                                                |
+| Audio                   | Web Audio API, procedural SFX                                          | No audio files until M13 (optional music).                                                           |
+| Unit and headless tests | Vitest                                                                 |                                                                                                      |
+| E2E tests               | Playwright: Chromium + WebKit with phone device profiles               |                                                                                                      |
+| Lint and format         | ESLint (flat config, typescript-eslint) + Prettier                     |                                                                                                      |
+| CI/CD                   | GitHub Actions → GitHub Pages                                          |                                                                                                      |
+| Art pipeline (M13)      | `sharp` + a small MIT texture packer                                   |                                                                                                      |
+| Optional (M14)          | Capacitor → Android APK                                                |                                                                                                      |
 
 ## 3. Architecture
 
 ```
 src/
   main.ts            boot order: fonts → save → UI → Phaser → service worker
-  config/            pure data: app, tiers, stages, upgrades, economy, physics, timings
+  config/            pure data: app, platform, tiers, stages, upgrades, economy, physics, timings
   core/              pure rules: rng, dropQueue, economy, upgrades, progression, save, events
   physics/           matter-js wrapper: PhysicsWorld, balls, merges, danger
   run/               RunController: the whole run, headless (drop, cooldown, queue, combo,
@@ -126,15 +126,18 @@ Data flow: pointer input (game) → `RunController.drop(x)` → PhysicsWorld ste
 - Manifest:
   - name "Maneki Merge", short_name "Maneki"
   - `display: "fullscreen"` (iOS falls back to standalone), `orientation: "portrait"`
-  - theme and background colours; icons 192/512 + maskable; `apple-touch-icon` 180
+  - theme and background colours (from `config/app.ts`); icons 64/192/512 + maskable 512; `apple-touch-icon` 180
+  - icons are generated from `public/icon.svg` by `npm run icons` (`pwa-assets.config.ts`) and committed, so builds don't need `sharp`
   - iOS meta tags with a `black-translucent` status bar
 - Workbox `generateSW` precaches the whole build (JS, CSS, HTML, fonts, images, audio), with `navigateFallback` = `index.html`. There are no remote origins to cache.
 - Updates use `registerType: "prompt"`. When a new service worker is waiting, only the main menu shows the "Update ready" badge. Tapping it activates the new service worker and reloads. Never reload during a run. A cold start also picks up the new version.
+- `platform/updateGate.ts` owns this policy. The plugin's `onNeedReload` hook routes through it, so even when another window of the app activates the update, this window doesn't reload mid-run: it shows the badge and reloads when the player taps it on the menu.
+- A long-running app checks for a new version when it becomes visible and once an hour (`config/platform.ts`).
 
 ## 10. Mobile platform checklist
 
 - `viewport-fit=cover`; no pinch or double-tap zoom (`touch-action: none` on the play area, block `gesturestart`); no text selection or long-press callout; `overscroll-behavior: none`; a fixed body so there's no rubber-band scrolling.
-- Landscape on a phone shows a full-screen "Please rotate your device" overlay and pauses the run.
+- Landscape on a phone shows a full-screen "Please rotate your device" overlay and pauses the run. "Phone" means a coarse pointer and a landscape viewport at most 540 px tall, so tablets in landscape stay playable.
 - Audio: create or resume the AudioContext on the first pointer event and after returning from the background. iOS mutes web audio when the silent switch is on, which is acceptable.
 - Backgrounding: pause the run, save, and suspend audio.
 - Android back button: history-state handling (game → pause → menu).

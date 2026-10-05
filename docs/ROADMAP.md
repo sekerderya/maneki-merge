@@ -6,7 +6,7 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
 | --- | ----------------------------------- | ------------------ | --------- | ----------- |
 | M0  | Owner setup                         | –                  | –         | done        |
 | M1  | Repository, toolchain and CI/CD     | medium             | –         | done        |
-| M2  | Mobile PWA shell                    | high               | –         | not started |
+| M2  | Mobile PWA shell                    | high               | –         | done        |
 | M3  | Core rules, config and save system  | high               | –         | not started |
 | M4  | Physics and merge engine (headless) | xhigh              | yes       | not started |
 | M5  | Playable game scene                 | high               | –         | not started |
@@ -61,16 +61,16 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
 
 **Effort:** high. **Goal:** an installable, offline, full-screen, portrait-safe shell with the two screens.
 
-- [ ] `vite-plugin-pwa` (generateSW, prompt-style updates), the manifest, a placeholder icon SVG turned into an icon set via `@vite-pwa/assets-generator`, apple-touch-icon, and iOS meta tags
-- [ ] Menu screen skeleton: title, coin balance (0), PLAY (centered), UPGRADES (below), sound icon, version
-- [ ] Game screen skeleton: an empty play area with a temporary "Back" control; switching between screens
-- [ ] Mobile CSS foundation (TECH_SPEC §10): safe areas, `100dvh`, no zoom/select/callout/rubber-band, 48 px targets, Fredoka via `@fontsource`, warm red/gold theme tokens
-- [ ] Rotate-device overlay (landscape on touch devices)
-- [ ] Install hints (iOS share instructions; Android install button)
-- [ ] "Update ready — tap to restart" badge (menu only)
-- [ ] Android back-button handling; `visibilitychange` hooks (stubs for pause and save)
-- [ ] URL flags parsed: `debug`, `seed`, `skin`
-- [ ] E2E: a clean console on boot (both profiles) and the offline reload test
+- [x] `vite-plugin-pwa` (generateSW, prompt-style updates), the manifest, a placeholder icon SVG turned into an icon set via `@vite-pwa/assets-generator`, apple-touch-icon, and iOS meta tags
+- [x] Menu screen skeleton: title, coin balance (0), PLAY (centered), UPGRADES (below), sound icon, version
+- [x] Game screen skeleton: an empty play area with a temporary "Back" control; switching between screens
+- [x] Mobile CSS foundation (TECH_SPEC §10): safe areas, `100dvh`, no zoom/select/callout/rubber-band, 48 px targets, Fredoka via `@fontsource`, warm red/gold theme tokens
+- [x] Rotate-device overlay (landscape on touch devices)
+- [x] Install hints (iOS share instructions; Android install button)
+- [x] "Update ready — tap to restart" badge (menu only)
+- [x] Android back-button handling; `visibilitychange` hooks (stubs for pause and save)
+- [x] URL flags parsed: `debug`, `seed`, `skin`
+- [x] E2E: a clean console on boot (both profiles) and the offline reload test
 
 **Acceptance:** installable in Chrome; offline relaunch works; no layout overflow at 375×667, 390×844 or 430×932.
 **Owner check:** install on the iPhone (Safari → Share → Add to Home Screen) and on Android (Chrome → Install app). It opens full screen and works in airplane mode.
