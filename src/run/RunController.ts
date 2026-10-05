@@ -13,7 +13,7 @@
  * reaches the next threshold saves the jar even on the step the danger timer would run out.
  */
 import { PHYSICS_STEP_MS, stepsFor } from '../config/physics';
-import { stageInfo } from '../config/stages';
+import { STAGE_COUNT, stageInfo } from '../config/stages';
 import { tierRadius } from '../config/tiers';
 import {
   DROP_COOLDOWN_MS,
@@ -27,8 +27,8 @@ import { cashOutBelow, RunEconomy } from '../core/economy';
 import { EventBus } from '../core/events';
 import type { GameEvents } from '../core/events';
 import { StateHasher } from '../core/hash';
-import { nextExpansion, stageProgress } from '../core/progression';
-import type { StageProgress } from '../core/progression';
+import { nextExpansion, stageProgress, stageThreshold } from '../core/progression';
+import type { ProgressionStats, StageProgress } from '../core/progression';
 import { Rng } from '../core/rng';
 import { defaultUpgradeLevels, deriveStats } from '../core/upgrades';
 import type { DerivedStats, UpgradeLevels } from '../core/upgrades';
@@ -108,6 +108,8 @@ export class RunController {
   private savesLeft: number;
   private lockedAnnounced = false;
   private expansionState: Expansion | null = null;
+  /** Debug only (`jumpToStage`): stages up to this one open regardless of Shrine Expansion. */
+  private debugMaxStage = 0;
 
   constructor(options: RunOptions) {
     if (!Number.isFinite(options.seed)) throw new RangeError(`Invalid seed: ${options.seed}`);
@@ -212,12 +214,20 @@ export class RunController {
 
   /** The HUD progress bar towards the next stage. */
   get progress(): StageProgress {
-    return stageProgress(this.economy.score, this.world.stage, this.stats);
+    return stageProgress(this.economy.score, this.world.stage, this.progression);
   }
 
   /** The running expansion sequence, or null. */
   get expansion(): ExpansionView | null {
     return this.expansionState;
+  }
+
+  /**
+   * How far the current frame is between two ticks (0–1). Rendering only: the scene uses it to
+   * move the expansion's camera smoothly at any refresh rate. It never affects the run.
+   */
+  get renderAlpha(): number {
+    return this.stepper.alpha;
   }
 
   // ── Input ──────────────────────────────────────────────────────────────────
@@ -281,6 +291,17 @@ export class RunController {
     this.events.emit('scoreChanged', { score });
   }
 
+  /**
+   * Opens every stage up to `stage` for this run, whatever the Shrine Expansion level, and raises
+   * the score to that stage's threshold. Each expansion then plays in turn, one stage at a time.
+   */
+  jumpToStage(stage: number): void {
+    if (!Number.isInteger(stage) || stage <= this.world.stage || stage > STAGE_COUNT) return;
+    this.debugMaxStage = Math.max(this.debugMaxStage, stage);
+    const threshold = stageThreshold(stage, this.stats.thresholdFactor);
+    if (this.economy.score < threshold) this.setScore(threshold);
+  }
+
   forceGameOver(): void {
     if (this.runState === 'over') return;
     this.gameOver();
@@ -296,6 +317,7 @@ export class RunController {
     h.number(this.queue.current.tier).bool(this.queue.current.golden);
     for (const next of this.queue.preview) h.number(next.tier).bool(next.golden);
     h.number(this.dropAllowedAt).number(this.savesLeft).bool(this.lockedAnnounced);
+    h.number(this.debugMaxStage);
     h.number(this.danger.remainingMs).bool(this.danger.inGrace);
     const e = this.expansionState;
     if (e) h.number(e.from).number(e.to).number(e.elapsedSteps);
@@ -351,9 +373,15 @@ export class RunController {
     this.events.emit('dropReady', { tier, golden });
   }
 
+  /** Thresholds and the stage lock, including the debug override. */
+  private get progression(): ProgressionStats {
+    if (this.debugMaxStage <= this.stats.maxStage) return this.stats;
+    return { thresholdFactor: this.stats.thresholdFactor, maxStage: this.debugMaxStage };
+  }
+
   /** Starts the next expansion if the score allows it; returns whether one started. */
   private checkExpansion(): boolean {
-    const next = nextExpansion(this.economy.score, this.world.stage, this.stats);
+    const next = nextExpansion(this.economy.score, this.world.stage, this.progression);
     if (next.kind === 'expand') {
       this.startExpansion(next.stage);
       return true;
@@ -409,7 +437,14 @@ export class RunController {
       this.world.removeBall(cat);
       const { coins } = this.economy.pop(cat.tier, cat.golden);
       this.bankCoins(coins);
-      this.events.emit('catPopped', { tier: cat.tier, golden: cat.golden, at, coins, reason });
+      this.events.emit('catPopped', {
+        id: cat.id,
+        tier: cat.tier,
+        golden: cat.golden,
+        at,
+        coins,
+        reason,
+      });
     }
     this.events.emit('runCoinsChanged', { coins: this.economy.coins });
   }
@@ -445,6 +480,7 @@ export class RunController {
     if (e.phase === 'zoom' && e.elapsedSteps >= ZOOM_STEPS) {
       e.phase = 'reveal';
       this.cashOut(e.to);
+      this.events.emit('expansionRevealed', { stage: e.to, newTiers: newTiers(e.from, e.to) });
     }
     if (e.elapsedSteps >= EXPANSION_STEPS) this.finishExpansion(e);
   }
@@ -465,13 +501,17 @@ export class RunController {
     this.runState = 'playing';
     this.world.resume();
     this.danger.reset();
-    const fromCap = stageInfo(e.from).tierCap;
-    const toCap = stageInfo(e.to).tierCap;
-    const newTiers = Array.from({ length: toCap - fromCap }, (_, i) => fromCap + 1 + i);
-    this.events.emit('expansionFinished', { stage: e.to, newTiers });
+    this.events.emit('expansionFinished', { stage: e.to, newTiers: newTiers(e.from, e.to) });
     // The dropper comes back, maybe with a re-rolled cat.
     this.dropAnnounced = false;
     this.announceDropIfReady();
     this.checkExpansion();
   }
+}
+
+/** The tiers a stage's cap allows that the previous stage's didn't ("New cats unlocked!"). */
+function newTiers(from: number, to: number): number[] {
+  const fromCap = stageInfo(from).tierCap;
+  const toCap = stageInfo(to).tierCap;
+  return Array.from({ length: toCap - fromCap }, (_, i) => fromCap + 1 + i);
 }

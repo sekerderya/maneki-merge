@@ -66,6 +66,14 @@ export class FixedStepper {
     return steps;
   }
 
+  /**
+   * How far the leftover time has come towards the next step, 0 (inclusive) to 1 (exclusive).
+   * Rendering only: it smooths motion between steps without touching the simulation.
+   */
+  get alpha(): number {
+    return Math.min(this.accumulator / this.stepMs, 1 - 1e-9);
+  }
+
   /** Forgets leftover time, e.g. when the game resumes after a pause. */
   reset(): void {
     this.accumulator = 0;
@@ -156,6 +164,11 @@ export class PhysicsWorld {
   /** matter-js gravity.y; 1 at stage 1. */
   get gravity(): number {
     return this.engine.gravity.y;
+  }
+
+  /** x of the right wall's inner face (the left one mirrors it): the jar's half-width. */
+  get wallInnerX(): number {
+    return this.rightWall.position.x - WALL_THICKNESS / 2;
   }
 
   /** The speed limit for every cat at the current stage, in world units per second. */

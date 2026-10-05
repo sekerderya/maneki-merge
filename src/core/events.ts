@@ -91,6 +91,8 @@ export interface GameEvents {
   };
   /** A single cat popped into coins (cash-out or Lucky Save). */
   catPopped: {
+    /** The cat's id (BallView.id), so the scene can pop the cat's own sprite. */
+    readonly id: number;
     readonly tier: number;
     readonly golden: boolean;
     readonly at: WorldPoint;
@@ -102,6 +104,12 @@ export interface GameEvents {
   comboChanged: { readonly combo: number };
   dangerChanged: { readonly active: boolean; readonly remainingMs: number };
   expansionStarted: { readonly from: number; readonly to: number };
+  /**
+   * The zoom has ended: the cash-out is done and the jar, gravity and drop pool are the new
+   * stage's. Physics stays paused until `expansionFinished`. `newTiers`: the tiers the new cap
+   * allows ("New cats unlocked!").
+   */
+  expansionRevealed: { readonly stage: number; readonly newTiers: readonly number[] };
   expansionFinished: { readonly stage: number; readonly newTiers: readonly number[] };
   expansionLocked: { readonly stage: number };
   luckySave: { readonly savesLeft: number };
