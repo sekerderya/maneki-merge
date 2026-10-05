@@ -82,7 +82,7 @@ Follow the Milestone workflow in CLAUDE.md.
 ```text
 Implement milestone M5 from docs/ROADMAP.md. First read CLAUDE.md, GAME_DESIGN §2–§6 and §13.1, TECH_SPEC §3–§7, §11 and §15, and the relevant Phaser 4 skills in node_modules/phaser/skills/.
 Only stage 1 has to look right for now (expansion comes in M6), but don't hard-code stage 1 anywhere.
-In the browser at 390x844 and 375x667, play at least one full run until game over. Check that the numbers on the cats are sharp, the aim line matches where cats land, and the console is clean. Put screenshots in the PR.
+In the browser at 390x844 and 375x667, play at least one full run until game over. Check that the numbers on the cats are sharp, the aim line matches where cats land, and the console is clean. Save screenshots in docs/screenshots/.
 Follow the Milestone workflow in CLAUDE.md.
 ```
 
@@ -108,7 +108,7 @@ Follow the Milestone workflow in CLAUDE.md.
 ```text
 Implement milestone M8 from docs/ROADMAP.md. First read CLAUDE.md, GAME_DESIGN §2 and §10, and TECH_SPEC §7.
 Wire every upgrade effect into the game and prove that each one works: unit tests for the math, and E2E or debug-driven browser checks for the visible ones.
-Check the layout at 375x667, 390x844 and 430x932 portrait, and put screenshots in the PR.
+Check the layout at 375x667, 390x844 and 430x932 portrait, and save screenshots in docs/screenshots/.
 Follow the Milestone workflow in CLAUDE.md.
 ```
 
@@ -133,7 +133,7 @@ Follow the Milestone workflow in CLAUDE.md.
 
 ```text
 Implement milestone M11 from docs/ROADMAP.md. First read CLAUDE.md and TECH_SPEC §10–§13.
-Be skeptical and actively try to break the game: rapid taps, rotation, backgrounding in the middle of an expansion, offline use, storage errors, 20 runs in a row. Fix what you find. Measure performance with CPU throttling and put the before/after numbers in the PR.
+Be skeptical and actively try to break the game: rapid taps, rotation, backgrounding in the middle of an expansion, offline use, storage errors, 20 runs in a row. Fix what you find. Measure performance with CPU throttling and put the before/after numbers in the CHANGELOG entry and your report.
 Follow the Milestone workflow in CLAUDE.md.
 ```
 
@@ -165,7 +165,7 @@ Bug: [what happened]
 Device: [e.g. iPhone 13, iOS 26, home-screen app]. Version shown on the menu: [x.y.z (hash)]
 Steps: 1) … 2) … 3) …
 Expected: […]
-Find the root cause instead of patching the symptom, add a regression test when possible, fix it, and follow the Milestone workflow in CLAUDE.md on a branch named fix-<short-name>.
+Find the root cause instead of patching the symptom, add a regression test when possible, fix it, and follow the Milestone workflow in CLAUDE.md.
 ```
 
 ### Playtest feedback
@@ -175,29 +175,29 @@ Playtest feedback (version [x.y.z]):
 - [e.g. Cats fall too slowly at stage 3]
 - [e.g. The coin text is too small on my phone]
 - [e.g. Big Catch feels useless]
-For each point, propose a concrete change: which config value or UI element to change, and why. Apply the clear ones and list the ones that need my decision. Keep GAME_DESIGN.md in sync with any number you change, and follow the Milestone workflow in CLAUDE.md on a branch named tune-<short-name>.
+For each point, propose a concrete change: which config value or UI element to change, and why. Apply the clear ones and list the ones that need my decision. Keep GAME_DESIGN.md in sync with any number you change, and follow the Milestone workflow in CLAUDE.md.
 ```
 
 ### Small text or number change
 
 ```text
-Change [exact text or number] to [new value]. Keep the docs in sync and follow the Milestone workflow in CLAUDE.md on a branch named tune-<short-name>.
+Change [exact text or number] to [new value]. Keep the docs in sync and follow the Milestone workflow in CLAUDE.md.
 ```
 
 ### CI failed
 
 ```text
-The GitHub Actions run for [PR / branch / main] failed. Read the failed job logs with gh, find the root cause, fix it, and get CI green again. Don't skip or weaken tests to make it pass.
+The GitHub Actions run on main failed. Read the failed job logs with gh, find the root cause, fix it, and get CI green again. Don't skip or weaken tests to make it pass.
 ```
 
 ### Stuck after two attempts (plan mode)
 
 ```text
-Two attempts to fix [problem] have failed. Start fresh: read the relevant code and tests, list at least three hypotheses for the root cause, and check each one with evidence (logs, a failing test, a minimal headless reproduction) before changing any code. Then fix the confirmed cause and explain in the PR what was wrong. Follow the Milestone workflow in CLAUDE.md.
+Two attempts to fix [problem] have failed. Start fresh: read the relevant code and tests, list at least three hypotheses for the root cause, and check each one with evidence (logs, a failing test, a minimal headless reproduction) before changing any code. Then fix the confirmed cause and explain in your report what was wrong. Follow the Milestone workflow in CLAUDE.md.
 ```
 
 ### Resume an interrupted milestone
 
 ```text
-Continue milestone [MNN] from docs/ROADMAP.md. Check the current branch, `git status`, open PRs and the ROADMAP checkboxes to see what's already done, then finish the rest and follow the Milestone workflow in CLAUDE.md.
+Continue milestone [MNN] from docs/ROADMAP.md. Check `git status`, the recent commits on main and the ROADMAP checkboxes to see what's already done, then finish the rest and follow the Milestone workflow in CLAUDE.md.
 ```

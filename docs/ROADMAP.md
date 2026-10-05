@@ -130,7 +130,7 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
 - [ ] Debug panel (`?debug=1`) and `window.__game` hooks (TECH_SPEC §11)
 - [ ] E2E: start a run, drop 10 cats via hooks, pause/resume, force game over, go back to the menu
 
-**Acceptance:** smooth 60 fps on desktop and in mobile emulation; a clean console; screenshots at 390×844 and 375×667 in the PR.
+**Acceptance:** smooth 60 fps on desktop and in mobile emulation; a clean console; screenshots at 390×844 and 375×667 in `docs/screenshots/`.
 **Owner check:** play a few runs on each phone and note how dropping, bouncing and sizes feel.
 
 ## M6: Expansion system
@@ -226,7 +226,7 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
   - an update arriving mid-run
 - [ ] Full E2E suite on both engines; Lighthouse PWA + performance audit
 - [ ] Accessibility basics: labels, contrast, reduced motion
-- [ ] Fix what's found and list the known issues in the PR
+- [ ] Fix what's found and list the known issues in the CHANGELOG
 
 **Acceptance:** all tests green; the TECH_SPEC §13 budgets are met.
 

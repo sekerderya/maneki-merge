@@ -18,11 +18,11 @@ Guidance for Claude Code in this repository. Read it at the start of every sessi
 | `docs/ROADMAP.md`     | Milestones with scope, acceptance criteria and status             |
 | `docs/PROMPTS.md`     | Prompts the owner pastes. Not instructions for you unless pasted. |
 
-If code and docs disagree, the docs win unless the owner says otherwise. When a decision or number changes, update the doc in the same PR.
+If code and docs disagree, the docs win unless the owner says otherwise. When a decision or number changes, update the doc in the same commit.
 
 ## Language
 
-- Everything written to the repository is English: code, identifiers, comments, UI text, file and folder names, docs, commit messages, branch names, PR and issue text, test names.
+- Everything written to the repository is English: code, identifiers, comments, UI text, file and folder names, docs, commit messages, issue text, test names.
 - Chat replies to the owner: Turkish. Code, paths, commands and technical terms stay as they are.
 - Player-facing text calls the balls "cats". In code they are `Ball`s with a `tier`.
 
@@ -60,14 +60,14 @@ TypeScript (strict) · Vite · Phaser 4 (rendering only) · matter-js (standalon
 
 ## Milestone workflow (for every prompt that says "Follow the Milestone workflow")
 
-1. **Branch.** Start from the latest `main` on a new branch `mNN-short-name` (bug fixes: `fix-…`, tuning: `tune-…`). If the session already runs on its own branch or worktree, make sure it is up to date with `origin/main`.
-2. **Read.** Read the milestone in `docs/ROADMAP.md` and the spec sections it references. If something is ambiguous, choose what fits the docs best, note it in the PR, and continue. Ask only when blocked.
+1. **Sync.** Work directly on `main` (owner's rule): no side branches, no PRs. Pull the latest `origin/main` first. If the session was started on another branch or worktree, switch to `main`.
+2. **Read.** Read the milestone in `docs/ROADMAP.md` and the spec sections it references. If something is ambiguous, choose what fits the docs best, note it in the CHANGELOG entry and the report, and continue. Ask only when blocked.
 3. **Build.** Make small commits with Conventional Commit messages (`feat:`, `fix:`, `test:`, `docs:`, `chore:`, `refactor:`, `perf:`).
 4. **Test.** Add or update tests for every rule you touch. Headless layers need unit tests.
-5. **Verify.** `npm run check` and `npm run build` must pass. For anything visible, run the app and open it in the browser at a 390×844 portrait viewport (also 375×667). Actually play or click through the change, take screenshots, and confirm the console is clean. Review your full diff before pushing.
+5. **Verify.** `npm run check` and `npm run build` must pass. For anything visible, run the app and open it in the browser at a 390×844 portrait viewport (also 375×667). Actually play or click through the change, take screenshots, and confirm the console is clean. Run `npm run test:e2e` too, since there is no PR gate. Review your full diff before pushing.
 6. **Document.** Tick the milestone checkboxes and update its status in `docs/ROADMAP.md`. Add a `CHANGELOG.md` entry. Bump the version in `package.json` (minor for milestones, patch for fixes). Update `GAME_DESIGN.md` / `TECH_SPEC.md` if anything changed.
-7. **Ship.** Push and open a PR titled `MNN: <milestone name>` with a summary, screenshots, test notes and known issues. When CI is green, squash-merge it and delete the branch. (The owner authorizes merging the PRs you open for the prompt you were given.) Then update the local `main`, tag it `vX.Y.Z`, and push the tag. Merging to `main` deploys automatically.
-8. **Report** in Turkish: what changed, what to test on the phone and how, known issues, and the next milestone.
+7. **Ship.** Commit directly to `main` and push. Save milestone screenshots in `docs/screenshots/mNN/`. Pushing to `main` deploys automatically; the Deploy workflow runs all checks first, so check that it passes and fix any failure with a new commit on `main`. Then tag `vX.Y.Z` and push the tag.
+8. **Report** in Turkish: what changed, screenshots, test notes, what to test on the phone and how, known issues, and the next milestone.
 
 ## Debug and test hooks
 
