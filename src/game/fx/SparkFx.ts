@@ -1,10 +1,11 @@
 /**
- * Gold sparks: along the rim when the shrine grows (GAME_DESIGN §7.1), and bursts for golden
- * merges and Jackpots. Two pooled Phaser particle emitters in stage-1 units; each emitter's scale
- * is set to the stage's, so sparks look the same at every zoom. M9 adds the rest of the polish.
+ * Sparks and particles: gold along the rim when the shrine grows and again when the new jar is
+ * revealed (GAME_DESIGN §7.1), gold bursts for golden merges and Jackpots, and a burst in the new
+ * cat's colour for every merge (§12). Three pooled Phaser particle emitters in stage-1 units; each
+ * emitter's scale is set to the stage's, so particles look the same at every zoom.
  */
 import type Phaser from 'phaser';
-import { BURST_SPARKS, EXPANSION_SPARKS } from '../../config/view';
+import { BURST_SPARKS, EXPANSION_SPARKS, MERGE_PARTICLES } from '../../config/view';
 
 const SPARK_KEY = 'fx-spark';
 const SPARK_PX = 64;
@@ -14,6 +15,7 @@ const SPARK_TINTS = [0xfff4c2, 0xf6c343, 0xffd36b, 0xffffff];
 export class SparkFx {
   private readonly emitter: Phaser.GameObjects.Particles.ParticleEmitter;
   private readonly bursts: Phaser.GameObjects.Particles.ParticleEmitter;
+  private readonly merges: Phaser.GameObjects.Particles.ParticleEmitter;
 
   constructor(scene: Phaser.Scene, layer: Phaser.GameObjects.Layer) {
     createSparkTexture(scene.textures);
@@ -40,7 +42,23 @@ export class SparkFx {
       tint: SPARK_TINTS,
       blendMode: 'ADD',
     });
-    layer.add([this.emitter, this.bursts]);
+    this.merges = scene.add.particles(0, 0, SPARK_KEY, {
+      emitting: false,
+      lifespan: { ...MERGE_PARTICLES.lifespanMs },
+      speed: { ...MERGE_PARTICLES.speed },
+      angle: { min: 0, max: 360 },
+      gravityY: MERGE_PARTICLES.gravity,
+      scale: { start: MERGE_PARTICLES.scale, end: 0 },
+      alpha: { start: 1, end: 0 },
+    });
+    layer.add([this.merges, this.emitter, this.bursts]);
+  }
+
+  /** A burst of `count` particles tinted `color` at a world point of a stage with `scale`. */
+  mergeBurst(x: number, y: number, count: number, color: number, scale: number): void {
+    this.merges.setScale(scale);
+    this.merges.setParticleTint(color);
+    this.merges.emitParticleAt(x / scale, y / scale, count);
   }
 
   /** A round burst of `count` sparks at a world point of a stage with `scale`. */
@@ -62,20 +80,22 @@ export class SparkFx {
   }
 
   pause(): void {
-    this.emitter.pause();
-    this.bursts.pause();
+    for (const emitter of this.all()) emitter.pause();
   }
 
   resume(): void {
-    this.emitter.resume();
-    this.bursts.resume();
+    for (const emitter of this.all()) emitter.resume();
   }
 
   clear(): void {
-    for (const emitter of [this.emitter, this.bursts]) {
+    for (const emitter of this.all()) {
       emitter.killAll();
       emitter.resume();
     }
+  }
+
+  private all(): Phaser.GameObjects.Particles.ParticleEmitter[] {
+    return [this.emitter, this.bursts, this.merges];
   }
 }
 

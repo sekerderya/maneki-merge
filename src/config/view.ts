@@ -133,3 +133,50 @@ export const GLINT_SIZE_RATIO = 0.75;
 
 /** The shop balance counts down to the new wallet after a purchase (GAME_DESIGN §2.2). */
 export const SHOP_BALANCE_COUNT_MS = 450;
+
+/**
+ * Merge juice (GAME_DESIGN §12). Every merge bursts particles in the new cat's colour (more for
+ * bigger cats), and the new cat bumps up by MERGE_BUMP_SCALE and settles over MERGE_BUMP_MS on top
+ * of its physical growth. Stage-1 units, scaled by the stage.
+ */
+export const MERGE_PARTICLES = {
+  base: 7,
+  perTier: 0.8,
+  max: 18,
+  lifespanMs: { min: 320, max: 620 },
+  speed: { min: 140, max: 420 },
+  gravity: 700,
+  scale: 0.42,
+} as const;
+export const MERGE_BUMP_MS = 220;
+export const MERGE_BUMP_SCALE = 0.14;
+/** With `prefers-reduced-motion`, particle counts are multiplied by this (and nothing shakes). */
+export const REDUCED_MOTION_PARTICLES = 0.35;
+
+/**
+ * Camera shake (GAME_DESIGN §12): merges into tier SHAKE.minTier and above, Jackpots, and combo
+ * escalation from SHAKE.comboMin. Amplitudes are stage-1 world units (scaled by the stage); a
+ * stronger shake replaces a weaker one, and each fades out over its duration.
+ */
+export const SHAKE = {
+  minTier: 10,
+  mergeBase: 5,
+  mergePerTier: 2,
+  mergeMs: 260,
+  jackpot: 15,
+  jackpotMs: 450,
+  comboMin: 5,
+  comboStep: 1.2,
+  comboMax: 7,
+  comboMs: 200,
+  /** Oscillation frequencies of the x and y offsets, in Hz. */
+  frequencyX: 29,
+  frequencyY: 23,
+} as const;
+
+/** The danger countdown number pulses when it reaches a new second. */
+export const COUNTDOWN_PULSE_MS = 260;
+export const COUNTDOWN_PULSE_SCALE = 0.35;
+
+/** "Combo ×N" heats up (bigger, hotter colour) at these combo levels. */
+export const COMBO_HEAT_LEVELS = [4, 7] as const;

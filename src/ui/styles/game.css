@@ -466,6 +466,20 @@
   font-weight: var(--weight-bold);
 }
 
+/* The chain heats up: bigger and hotter at COMBO_HEAT_LEVELS (config/view.ts). */
+.combo[data-heat='1'] .combo-text {
+  font-size: 1.9rem;
+  color: #ffe08a;
+}
+
+.combo[data-heat='2'] .combo-text {
+  font-size: 2.2rem;
+  color: #fff4c2;
+  text-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.35),
+    0 0 14px rgba(255, 170, 60, 0.85);
+}
+
 .combo.is-step {
   animation: combo-step 260ms ease-out;
 }

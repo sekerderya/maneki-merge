@@ -106,7 +106,8 @@ button:focus-visible {
 }
 
 .btn:active:not(:disabled) {
-  transform: translateY(4px);
+  transform: translateY(4px) scale(0.97);
+  filter: brightness(0.95);
   box-shadow: var(--shadow-pressed);
 }
 

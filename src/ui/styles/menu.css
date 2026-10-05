@@ -37,6 +37,7 @@
 
 .menu-title {
   margin: 0;
+  animation: idle-bob 3.2s ease-in-out infinite;
   font-weight: var(--weight-bold);
   font-size: clamp(2.6rem, 13vw, 4rem);
   line-height: 1.05;
@@ -83,6 +84,47 @@
   width: min(78vw, 300px);
   min-height: 76px;
   font-size: 2rem;
+  animation: play-breathe 2.4s ease-in-out infinite;
+}
+
+.btn-play:active:not(:disabled) {
+  animation: none;
+}
+
+.notify-dot:not([hidden]) {
+  animation: dot-pop 1.8s ease-in-out infinite;
+}
+
+/* Menu micro-animations (M9): the title floats, PLAY breathes, the shop dot nudges. */
+@keyframes idle-bob {
+  50% {
+    transform: translateY(-6px) rotate(-1deg);
+  }
+}
+
+@keyframes play-breathe {
+  50% {
+    transform: scale(1.035);
+  }
+}
+
+@keyframes dot-pop {
+  0%,
+  70%,
+  100% {
+    transform: scale(1);
+  }
+  80% {
+    transform: scale(1.35);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-title,
+  .btn-play,
+  .notify-dot:not([hidden]) {
+    animation: none;
+  }
 }
 
 .btn-upgrades {

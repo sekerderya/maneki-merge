@@ -16,12 +16,18 @@ import {
   AIM_GAP,
   AIM_LINE_WIDTH,
   BURST_SPARKS,
+  COUNTDOWN_PULSE_MS,
+  COUNTDOWN_PULSE_SCALE,
   DANGER_FLASH_PERIOD_MS,
   DROPPER_POP_IN_MS,
+  REDUCED_MOTION_PARTICLES,
+  SHAKE,
   SKIN_PREPARE_BUDGET_MS,
 } from '../config/view';
+import { hexToNumber } from '../core/color';
 import type { GameEvents } from '../core/events';
 import { clampDropX, jarGeometry } from '../physics/geometry';
+import { reducedMotion } from '../platform/motion';
 import type { RunController } from '../run/RunController';
 import { landingY } from './aim';
 import { BallRenderer } from './BallRenderer';
@@ -34,8 +40,9 @@ import { PopFx } from './fx/PopFx';
 import type { PopRequest } from './fx/PopFx';
 import { SparkFx } from './fx/SparkFx';
 import { JarView } from './JarView';
+import { comboShake, mergeParticleCount, mergeShake, Shake } from './shake';
 import type { BallSkin } from './skins/BallSkin';
-import { PlaceholderSkin } from './skins/PlaceholderSkin';
+import { PlaceholderSkin, tierColor } from './skins/PlaceholderSkin';
 
 export const GAME_SCENE_KEY = 'game';
 
@@ -67,6 +74,10 @@ export class GameScene extends Phaser.Scene {
   private readonly point = new Phaser.Math.Vector2();
   /** Cats popped during this frame's ticks; they pop on screen together, staggered. */
   private readonly popped: PopRequest[] = [];
+  private readonly shake = new Shake();
+  private readonly shakeOffset = { x: 0, y: 0 };
+  /** When the danger countdown last reached a new second (it pulses). */
+  private countdownPulseMs = -Infinity;
   /** The stage whose textures are being drawn ahead of an expansion's reveal (0: none). */
   private preparing = 0;
 
@@ -144,15 +155,30 @@ export class GameScene extends Phaser.Scene {
     on('dropReady', () => {
       this.popInFromMs = this.nowMs;
     });
+    // Merge juice (GAME_DESIGN §12): pop ring, "+coins", the new cat's bump, particles in its
+    // colour, gold sparks for golden merges, and a shake for big cats.
     on('merged', (e) => {
       const scale = run.geometry.scale;
+      const reduced = reducedMotion();
       this.fx.merge(this.nowMs, e.at.x, e.at.y, e.newTier, e.coins, scale);
-      if (e.golden) this.sparks.burst(e.at.x, e.at.y, BURST_SPARKS.golden, scale);
+      this.balls.bump(e.id, this.nowMs);
+      const color = hexToNumber(tierColor(e.newTier));
+      const count = mergeParticleCount(e.newTier, reduced);
+      this.sparks.mergeBurst(e.at.x, e.at.y, count, color, scale);
+      if (e.golden) this.sparks.burst(e.at.x, e.at.y, this.particles(BURST_SPARKS.golden), scale);
+      this.addShake(mergeShake(e.newTier), SHAKE.mergeMs, scale);
     });
     on('jackpot', (e) => {
       const scale = run.geometry.scale;
       this.fx.jackpot(this.nowMs, e.at.x, e.at.y, e.tier, e.coins, scale);
-      this.sparks.burst(e.at.x, e.at.y, BURST_SPARKS.jackpot, scale);
+      this.sparks.burst(e.at.x, e.at.y, this.particles(BURST_SPARKS.jackpot), scale);
+      this.addShake(SHAKE.jackpot, SHAKE.jackpotMs, scale);
+    });
+    on('comboChanged', (e) => {
+      this.addShake(comboShake(e.combo), SHAKE.comboMs, run.geometry.scale);
+    });
+    on('dangerTick', () => {
+      this.countdownPulseMs = this.nowMs;
     });
     on('catPopped', (e) => {
       this.popped.push({ id: e.id, tier: e.tier, x: e.at.x, y: e.at.y, coins: e.coins });
@@ -165,12 +191,27 @@ export class GameScene extends Phaser.Scene {
     on('expansionRevealed', (e) => {
       this.preparing = 0;
       this.skin.setStage(e.stage);
+      // The grown jar's rim sparkles as it settles.
+      const geo = jarGeometry(e.stage);
+      this.sparks.rim(geo.width, geo.rimY, geo.scale);
     });
     on('paused', () => {
       this.aiming = false;
+      this.shake.clear();
       this.sparks.pause();
     });
     on('resumed', () => this.sparks.resume());
+  }
+
+  /** Particle counts shrink with `prefers-reduced-motion`. */
+  private particles(count: number): number {
+    return reducedMotion() ? Math.max(1, Math.round(count * REDUCED_MOTION_PARTICLES)) : count;
+  }
+
+  /** A shake of `amplitude` stage-1 units; none with `prefers-reduced-motion`. */
+  private addShake(amplitude: number, durationMs: number, scale: number): void {
+    if (amplitude <= 0 || reducedMotion()) return;
+    this.shake.add(this.nowMs, amplitude * scale, durationMs);
   }
 
   /** Where payouts appear on screen, for the coin flights to the HUD. */
@@ -206,6 +247,8 @@ export class GameScene extends Phaser.Scene {
     this.run = null;
     this.popped.length = 0;
     this.preparing = 0;
+    this.shake.clear();
+    this.countdownPulseMs = -Infinity;
     this.pops?.clear();
     this.balls?.clear();
     this.fx?.clear();
@@ -236,7 +279,8 @@ export class GameScene extends Phaser.Scene {
     const frames = expansionFrames(run.geometry, run.expansion, run.renderAlpha);
     const cam = this.cameras.main;
     this.fit = fitCamera(frames.camera, cam.width, cam.height);
-    cam.setZoom(this.fit.zoom).centerOn(this.fit.centerX, this.fit.centerY);
+    const shake = this.shake.offset(this.nowMs, this.shakeOffset);
+    cam.setZoom(this.fit.zoom).centerOn(this.fit.centerX + shake.x, this.fit.centerY + shake.y);
     this.fx.setResolution(this.fit.zoom);
 
     const danger = run.dangerActive;
@@ -300,11 +344,13 @@ export class GameScene extends Phaser.Scene {
     this.countdown.setVisible(show);
     if (!show) return;
     const scale = frame.width / jarGeometry(1).width;
-    const resolution = this.fit.zoom * scale;
+    const resolution = this.fit.zoom * scale * (1 + COUNTDOWN_PULSE_SCALE);
+    const t = (this.nowMs - this.countdownPulseMs) / COUNTDOWN_PULSE_MS;
+    const pulse = t >= 0 && t < 1 ? 1 + COUNTDOWN_PULSE_SCALE * (1 - t) * (1 - t) : 1;
     if (this.countdown.style.resolution !== resolution) this.countdown.setResolution(resolution);
     this.countdown
       .setText(String(Math.max(1, Math.ceil(run.dangerRemainingMs / 1000))))
-      .setScale(scale)
+      .setScale(scale * pulse)
       .setPosition(0, -frame.height * 0.82);
   }
 

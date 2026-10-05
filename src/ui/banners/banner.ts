@@ -1,4 +1,4 @@
-import { BANNER_MS, TOAST_MS } from '../../config/view';
+import { BANNER_MS, COMBO_HEAT_LEVELS, TOAST_MS } from '../../config/view';
 import { formatNumber } from '../../core/format';
 import { catIcon } from '../catIcon';
 import { el } from '../dom';
@@ -109,6 +109,8 @@ export function createBanners(root: HTMLElement): BannerView {
         return;
       }
       comboText.textContent = `Combo ×${count}`;
+      // It heats up as the chain grows (GAME_DESIGN §12).
+      combo.dataset['heat'] = String(COMBO_HEAT_LEVELS.filter((level) => count >= level).length);
       const percent = Math.round(bonus * 100);
       comboBonus.textContent = percent > 0 ? `+${percent}%` : '';
       comboBonus.hidden = percent <= 0;

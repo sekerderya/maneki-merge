@@ -5,10 +5,11 @@
  *
  * When the skin switches to another stage's textures, every live sprite takes its new texture on
  * the next sync. A popped cat's sprite can be handed to an effect (`detach`) and comes back to the
- * pool when the effect ends (`recycle`).
+ * pool when the effect ends (`recycle`). A freshly merged cat bumps up and settles (`bump`).
  */
 import type Phaser from 'phaser';
 import { tierRadius } from '../config/tiers';
+import { MERGE_BUMP_MS, MERGE_BUMP_SCALE } from '../config/view';
 import type { BallView } from '../physics/balls';
 import { createGlintTexture, GLINT_KEY, glintPhase, placeGlint } from './fx/glint';
 import type { BallSkin } from './skins/BallSkin';
@@ -29,6 +30,8 @@ export interface CatSprite {
 export class BallRenderer {
   private readonly live = new Map<number, CatSprite>();
   private readonly free: CatSprite[] = [];
+  /** When each bumping cat's bump started, by cat id. */
+  private readonly bumps = new Map<number, number>();
   private frame = 0;
   private revision: number;
 
@@ -53,7 +56,7 @@ export class BallRenderer {
     for (const ball of balls) {
       const sprite = this.live.get(ball.id) ?? this.acquire(ball);
       sprite.seen = frame;
-      const grow = ball.radius / tierRadius(ball.tier);
+      const grow = (ball.radius / tierRadius(ball.tier)) * this.bumpAt(ball.id, nowMs);
       const body = this.skin.body(ball.tier, ball.golden);
       sprite.body
         .setPosition(ball.x, ball.y)
@@ -68,6 +71,23 @@ export class BallRenderer {
     for (const [id, sprite] of this.live) {
       if (sprite.seen !== frame) this.release(id, sprite);
     }
+  }
+
+  /** The merged cat `id` pops: a short scale bump on top of its growth. */
+  bump(id: number, nowMs: number): void {
+    this.bumps.set(id, nowMs);
+  }
+
+  private bumpAt(id: number, nowMs: number): number {
+    if (this.bumps.size === 0) return 1;
+    const start = this.bumps.get(id);
+    if (start === undefined) return 1;
+    const t = (nowMs - start) / MERGE_BUMP_MS;
+    if (t >= 1) {
+      this.bumps.delete(id);
+      return 1;
+    }
+    return t < 0 ? 1 : 1 + MERGE_BUMP_SCALE * Math.sin(Math.PI * t);
   }
 
   /** Takes a cat's sprite out of the renderer, as it is on screen now, or null if it has none. */
@@ -88,6 +108,7 @@ export class BallRenderer {
   }
 
   clear(): void {
+    this.bumps.clear();
     for (const [id, sprite] of this.live) this.release(id, sprite);
   }
 
@@ -122,6 +143,7 @@ export class BallRenderer {
 
   private release(id: number, sprite: CatSprite): void {
     this.live.delete(id);
+    this.bumps.delete(id);
     this.recycle(sprite);
   }
 
