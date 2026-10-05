@@ -1,4 +1,5 @@
 import { APP_NAME } from '../../config/app';
+import { formatNumber } from '../../core/format';
 import { formatVersionLabel } from '../../core/version';
 import { button, el } from '../dom';
 import { ICON_COIN, ICON_SHARE, ICON_SOUND_OFF, ICON_SOUND_ON } from '../icons';
@@ -90,10 +91,10 @@ export function createMenuScreen(root: HTMLElement, actions: MenuActions): MenuV
 
   const view: MenuView = {
     setCoins(value) {
-      coinValue.textContent = value.toLocaleString('en-US');
+      coinValue.textContent = formatNumber(value);
     },
     setRecords(bestScore, bestStage) {
-      records.textContent = `Best ${bestScore.toLocaleString('en-US')} · Stage ${bestStage}`;
+      records.textContent = `Best ${formatNumber(bestScore)} · Stage ${bestStage}`;
     },
     setSoundOn(on) {
       sound.innerHTML = on ? ICON_SOUND_ON : ICON_SOUND_OFF;
