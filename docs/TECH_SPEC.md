@@ -39,16 +39,18 @@ src/
   session.ts         composition root for play: starts runs, wires run events to the HUD,
                      overlays and hints, owns pause / game over / quit (no rules)
   config/            pure data: app, platform, tiers, stages, upgrades, economy, physics, timings
-  core/              pure rules: rng, dropQueue, economy, upgrades, progression, save, events
+  core/              pure rules: rng, dropQueue, economy, upgrades, progression, save, events,
+                     profile (the save in play: wallet, records, stats, throttled writes)
   physics/           matter-js wrapper: PhysicsWorld (+ FixedStepper), balls, merges, danger,
                      geometry (jar per stage), circleCollision (exact circle contacts)
   run/               RunController: the whole run, headless (drop, cooldown, queue, combo,
-                     expansion timeline, cash-out, jackpot, Lucky Save, game over)
+                     expansion timeline, cash-out, jackpot, Lucky Save, game over);
+                     profileRun (a run banking into the profile and keeping its records)
   game/              Phaser: GameScene, cameraFit + aim + expansionView (pure math),
                      BallRenderer, JarView, skins/ (BallSkin, PlaceholderSkin, skinSets),
-                     fx/ (MergeFx, PopFx, SparkFx)
+                     fx/ (MergeFx, PopFx, SparkFx, glint)
   ui/                DOM: screens/ (menu, game), panels/ (shop), overlays/ (pause, game over),
-                     hud/, banners/, styles/
+                     hud/, banners/ (banners, toasts, combo), fx/ (coin flights), styles/
   audio/             procedural SFX + mixer
   platform/          storage adapter, haptics, visibility, back button, orientation,
                      install hint, update badge, safe areas
@@ -72,7 +74,7 @@ Randomness: `core/rng.ts` is sfc32 seeded through splitmix32. Its state is four 
 
 - `game` and `ui` talk to each other only through the typed event bus (`core/events.ts`) and the RunController API, never by reaching into each other.
 
-Data flow: pointer input (game) → `RunController.drop(x)` → PhysicsWorld steps → merge events → economy (score, coins) → event bus → HUD, FX, audio, haptics, save.
+Data flow: pointer input (game) → `RunController.drop(x)` → PhysicsWorld steps → merge events → economy (score, coins) → wallet (`bank`, before the event) → event bus → HUD, FX, audio, haptics, records.
 
 ## 4. World, coordinates and camera
 
@@ -166,11 +168,17 @@ Data flow: pointer input (game) → `RunController.drop(x)` → PhysicsWorld ste
 - Back in the game: the screen manager keeps one history layer while the game is open. Back opens the pause overlay and re-opens the layer; back on the pause or Game Over overlay goes to the menu (`ui/screenManager.ts`, `session.ts`).
 - Use `env(safe-area-inset-*)`, `100dvh`, and `resize` / `visualViewport` listeners.
 - Touch targets are at least 48 px, with pressed states and no hover-only interactions.
-- Coin fly: convert the merge's world position to screen space through the camera, then animate a DOM coin to the HUD counter.
+- Payouts on screen (GAME_DESIGN §12): every merge, Jackpot and popping cat shows a gold "+coins" in the scene (`MergeFx`; a Jackpot's is bigger, with a spark burst, and golden merges burst sparks too). Where it appears is reported through `GameView.onCoins(x, y, big)` in CSS pixels of the play area (the camera's `worldToView` divided by the render resolution); for cash-out and Lucky Save pops that is when each staggered pop goes off.
+- Coin fly (`ui/fx/coinFly.ts`): a pooled DOM coin (24 at most in the air) bows sideways from there to the HUD counter with the Web Animations API, 620 ms; a Jackpot sends a shower of 8 from a ring around its origin. The counter bumps as each one lands. The coins are already in the wallet, so a flight that doesn't fit the pool is skipped, and `prefers-reduced-motion` sends one coin at most.
+- Combo (`BannerView.combo`): one persistent "Combo ×N" label from N = 2, 30% of the jar's height below the rim, text only so cats stay visible. It pops at each step, shows the Combo Charm bonus as a chip ("+16%") when there is one, and fades when the combo window passes. Jackpot ("Jackpot!" + coins, gold) and Lucky Save ("Lucky Save!", "1 left" while saves remain) use the big banner.
+- Golden cats (`game/fx/glint.ts`): besides the gold ring of their texture, each golden cat (and the dropper's) gets an upright star glint on its upper right that twinkles every 1.4 s, phase-shifted by cat id; the HUD preview icons shimmer in CSS.
+- Game Over: score, best, stage, the biggest cat made this run (as an icon), coins earned, a "New best!" badge for the score and "New" chips on the stage and biggest cat when they set a record.
 - The HUD's next-cat preview and the shop icons use the same skin data: a CSS circle with a number for placeholders, small exported images for the final art.
 
 ## 8. Persistence
 
+- In play the save lives in a `Profile` (`core/profile.ts`, headless, clock injected): the wallet, upgrades, records, stats, settings and hint flags. `run/profileRun.ts` starts each run with the profile's upgrades and `bank`s every payout into the wallet before its event fires; merges, Jackpots, score and stage update the stats and records while the run plays, so a crash keeps a best score too. `runsPlayed` counts at the run start. Game Over badges compare against the records saved when the run started (`newRecords`).
+- Boot: `openStorage()` (probe write, memory fallback) → `SaveStore.load()` (a corrupt, repaired or newer save logs one warning) → `Profile`; `navigator.storage.persist()` once when storage works.
 - The `localStorage` key `maneki-merge:save` holds `{ version, data }` (schema v1: wallet, upgrades, records, stats, settings, flags). `core/save.ts` provides `defaultSave()`, `decodeSave()` / `migrate()`, `sanitize()` and a `SaveStore` (`load()`, `save()`) behind a `StorageAdapter`. Implementations: `WebStorageAdapter` (wraps the localStorage that `platform/storage.ts` hands in after a probe write) and `MemoryStorage` (tests, the simulator, and browsers that block storage).
 - Migrations: `MIGRATIONS[n]` turns version n data into version n + 1; they run in order up to `SAVE_VERSION`. A migrated save is rewritten in the new format right away.
 - Repair: every known field is validated. A missing field silently takes its default, so adding a field needs no migration. An invalid field (wrong type, negative, above an upgrade's max level, …) takes its default or the nearest valid value and is reported. Unknown fields are dropped.
@@ -178,9 +186,10 @@ Data flow: pointer input (game) → `RunController.drop(x)` → PhysicsWorld ste
 - Storage errors never crash the game: a failed read starts from defaults in memory, and `save()` returns false when a write fails (storage full or blocked).
 - Write on:
   - purchase
-  - coin changes (throttled to at most 1 write per second)
-  - run end
-  - `visibilitychange` (hidden) and `pagehide`
+  - any change (coins, records, stats, settings, hints), throttled: the first change after a quiet second is written at once, later ones at most once per second (`SAVE_THROTTLE_MS`)
+  - run end (game over, leaving to the menu)
+  - `visibilitychange` (hidden) and `pagehide` (`Profile.flush()`)
+- A refused write keeps the changes pending and is retried with the next change or flush. A hard kill without a page hide can lose at most the last second of changes.
 - Call `navigator.storage.persist()` once (best effort).
 
 ## 9. PWA and offline
@@ -209,17 +218,17 @@ Data flow: pointer input (game) → `RunController.drop(x)` → PhysicsWorld ste
 
 ## 11. Testing
 
-- **Unit tests (Vitest):** config tables vs GAME_DESIGN, camera fit and the expansion frames (the jar inside the camera, the floor still on screen), texture sets per stage, RNG determinism, drop weights and Big Catch, economy, upgrade prices/effects/purchase rules, thresholds and locks, save defaults/migrations/corruption, the event bus, number formatting, and the layer import rules. `npm run test:coverage` (part of `npm run check` and CI) fails below 90% line coverage on `src/core`.
-- **Headless physics (Vitest, `tests/physics/`):** circle contacts against matter-js's record contract, the world (walls, stages, fixed stepping, speed limits, growth), merge rules (a pair → the next tier, three touching → one merge, cap → Jackpot), growth without launches, the danger timer, Lucky Save, the RunController (drops, cooldown, payouts, combo, expansion timeline and cash-out, locks, game over, pause), determinism, expansions (a pile through every stage up to 5: nothing escapes, launches or moves during the time stop; cash-out amounts and event order; the time stop freezing the cooldown and combo; Quick Growth thresholds and Shrine locks; caps, Jackpots and drop pools at every stage; a replay through four expansions), the stability stress test, and chaos runs where a bot plays whole runs while every tick checks that nothing escapes or beats the speed limit. `npm run test:coverage` also fails below 90% line coverage on `src/physics` and `src/run`.
+- **Unit tests (Vitest):** config tables vs GAME_DESIGN, camera fit and the expansion frames (the jar inside the camera, the floor still on screen), texture sets per stage, RNG determinism, drop weights and Big Catch, economy, upgrade prices/effects/purchase rules, thresholds and locks, save defaults/migrations/corruption, the profile (wallet, records, stats, the write throttle, refused writes), the event bus, number formatting, and the layer import rules. `npm run test:coverage` (part of `npm run check` and CI) fails below 90% line coverage on `src/core`.
+- **Headless physics (Vitest, `tests/physics/`):** circle contacts against matter-js's record contract, the world (walls, stages, fixed stepping, speed limits, growth), merge rules (a pair → the next tier, three touching → one merge, cap → Jackpot), growth without launches, the danger timer, Lucky Save, the RunController (drops, cooldown, payouts, combo, expansion timeline and cash-out, locks, game over, pause), determinism, expansions (a pile through every stage up to 5: nothing escapes, launches or moves during the time stop; cash-out amounts and event order; the time stop freezing the cooldown and combo; Quick Growth thresholds and Shrine locks; caps, Jackpots and drop pools at every stage; a replay through four expansions), the payout pipeline (merges with Lucky Paw, combo and golden, Jackpots, cash-outs and Lucky Save pops banked into the profile and its storage, `payout.test.ts`), the stability stress test, and chaos runs where a bot plays whole runs while every tick checks that nothing escapes or beats the speed limit. `npm run test:coverage` also fails below 90% line coverage on `src/physics` and `src/run`.
 - **Performance:** `npm run test:perf` runs the 150-cat step benchmark alone, without coverage, and fails above 2 ms per step. Inside the full suite the same test only catches gross regressions (20 ms), because coverage instrumentation slows it down several times.
 - **E2E (Playwright, iPhone and Pixel profiles, Chromium + WebKit):**
   - Boot with a clean console.
   - Menu → play → drop cats via hooks → pause/resume → game over → menu.
   - Expansion: the threshold via a hook → banners → stage 2; a locked stage's toast and lock; a resize and a pause in the middle of an expansion; the debug jump past a locked stage.
   - Shop purchase with debug coins.
-  - Coins survive a reload.
+  - Coins survive a reload in the middle of a run (inside the write throttle), backgrounding writes the save, settings/records/stats/hints persist, Game Over badges, a Lucky Save, combo and Jackpot banners (`economy.spec.ts`).
   - Offline reload: load, wait for the service worker, go offline, reload, start a run. This one runs in the Chromium project.
-- **Hooks:** with `?debug=1`, `window.__game` exposes read-only state (`state()`: screen, run state, score, run coins, wallet, stage, ball count, canDrop, danger, locked, expansion `{ from, to, phase }`, ticks; `ballXs()`) and helpers (dropAt, addCoins, setUpgrade, setStage, setScore, spawnTier, forceGameOver). `setStage(n)` calls `RunController.jumpToStage(n)`: it opens every stage up to n for this run, whatever the Shrine Expansion level, raises the score to n's threshold, and each expansion then plays in turn. `setScore` respects the locks, so the locked case can be tested. The debug panel shows FPS, the body count and the running expansion, and puts the helpers on buttons.
+- **Hooks:** with `?debug=1`, `window.__game` exposes read-only state (`state()`: screen, run state, score, run coins, wallet, stage, ball count, canDrop, danger, locked, expansion `{ from, to, phase }`, ticks; `ballXs()`) and helpers (dropAt, addCoins, setUpgrade, setStage, setScore, spawnTier (optionally golden), forceGameOver, forceDangerTimeout, resetSave). `state()` also has the combo and the Lucky Saves left; `wallet` is the profile's. `addCoins` and `setUpgrade` write to the save (debug coins don't count as earned). `forceDangerTimeout` acts as if the danger timer ran out: a Lucky Save when one is left, else game over. `resetSave` wipes the save and reloads. `setStage(n)` calls `RunController.jumpToStage(n)`: it opens every stage up to n for this run, whatever the Shrine Expansion level, raises the score to n's threshold, and each expansion then plays in turn. `setScore` respects the locks, so the locked case can be tested. The debug panel shows FPS, the body count and the running expansion, and puts the helpers on buttons.
 - **Headless browsers:** they render the DPR-3 canvas in software at a few frames per second, so the run advances slowly there (at most 5 fixed steps per frame) and E2E waits are long. Chromium's software GPU (SwiftShader) also drops parts of some cat sprites; a real GPU renders the same scene correctly, so milestone screenshots are taken with Chromium on the GPU (`--use-angle=gl`).
 - **Manual:** test on a real iPhone (home-screen app) and a real Android phone (installed app) after each milestone, using the checklist in ROADMAP.
 

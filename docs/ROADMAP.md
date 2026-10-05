@@ -11,7 +11,7 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
 | M4  | Physics and merge engine (headless) | xhigh              | yes       | done        |
 | M5  | Playable game scene                 | high               | –         | done        |
 | M6  | Expansion system                    | xhigh              | yes       | done        |
-| M7  | Economy and persistence in play     | high               | –         | not started |
+| M7  | Economy and persistence in play     | high               | –         | done        |
 | M8  | Main menu and upgrade shop          | high               | –         | not started |
 | M9  | Audio, haptics and juice            | medium             | –         | not started |
 | M10 | Balance simulation and tuning       | xhigh              | yes       | not started |
@@ -157,13 +157,13 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
 
 **Effort:** high. **Goal:** coins and records work end to end and survive restarts.
 
-- [ ] Coin payout per merge with multipliers, combo and golden; floating "+N"; coin fly to the HUD
-- [ ] Combo counter and banner
-- [ ] Golden cats in the queue, with their visuals
-- [ ] Jackpot celebration and payout; cash-out payouts; Lucky Save flow
-- [ ] Save integration: wallet (throttled writes), records, stats, settings; load on boot
-- [ ] Game Over summary: coins earned this run, new-record badges
-- [ ] Tests: payout pipeline (unit) and coins surviving a mid-run reload (E2E)
+- [x] Coin payout per merge with multipliers, combo and golden; floating "+N"; coin fly to the HUD
+- [x] Combo counter and banner
+- [x] Golden cats in the queue, with their visuals
+- [x] Jackpot celebration and payout; cash-out payouts; Lucky Save flow
+- [x] Save integration: wallet (throttled writes), records, stats, settings; load on boot
+- [x] Game Over summary: coins earned this run, new-record badges
+- [x] Tests: payout pipeline (unit) and coins surviving a mid-run reload (E2E)
 
 **Acceptance:** the numbers match GAME_DESIGN; no coins are lost on quit, reload or backgrounding.
 **Owner check:** earn coins, close the app mid-run, reopen it, and check that the wallet kept them.

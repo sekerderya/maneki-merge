@@ -2,6 +2,43 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.7.0] - 2026-10-06
+
+### Added
+
+- M7: coins and records now work end to end and survive restarts.
+- `core/profile.ts`: the save in play. Wallet, upgrades, records, stats, settings and first-run hint flags, written to `localStorage` with a throttle (the first change after a quiet second at once, then at most once per second) and flushed on backgrounding, page hide, game over and leaving a run. A refused write is retried.
+- `run/profileRun.ts`: every run starts with the saved upgrades and banks each payout into the wallet before its event fires; best score, best stage, highest tier, merges, Jackpots, coins earned and runs played update while the run plays.
+- Boot loads the save (repairing or backing up a damaged one) and asks the browser to keep storage persistent. The menu shows the saved coins and best score/stage; sound and haptics settings persist; the first-run hints only show until they have been seen once.
+- Payout feedback: a gold "+coins" for every merge, Jackpot and popping cat, and a coin that flies from there to the HUD counter, which bumps as it lands (a shower of 8 for a Jackpot).
+- "Combo ×N" from the second merge in a row, with the Combo Charm bonus as a chip ("+16%"); it pops at each step and fades when the combo window passes.
+- Jackpot celebration: a gold "Jackpot!" banner with the payout, a bigger "+coins" and a spark burst. Golden merges burst gold sparks.
+- Golden cats twinkle with an upright star glint (also in the dropper); golden icons in the HUD preview shimmer.
+- Lucky Save: a "Lucky Save!" banner ("1 left" while saves remain); its pops pay out and fly coins like cash-out pops.
+- Game Over: coins earned this run, the biggest cat made, and a badge for each record broken (best score, best stage, biggest cat ever).
+- Debug: spawn golden cats, "Danger timeout" (`forceDangerTimeout`: a Lucky Save if one is left, else game over), "Reset save"; `state()` shows the combo and Lucky Saves left; debug coins and upgrade levels go into the save.
+- Tests: the profile and its write throttle (unit), the payout pipeline from physics merges to storage with Lucky Paw, combo, golden, Jackpot, cash-out and Lucky Save (headless), and E2E for coins surviving a reload in the middle of a run, saving on backgrounding, persisted settings/records/stats/hints, Game Over badges, Lucky Save, combo and Jackpot banners.
+
+### Changed
+
+- Merges show the coins they pay instead of their score (GAME_DESIGN §12); the score is in the HUD.
+- GAME_DESIGN §2.3 and §12 and TECH_SPEC §3, §7, §8 and §11 describe the payout feedback, the profile and the new hooks.
+
+### Decisions (where the docs were open)
+
+- Records update during the run, not only at its end, so a crash or a closed app keeps a new best score; the Game Over badges compare against the records from the run's start.
+- "Runs played" counts when a run starts, because a run closed with the app never reaches an end.
+- Debug coins go into the wallet but don't count as coins earned.
+- The HUD coin counter shows the true run total at once; the flying coins are decoration and are skipped when 24 are already in the air.
+- "Combo ×N" sits 30% of the jar's height below the rim, text only, so it doesn't hide the pile or collide with the expansion banners.
+- The Game Over overlay gained a "Biggest cat" row so the highest-tier record has something to point at.
+
+### Known issues
+
+- Two windows of the app open at the same time each keep their own copy of the save; the last one to write wins. Rare for a home-screen app; to be looked at in M11.
+- A hard kill without a page-hide event can lose at most the last second of changes (the write throttle from TECH_SPEC §8).
+- UPGRADES is still "Soon": the shop and the affordability dot arrive in M8. No sound or haptics yet (M9).
+
 ## [0.6.0] - 2026-10-05
 
 ### Added

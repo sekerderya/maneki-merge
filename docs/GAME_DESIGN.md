@@ -39,7 +39,7 @@ There are exactly two screens. Everything else is a panel or overlay on top of t
 - HUD at the top: pause button, score, coins earned this run, a preview of the next cat (or two with Fortune Teller), and a stage label with a progress bar to the next expansion (a lock icon if the next stage isn't unlocked).
 - Overlays:
   - **Pause**: Resume, Sound, Haptics, Quit to Menu.
-  - **Game Over**: score, best score, stage reached, coins earned this run, new-record badges, Play Again, Menu.
+  - **Game Over**: score, best score, stage reached, the biggest cat made this run, coins earned this run, new-record badges (best score, best stage, biggest cat ever), Play Again, Menu.
 - Short banners: Combo, Jackpot, The shrine grows!, New cats unlocked, Lucky Save!, Expansion locked.
 - First-run hints: "Drag to aim, release to drop" and "Merge two identical cats".
 
@@ -181,7 +181,8 @@ If a save can't be read, or some of its fields are invalid, a copy is kept (TECH
 
 ## 12. Feedback and juice
 
-- Merge: a pop scale, a particle burst in the tier's colour, a floating "+coins", and a coin icon that flies to the HUD counter.
+- Merge: a pop scale, a particle burst in the tier's colour, a floating "+coins", and a coin icon that flies to the HUD counter. A Jackpot shows a bigger "+coins", a gold spark burst and a shower of coins; golden merges burst gold sparks.
+- Combo: "Combo ×N" over the jar, with the Combo Charm bonus ("+16%") when it has one.
 - Sound effects are procedural Web Audio, no files:
   - drop plop; merge pop (lower pitch for bigger tiers); coin ching
   - rising combo notes; Jackpot fanfare; expansion whoosh + chime
