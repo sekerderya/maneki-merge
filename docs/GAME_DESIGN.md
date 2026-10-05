@@ -114,8 +114,8 @@ Thresholds are cumulative run score multiplied by the Quick Growth factor (§10)
 1. The expansion starts as soon as the score reaches the next threshold and that stage is unlocked. If several thresholds are passed at once, the jar expands one stage at a time.
 2. Input is disabled, the dropper hides, physics pauses (a "time stop"), and the danger timers reset. The time stop also freezes the drop cooldown and the combo window.
 3. A "The shrine grows!" banner shows, with a whoosh and a burst of gold particles.
-4. The camera zooms out and pans (ease in-out, about 1.2 s) while the walls slide outward and the rim rises. The floor stays put.
-5. **Cash-out** (when the zoom ends). Every cat below the new stage's smallest drop tier pops into coins: C(t) each, with multipliers. These tiny cats would be unreadable at the new zoom.
+4. The camera zooms out and pans (ease in-out, about 1.2 s) while the walls slide outward and the rim rises. The camera leads a little, so the jar visibly widens into the new frame; both arrive together. The floor stays put.
+5. **Cash-out** (when the zoom ends). Every cat below the new stage's smallest drop tier pops into coins: C(t) each, with multipliers. These tiny cats would be unreadable at the new zoom. They pop one after another, oldest first, within a quarter of a second.
 6. A "New cats unlocked!" banner shows the new tiers: the ones the new tier cap allows (8 and 9 at stage 2).
 7. Physics resumes with gravity scaled to the stage (TECH_SPEC §5), the dropper returns at the new rim, and input is enabled again.
 

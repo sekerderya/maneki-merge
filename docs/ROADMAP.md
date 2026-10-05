@@ -10,7 +10,7 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
 | M3  | Core rules, config and save system  | high               | –         | done        |
 | M4  | Physics and merge engine (headless) | xhigh              | yes       | done        |
 | M5  | Playable game scene                 | high               | –         | done        |
-| M6  | Expansion system                    | xhigh              | yes       | not started |
+| M6  | Expansion system                    | xhigh              | yes       | done        |
 | M7  | Economy and persistence in play     | high               | –         | not started |
 | M8  | Main menu and upgrade shop          | high               | –         | not started |
 | M9  | Audio, haptics and juice            | medium             | –         | not started |
@@ -137,18 +137,18 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
 
 **Effort:** xhigh. **Plan mode:** yes. **Goal:** the signature zoom-out.
 
-- [ ] Threshold detection with the Quick Growth factor and `maxStage`, one stage at a time
-- [ ] Expansion sequence (GAME_DESIGN §7.1):
+- [x] Threshold detection with the Quick Growth factor and `maxStage`, one stage at a time
+- [x] Expansion sequence (GAME_DESIGN §7.1):
   - time stop and banners
   - camera zoom and pan in sync with the wall slide and rim rise
   - cash-out pops
   - gravity scaling and dropper repositioning
-- [ ] Tier caps, Jackpots, per-stage drop pools
-- [ ] Locked stage: a one-time toast + HUD lock
-- [ ] HUD progress bar and stage label for each stage
-- [ ] Sharp visuals at stage 5 (texture sizes and line widths scale with zoom)
-- [ ] Debug: jump to stage N, set score
-- [ ] Tests: headless expansion (walls move, nothing escapes, no launches, correct cash-out amounts); E2E: threshold via hook → stage 2
+- [x] Tier caps, Jackpots, per-stage drop pools
+- [x] Locked stage: a one-time toast + HUD lock
+- [x] HUD progress bar and stage label for each stage
+- [x] Sharp visuals at stage 5 (texture sizes and line widths scale with zoom)
+- [x] Debug: jump to stage N, set score
+- [x] Tests: headless expansion (walls move, nothing escapes, no launches, correct cash-out amounts); E2E: threshold via hook → stage 2
 
 **Acceptance:** smooth expansions up to stage 5 at 60 fps; resize or rotation during an expansion is safe; the locked case works.
 **Owner check:** reach stage 2 in normal play, then jump through all stages with `?debug=1`.

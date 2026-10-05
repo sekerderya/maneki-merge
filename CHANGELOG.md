@@ -2,6 +2,43 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.6.0] - 2026-10-05
+
+### Added
+
+- M6: the expansion, the game's signature moment. Passing a threshold stops time, the camera pulls back, the walls slide out and the rim rises, the smallest cats pop into coins, and play resumes at the new stage with bigger cats unlocked. Works through every stage up to 5.
+- `game/expansionView.ts`: camera, walls and rim come from the run's tick timeline plus the fraction of a tick the frame is into (`RunController.renderAlpha`), so the zoom stays smooth at 60/90/120 Hz and never drifts from the physics. The camera leads and the walls trail it (`EXPANSION_WALL_LAG`), so the jar visibly widens into the new frame; the floor stays still on screen.
+- One cat texture set per stage, drawn at that stage's zoom during the expansion and switched in at the reveal: stage 5 stays as sharp as stage 1. Only stage 1, the previous and the current sets are kept.
+- Cash-out pops: each popped cat grows and fades in place, one after another, with a gold "+coins" (`PopFx`).
+- Gold sparks along the rim when the shrine grows (`SparkFx`).
+- Banners: "The shrine grows!" and "New cats unlocked!" with the new tiers' icons, placed in the empty top of the grown jar; they pause with the run. A locked stage shows "Expansion locked — upgrade the Shrine in the shop" once per run, and the HUD lock pulses.
+- HUD: the stage label glows at each new stage, the bar resets without sliding back, and stays full and gold at stage 5.
+- Run events: `expansionRevealed { stage, newTiers }` when the zoom ends; `catPopped` carries the cat's id.
+- Debug: "Jump to stage" (`setStage`) now plays every expansion in turn and opens locked stages for that run (`RunController.jumpToStage`); "Set score" keeps the locks. `state()` shows the running expansion and the lock.
+- Tests: a pile carried through every expansion to stage 5 (nothing escapes, launches or moves during the time stop), cash-out amounts and event order, the time stop freezing cooldown and combo, Quick Growth thresholds, Shrine locks, caps, Jackpots and drop pools at every stage, a replay through four expansions; unit tests for the expansion frames and texture sets; E2E for the first expansion, the locked toast, a resize and a pause mid-expansion, and the debug jump.
+
+### Changed
+
+- The pop ring texture is 512 px, and up to 48 merge effects play at once (a cash-out can pop dozens of cats).
+- TECH_SPEC §4, §6, §7 and §11 describe the final expansion visuals, textures per stage, banners and hooks.
+
+### Decisions (where the docs were open)
+
+- No Phaser camera effects or tweens for the expansion: they run on the wall clock and would drift from the tick timeline and ignore pauses.
+- The walls trail the camera by a quarter of the zoom, so the widening is visible; `EXPANSION_WALL_LAG = 0` would lock the jar to the frame. To be judged on the phones.
+- Cash-out pops go off 30 ms apart, at most 240 ms in all, so they end within the reveal.
+- Banners centre 15% of the jar's height below the rim; on tall phones a fixed position covered the dropper. The locked toast sits at the top of the play area, under the HUD lock it explains.
+- "New cats unlocked!" stays 2 s, a little into play, because the reveal (0.4 s) is too short to read it.
+
+### Measured
+
+- Four expansions in a row (stage 1 → 5) in Chromium on the GPU at 390×844, DPR 3: median frame 16.7 ms, 99th percentile 16.8 ms; one 33 ms frame in the first of three runs, none in the others.
+
+### Known issues
+
+- The expansion has no sound or haptics yet (M9).
+- Cats over the danger line when an expansion starts are usually below the new, higher rim afterwards, so an expansion can rescue a full jar. That follows GAME_DESIGN §7.1; M10 looks at the balance.
+
 ## [0.5.0] - 2026-10-05
 
 ### Added
