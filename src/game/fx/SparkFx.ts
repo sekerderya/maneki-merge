@@ -1,16 +1,19 @@
 /**
- * A burst of gold sparks along the rim when the shrine grows (GAME_DESIGN §7.1). One pooled
- * Phaser particle emitter in stage-1 units; the emitter's scale is set to the stage's, so sparks
- * look the same at every zoom. M9 adds the sound and the rest of the polish.
+ * Gold sparks: along the rim when the shrine grows (GAME_DESIGN §7.1), and bursts for golden
+ * merges and Jackpots. Two pooled Phaser particle emitters in stage-1 units; each emitter's scale
+ * is set to the stage's, so sparks look the same at every zoom. M9 adds the rest of the polish.
  */
 import type Phaser from 'phaser';
-import { EXPANSION_SPARKS } from '../../config/view';
+import { BURST_SPARKS, EXPANSION_SPARKS } from '../../config/view';
 
 const SPARK_KEY = 'fx-spark';
 const SPARK_PX = 64;
 
+const SPARK_TINTS = [0xfff4c2, 0xf6c343, 0xffd36b, 0xffffff];
+
 export class SparkFx {
   private readonly emitter: Phaser.GameObjects.Particles.ParticleEmitter;
+  private readonly bursts: Phaser.GameObjects.Particles.ParticleEmitter;
 
   constructor(scene: Phaser.Scene, layer: Phaser.GameObjects.Layer) {
     createSparkTexture(scene.textures);
@@ -23,10 +26,27 @@ export class SparkFx {
       gravityY: EXPANSION_SPARKS.gravity,
       scale: { start: EXPANSION_SPARKS.scale, end: 0 },
       alpha: { start: 1, end: 0.2 },
-      tint: [0xfff4c2, 0xf6c343, 0xffd36b, 0xffffff],
+      tint: SPARK_TINTS,
       blendMode: 'ADD',
     });
-    layer.add(this.emitter);
+    this.bursts = scene.add.particles(0, 0, SPARK_KEY, {
+      emitting: false,
+      lifespan: { ...BURST_SPARKS.lifespanMs },
+      speed: { ...BURST_SPARKS.speed },
+      angle: { min: 0, max: 360 },
+      gravityY: BURST_SPARKS.gravity,
+      scale: { start: BURST_SPARKS.scale, end: 0 },
+      alpha: { start: 1, end: 0.2 },
+      tint: SPARK_TINTS,
+      blendMode: 'ADD',
+    });
+    layer.add([this.emitter, this.bursts]);
+  }
+
+  /** A round burst of `count` sparks at a world point of a stage with `scale`. */
+  burst(x: number, y: number, count: number, scale: number): void {
+    this.bursts.setScale(scale);
+    this.bursts.emitParticleAt(x / scale, y / scale, count);
   }
 
   /** Sparks along a rim `width` wide at height `rimY` (world units) of a stage with `scale`. */
@@ -43,15 +63,19 @@ export class SparkFx {
 
   pause(): void {
     this.emitter.pause();
+    this.bursts.pause();
   }
 
   resume(): void {
     this.emitter.resume();
+    this.bursts.resume();
   }
 
   clear(): void {
-    this.emitter.killAll();
-    this.emitter.resume();
+    for (const emitter of [this.emitter, this.bursts]) {
+      emitter.killAll();
+      emitter.resume();
+    }
   }
 }
 

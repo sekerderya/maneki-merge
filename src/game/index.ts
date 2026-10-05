@@ -19,6 +19,11 @@ export interface GameView {
   refit(): void;
   /** The jar's rim and floor in CSS pixels from the top of the play area, or null. */
   jarBox(): { top: number; bottom: number } | null;
+  /**
+   * Called whenever a payout shows up on screen (merge, Jackpot, popping cat), with its point in
+   * CSS pixels from the play area's top-left corner; `big` for a Jackpot.
+   */
+  onCoins(listener: (x: number, y: number, big: boolean) => void): void;
   /** Frames per second actually rendered, for the debug panel. */
   readonly fps: number;
 }
@@ -31,6 +36,9 @@ export function createGame(parent: HTMLElement): GameView {
   let awake = false;
   /** Set after the first frame: before it, Phaser hasn't started its loop yet. */
   let looping = false;
+  let coinsListener: ((x: number, y: number, big: boolean) => void) | null = null;
+  const forwardCoins = (x: number, y: number, big: boolean): void =>
+    coinsListener?.(x / resolution, y / resolution, big);
 
   const game = new Phaser.Game({
     type: Phaser.AUTO,
@@ -46,6 +54,7 @@ export function createGame(parent: HTMLElement): GameView {
     callbacks: {
       postBoot: (booted) => {
         scene = booted.scene.getScene(GAME_SCENE_KEY) as GameScene;
+        scene.setCoinsListener(forwardCoins);
         // The loop starts right after postBoot; put it to sleep until a run is shown.
         booted.events.once(Phaser.Core.Events.POST_RENDER, () => {
           looping = true;
@@ -99,6 +108,9 @@ export function createGame(parent: HTMLElement): GameView {
       if (looping && game.loop.running) game.loop.sleep();
     },
     refit,
+    onCoins(listener) {
+      coinsListener = listener;
+    },
     jarBox() {
       const box = scene?.jarBox();
       return box ? { top: box.top / resolution, bottom: box.bottom / resolution } : null;

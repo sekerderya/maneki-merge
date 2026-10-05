@@ -96,3 +96,37 @@ export const BANNER_MS = 1300;
 export const BANNER_JAR_OFFSET = 0.15;
 export const BANNER_NEW_CATS_MS = 2000;
 export const TOAST_MS = 3200;
+
+/** "Combo ×N" (GAME_DESIGN §5) centres this far below the rim, as a fraction of the jar's height. */
+export const COMBO_JAR_OFFSET = 0.3;
+
+/**
+ * Coins fly from a payout to the HUD counter (GAME_DESIGN §12, TECH_SPEC §7): one coin per merge
+ * or pop, a shower for a Jackpot. At most COIN_FLY_POOL coins are in the air; the coins are
+ * already in the wallet, so a flight that doesn't fit is simply skipped.
+ */
+export const COIN_FLY_MS = 620;
+export const COIN_FLY_STAGGER_MS = 50;
+export const COIN_FLY_POOL = 24;
+export const JACKPOT_COIN_FLIGHTS = 8;
+/** A Jackpot's coins burst out to a ring this many CSS pixels wide before they fly. */
+export const COIN_SHOWER_SPREAD = 34;
+/** How high the flight arcs above the straight line, as a fraction of its length. */
+export const COIN_FLY_ARC = 0.22;
+
+/** A Jackpot's floating "+coins" is this much bigger than a merge's. */
+export const JACKPOT_TEXT_SCALE = 1.7;
+/** Spark bursts (stage-1 units, scaled by the stage): golden merges and Jackpots. */
+export const BURST_SPARKS = {
+  golden: 12,
+  jackpot: 40,
+  lifespanMs: { min: 450, max: 900 },
+  speed: { min: 180, max: 520 },
+  gravity: 600,
+  scale: 0.45,
+} as const;
+
+/** Golden cats twinkle: a star glint on the upper right, pulsing with this period. */
+export const GLINT_PERIOD_MS = 1400;
+/** The glint's size at its brightest, as a fraction of the cat's radius. */
+export const GLINT_SIZE_RATIO = 0.75;

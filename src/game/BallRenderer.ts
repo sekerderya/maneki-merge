@@ -1,6 +1,7 @@
 /**
- * Draws the cats of a run: one pooled body image (rotating) and one number image (upright) per
- * cat, matched by cat id each frame. No allocations per frame once the pool has warmed up.
+ * Draws the cats of a run: one pooled body image (rotating), one number image (upright) and, for
+ * golden cats, a twinkling glint per cat, matched by cat id each frame. No allocations per frame
+ * once the pool has warmed up.
  *
  * When the skin switches to another stage's textures, every live sprite takes its new texture on
  * the next sync. A popped cat's sprite can be handed to an effect (`detach`) and comes back to the
@@ -9,6 +10,7 @@
 import type Phaser from 'phaser';
 import { tierRadius } from '../config/tiers';
 import type { BallView } from '../physics/balls';
+import { createGlintTexture, GLINT_KEY, glintPhase, placeGlint } from './fx/glint';
 import type { BallSkin } from './skins/BallSkin';
 
 /** A texture every Phaser game has; parked sprites point at it, never at a freed texture. */
@@ -21,6 +23,7 @@ export interface CatSprite {
   seen: number;
   readonly body: Phaser.GameObjects.Image;
   readonly number: Phaser.GameObjects.Image;
+  readonly glint: Phaser.GameObjects.Image;
 }
 
 export class BallRenderer {
@@ -36,13 +39,15 @@ export class BallRenderer {
     private readonly numbers: Phaser.GameObjects.Layer,
   ) {
     this.revision = skin.revision;
+    createGlintTexture(scene.textures);
   }
 
   get count(): number {
     return this.live.size;
   }
 
-  sync(balls: readonly BallView[]): void {
+  /** Matches sprites to cats; `nowMs` drives the golden glints. */
+  sync(balls: readonly BallView[], nowMs: number): void {
     if (this.skin.revision !== this.revision) this.retexture();
     const frame = ++this.frame;
     for (const ball of balls) {
@@ -56,6 +61,9 @@ export class BallRenderer {
         .setScale(body.unitsPerPixel * grow);
       const number = this.skin.number(ball.tier);
       if (number) sprite.number.setPosition(ball.x, ball.y).setScale(number.unitsPerPixel * grow);
+      if (ball.golden) {
+        placeGlint(sprite.glint, ball.x, ball.y, ball.radius, nowMs, glintPhase(ball.id));
+      }
     }
     for (const [id, sprite] of this.live) {
       if (sprite.seen !== frame) this.release(id, sprite);
@@ -67,6 +75,7 @@ export class BallRenderer {
     const sprite = this.live.get(id);
     if (!sprite) return null;
     this.live.delete(id);
+    sprite.glint.setVisible(false);
     return sprite;
   }
 
@@ -74,6 +83,7 @@ export class BallRenderer {
   recycle(sprite: CatSprite): void {
     sprite.body.setVisible(false).setAlpha(1).setTexture(PARKED_TEXTURE);
     sprite.number.setVisible(false).setAlpha(1).setTexture(PARKED_TEXTURE);
+    sprite.glint.setVisible(false);
     this.free.push(sprite);
   }
 
@@ -88,9 +98,11 @@ export class BallRenderer {
     sprite.golden = ball.golden;
     this.applyTextures(sprite);
     sprite.body.setVisible(true);
+    sprite.glint.setVisible(false);
     // Newer cats draw on top of older ones.
     this.bodies.bringToTop(sprite.body);
     this.numbers.bringToTop(sprite.number);
+    this.numbers.bringToTop(sprite.glint);
     this.live.set(ball.id, sprite);
     return sprite;
   }
@@ -116,8 +128,9 @@ export class BallRenderer {
   private createSprite(): CatSprite {
     const body = this.scene.add.image(0, 0, PARKED_TEXTURE).setVisible(false);
     const number = this.scene.add.image(0, 0, PARKED_TEXTURE).setVisible(false);
+    const glint = this.scene.add.image(0, 0, GLINT_KEY).setVisible(false);
     this.bodies.add(body);
-    this.numbers.add(number);
-    return { id: -1, tier: 1, golden: false, seen: 0, body, number };
+    this.numbers.add([number, glint]);
+    return { id: -1, tier: 1, golden: false, seen: 0, body, number, glint };
   }
 }

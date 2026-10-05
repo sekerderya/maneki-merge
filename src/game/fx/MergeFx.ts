@@ -1,7 +1,8 @@
 /**
- * Basic merge feedback (ROADMAP M5): a ring that pops out in the tier's colour and a floating
- * "+score" (gold "+coins" for a cat popping into coins). Both are pooled and animated by hand in
- * `update`, so a burst of merges allocates nothing. Coin flights and shakes arrive with M7 and M9.
+ * Payout feedback (GAME_DESIGN §12): a ring that pops out in the tier's colour and a floating gold
+ * "+coins" for every merge, Jackpot and popping cat. Both are pooled and animated by hand in
+ * `update`, so a burst of merges allocates nothing. Each payout is also reported to `onCoins`
+ * (world position), where the coin flight to the HUD starts. Shakes arrive with M9.
  */
 import type Phaser from 'phaser';
 import { tierRadius } from '../../config/tiers';
@@ -10,6 +11,7 @@ import {
   FLOAT_TEXT_RISE,
   FLOAT_TEXT_SIZE,
   FX_POOL_SIZE,
+  JACKPOT_TEXT_SCALE,
   MERGE_POP_MS,
   MERGE_POP_SCALE,
 } from '../../config/view';
@@ -19,8 +21,10 @@ import { tierColor } from '../skins/PlaceholderSkin';
 const RING_KEY = 'fx-ring';
 /** Big enough that the ring of a tier-15 Jackpot is not upscaled on a phone. */
 const RING_PX = 512;
-const SCORE_COLOR = '#ffe8a8';
 const COINS_COLOR = '#ffc83d';
+
+/** A payout appeared at a world point; `big` for a Jackpot. */
+export type CoinsListener = (x: number, y: number, big: boolean) => void;
 
 interface Pop {
   startMs: number;
@@ -42,7 +46,11 @@ export class MergeFx {
   private nextText = 0;
   private resolution = 1;
 
-  constructor(scene: Phaser.Scene, layer: Phaser.GameObjects.Layer) {
+  constructor(
+    scene: Phaser.Scene,
+    layer: Phaser.GameObjects.Layer,
+    private readonly onCoins: CoinsListener,
+  ) {
     createRingTexture(scene.textures);
     for (let i = 0; i < FX_POOL_SIZE; i++) {
       const ring = scene.add.image(0, 0, RING_KEY).setVisible(false);
@@ -53,7 +61,7 @@ export class MergeFx {
           fontFamily: 'Fredoka, system-ui, sans-serif',
           fontStyle: '700',
           fontSize: `${FLOAT_TEXT_SIZE}px`,
-          color: SCORE_COLOR,
+          color: COINS_COLOR,
           stroke: '#3b1a10',
           strokeThickness: FLOAT_TEXT_SIZE * 0.18,
         })
@@ -69,14 +77,19 @@ export class MergeFx {
     this.resolution = Math.max(0.25, pixelsPerUnit);
   }
 
-  /** A merge into `newTier` (or a Jackpot of `tier`) at a world point; `scale` is the stage's. */
-  merge(nowMs: number, x: number, y: number, tier: number, score: number, scale: number): void {
-    this.burst(nowMs, x, y, tier, `+${score}`, SCORE_COLOR, scale);
+  /** A merge into `newTier` paying `coins` at a world point; `scale` is the stage's. */
+  merge(nowMs: number, x: number, y: number, tier: number, coins: number, scale: number): void {
+    this.burst(nowMs, x, y, tier, coins, scale, false);
+  }
+
+  /** A Jackpot of two `tier` cats: a bigger "+coins" and a coin shower. */
+  jackpot(nowMs: number, x: number, y: number, tier: number, coins: number, scale: number): void {
+    this.burst(nowMs, x, y, tier, coins, scale, true);
   }
 
   /** A cat of `tier` popping into `coins` (cash-out, Lucky Save). */
   coins(nowMs: number, x: number, y: number, tier: number, coins: number, scale: number): void {
-    this.burst(nowMs, x, y, tier, `+${coins}`, COINS_COLOR, scale);
+    this.burst(nowMs, x, y, tier, coins, scale, false);
   }
 
   private burst(
@@ -84,9 +97,9 @@ export class MergeFx {
     x: number,
     y: number,
     tier: number,
-    label: string,
-    color: string,
+    coins: number,
     scale: number,
+    big: boolean,
   ): void {
     const pop = this.pops[this.nextPop] as Pop;
     this.nextPop = (this.nextPop + 1) % this.pops.length;
@@ -103,10 +116,11 @@ export class MergeFx {
     item.y = y;
     item.rise = FLOAT_TEXT_RISE * scale;
     const text = item.text;
-    const resolution = this.resolution * scale;
+    const size = big ? scale * JACKPOT_TEXT_SCALE : scale;
+    const resolution = this.resolution * size;
     if (text.style.resolution !== resolution) text.setResolution(resolution);
-    if (text.style.color !== color) text.setColor(color);
-    text.setText(label).setScale(scale).setPosition(x, y).setAlpha(1).setVisible(true);
+    text.setText(`+${coins}`).setScale(size).setPosition(x, y).setAlpha(1).setVisible(true);
+    this.onCoins(x, y, big);
   }
 
   update(nowMs: number): void {
