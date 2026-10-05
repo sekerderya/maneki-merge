@@ -1,0 +1,236 @@
+/* Shop panel over the main menu (GAME_DESIGN §2.2): a sheet that slides up. */
+.shop-overlay {
+  justify-content: flex-end;
+  padding: calc(var(--safe-top) + 20px) 0 0;
+  background: rgba(40, 8, 8, 0.6);
+}
+
+.shop-sheet {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 520px;
+  max-height: 100%;
+  min-height: 0;
+  border-radius: 24px 24px 0 0;
+  background: linear-gradient(180deg, var(--color-red-600), var(--color-red-700) 40%);
+  border: 3px solid var(--color-gold-700);
+  border-bottom: 0;
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.35);
+  text-align: left;
+  animation: shop-slide-up 280ms cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+@keyframes shop-slide-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+.shop-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px calc(var(--safe-right) + 12px) 10px calc(var(--safe-left) + 18px);
+  border-bottom: 2px solid rgba(0, 0, 0, 0.18);
+}
+
+.shop-title {
+  flex: 1;
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: var(--weight-bold);
+  color: var(--color-gold-100);
+  text-shadow: 0 2px 0 var(--color-red-900);
+}
+
+.shop-balance {
+  font-size: 1.1rem;
+}
+
+.shop-balance svg {
+  width: 26px;
+  height: 26px;
+}
+
+.shop-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 12px calc(var(--safe-right) + 14px) calc(var(--safe-bottom) + 16px)
+    calc(var(--safe-left) + 14px);
+}
+
+/* One card per upgrade. */
+.shop-card {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 12px;
+  flex: none;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: rgba(0, 0, 0, 0.22);
+  border: 2px solid rgba(255, 232, 168, 0.14);
+}
+
+.shop-card[data-state='affordable'] {
+  border-color: rgba(246, 195, 67, 0.6);
+}
+
+.shop-card.is-bought {
+  animation: shop-card-bought 450ms ease-out;
+}
+
+@keyframes shop-card-bought {
+  30% {
+    transform: scale(1.03);
+    border-color: var(--color-gold-300);
+    box-shadow: 0 0 22px rgba(246, 195, 67, 0.55);
+  }
+}
+
+.shop-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, var(--color-gold-300), var(--color-gold-500));
+  border: 2px solid var(--color-gold-700);
+  color: var(--color-red-700);
+}
+
+.shop-icon svg {
+  width: 26px;
+  height: 26px;
+}
+
+.shop-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.shop-name {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: var(--weight-bold);
+  line-height: 1.2;
+}
+
+.shop-level {
+  flex: none;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.shop-pips {
+  display: flex;
+  gap: 4px;
+  margin: 6px 0 6px;
+}
+
+.shop-pip {
+  flex: 0 1 28px;
+  height: 7px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 248, 236, 0.18);
+}
+
+.shop-pips.is-dense .shop-pip {
+  flex-basis: 20px;
+}
+
+.shop-pip.is-on {
+  background: var(--color-gold-300);
+}
+
+.shop-desc {
+  margin: 0 0 8px;
+  color: var(--color-muted);
+  font-size: 0.88rem;
+  line-height: 1.25;
+}
+
+.shop-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.shop-value {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 6px;
+  min-width: 0;
+  margin: 0;
+  font-size: 0.92rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.shop-stat {
+  width: 100%;
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.shop-current,
+.shop-next {
+  font-weight: var(--weight-bold);
+}
+
+.shop-arrow {
+  color: var(--color-muted);
+}
+
+.shop-next {
+  color: var(--color-gold-300);
+}
+
+/* Price button: affordable, not enough coins (disabled) or MAX. */
+.shop-buy {
+  flex: none;
+  min-width: 100px;
+  padding: 0 14px;
+  gap: 6px;
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+  background: linear-gradient(180deg, var(--color-gold-300), var(--color-gold-500));
+  color: var(--color-ink);
+  border: 3px solid var(--color-gold-700);
+}
+
+.shop-buy svg {
+  width: 20px;
+  height: 20px;
+}
+
+.shop-buy[data-state='insufficient'] {
+  filter: none;
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--color-muted);
+  border-color: rgba(255, 248, 236, 0.15);
+  box-shadow: none;
+}
+
+.shop-buy[data-state='insufficient'] svg {
+  opacity: 0.6;
+}
+
+.shop-buy[data-state='max'] {
+  filter: none;
+  background: transparent;
+  color: var(--color-gold-300);
+  border: 2px solid var(--color-gold-300);
+  box-shadow: none;
+  letter-spacing: 0.1em;
+}

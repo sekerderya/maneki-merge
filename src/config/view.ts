@@ -130,3 +130,6 @@ export const BURST_SPARKS = {
 export const GLINT_PERIOD_MS = 1400;
 /** The glint's size at its brightest, as a fraction of the cat's radius. */
 export const GLINT_SIZE_RATIO = 0.75;
+
+/** The shop balance counts down to the new wallet after a purchase (GAME_DESIGN §2.2). */
+export const SHOP_BALANCE_COUNT_MS = 450;

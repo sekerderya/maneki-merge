@@ -193,6 +193,14 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
   level.type = 'number';
   level.min = '0';
   level.value = '1';
+  // The level field follows the chosen upgrade's range (0…max).
+  const syncLevelRange = (): void => {
+    const max = UPGRADES[upgrade.value as UpgradeId].maxLevel;
+    level.max = String(max);
+    if (Number(level.value) > max) level.value = String(max);
+  };
+  upgrade.addEventListener('change', syncLevelRange);
+  syncLevelRange();
 
   body.append(
     stats,

@@ -21,11 +21,11 @@ export interface MenuView {
   setSoundOn(on: boolean): void;
   setUpdateReady(ready: boolean): void;
   setInstallHint(hint: InstallHint): void;
-  /** Until the shop exists (M8) the button is disabled and marked "Soon". */
-  setUpgradesAvailable(available: boolean): void;
+  /** The dot on UPGRADES: at least one upgrade is affordable. */
+  setUpgradesAffordable(affordable: boolean): void;
 }
 
-/** Main menu (GAME_DESIGN §2.1). The shop behind UPGRADES arrives in M8. */
+/** Main menu (GAME_DESIGN §2.1). UPGRADES opens the shop panel. */
 export function createMenuScreen(root: HTMLElement, actions: MenuActions): MenuView {
   root.replaceChildren();
   root.classList.add('menu-screen');
@@ -46,8 +46,19 @@ export function createMenuScreen(root: HTMLElement, actions: MenuActions): MenuV
   // Center: title, records, PLAY, UPGRADES.
   const center = el('div', 'menu-center');
   const title = el('h1', 'menu-title', APP_NAME);
-  const records = el('p', 'menu-records');
+  // Best score and best stage, each as a labelled chip.
+  const records = el('div', 'menu-records');
   records.dataset['testid'] = 'records';
+  const record = (label: string, testid: string): HTMLElement => {
+    const chip = el('p', 'record');
+    const value = el('span', 'record-value', '0');
+    value.dataset['testid'] = testid;
+    chip.append(el('span', 'record-label', label), value);
+    records.append(chip);
+    return value;
+  };
+  const bestScoreValue = record('Best score', 'best-score');
+  const bestStageValue = record('Best stage', 'best-stage');
 
   const play = button('btn btn-primary btn-play', 'PLAY');
   play.dataset['testid'] = 'play';
@@ -57,9 +68,9 @@ export function createMenuScreen(root: HTMLElement, actions: MenuActions): MenuV
   upgrades.dataset['testid'] = 'upgrades';
   upgrades.addEventListener('click', actions.onUpgrades);
   const upgradesDot = el('span', 'notify-dot');
+  upgradesDot.dataset['testid'] = 'upgrades-dot';
   upgradesDot.hidden = true;
-  const upgradesSoon = el('span', 'soon-chip', 'Soon');
-  upgrades.append(upgradesDot, upgradesSoon);
+  upgrades.append(upgradesDot);
 
   center.append(title, records, play, upgrades);
 
@@ -94,7 +105,8 @@ export function createMenuScreen(root: HTMLElement, actions: MenuActions): MenuV
       coinValue.textContent = formatNumber(value);
     },
     setRecords(bestScore, bestStage) {
-      records.textContent = `Best ${formatNumber(bestScore)} · Stage ${bestStage}`;
+      bestScoreValue.textContent = formatNumber(bestScore);
+      bestStageValue.textContent = String(bestStage);
     },
     setSoundOn(on) {
       sound.innerHTML = on ? ICON_SOUND_ON : ICON_SOUND_OFF;
@@ -108,9 +120,9 @@ export function createMenuScreen(root: HTMLElement, actions: MenuActions): MenuV
       iosHint.hidden = hint !== 'ios-share';
       install.hidden = hint !== 'install-button';
     },
-    setUpgradesAvailable(available) {
-      upgrades.disabled = !available;
-      upgradesSoon.hidden = available;
+    setUpgradesAffordable(affordable) {
+      upgradesDot.hidden = !affordable;
+      upgrades.setAttribute('aria-label', affordable ? 'Upgrades, one is affordable' : 'Upgrades');
     },
   };
   view.setCoins(0);

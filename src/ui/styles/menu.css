@@ -47,9 +47,35 @@
 }
 
 .menu-records {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
   margin: 0 0 clamp(8px, 4vh, 40px);
+}
+
+.record {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 112px;
+  margin: 0;
+  padding: 6px 14px 7px;
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.record-label {
   color: var(--color-muted);
-  font-size: 1.05rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.record-value {
+  font-size: 1.35rem;
+  font-weight: var(--weight-bold);
+  line-height: 1.15;
+  color: var(--color-gold-100);
   font-variant-numeric: tabular-nums;
 }
 
@@ -74,15 +100,6 @@
   border-radius: 50%;
   background: var(--color-gold-300);
   border: 2px solid var(--color-red-900);
-}
-
-.soon-chip {
-  padding: 2px 8px;
-  border-radius: var(--radius-pill);
-  background: rgba(0, 0, 0, 0.3);
-  font-size: 0.7rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 
 .menu-bottom {

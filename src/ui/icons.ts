@@ -1,4 +1,5 @@
 /** Inline SVG icons (no icon font, no network). They inherit `currentColor`. */
+import type { UpgradeId } from '../config/upgrades';
 
 const svg = (body: string, viewBox = '0 0 24 24'): string =>
   `<svg viewBox="${viewBox}" aria-hidden="true" focusable="false">${body}</svg>`;
@@ -49,3 +50,41 @@ export const ICON_VIBRATE = svg(
   '<rect x="8" y="4" width="8" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>' +
     '<path d="M4 9v6M20 9v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
 );
+
+export const ICON_CLOSE = svg(
+  '<path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/>',
+);
+
+/** One glyph per upgrade for the shop cards (GAME_DESIGN §2.2). */
+export const UPGRADE_ICONS: Readonly<Record<UpgradeId, string>> = {
+  luckyPaw: svg(
+    '<ellipse cx="12" cy="16" rx="5" ry="4.2" fill="currentColor"/>' +
+      '<circle cx="5.5" cy="10.5" r="2.1" fill="currentColor"/>' +
+      '<circle cx="9.3" cy="6.6" r="2.2" fill="currentColor"/>' +
+      '<circle cx="14.7" cy="6.6" r="2.2" fill="currentColor"/>' +
+      '<circle cx="18.5" cy="10.5" r="2.1" fill="currentColor"/>',
+  ),
+  bigCatch: svg(
+    '<circle cx="6.5" cy="16.5" r="3.5" fill="none" stroke="currentColor" stroke-width="2"/>' +
+      '<circle cx="15" cy="11" r="7" fill="currentColor"/>',
+  ),
+  shrineExpansion: svg(
+    '<path d="M2.5 5.5c6 1.4 13 1.4 19 0" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>' +
+      '<path d="M5 10h14M7 7v14M17 7v14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
+  ),
+  quickGrowth: svg(
+    '<path d="M6 12l6-6 6 6M6 19l6-6 6 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>',
+  ),
+  goldenTouch: svg(
+    '<path d="M12 2.5l2.2 7.3 7.3 2.2-7.3 2.2L12 21.5l-2.2-7.3L2.5 12l7.3-2.2z" fill="currentColor"/>',
+  ),
+  comboCharm: svg('<path d="M13.5 2L5 13.5h5.5L9.5 22 19 9.5h-5.8z" fill="currentColor"/>'),
+  secondChance: svg(
+    '<path d="M12 20.5S3.5 15.2 3.5 9.2A4.4 4.4 0 0 1 12 7a4.4 4.4 0 0 1 8.5 2.2c0 6-8.5 11.3-8.5 11.3z" fill="currentColor"/>',
+  ),
+  fortuneTeller: svg(
+    '<circle cx="12" cy="10.5" r="7" fill="none" stroke="currentColor" stroke-width="2.2"/>' +
+      '<path d="M9 8.2a3.4 3.4 0 0 1 3-1.9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>' +
+      '<path d="M6.5 21h11l-1.6-3.2H8.1z" fill="currentColor"/>',
+  ),
+};

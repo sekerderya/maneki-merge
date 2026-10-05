@@ -1,5 +1,6 @@
 import './ui/styles/index.css';
 import { Profile } from './core/profile';
+import { anyAffordable } from './core/upgrades';
 import type { Scheduler } from './core/profile';
 import { SaveStore } from './core/save';
 import { parseUrlFlags } from './core/urlFlags';
@@ -22,6 +23,7 @@ import {
 import { GameSession } from './session';
 import { byId } from './ui/dom';
 import { createGameOverOverlay } from './ui/overlays/gameOverOverlay';
+import { createShopPanel } from './ui/panels/shopPanel';
 import { createPauseOverlay } from './ui/overlays/pauseOverlay';
 import { createRotateOverlay } from './ui/overlays/rotateOverlay';
 import { ScreenManager } from './ui/screenManager';
@@ -67,14 +69,38 @@ async function boot(): Promise<void> {
       screens?.showGame();
       session.startRun();
     },
-    onUpgrades: () => undefined, // The shop panel arrives in M8.
+    onUpgrades: () => openShop(),
     onToggleSound: () => toggleSound(),
     onApplyUpdate: () => void gate.apply(),
     onInstall: () => void installPrompt.prompt(),
   });
 
-  menu.setUpgradesAvailable(false);
   menu.setInstallHint(installHintFor(installContext, installPrompt.available));
+
+  // Shop panel (GAME_DESIGN §2.2) over the menu, with its own back layer.
+  let shopLayer: number | null = null;
+  const shop = createShopPanel(byId('overlays'), {
+    onBuy: (id) => {
+      if (!profile.buy(id).ok) return;
+      showProfile();
+      shop.purchased(id); // From M9: purchase sound.
+    },
+    onClose: () => closeShop(),
+  });
+  const openShop = (): void => {
+    if (shop.visible) return;
+    showProfile();
+    shop.show();
+    shopLayer = back.push(() => {
+      shopLayer = null;
+      shop.hide();
+    });
+  };
+  const closeShop = (): void => {
+    if (shopLayer !== null) back.release(shopLayer);
+    shopLayer = null;
+    shop.hide();
+  };
 
   const gameScreen = createGameScreen(byId('game-screen'), {
     onPause: () => session.pauseRun(),
@@ -99,6 +125,8 @@ async function boot(): Promise<void> {
     const settings = profile.settings;
     menu.setCoins(profile.coins);
     menu.setRecords(bestScore, bestStage);
+    menu.setUpgradesAffordable(anyAffordable(profile.upgrades, profile.coins));
+    shop.update(profile.upgrades, profile.coins);
     menu.setSoundOn(settings.sound);
     pause.setSoundOn(settings.sound);
     pause.setHapticsOn(settings.haptics);
