@@ -124,6 +124,54 @@ describe('Profile: wallet, records and stats (GAME_DESIGN §5, §11)', () => {
     expect(profile.records).toMatchObject({ bestScore: 900, bestStage: 2 });
   });
 
+  it('buys an upgrade with wallet coins and writes the save at once', () => {
+    const data = defaultSave();
+    data.wallet.coins = 300;
+    const { profile, store, scheduler } = setup(data);
+    profile.earn(5); // the first change after a quiet second is written at once
+    scheduler.advance(100);
+    const writes = store.writes.length;
+    // Inside the throttle window, a purchase still goes straight to storage.
+    expect(profile.buy('luckyPaw')).toEqual({
+      ok: true,
+      levels: expect.objectContaining({ luckyPaw: 1 }) as unknown,
+      coins: 255,
+      price: 50,
+    });
+    expect(store.writes).toHaveLength(writes + 1);
+    expect(store.last?.wallet.coins).toBe(255);
+    expect(store.last?.upgrades.luckyPaw).toBe(1);
+    expect(profile.pending).toBe(false);
+    // Spending is not earning.
+    expect(profile.stats.totalCoinsEarned).toBe(5);
+  });
+
+  it('refuses a purchase it cannot afford or that is maxed, without writing', () => {
+    const data = defaultSave();
+    data.wallet.coins = 450;
+    data.upgrades.fortuneTeller = 1;
+    const { profile, store } = setup(data);
+    expect(profile.buy('fortuneTeller')).toEqual({ ok: false, reason: 'max' });
+    expect(profile.buy('secondChance')).toEqual({ ok: false, reason: 'insufficient' });
+    expect(profile.coins).toBe(450);
+    expect(profile.upgrades.secondChance).toBe(0);
+    expect(store.writes).toHaveLength(0);
+  });
+
+  it('keeps a purchase pending when the storage refuses it', () => {
+    const data = defaultSave();
+    data.wallet.coins = 100;
+    const { profile, store } = setup(data);
+    store.refuse = true;
+    expect(profile.buy('comboCharm').ok).toBe(true);
+    expect(profile.lastWriteOk).toBe(false);
+    expect(profile.pending).toBe(true);
+    store.refuse = false;
+    expect(profile.flush()).toBe(true);
+    expect(store.last?.upgrades.comboCharm).toBe(1);
+    expect(store.last?.wallet.coins).toBe(20);
+  });
+
   it('clamps upgrade levels to their range', () => {
     const { profile } = setup();
     profile.setUpgrade('fortuneTeller', 5);

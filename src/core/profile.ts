@@ -14,7 +14,8 @@ import { UPGRADES } from '../config/upgrades';
 import type { UpgradeId } from '../config/upgrades';
 import { defaultSave } from './save';
 import type { SaveData } from './save';
-import type { UpgradeLevels } from './upgrades';
+import { buy } from './upgrades';
+import type { BuyResult, UpgradeLevels } from './upgrades';
 
 /** Timers for the write throttle (window timers in the browser, fakes in tests). */
 export interface Scheduler {
@@ -136,7 +137,21 @@ export class Profile {
     this.touch();
   }
 
-  /** Sets an upgrade level (clamped to 0…max). Purchases arrive in M8; debug uses this now. */
+  /**
+   * Buys the next level of an upgrade with wallet coins (GAME_DESIGN §2.2, §10) and writes the
+   * save at once (TECH_SPEC §8). Nothing changes when it is maxed or too expensive.
+   */
+  buy(id: UpgradeId): BuyResult {
+    const result = buy(id, this.state.upgrades, this.state.wallet.coins);
+    if (!result.ok) return result;
+    this.state.wallet.coins = result.coins;
+    this.state.upgrades[id] = result.levels[id];
+    this.dirty = true;
+    this.flush();
+    return result;
+  }
+
+  /** Sets an upgrade level (clamped to 0…max), for debug. */
   setUpgrade(id: UpgradeId, level: number): void {
     const clamped = Math.max(0, Math.min(UPGRADES[id].maxLevel, Math.round(level)));
     if (!Number.isFinite(clamped) || this.state.upgrades[id] === clamped) return;

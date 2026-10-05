@@ -18,6 +18,8 @@ export interface UpgradeDef {
   readonly name: string;
   /** One-line effect per level, shown on the shop card. */
   readonly description: string;
+  /** What the shop card's "current → next" value measures (core/shop.ts formats the value). */
+  readonly statLabel: string;
   readonly maxLevel: number;
   /** prices[n] buys level n + 1, so the length equals maxLevel. */
   readonly prices: readonly number[];
@@ -30,6 +32,7 @@ export const UPGRADES: Readonly<Record<UpgradeId, UpgradeDef>> = {
     id: 'luckyPaw',
     name: 'Lucky Paw',
     description: '+15% coins from everything',
+    statLabel: 'Coins',
     maxLevel: 10,
     prices: [50, 80, 125, 200, 320, 500, 800, 1250, 2000, 3200],
     perLevel: 0.15,
@@ -38,6 +41,7 @@ export const UPGRADES: Readonly<Record<UpgradeId, UpgradeDef>> = {
     id: 'bigCatch',
     name: 'Big Catch',
     description: 'Bigger cats come more often',
+    statLabel: 'Biggest drop',
     maxLevel: 5,
     prices: [100, 250, 600, 1500, 3500],
     // weight_i = base_i × (1 + perLevel × level × i), i = 0 for the smallest tier.
@@ -47,6 +51,7 @@ export const UPGRADES: Readonly<Record<UpgradeId, UpgradeDef>> = {
     id: 'shrineExpansion',
     name: 'Shrine Expansion',
     description: 'Unlocks stage 3 / 4 / 5',
+    statLabel: 'Max stage',
     maxLevel: 3,
     prices: [1500, 10_000, 60_000],
     perLevel: 1,
@@ -55,6 +60,7 @@ export const UPGRADES: Readonly<Record<UpgradeId, UpgradeDef>> = {
     id: 'quickGrowth',
     name: 'Quick Growth',
     description: '−6% expansion thresholds',
+    statLabel: 'Thresholds',
     maxLevel: 5,
     prices: [150, 300, 600, 1200, 2400],
     perLevel: 0.06,
@@ -63,6 +69,7 @@ export const UPGRADES: Readonly<Record<UpgradeId, UpgradeDef>> = {
     id: 'goldenTouch',
     name: 'Golden Touch',
     description: '+3% chance that a dropped cat is golden (×3 coins)',
+    statLabel: 'Golden',
     maxLevel: 5,
     prices: [120, 240, 480, 960, 1900],
     perLevel: 0.03,
@@ -71,6 +78,7 @@ export const UPGRADES: Readonly<Record<UpgradeId, UpgradeDef>> = {
     id: 'comboCharm',
     name: 'Combo Charm',
     description: '+8% coins per combo step (up to 5 steps)',
+    statLabel: 'Per combo step',
     maxLevel: 5,
     prices: [80, 160, 320, 640, 1280],
     perLevel: 0.08,
@@ -79,6 +87,7 @@ export const UPGRADES: Readonly<Record<UpgradeId, UpgradeDef>> = {
     id: 'secondChance',
     name: 'Second Chance',
     description: '+1 Lucky Save per run',
+    statLabel: 'Lucky Saves',
     maxLevel: 2,
     prices: [500, 4000],
     perLevel: 1,
@@ -87,6 +96,7 @@ export const UPGRADES: Readonly<Record<UpgradeId, UpgradeDef>> = {
     id: 'fortuneTeller',
     name: 'Fortune Teller',
     description: 'See the next 2 cats instead of 1',
+    statLabel: 'Next cats shown',
     maxLevel: 1,
     prices: [400],
     perLevel: 1,
