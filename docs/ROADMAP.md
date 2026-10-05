@@ -8,7 +8,7 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
 | M1  | Repository, toolchain and CI/CD     | medium             | –         | done        |
 | M2  | Mobile PWA shell                    | high               | –         | done        |
 | M3  | Core rules, config and save system  | high               | –         | done        |
-| M4  | Physics and merge engine (headless) | xhigh              | yes       | not started |
+| M4  | Physics and merge engine (headless) | xhigh              | yes       | done        |
 | M5  | Playable game scene                 | high               | –         | not started |
 | M6  | Expansion system                    | xhigh              | yes       | not started |
 | M7  | Economy and persistence in play     | high               | –         | not started |
@@ -96,21 +96,21 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
 
 **Effort:** xhigh. **Plan mode:** yes. **Goal:** a robust, deterministic Suika physics core that runs in Node.
 
-- [ ] `physics/PhysicsWorld.ts`: engine, fixed-timestep accumulator, jar walls from the stage geometry, `setStage` (walls, rim, gravity scaling), pause/resume
-- [ ] `physics/balls.ts`: create and remove balls (tier, golden, radius, density) and query them for rendering
-- [ ] `physics/merges.ts`:
+- [x] `physics/PhysicsWorld.ts`: engine, fixed-timestep accumulator, jar walls from the stage geometry, `setStage` (walls, rim, gravity scaling), pause/resume
+- [x] `physics/balls.ts`: create and remove balls (tier, golden, radius, density) and query them for rendering
+- [x] `physics/merges.ts`:
   - collision → queue → resolve after the step, one merge per ball per step
   - midpoint spawn, growth, velocity clamp
   - Jackpot at the cap tier
   - emits merge events
-- [ ] `physics/danger.ts`: landed flag + grace, over-the-line timer, game over, Lucky Save removal
-- [ ] `run/RunController.ts`:
+- [x] `physics/danger.ts`: landed flag + grace, over-the-line timer, game over, Lucky Save removal
+- [x] `run/RunController.ts`:
   - drop(x) with cooldown and queue
   - combo timer
   - expansion trigger and timeline (instant mode for tests), cash-out
   - Lucky Save, game over, events
-- [ ] Headless tests (TECH_SPEC §11), including the stability stress test and determinism
-- [ ] The final physics constants and the reasoning behind them recorded in TECH_SPEC §5
+- [x] Headless tests (TECH_SPEC §11), including the stability stress test and determinism
+- [x] The final physics constants and the reasoning behind them recorded in TECH_SPEC §5
 
 **Acceptance:** all tests green; the stress test passes; the average physics step is under 2 ms with 150 balls in Node on the dev machine.
 **Owner check:** nothing visible yet.

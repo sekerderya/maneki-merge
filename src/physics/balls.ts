@@ -109,10 +109,6 @@ export class Ball implements BallView, CircleShape {
     return this.radius < this.targetRadius;
   }
 
-  get landed(): boolean {
-    return this.landedMs >= 0;
-  }
-
   /** Grows linearly from the start radius to the tier's radius over MERGE_GROW_MS. */
   grow(dtMs: number): void {
     if (!this.growing) return;

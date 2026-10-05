@@ -32,14 +32,14 @@ TypeScript (strict) · Vite · Phaser 4 (rendering only) · matter-js (standalon
 
 ## Commands
 
-| Command                             | Purpose                                                                              |
-| ----------------------------------- | ------------------------------------------------------------------------------------ |
-| `npm run dev`                       | Dev server (`npm run dev -- --host` to open it from a phone on the same Wi-Fi)       |
-| `npm run build` / `npm run preview` | Production build / serve the build                                                   |
-| `npm run check`                     | Typecheck + lint + unit tests (≥ 90% core coverage). Must pass before every commit.  |
-| `npm run test` / `npm run test:e2e` | Vitest / Playwright                                                                  |
-| `npm run test:perf`                 | Physics step benchmark (150 cats, at most 2 ms per step), run alone without coverage |
-| `npm run sim`                       | Headless balance simulation (from M10)                                               |
+| Command                             | Purpose                                                                                              |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `npm run dev`                       | Dev server (`npm run dev -- --host` to open it from a phone on the same Wi-Fi)                       |
+| `npm run build` / `npm run preview` | Production build / serve the build                                                                   |
+| `npm run check`                     | Typecheck + lint + unit tests (≥ 90% coverage on core, physics, run). Must pass before every commit. |
+| `npm run test` / `npm run test:e2e` | Vitest / Playwright                                                                                  |
+| `npm run test:perf`                 | Physics step benchmark (150 cats, at most 2 ms per step), run alone without coverage                 |
+| `npm run sim`                       | Headless balance simulation (from M10)                                                               |
 
 ## Architecture rules
 
