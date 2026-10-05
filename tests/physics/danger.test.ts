@@ -23,6 +23,7 @@ function cat(tier: number, y: number, landedMs = 0): BallView {
     angle: 0,
     vx: 0,
     vy: 0,
+    speed: 0,
     radius: tierRadius(tier),
     growing: false,
     landedMs,

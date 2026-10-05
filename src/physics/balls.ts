@@ -31,6 +31,8 @@ export interface BallView {
   /** World units per second. */
   readonly vx: number;
   readonly vy: number;
+  /** World units per second. */
+  readonly speed: number;
   /** The current radius; a merged cat grows into its tier's radius. */
   readonly radius: number;
   readonly growing: boolean;

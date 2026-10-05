@@ -89,9 +89,11 @@ export default defineConfig({
       provider: 'v8',
       include: ['src/config/**', 'src/core/**', 'src/physics/**', 'src/run/**'],
       reporter: ['text', 'html'],
-      // ROADMAP M3: the pure rules stay at least 90% covered.
+      // The headless layers stay at least 90% covered (ROADMAP M3, M4).
       thresholds: {
         'src/core/**': { lines: 90 },
+        'src/physics/**': { lines: 90 },
+        'src/run/**': { lines: 90 },
       },
     },
   },

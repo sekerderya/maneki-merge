@@ -19,6 +19,7 @@
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:perf": "vitest run --mode perf tests/physics/performance.test.ts",
     "check": "npm run typecheck && npm run lint && npm run test:coverage",
     "icons": "pwa-assets-generator --config pwa-assets.config.ts"
   },
