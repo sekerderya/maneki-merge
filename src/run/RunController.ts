@@ -307,6 +307,13 @@ export class RunController {
     this.gameOver();
   }
 
+  /** Acts as if the danger timer just ran out: a Lucky Save if one is left, else game over. */
+  forceDangerTimeout(): void {
+    if (this.runState !== 'playing') return;
+    if (this.savesLeft > 0) this.luckySave();
+    else this.gameOver();
+  }
+
   /** A digest of everything that decides the rest of the run; equal digests replay equally. */
   stateHash(): string {
     const h = this.hasher.reset();

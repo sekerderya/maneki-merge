@@ -21,3 +21,6 @@ export type HintId = (typeof HINT_IDS)[number];
 /** Browser chrome and splash colors (manifest, theme-color meta). Match --color-bg-top in CSS. */
 export const THEME_COLOR = '#7a1c1c';
 export const BACKGROUND_COLOR = '#7a1c1c';
+
+/** Coin and record changes are written to storage at most once per this interval (TECH_SPEC §8). */
+export const SAVE_THROTTLE_MS = 1000;
