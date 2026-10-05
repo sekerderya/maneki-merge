@@ -80,7 +80,7 @@ Implement the formulas. Unit tests assert this table.
 ## 5. Merging
 
 - Two touching cats of the same tier merge into one cat of the next tier at their midpoint, with a pop. The new cat grows from the old size to its new size over about 120 ms, so neighbours get pushed but never launched.
-- A cat takes part in at most one merge per physics step. Merges are queued during collision handling and resolved after the step.
+- A cat takes part in at most one merge per physics step. Merges are queued during collision handling and resolved after the step. When pairs compete for a cat, the oldest cats merge first.
 - **Cap tier.** Each stage has a maximum tier (§7). Two cap-tier cats don't merge upward. Instead they trigger a **Jackpot**: both vanish with a big celebration, paying score `2 × S(cap)` and coins `5 × C(cap)` before multipliers.
 - **Combo.** A merge within 1.0 s of the previous merge raises the combo counter; otherwise the counter resets to 1. "Combo ×N" shows from N = 2. Combos pay extra coins only with the Combo Charm upgrade. Jackpots count as merges for the combo; pops (cash-out, Lucky Save) neither raise it nor get a combo bonus.
 - **Golden cats.** A dropped cat may be golden; the chance comes from Golden Touch and is 0% by default. If either merging cat is golden, that merge pays ×3 coins. The merged cat is a normal one. A golden cat that pops (cash-out, Lucky Save) also pays ×3.

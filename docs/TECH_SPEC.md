@@ -89,10 +89,12 @@ Data flow: pointer input (game) → `RunController.drop(x)` → PhysicsWorld ste
   - sleeping off
 - Density per tier is `0.001 × (r1 / r(t))^0.5`, so mass grows like r^1.5 instead of r². This limits mass ratios.
 - Gravity scales with the stage (`g_s = g_1 × scale_s`) so on-screen motion feels the same at every zoom. The speed clamp scales with it.
-- Merges:
-  - Collect same-tier pairs from `collisionStart` and `collisionActive`, dedupe them, and resolve them after the step.
-  - Spawn the new body at the midpoint with the averaged velocity and grow its radius over about 120 ms.
-  - Clamp neighbour velocities after merges.
+- Merges (`physics/merges.ts`, run after every step):
+  - The step makes one pass over matter-js's pair list, which with sleeping off holds exactly the pairs that overlap this step (`collisionStart` + `collisionActive`), once each. It records each cat's first contact and collects same-tier cat pairs.
+  - Order: candidate pairs are sorted by (older cat id, younger cat id), so the oldest cats merge first. Our ids come from creation order, so the order never depends on matter-js internals.
+  - One merge per cat per step: a pair with an already used cat is skipped. Three touching cats give one merge; the third can merge on a later step. New cats aren't in this step's pairs, so chains continue on the next step at the earliest.
+  - Two cats at or above the stage's cap tier make a Jackpot and vanish. Otherwise the new cat is born at the midpoint with the parents' average velocity (capped at `MERGE_MAX_SPEED_BASE` × scale), at the parents' size, and grows linearly into its own radius over `MERGE_GROW_MS` (120 ms, 15 steps). It inherits the earlier landing time, so a pile over the line keeps counting.
+- Growth without launches: linear growth has the lowest peak growth rate (about 1.5% of the radius per step). matter-js 0.20 removes overlap in its position solver by moving `position` and `positionPrev` together, so growth pushes neighbours without giving them velocity. On top of that, every cat touching a growing cat is capped at `GROWTH_NEIGHBOUR_MAX_SPEED_BASE` × scale, and every cat on every step at `MAX_SPEED_BASE` × scale and `MAX_ANGULAR_SPEED`. A test wedges a big pair between the walls under a settled pile and resolves every merge at once: upward speeds stay under 20% of the speed limit.
 - Stability acceptance test (headless): 150 random cats settle in a stage-5 jar within 10 s of simulated time. After settling, no cat has escaped, the largest overlap is under 15% of the smaller radius, and no cat moves faster than the clamp.
 - Determinism: the same seed and the same inputs give an identical state hash after N steps.
 - If matter-js can't pass the stability test after tuning, switch to planck.js behind the same `PhysicsWorld` interface and record why here.
