@@ -1,12 +1,15 @@
 import { fileURLToPath } from 'node:url';
 import { ESLint } from 'eslint';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 /**
  * TECH_SPEC §3: the headless layers (config → core → physics → run) never import Phaser, the DOM
  * or the presentation layers, and only import the layers below them. These tests lint small
  * snippets as if they lived in each layer, to prove the ESLint rules really block them.
  */
+// The first lint loads ESLint's config and parsers, which takes seconds while the suite runs in parallel.
+vi.setConfig({ testTimeout: 30_000 });
+
 const root = fileURLToPath(new URL('../..', import.meta.url));
 let eslint: ESLint;
 

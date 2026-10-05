@@ -6,27 +6,33 @@ async function screen(page: Page): Promise<string | undefined> {
 }
 
 test.describe('screens and back button', () => {
-  test('PLAY opens the game screen and Back returns to the menu', async ({ page }) => {
+  test('PLAY opens the game screen and Pause → Quit returns to the menu', async ({ page }) => {
     await page.goto('./?debug=1');
     await page.getByTestId('play').click();
     await expect(page.getByTestId('play-area')).toBeVisible();
     await expect(page.locator('#menu-screen')).toBeHidden();
     expect(await screen(page)).toBe('game');
 
-    await page.getByTestId('back').click();
+    await page.getByTestId('pause').click();
+    await expect(page.getByTestId('pause-overlay')).toBeVisible();
+    await page.getByTestId('quit').click();
     await expect(page.getByTestId('play')).toBeVisible();
     await expect(page.locator('#game-screen')).toBeHidden();
     expect(await screen(page)).toBe('menu');
   });
 
-  test('the browser/Android back button goes from the game to the menu', async ({ page }) => {
+  test('the browser/Android back button goes game → pause → menu', async ({ page }) => {
     await page.goto('./?debug=1');
     const startLength = await page.evaluate(() => history.length);
 
     await page.getByTestId('play').click();
     await expect(page.getByTestId('play-area')).toBeVisible();
     await page.goBack();
+    await expect(page.getByTestId('pause-overlay')).toBeVisible();
+    expect(await screen(page)).toBe('game');
+    await page.goBack();
     await expect(page.getByTestId('play')).toBeVisible();
+    await expect(page.getByTestId('pause-overlay')).toBeHidden();
     expect(await screen(page)).toBe('menu');
     // Still on the app: the back press was consumed, the page didn't navigate away.
     await expect(page).toHaveURL(/\?debug=1$/);
@@ -34,7 +40,8 @@ test.describe('screens and back button', () => {
     // Opening and closing via the UI must not grow the history.
     for (let i = 0; i < 3; i++) {
       await page.getByTestId('play').click();
-      await page.getByTestId('back').click();
+      await page.getByTestId('pause').click();
+      await page.getByTestId('quit').click();
     }
     await expect(page.getByTestId('play')).toBeVisible();
     expect(await page.evaluate(() => history.length)).toBeLessThanOrEqual(startLength + 1);
@@ -48,7 +55,8 @@ test.describe('update badge', () => {
     await page.evaluate(() => window.__game?.simulateUpdateReady());
     await expect(page.getByTestId('update-badge')).toBeHidden();
 
-    await page.getByTestId('back').click();
+    await page.getByTestId('pause').click();
+    await page.getByTestId('quit').click();
     await expect(page.getByTestId('update-badge')).toBeVisible();
     await expect(page.getByTestId('update-badge')).toHaveText('Update ready — tap to restart');
   });
@@ -117,9 +125,9 @@ test.describe('layout', () => {
       expect(box?.height).toBeGreaterThanOrEqual(48);
     }
     await page.getByTestId('play').click();
-    const back = await page.getByTestId('back').boundingBox();
-    expect(back?.width).toBeGreaterThanOrEqual(48);
-    expect(back?.height).toBeGreaterThanOrEqual(48);
+    const pause = await page.getByTestId('pause').boundingBox();
+    expect(pause?.width).toBeGreaterThanOrEqual(48);
+    expect(pause?.height).toBeGreaterThanOrEqual(48);
   });
 
   test('a phone in landscape shows the rotate overlay', async ({ page }) => {
