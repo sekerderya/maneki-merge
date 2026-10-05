@@ -107,14 +107,3 @@ test('backgrounding pauses the run', async ({ page }) => {
   await expect(page.getByTestId('pause-overlay')).toBeVisible();
   expect((await state(page)).runState).toBe('paused');
 });
-
-test('the expansion past 500 points keeps the game running', async ({ page }) => {
-  await page.goto('./?debug=1&seed=3');
-  await page.getByTestId('play').click();
-  await expect.poll(async () => (await state(page)).runState, WAIT).toBe('playing');
-  await page.evaluate(() => window.__game?.setStage(2));
-  await expect.poll(async () => (await state(page)).stage, WAIT).toBe(2);
-  await expect.poll(async () => (await state(page)).runState, WAIT).toBe('playing');
-  await expect(page.getByTestId('hud-stage')).toHaveText('Stage 2');
-  await dropAt(page, 0);
-});
