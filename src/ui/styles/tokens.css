@@ -1,0 +1,39 @@
+/* Theme tokens: warm lucky-cat red and gold. Keep --color-bg-top in sync with THEME_COLOR. */
+:root {
+  --color-bg-top: #7a1c1c;
+  --color-bg-bottom: #c8811f;
+  --color-red-900: #4a0f0f;
+  --color-red-700: #7a1c1c;
+  --color-red-600: #9e2a22;
+  --color-red-500: #c0392b;
+  --color-gold-700: #a8691a;
+  --color-gold-500: #e2a52b;
+  --color-gold-300: #f6c343;
+  --color-gold-100: #ffe8a8;
+  --color-cream: #fff8ec;
+  --color-ink: #3b1a10;
+  --color-text: var(--color-cream);
+  --color-muted: rgba(255, 248, 236, 0.72);
+  --color-scrim: rgba(40, 8, 8, 0.92);
+
+  --font-family: 'Fredoka', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --weight-regular: 500;
+  --weight-bold: 700;
+
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-pill: 999px;
+
+  --touch-min: 48px;
+  --gutter: 16px;
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+
+  --shadow-raised: 0 5px 0 rgba(0, 0, 0, 0.28);
+  --shadow-pressed: 0 1px 0 rgba(0, 0, 0, 0.28);
+
+  color-scheme: dark;
+}

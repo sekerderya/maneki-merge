@@ -1,0 +1,163 @@
+/* Mobile foundation (TECH_SPEC §10): fixed full-screen app, no zoom, selection, callouts or rubber-banding. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(180deg, var(--color-bg-top), var(--color-bg-bottom));
+  color: var(--color-text);
+  font-family: var(--font-family);
+  font-weight: var(--weight-regular);
+  line-height: 1.3;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+#app {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100dvh;
+  height: var(--app-height, 100dvh);
+  overflow: hidden;
+}
+
+.screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: calc(var(--safe-top) + 8px) calc(var(--safe-right) + var(--gutter))
+    calc(var(--safe-bottom) + 8px) calc(var(--safe-left) + var(--gutter));
+}
+
+[hidden] {
+  display: none !important;
+}
+
+img,
+svg {
+  display: block;
+}
+
+[data-scrollable] {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+
+/* Buttons: 48 px targets, a pressed state, no hover-only behavior. */
+button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  margin: 0;
+  background: none;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+button:disabled {
+  cursor: default;
+}
+
+button:focus-visible {
+  outline: 3px solid var(--color-gold-100);
+  outline-offset: 3px;
+}
+
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--touch-min);
+  padding: 0 28px;
+  border-radius: var(--radius-pill);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.04em;
+  box-shadow: var(--shadow-raised);
+  transition:
+    transform 80ms ease-out,
+    box-shadow 80ms ease-out,
+    filter 80ms ease-out;
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: var(--shadow-pressed);
+}
+
+.btn:disabled {
+  filter: saturate(0.4) brightness(0.85);
+}
+
+.btn-primary {
+  background: linear-gradient(180deg, var(--color-gold-300), var(--color-gold-500));
+  color: var(--color-ink);
+  border: 3px solid var(--color-gold-700);
+}
+
+.btn-secondary {
+  background: linear-gradient(180deg, var(--color-red-500), var(--color-red-600));
+  color: var(--color-cream);
+  border: 3px solid var(--color-red-900);
+}
+
+.btn-small {
+  min-height: var(--touch-min);
+  padding: 0 20px;
+  font-size: 1rem;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--touch-min);
+  height: var(--touch-min);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.22);
+  transition: transform 80ms ease-out;
+}
+
+.icon-btn:active {
+  transform: scale(0.92);
+  background: rgba(0, 0, 0, 0.32);
+}
+
+.icon-btn svg {
+  width: 26px;
+  height: 26px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
+}

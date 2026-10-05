@@ -1,0 +1,26 @@
+/* Game screen skeleton (GAME_DESIGN §2.3). The Phaser canvas mounts into .play-area in M5. */
+.game-hud {
+  display: flex;
+  align-items: center;
+  min-height: var(--touch-min);
+}
+
+.play-area {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  margin-top: 8px;
+  border-radius: var(--radius-md);
+  background: rgba(0, 0, 0, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* All gestures belong to the game: no scroll, no zoom. */
+  touch-action: none;
+}
+
+.play-area-placeholder {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 1rem;
+}

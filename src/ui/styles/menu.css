@@ -1,0 +1,160 @@
+/* Main menu (GAME_DESIGN §2.1). */
+.menu-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--touch-min);
+}
+
+.coin-balance {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 4px 16px 4px 6px;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 0, 0, 0.25);
+  font-weight: var(--weight-bold);
+  font-size: 1.25rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.coin-balance svg {
+  width: 30px;
+  height: 30px;
+}
+
+.menu-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 0;
+  text-align: center;
+}
+
+.menu-title {
+  margin: 0;
+  font-weight: var(--weight-bold);
+  font-size: clamp(2.6rem, 13vw, 4rem);
+  line-height: 1.05;
+  color: var(--color-gold-100);
+  text-shadow:
+    0 3px 0 var(--color-red-900),
+    0 6px 16px rgba(0, 0, 0, 0.35);
+}
+
+.menu-records {
+  margin: 0 0 clamp(8px, 4vh, 40px);
+  color: var(--color-muted);
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.btn-play {
+  width: min(78vw, 300px);
+  min-height: 76px;
+  font-size: 2rem;
+}
+
+.btn-upgrades {
+  width: min(64vw, 240px);
+  min-height: 56px;
+  font-size: 1.2rem;
+}
+
+.notify-dot {
+  position: absolute;
+  top: -4px;
+  right: 10px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-gold-300);
+  border: 2px solid var(--color-red-900);
+}
+
+.soon-chip {
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 0, 0, 0.3);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.menu-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 4px;
+}
+
+.update-badge {
+  min-height: var(--touch-min);
+  padding: 0 20px;
+  border-radius: var(--radius-pill);
+  background: var(--color-cream);
+  color: var(--color-red-700);
+  font-weight: var(--weight-bold);
+  box-shadow: var(--shadow-raised);
+  animation: badge-pulse 1.6s ease-in-out infinite;
+}
+
+.update-badge:active {
+  transform: translateY(3px);
+  box-shadow: var(--shadow-pressed);
+}
+
+@keyframes badge-pulse {
+  50% {
+    transform: scale(1.04);
+  }
+}
+
+.install-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.22);
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+.install-hint svg {
+  width: 20px;
+  height: 20px;
+  color: #6fb3ff;
+}
+
+.install-btn {
+  background: var(--color-cream);
+  color: var(--color-red-700);
+}
+
+.version {
+  align-self: flex-end;
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Short screens (e.g. 375×667): tighten the vertical rhythm. */
+@media (max-height: 700px) {
+  .menu-center {
+    gap: 12px;
+  }
+
+  .btn-play {
+    min-height: 68px;
+  }
+}
