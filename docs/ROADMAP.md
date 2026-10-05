@@ -12,7 +12,7 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
 | M5  | Playable game scene                 | high               | –         | done        |
 | M6  | Expansion system                    | xhigh              | yes       | done        |
 | M7  | Economy and persistence in play     | high               | –         | done        |
-| M8  | Main menu and upgrade shop          | high               | –         | not started |
+| M8  | Main menu and upgrade shop          | high               | –         | done        |
 | M9  | Audio, haptics and juice            | medium             | –         | not started |
 | M10 | Balance simulation and tuning       | xhigh              | yes       | not started |
 | M11 | QA, performance and hardening       | high               | –         | not started |
@@ -172,11 +172,11 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
 
 **Effort:** high. **Goal:** the meta loop: play, earn, upgrade, play stronger.
 
-- [ ] Final menu layout (GAME_DESIGN §2.1), including best score/stage and the affordability dot
-- [ ] Shop panel (GAME_DESIGN §2.2): 8 cards, levels, prices, states, purchase feedback, scrolling
-- [ ] All 8 upgrade effects wired into runs
-- [ ] Debug: set any upgrade level
-- [ ] E2E: buy with debug coins; Fortune Teller shows 2 previews; Shrine Expansion Lv 1 allows stage 3
+- [x] Final menu layout (GAME_DESIGN §2.1), including best score/stage and the affordability dot
+- [x] Shop panel (GAME_DESIGN §2.2): 8 cards, levels, prices, states, purchase feedback, scrolling
+- [x] All 8 upgrade effects wired into runs
+- [x] Debug: set any upgrade level
+- [x] E2E: buy with debug coins; Fortune Teller shows 2 previews; Shrine Expansion Lv 1 allows stage 3
 
 **Acceptance:** purchases persist; every effect is verified; the layout fits everything from 375×667 to 430×932 without overlap.
 **Owner check:** buy upgrades and feel the difference in the next run.

@@ -2,6 +2,35 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.8.0] - 2026-10-06
+
+### Added
+
+- M8: the meta loop. Play, earn coins, buy permanent upgrades in the shop, play stronger.
+- Shop panel (GAME_DESIGN §2.2): a sheet that slides up over the menu with the balance and a close button, and one card per upgrade: an icon, the name, the effect, the "current → next" value (e.g. "Coins +45% → +60%"), level pips with "3/10", and a price button that is affordable, disabled when coins are short, or MAX. Buying pulses the card and counts the balance down. The list scrolls; the back button, the close button or a tap above the sheet closes it.
+- `Profile.buy(id)`: spends wallet coins on the next level and writes the save at once.
+- `core/shop.ts`: what each card shows (price state and the value of every upgrade at every level).
+- Menu: the UPGRADES dot shows when any upgrade is affordable; best score and best stage are two labelled chips under the title.
+- Debug: the upgrade level field follows the chosen upgrade's max level.
+- Tests: purchases in the profile (written at once, refused when maxed or too expensive, retried after a refused write), the shop cards, every upgrade bought through the profile changing the next run (headless), and E2E for buying with debug coins and reloading, the back button, Fortune Teller's 2 previews, Shrine Expansion Lv 1 opening stage 3, and the menu and shop fitting 375×667, 390×844 and 430×932.
+
+### Changed
+
+- UPGRADES is no longer "Soon".
+- GAME_DESIGN §2.1 and §2.2 and TECH_SPEC §3, §7, §8 and §11 describe the shop, the card values and the purchase write.
+
+### Decisions (where the docs were open)
+
+- Each card's value is one number that the upgrade changes: for Big Catch it is the share of stage 1's largest drop tier (10% → 18% over 5 levels), for Quick Growth the thresholds as a percentage of normal (100% → 70%). The table is in GAME_DESIGN §2.2.
+- The upgrade effects were already wired into runs in M3–M7; M8 adds a test per upgrade that buys it and compares a run with level 0.
+- Upgrades bought apply from the next run (the shop only opens from the menu, so there is never a run in progress).
+- The purchase sound arrives with the rest of the audio in M9.
+
+### Known issues
+
+- No purchase sound yet (M9).
+- The title is still text until the final art (M13).
+
 ## [0.7.0] - 2026-10-06
 
 ### Added

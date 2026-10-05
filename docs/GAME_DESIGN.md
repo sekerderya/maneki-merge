@@ -17,7 +17,7 @@ There are exactly two screens. Everything else is a panel or overlay on top of t
 
 ### 2.1 Main menu
 
-- Title (text placeholder until the final art), with the best score and best stage under it.
+- Title (text placeholder until the final art), with the best score and best stage under it as two labelled chips.
 - Coin balance at the top.
 - **PLAY**: large and centered.
 - **UPGRADES**: below PLAY. Shows a dot when any upgrade is affordable and opens the shop panel.
@@ -28,9 +28,23 @@ There are exactly two screens. Everything else is a panel or overlay on top of t
 ### 2.2 Shop panel (over the main menu)
 
 - Slides up, with a close button and the coin balance.
-- One card per upgrade (§10) showing the name, a one-line effect, the current → next value, level pips (e.g. 3/10) and a price button.
+- One card per upgrade (§10) showing an icon, the name, a one-line effect, the current → next value, level pips with the level (e.g. 3/10) and a price button.
+- The value each card shows (derived from §10; at MAX only the current value):
+
+  | Upgrade          | Value                                                       | Level 0 → 1 | At max |
+  | ---------------- | ----------------------------------------------------------- | ----------- | ------ |
+  | Lucky Paw        | Coins                                                       | +0% → +15%  | +150%  |
+  | Big Catch        | Biggest drop: the share of stage 1's largest drop tier (§8) | 10% → 12%   | 18%    |
+  | Shrine Expansion | Max stage                                                   | 2 → 3       | 5      |
+  | Quick Growth     | Thresholds                                                  | 100% → 94%  | 70%    |
+  | Golden Touch     | Golden                                                      | 0% → 3%     | 15%    |
+  | Combo Charm      | Per combo step                                              | +0% → +8%   | +40%   |
+  | Second Chance    | Lucky Saves                                                 | 0 → 1       | 2      |
+  | Fortune Teller   | Next cats shown                                             | 1 → 2       | 2      |
+
 - The price button has three states: affordable, not enough coins (disabled), and MAX.
-- Buying gives feedback: a sound, a card pulse, and the balance counting down. The panel scrolls vertically if needed.
+- Buying gives feedback: a sound (from M9), a card pulse, and the balance counting down. The purchase is saved at once. The panel scrolls vertically if needed.
+- Closing: the close button, a tap on the dimmed menu above the panel, or the back button.
 
 ### 2.3 Game
 
