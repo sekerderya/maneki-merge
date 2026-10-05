@@ -1,4 +1,7 @@
 import './ui/styles/index.css';
+import { Profile } from './core/profile';
+import type { Scheduler } from './core/profile';
+import { SaveStore } from './core/save';
 import { parseUrlFlags } from './core/urlFlags';
 import { installDebugHooks } from './debug';
 import { createGame } from './game';
@@ -7,8 +10,10 @@ import {
   detectInstallContext,
   InstallPrompt,
   loadFonts,
+  openStorage,
   readInstallEnvironment,
   registerServiceWorker,
+  requestPersistentStorage,
   setupViewport,
   UpdateGate,
   watchLifecycle,
@@ -32,7 +37,15 @@ async function boot(): Promise<void> {
 
   await loadFonts();
 
-  // Save: loaded here from M7. Until then the session keeps settings and coins in memory.
+  // Save (TECH_SPEC §8): load it once; the profile writes it back, throttled.
+  const storage = openStorage();
+  const store = new SaveStore(storage.adapter);
+  const loaded = store.load();
+  if (loaded.status === 'corrupt' || loaded.status === 'repaired' || loaded.status === 'future') {
+    console.warn(`Save ${loaded.status}; a copy was kept.`, loaded.issues);
+  }
+  const profile = new Profile(store, loaded.data, { scheduler: windowScheduler });
+  if (storage.persistent) void requestPersistentStorage();
 
   // UI
   const back = new BackStack(window.history, window);
@@ -70,10 +83,7 @@ async function boot(): Promise<void> {
   const pause = createPauseOverlay(overlays, {
     onResume: () => session.resumeRun(),
     onToggleSound: () => toggleSound(),
-    onToggleHaptics: () => {
-      session.settings.haptics = !session.settings.haptics;
-      pause.setHapticsOn(session.settings.haptics);
-    },
+    onToggleHaptics: () => session.setSetting('haptics', !session.settings.haptics),
     onQuit: () => screens?.showMenu(),
   });
   const gameOver = createGameOverOverlay(overlays, {
@@ -83,25 +93,31 @@ async function boot(): Promise<void> {
 
   // Phaser renders into the play area; its loop sleeps while the menu is up.
   const game = createGame(gameScreen.playArea);
+  // The menu and the pause overlay show what the profile holds.
+  const showProfile = (): void => {
+    const { bestScore, bestStage } = profile.records;
+    const settings = profile.settings;
+    menu.setCoins(profile.coins);
+    menu.setRecords(bestScore, bestStage);
+    menu.setSoundOn(settings.sound);
+    pause.setSoundOn(settings.sound);
+    pause.setHapticsOn(settings.haptics);
+  };
   const session = new GameSession({
+    profile,
     game,
     hud: gameScreen.hud,
     hint: gameScreen.hint,
     banners: gameScreen.banners,
+    coins: gameScreen.coins,
     pause,
     gameOver,
     seed: flags.seed,
-    onWalletChange: (coins) => menu.setCoins(coins),
+    onProfileChange: showProfile,
   });
+  showProfile();
 
-  const toggleSound = (): void => {
-    session.settings.sound = !session.settings.sound;
-    menu.setSoundOn(session.settings.sound);
-    pause.setSoundOn(session.settings.sound);
-  };
-  menu.setSoundOn(session.settings.sound);
-  pause.setSoundOn(session.settings.sound);
-  pause.setHapticsOn(session.settings.haptics);
+  const toggleSound = (): void => session.setSetting('sound', !session.settings.sound);
 
   screens = new ScreenManager(
     { menu: byId('menu-screen'), game: byId('game-screen') },
@@ -122,7 +138,8 @@ async function boot(): Promise<void> {
   watchLifecycle({
     onHidden: () => {
       session.autoPause();
-      // From M7: save. From M9: suspend audio.
+      session.save();
+      // From M9: suspend audio.
     },
     onVisible: () => {
       // From M9: resume audio.
@@ -141,6 +158,12 @@ async function boot(): Promise<void> {
 
   const sw = registerServiceWorker(gate);
 }
+
+const windowScheduler: Scheduler = {
+  now: () => performance.now(),
+  setTimeout: (fn, ms) => window.setTimeout(fn, ms),
+  clearTimeout: (handle) => window.clearTimeout(handle),
+};
 
 function installHintFor(context: InstallContext, promptAvailable: boolean): InstallHint {
   if (context === 'ios-browser') return 'ios-share';

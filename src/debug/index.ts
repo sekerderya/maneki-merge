@@ -23,7 +23,11 @@ export interface GameStateSnapshot {
   readonly runState: string | null;
   readonly score: number;
   readonly runCoins: number;
+  /** The persistent wallet (GAME_DESIGN §11). */
   readonly wallet: number;
+  /** The combo as it stands (0 once its window has passed). */
+  readonly combo: number;
+  readonly luckySaves: number;
   readonly stage: number;
   readonly balls: number;
   readonly canDrop: boolean;
@@ -60,8 +64,12 @@ export interface GameHooks {
   setStage(stage: number): void;
   /** Sets the run score; the stage locks still apply. */
   setScore(score: number): void;
-  spawnTier(tier: number, x?: number): void;
+  spawnTier(tier: number, x?: number, golden?: boolean): void;
   forceGameOver(): void;
+  /** Acts as if the danger timer ran out: a Lucky Save if one is left, else game over. */
+  forceDangerTimeout(): void;
+  /** Wipes the save back to defaults and reloads the page. */
+  resetSave(): void;
 }
 
 declare global {
@@ -83,7 +91,9 @@ export function installDebugHooks(ctx: DebugContext): GameHooks {
         runState: run?.state ?? null,
         score: run?.score ?? 0,
         runCoins: run?.coins ?? 0,
-        wallet: session.wallet,
+        wallet: session.profile.coins,
+        combo: run?.combo ?? 0,
+        luckySaves: run?.luckySavesLeft ?? 0,
         stage: run?.stage ?? 1,
         balls: run?.balls.length ?? 0,
         canDrop: run?.canDrop ?? false,
@@ -102,10 +112,10 @@ export function installDebugHooks(ctx: DebugContext): GameHooks {
       return session.run?.drop(x) ?? false;
     },
     addCoins(coins) {
-      session.addCoins(coins);
+      session.addCoins(Math.max(0, Math.round(coins)));
     },
     setUpgrade(id, level) {
-      session.setUpgrade(id, Math.max(0, Math.min(UPGRADES[id].maxLevel, Math.round(level))));
+      session.setUpgrade(id, level);
     },
     setStage(stage) {
       session.run?.jumpToStage(Math.round(stage));
@@ -113,13 +123,20 @@ export function installDebugHooks(ctx: DebugContext): GameHooks {
     setScore(score) {
       session.run?.setScore(Math.max(0, Math.round(score)));
     },
-    spawnTier(tier, x = 0) {
+    spawnTier(tier, x = 0, golden = false) {
       const run = session.run;
       if (!run || tier < 1 || tier > MAX_TIER) return;
-      run.spawnBall(tier, x);
+      run.spawnBall(tier, x, undefined, golden);
     },
     forceGameOver() {
       session.run?.forceGameOver();
+    },
+    forceDangerTimeout() {
+      session.run?.forceDangerTimeout();
+    },
+    resetSave() {
+      session.profile.reset();
+      window.location.reload();
     },
   };
   window.__game = hooks;
@@ -159,6 +176,10 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
     Array.from({ length: MAX_TIER }, (_, i) => i + 1),
     1,
   );
+  const golden = el('input');
+  golden.type = 'checkbox';
+  golden.title = 'Golden';
+  golden.setAttribute('aria-label', 'Golden');
   const stage = select(
     Array.from({ length: STAGE_COUNT - 1 }, (_, i) => i + 2),
     2,
@@ -177,7 +198,8 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
     stats,
     row(
       tier,
-      action('Spawn tier', () => hooks.spawnTier(Number(tier.value))),
+      golden,
+      action('Spawn tier', () => hooks.spawnTier(Number(tier.value), 0, golden.checked)),
     ),
     row(
       score,
@@ -196,6 +218,12 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
       action('+1000 coins', () => hooks.addCoins(1000)),
       action('Game over', () => hooks.forceGameOver()),
     ),
+    row(
+      action('Danger timeout', () => hooks.forceDangerTimeout()),
+      action('Reset save', () => {
+        if (window.confirm('Reset the save?')) hooks.resetSave();
+      }),
+    ),
   );
   panel.append(toggle, body);
   document.body.append(panel);
@@ -206,6 +234,8 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
     stats.textContent =
       `fps ${ctx.game.fps.toFixed(0)}  bodies ${s.balls}\n` +
       `${s.screen} · ${s.runState ?? '-'} · stage ${s.stage}\n` +
-      `score ${s.score}  wallet ${s.wallet}`;
+      `score ${s.score}  wallet ${s.wallet}
+` +
+      `combo ${s.combo}  saves ${s.luckySaves}`;
   }, 250);
 }

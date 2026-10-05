@@ -162,3 +162,19 @@
     font-size: 2.5rem;
   }
 }
+
+/* A small "New" chip next to a stat that set a record (GAME_DESIGN §2.3). */
+.record-chip {
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  background: var(--color-gold-300);
+  color: var(--color-ink);
+  font-size: 0.7rem;
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.go-stats .cat-icon {
+  --size: 28px;
+}

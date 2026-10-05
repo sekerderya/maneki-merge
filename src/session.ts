@@ -1,89 +1,112 @@
 /**
  * The play session (composition root, next to main.ts): starts runs, wires a run's events to
- * the HUD, overlays and hints, and owns pause, game over and quit. The run decides the rules,
- * the game scene draws it, the DOM shows its state; this file only connects them.
- *
- * Until the save system is wired in (M7), the wallet, best score, settings, upgrade levels and
- * seen hints live in memory for the session.
+ * the HUD, overlays, banners, coin flights and hints, and owns pause, game over and quit. The
+ * run decides the rules, the profile keeps what lasts, the game scene draws it, the DOM shows
+ * its state; this file only connects them.
  */
-import { BANNER_JAR_OFFSET, BANNER_NEW_CATS_MS, HINT_MERGE_DELAY_MS } from './config/view';
+import { COMBO_BANNER_MIN } from './config/economy';
+import {
+  BANNER_JAR_OFFSET,
+  BANNER_NEW_CATS_MS,
+  COMBO_JAR_OFFSET,
+  HINT_MERGE_DELAY_MS,
+  JACKPOT_COIN_FLIGHTS,
+} from './config/view';
 import type { UpgradeId } from './config/upgrades';
 import { EventBus } from './core/events';
 import type { GameEvents } from './core/events';
-import { defaultUpgradeLevels } from './core/upgrades';
+import { newRecords } from './core/profile';
+import type { Profile, Records, Settings } from './core/profile';
+import { comboBonus } from './core/upgrades';
 import type { GameView } from './game';
-import { RunController } from './run/RunController';
+import { startProfileRun } from './run/profileRun';
+import type { RunController } from './run/RunController';
 import type { BannerView } from './ui/banners/banner';
 import type { HintView } from './ui/banners/hint';
+import type { CoinFlyView } from './ui/fx/coinFly';
 import type { HudView } from './ui/hud/hud';
 import type { GameOverView } from './ui/overlays/gameOverOverlay';
 import type { PauseView } from './ui/overlays/pauseOverlay';
 import type { GameBackResult } from './ui/screenManager';
 
 export interface SessionParts {
+  readonly profile: Profile;
   readonly game: GameView;
   readonly hud: HudView;
   readonly hint: HintView;
   readonly banners: BannerView;
+  readonly coins: CoinFlyView;
   readonly pause: PauseView;
   readonly gameOver: GameOverView;
   /** A fixed seed (`?seed=`) for every run, or null for a fresh one each time. */
   readonly seed: number | null;
-  readonly onWalletChange: (coins: number) => void;
-}
-
-export interface Settings {
-  sound: boolean;
-  haptics: boolean;
+  /** The wallet, records or settings changed (the menu shows them). */
+  readonly onProfileChange: () => void;
 }
 
 export class GameSession {
-  readonly settings: Settings = { sound: true, haptics: true };
-  readonly upgrades = defaultUpgradeLevels();
-  private walletCoins = 0;
-  private best = 0;
-  private readonly seen = { aim: false, merge: false };
   private current: RunController | null = null;
   private hintTimer = 0;
+  /** The records as they were when the current run started, for the Game Over badges. */
+  private recordsBefore: Records;
 
-  constructor(private readonly parts: SessionParts) {}
+  constructor(private readonly parts: SessionParts) {
+    this.recordsBefore = parts.profile.records;
+    // Coins fly from wherever the scene shows a payout to the HUD counter.
+    parts.game.onCoins((x, y, big) =>
+      parts.coins.fly(x, y, big ? JACKPOT_COIN_FLIGHTS : 1, () => parts.hud.pulseCoins()),
+    );
+  }
 
   get run(): RunController | null {
     return this.current;
   }
 
-  get wallet(): number {
-    return this.walletCoins;
+  get profile(): Profile {
+    return this.parts.profile;
   }
 
-  get bestScore(): number {
-    return this.best;
+  get settings(): Settings {
+    return this.parts.profile.settings;
   }
 
+  /** Debug: coins from outside play. */
   addCoins(coins: number): void {
-    this.walletCoins += coins;
-    this.parts.onWalletChange(this.walletCoins);
+    this.parts.profile.grant(coins);
+    this.parts.onProfileChange();
   }
 
+  /** Debug: applies from the next run. */
   setUpgrade(id: UpgradeId, level: number): void {
-    this.upgrades[id] = level;
+    this.parts.profile.setUpgrade(id, level);
+    this.parts.onProfileChange();
+  }
+
+  setSetting(key: keyof Settings, on: boolean): void {
+    this.parts.profile.setSetting(key, on);
+    this.parts.onProfileChange();
+  }
+
+  /** Writes everything pending (backgrounding, page hide, leaving a run). */
+  save(): boolean {
+    return this.parts.profile.flush();
   }
 
   /** Starts a new run (PLAY, Play Again). */
   startRun(): void {
-    const { game, hud, hint, banners, pause, gameOver } = this.parts;
+    const { game, hud, hint, banners, coins, pause, gameOver, profile } = this.parts;
     pause.hide();
     gameOver.hide();
     hint.hide();
     banners.clear();
+    coins.clear();
     window.clearTimeout(this.hintTimer);
 
+    this.recordsBefore = profile.records;
     const events = new EventBus<GameEvents>();
-    const run = new RunController({
+    const run = startProfileRun(profile, {
       seed: this.parts.seed ?? freshSeed(),
-      upgrades: { ...this.upgrades },
       events,
-      bank: (coins) => this.addCoins(coins),
     });
     this.current = run;
 
@@ -101,15 +124,44 @@ export class GameSession {
       hud.setScore(e.score);
       showProgress();
     });
+    // The menu catches up with the wallet when the run ends (it is hidden until then).
     events.on('runCoinsChanged', (e) => hud.setCoins(e.coins));
     events.on('catDropped', showPreview);
 
-    // Expansions (GAME_DESIGN §7.1, §7.2). Banners sit in the empty top of the grown jar.
-    const bannerY = (): number | undefined => {
+    // Banners sit in the empty top of the jar (GAME_DESIGN §2.3).
+    const jarY = (fraction: number): number | undefined => {
       const box = game.jarBox();
-      return box ? box.top + BANNER_JAR_OFFSET * (box.bottom - box.top) : undefined;
+      return box ? box.top + fraction * (box.bottom - box.top) : undefined;
     };
-    events.on('expansionStarted', () => banners.show('The shrine grows!', { y: bannerY() }));
+    const bannerY = (): number | undefined => jarY(BANNER_JAR_OFFSET);
+
+    // Combo (GAME_DESIGN §5): "Combo ×N" from N = 2, with the Combo Charm bonus when it has one.
+    events.on('comboChanged', (e) => {
+      if (e.combo < COMBO_BANNER_MIN) {
+        banners.combo(0, 0);
+        return;
+      }
+      banners.combo(
+        e.combo,
+        comboBonus(run.stats.comboCharmLevel, e.combo),
+        jarY(COMBO_JAR_OFFSET),
+      );
+    });
+    events.on('jackpot', (e) =>
+      banners.show('Jackpot!', { coins: e.coins, y: bannerY(), tone: 'jackpot' }),
+    );
+    events.on('luckySave', (e) =>
+      banners.show('Lucky Save!', {
+        detail: e.savesLeft > 0 ? `${e.savesLeft} left` : undefined,
+        y: bannerY(),
+      }),
+    );
+
+    // Expansions (GAME_DESIGN §7.1, §7.2).
+    events.on('expansionStarted', () => {
+      banners.combo(0, 0);
+      banners.show('The shrine grows!', { y: bannerY() });
+    });
     events.on('expansionRevealed', (e) => {
       showPreview();
       showProgress();
@@ -132,22 +184,24 @@ export class GameSession {
     events.on('resumed', () => banners.setPaused(false));
     events.on('gameOver', (e) => this.onGameOver(e));
 
-    // First-run hints (GAME_DESIGN §2.3).
-    if (!this.seen.aim) hint.show('Drag to aim, release to drop');
+    // First-run hints (GAME_DESIGN §2.3), remembered in the save.
+    if (!profile.hintSeen('aim')) hint.show('Drag to aim, release to drop');
     events.on('catDropped', () => {
-      if (!this.seen.aim) {
-        this.seen.aim = true;
+      if (!profile.hintSeen('aim')) {
+        profile.markHintSeen('aim');
         hint.hide();
       }
-      if (!this.seen.merge && this.hintTimer === 0) {
+      if (!profile.hintSeen('merge') && this.hintTimer === 0) {
         this.hintTimer = window.setTimeout(() => {
-          if (this.current === run && !this.seen.merge) hint.show('Merge two identical cats');
+          if (this.current === run && !profile.hintSeen('merge')) {
+            hint.show('Merge two identical cats');
+          }
         }, HINT_MERGE_DELAY_MS);
       }
     });
     events.on('merged', () => {
-      if (this.seen.merge) return;
-      this.seen.merge = true;
+      if (profile.hintSeen('merge')) return;
+      profile.markHintSeen('merge');
       window.clearTimeout(this.hintTimer);
       hint.hide();
     });
@@ -175,8 +229,11 @@ export class GameSession {
     this.parts.gameOver.hide();
     this.parts.hint.hide();
     this.parts.banners.clear();
+    this.parts.coins.clear();
     this.parts.game.sleep();
     this.current = null;
+    this.save();
+    this.parts.onProfileChange();
   }
 
   /** Back in the game: game → pause; pause or game over → menu. */
@@ -197,15 +254,16 @@ export class GameSession {
     this.parts.hint.hide();
     this.parts.banners.clear();
     this.parts.pause.hide();
-    const newBestScore = e.score > this.best;
-    if (newBestScore) this.best = e.score;
+    const records = newRecords(this.recordsBefore, e);
     this.parts.gameOver.show({
       score: e.score,
-      bestScore: this.best,
+      bestScore: this.parts.profile.records.bestScore,
       stage: e.stage,
       coins: e.coins,
-      newBestScore,
+      highestTier: e.highestTier,
+      records,
     });
+    this.parts.onProfileChange();
   }
 }
 

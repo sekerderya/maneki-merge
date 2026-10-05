@@ -395,3 +395,173 @@
     transform: translateX(-50%);
   }
 }
+
+/* Banner extras: a Jackpot's coins, a Lucky Save's "1 left". */
+.banner-coins {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-gold-300);
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
+}
+
+.banner-coins svg {
+  width: 26px;
+  height: 26px;
+}
+
+.banner-detail {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: var(--weight-bold);
+  color: var(--color-cream);
+  opacity: 0.85;
+}
+
+.banner.is-jackpot {
+  background: linear-gradient(180deg, rgba(168, 105, 26, 0.95), rgba(110, 40, 12, 0.95));
+  border-color: #fff4c2;
+  box-shadow:
+    0 0 36px rgba(255, 211, 107, 0.8),
+    var(--shadow-raised);
+}
+
+.banner.is-jackpot .banner-text {
+  font-size: 2.3rem;
+  color: #fff4c2;
+}
+
+/* "Combo ×N": text only, so cats stay visible under it. Pops at each step, fades at the end. */
+.combo {
+  position: absolute;
+  left: 50%;
+  top: 34%;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.combo-text {
+  font-size: 1.6rem;
+  font-weight: var(--weight-bold);
+  color: var(--color-gold-100);
+  -webkit-text-stroke: 1.5px var(--color-ink);
+  paint-order: stroke fill;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
+}
+
+.combo-bonus {
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--color-gold-300);
+  color: var(--color-ink);
+  font-size: 0.9rem;
+  font-weight: var(--weight-bold);
+}
+
+.combo.is-step {
+  animation: combo-step 260ms ease-out;
+}
+
+.combo.is-ending {
+  animation: combo-end 300ms ease-in forwards;
+}
+
+@keyframes combo-step {
+  0% {
+    transform: translate(-50%, -50%) scale(0.7);
+  }
+  45% {
+    transform: translate(-50%, -50%) scale(1.18);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes combo-end {
+  to {
+    opacity: 0;
+    transform: translate(-50%, -70%) scale(0.95);
+  }
+}
+
+/* The HUD coin counter bumps when a flying coin lands. */
+.hud-coins.is-pulsing {
+  animation: coins-pulse 180ms ease-out;
+}
+
+@keyframes coins-pulse {
+  50% {
+    transform: scale(1.12);
+    background: rgba(246, 195, 67, 0.35);
+  }
+}
+
+/* Coins flying to the HUD: above the HUD and the play area, below the overlays. */
+.coin-fly {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.coin-fly-coin {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  will-change: transform;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+}
+
+.coin-fly-coin svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Golden cats in the HUD and banners shimmer, like their sprites twinkle. */
+.cat-icon.is-golden {
+  position: relative;
+  overflow: hidden;
+}
+
+.cat-icon.is-golden::after {
+  content: '';
+  position: absolute;
+  inset: -20%;
+  background: linear-gradient(
+    115deg,
+    transparent 35%,
+    rgba(255, 244, 194, 0.85) 50%,
+    transparent 65%
+  );
+  transform: translateX(-100%);
+  animation: golden-shimmer 1.8s ease-in-out infinite;
+}
+
+@keyframes golden-shimmer {
+  60%,
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .combo.is-step,
+  .hud-coins.is-pulsing,
+  .cat-icon.is-golden::after {
+    animation: none;
+  }
+}

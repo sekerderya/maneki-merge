@@ -25,7 +25,7 @@ export interface MenuView {
   setUpgradesAvailable(available: boolean): void;
 }
 
-/** Main menu (GAME_DESIGN §2.1). Records and coins are placeholders until the save system (M7). */
+/** Main menu (GAME_DESIGN §2.1). The shop behind UPGRADES arrives in M8. */
 export function createMenuScreen(root: HTMLElement, actions: MenuActions): MenuView {
   root.replaceChildren();
   root.classList.add('menu-screen');

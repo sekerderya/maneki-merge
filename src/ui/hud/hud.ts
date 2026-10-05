@@ -24,6 +24,10 @@ export interface HudView {
   setStage(stage: number, fraction: number, locked: boolean, final: boolean): void;
   /** Draws attention to the lock (the score reached a stage that isn't unlocked). */
   pulseLock(): void;
+  /** A coin landed on the counter. */
+  pulseCoins(): void;
+  /** Where flying coins land. */
+  readonly coinTarget: HTMLElement;
 }
 
 /** In-game HUD (GAME_DESIGN §2.3): pause, score, run coins, next cat, stage and progress. */
@@ -81,6 +85,7 @@ export function createHud(root: HTMLElement, actions: HudActions): HudView {
   };
   stageLabel.addEventListener('animationend', () => stageLabel.classList.remove('is-new'));
   lock.addEventListener('animationend', () => lock.classList.remove('is-pulsing'));
+  coins.addEventListener('animationend', () => coins.classList.remove('is-pulsing'));
 
   return {
     setScore(value) {
@@ -120,5 +125,9 @@ export function createHud(root: HTMLElement, actions: HudActions): HudView {
     pulseLock() {
       restartAnimation(lock, 'is-pulsing');
     },
+    pulseCoins() {
+      restartAnimation(coins, 'is-pulsing');
+    },
+    coinTarget: coins,
   };
 }
