@@ -2,7 +2,6 @@ import { stageInfo, STAGE_COUNT } from '../config/stages';
 import { MAX_TIER } from '../config/tiers';
 import { UPGRADE_IDS, UPGRADES } from '../config/upgrades';
 import type { UpgradeId } from '../config/upgrades';
-import { stageThreshold } from '../core/progression';
 import type { UrlFlags } from '../core/urlFlags';
 import type { GameView } from '../game';
 import type { GameSession } from '../session';
@@ -30,6 +29,14 @@ export interface GameStateSnapshot {
   readonly canDrop: boolean;
   /** The danger countdown is running (a cat is over the line). */
   readonly danger: boolean;
+  /** The next stage exists but isn't unlocked (the HUD shows a lock). */
+  readonly locked: boolean;
+  /** The running expansion, or null. */
+  readonly expansion: {
+    readonly from: number;
+    readonly to: number;
+    readonly phase: 'zoom' | 'reveal';
+  } | null;
   readonly ticks: number;
 }
 
@@ -46,8 +53,12 @@ export interface GameHooks {
   addCoins(coins: number): void;
   /** Applies from the next run. */
   setUpgrade(id: UpgradeId, level: number): void;
-  /** Sets the score to the stage's threshold, so the jar expands to it (if unlocked). */
+  /**
+   * Plays every expansion up to `stage`, one at a time, even past a locked stage (it opens them
+   * for this run only).
+   */
   setStage(stage: number): void;
+  /** Sets the run score; the stage locks still apply. */
   setScore(score: number): void;
   spawnTier(tier: number, x?: number): void;
   forceGameOver(): void;
@@ -77,6 +88,10 @@ export function installDebugHooks(ctx: DebugContext): GameHooks {
         balls: run?.balls.length ?? 0,
         canDrop: run?.canDrop ?? false,
         danger: run?.dangerActive ?? false,
+        locked: run?.progress.locked ?? false,
+        expansion: run?.expansion
+          ? { from: run.expansion.from, to: run.expansion.to, phase: run.expansion.phase }
+          : null,
         ticks: run?.ticks ?? 0,
       };
     },
@@ -93,9 +108,7 @@ export function installDebugHooks(ctx: DebugContext): GameHooks {
       session.setUpgrade(id, Math.max(0, Math.min(UPGRADES[id].maxLevel, Math.round(level))));
     },
     setStage(stage) {
-      const run = session.run;
-      if (!run || stage <= run.stage || stage > STAGE_COUNT) return;
-      run.setScore(Math.max(run.score, stageThreshold(stage, run.stats.thresholdFactor)));
+      session.run?.jumpToStage(Math.round(stage));
     },
     setScore(score) {
       session.run?.setScore(Math.max(0, Math.round(score)));

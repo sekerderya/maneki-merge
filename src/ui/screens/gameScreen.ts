@@ -1,3 +1,5 @@
+import { createBanners } from '../banners/banner';
+import type { BannerView } from '../banners/banner';
 import { createHint } from '../banners/hint';
 import type { HintView } from '../banners/hint';
 import { el } from '../dom';
@@ -7,6 +9,7 @@ import type { HudActions, HudView } from '../hud/hud';
 export interface GameScreenView {
   readonly hud: HudView;
   readonly hint: HintView;
+  readonly banners: BannerView;
   /** The Phaser canvas mounts here; it fills the play band below the HUD. */
   readonly playArea: HTMLElement;
 }
@@ -22,7 +25,8 @@ export function createGameScreen(root: HTMLElement, actions: HudActions): GameSc
   const playArea = el('div', 'play-area');
   playArea.dataset['testid'] = 'play-area';
   const hint = createHint(playArea);
+  const banners = createBanners(playArea);
 
   root.append(hudRoot, playArea);
-  return { hud, hint, playArea };
+  return { hud, hint, banners, playArea };
 }

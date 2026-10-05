@@ -17,8 +17,13 @@ export interface HudView {
   setCoins(coins: number): void;
   /** The next one or two cats (Fortune Teller), next first. */
   setPreview(cats: readonly HudCat[]): void;
-  /** Stage label and the bar towards the next expansion (a lock when it isn't unlocked). */
+  /**
+   * Stage label and the bar towards the next expansion (a lock when it isn't unlocked). A new
+   * stage resets the bar without animating it backwards and makes the label glow.
+   */
   setStage(stage: number, fraction: number, locked: boolean, final: boolean): void;
+  /** Draws attention to the lock (the score reached a stage that isn't unlocked). */
+  pulseLock(): void;
 }
 
 /** In-game HUD (GAME_DESIGN §2.3): pause, score, run coins, next cat, stage and progress. */
@@ -68,6 +73,15 @@ export function createHud(root: HTMLElement, actions: HudActions): HudView {
 
   root.append(pause, main, next);
 
+  let shownStage = 0;
+  const restartAnimation = (node: HTMLElement, className: string): void => {
+    node.classList.remove(className);
+    void node.offsetWidth; // restart the CSS animation
+    node.classList.add(className);
+  };
+  stageLabel.addEventListener('animationend', () => stageLabel.classList.remove('is-new'));
+  lock.addEventListener('animationend', () => lock.classList.remove('is-pulsing'));
+
   return {
     setScore(value) {
       score.textContent = formatNumber(value);
@@ -85,13 +99,26 @@ export function createHud(root: HTMLElement, actions: HudActions): HudView {
       next.classList.toggle('has-two', cats.length > 1);
     },
     setStage(value, fraction, locked, final) {
-      stageLabel.textContent = `Stage ${value}`;
       const percent = Math.round(fraction * 100);
-      fill.style.transform = `scaleX(${fraction})`;
+      if (value !== shownStage) {
+        // A run start or an expansion: jump to the new fill instead of sliding back.
+        fill.classList.add('is-instant');
+        fill.style.transform = `scaleX(${fraction})`;
+        void fill.offsetWidth;
+        fill.classList.remove('is-instant');
+        stageLabel.textContent = `Stage ${value}`;
+        if (shownStage !== 0 && value > shownStage) restartAnimation(stageLabel, 'is-new');
+        shownStage = value;
+      } else {
+        fill.style.transform = `scaleX(${fraction})`;
+      }
       bar.setAttribute('aria-valuenow', String(percent));
       bar.classList.toggle('is-locked', locked);
       bar.classList.toggle('is-final', final);
       lock.hidden = !locked;
+    },
+    pulseLock() {
+      restartAnimation(lock, 'is-pulsing');
     },
   };
 }

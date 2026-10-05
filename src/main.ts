@@ -87,6 +87,7 @@ async function boot(): Promise<void> {
     game,
     hud: gameScreen.hud,
     hint: gameScreen.hint,
+    banners: gameScreen.banners,
     pause,
     gameOver,
     seed: flags.seed,

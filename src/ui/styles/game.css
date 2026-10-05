@@ -199,3 +199,199 @@
     transform: translate(-50%, -6px);
   }
 }
+
+/* Stage label and bar: a short glow when the jar grows; at the last stage the bar stays gold. */
+.hud-stage-label.is-new {
+  animation: stage-label-glow 900ms ease-out;
+}
+
+@keyframes stage-label-glow {
+  0% {
+    color: #fff;
+    text-shadow: 0 0 10px var(--color-gold-300);
+    transform: scale(1.25);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.hud-stage-label {
+  display: inline-block;
+  transform-origin: left center;
+}
+
+.hud-bar-fill.is-instant {
+  transition: none;
+}
+
+.hud-bar.is-final .hud-bar-fill {
+  background: linear-gradient(90deg, var(--color-gold-300), #fff4c2, var(--color-gold-300));
+}
+
+.hud-lock {
+  display: inline-flex;
+}
+
+.hud-lock.is-pulsing svg {
+  animation: lock-pulse 450ms ease-in-out 3;
+}
+
+@keyframes lock-pulse {
+  50% {
+    color: #fff;
+    transform: scale(1.35);
+  }
+}
+
+/* Banners and toasts (GAME_DESIGN §2.3): over the jar, never in the way of a touch. Each runs one
+   animation for its whole life, so pausing the animation pauses the banner. */
+.banners {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.banners.is-paused > * {
+  animation-play-state: paused;
+}
+
+/* A banner and a first-run hint never show on top of each other. */
+.play-area:has(.banner) .hint-pill {
+  visibility: hidden;
+}
+
+.banner {
+  position: absolute;
+  left: 50%;
+  top: 30%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100% - 32px);
+  padding: 14px 24px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, rgba(122, 28, 28, 0.92), rgba(74, 15, 15, 0.92));
+  border: 2px solid var(--color-gold-300);
+  box-shadow:
+    0 0 24px rgba(246, 195, 67, 0.45),
+    var(--shadow-raised);
+  text-align: center;
+  white-space: nowrap;
+  animation: banner-life 1300ms ease-out both;
+}
+
+.banner-text {
+  margin: 0;
+  font-size: 1.7rem;
+  font-weight: var(--weight-bold);
+  line-height: 1.1;
+  color: var(--color-gold-100);
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
+}
+
+.banner-cats {
+  display: flex;
+  gap: 10px;
+}
+
+.banner-cats .cat-icon {
+  --size: 44px;
+}
+
+@keyframes banner-life {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+  12% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.08);
+  }
+  20%,
+  80% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -70%) scale(1);
+  }
+}
+
+/* Toasts sit at the top of the play area, under the HUD's progress bar they are about. */
+.toast {
+  position: absolute;
+  left: 50%;
+  top: 8px;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  margin: 0;
+  padding: 10px 18px;
+  border-radius: var(--radius-pill);
+  background: rgba(40, 8, 8, 0.86);
+  border: 1.5px solid rgba(255, 232, 168, 0.5);
+  color: var(--color-cream);
+  font-weight: var(--weight-bold);
+  font-size: 0.95rem;
+  text-align: center;
+  text-wrap: balance;
+  animation: toast-life 3200ms ease-out both;
+}
+
+@keyframes toast-life {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -12px);
+  }
+  8%,
+  88% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .banner {
+    animation-name: banner-fade;
+  }
+  .toast {
+    animation-name: toast-fade;
+  }
+  .hud-stage-label.is-new,
+  .hud-lock.is-pulsing svg {
+    animation: none;
+  }
+}
+
+@keyframes banner-fade {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%);
+  }
+  10%,
+  85% {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+@keyframes toast-fade {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translateX(-50%);
+  }
+  8%,
+  88% {
+    opacity: 1;
+    transform: translateX(-50%);
+  }
+}

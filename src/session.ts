@@ -6,13 +6,14 @@
  * Until the save system is wired in (M7), the wallet, best score, settings, upgrade levels and
  * seen hints live in memory for the session.
  */
-import { HINT_MERGE_DELAY_MS } from './config/view';
+import { BANNER_JAR_OFFSET, BANNER_NEW_CATS_MS, HINT_MERGE_DELAY_MS } from './config/view';
 import type { UpgradeId } from './config/upgrades';
 import { EventBus } from './core/events';
 import type { GameEvents } from './core/events';
 import { defaultUpgradeLevels } from './core/upgrades';
 import type { GameView } from './game';
 import { RunController } from './run/RunController';
+import type { BannerView } from './ui/banners/banner';
 import type { HintView } from './ui/banners/hint';
 import type { HudView } from './ui/hud/hud';
 import type { GameOverView } from './ui/overlays/gameOverOverlay';
@@ -23,6 +24,7 @@ export interface SessionParts {
   readonly game: GameView;
   readonly hud: HudView;
   readonly hint: HintView;
+  readonly banners: BannerView;
   readonly pause: PauseView;
   readonly gameOver: GameOverView;
   /** A fixed seed (`?seed=`) for every run, or null for a fresh one each time. */
@@ -69,10 +71,11 @@ export class GameSession {
 
   /** Starts a new run (PLAY, Play Again). */
   startRun(): void {
-    const { game, hud, hint, pause, gameOver } = this.parts;
+    const { game, hud, hint, banners, pause, gameOver } = this.parts;
     pause.hide();
     gameOver.hide();
     hint.hide();
+    banners.clear();
     window.clearTimeout(this.hintTimer);
 
     const events = new EventBus<GameEvents>();
@@ -100,10 +103,33 @@ export class GameSession {
     });
     events.on('runCoinsChanged', (e) => hud.setCoins(e.coins));
     events.on('catDropped', showPreview);
+
+    // Expansions (GAME_DESIGN §7.1, §7.2). Banners sit in the empty top of the grown jar.
+    const bannerY = (): number | undefined => {
+      const box = game.jarBox();
+      return box ? box.top + BANNER_JAR_OFFSET * (box.bottom - box.top) : undefined;
+    };
+    events.on('expansionStarted', () => banners.show('The shrine grows!', { y: bannerY() }));
+    events.on('expansionRevealed', (e) => {
+      showPreview();
+      showProgress();
+      banners.show('New cats unlocked!', {
+        tiers: e.newTiers,
+        durationMs: BANNER_NEW_CATS_MS,
+        y: bannerY(),
+      });
+    });
     events.on('expansionFinished', () => {
       showPreview();
       showProgress();
     });
+    events.on('expansionLocked', () => {
+      showProgress();
+      hud.pulseLock();
+      banners.toast('Expansion locked — upgrade the Shrine in the shop');
+    });
+    events.on('paused', () => banners.setPaused(true));
+    events.on('resumed', () => banners.setPaused(false));
     events.on('gameOver', (e) => this.onGameOver(e));
 
     // First-run hints (GAME_DESIGN §2.3).
@@ -148,6 +174,7 @@ export class GameSession {
     this.parts.pause.hide();
     this.parts.gameOver.hide();
     this.parts.hint.hide();
+    this.parts.banners.clear();
     this.parts.game.sleep();
     this.current = null;
   }
@@ -168,6 +195,7 @@ export class GameSession {
   private onGameOver(e: GameEvents['gameOver']): void {
     window.clearTimeout(this.hintTimer);
     this.parts.hint.hide();
+    this.parts.banners.clear();
     this.parts.pause.hide();
     const newBestScore = e.score > this.best;
     if (newBestScore) this.best = e.score;
