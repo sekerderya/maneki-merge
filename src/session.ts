@@ -15,6 +15,8 @@ import {
 import type { UpgradeId } from './config/upgrades';
 import { EventBus } from './core/events';
 import type { GameEvents } from './core/events';
+import { connectRunFeedback } from './feedback';
+import type { FeedbackOutputs } from './feedback';
 import { newRecords } from './core/profile';
 import type { Profile, Records, Settings } from './core/profile';
 import { comboBonus } from './core/upgrades';
@@ -38,6 +40,8 @@ export interface SessionParts {
   readonly coins: CoinFlyView;
   readonly pause: PauseView;
   readonly gameOver: GameOverView;
+  /** Sound effects and haptics for the run's events. */
+  readonly feedback: FeedbackOutputs;
   /** A fixed seed (`?seed=`) for every run, or null for a fresh one each time. */
   readonly seed: number | null;
   /** The wallet, records or settings changed (the menu shows them). */
@@ -109,6 +113,7 @@ export class GameSession {
       events,
     });
     this.current = run;
+    connectRunFeedback(events, this.parts.feedback);
 
     const showProgress = (): void => {
       const p = run.progress;

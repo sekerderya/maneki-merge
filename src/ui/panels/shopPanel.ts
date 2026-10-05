@@ -151,6 +151,7 @@ function createCard(id: UpgradeId, onBuy: () => void): CardParts {
   value.append(el('span', 'shop-stat', def.statLabel), current, arrow, next);
 
   const buy = button('btn shop-buy', '');
+  buy.dataset['sfx'] = 'none'; // A purchase plays its own sound.
   buy.dataset['testid'] = `shop-buy-${id}`;
   buy.addEventListener('click', onBuy);
   const price = el('span', 'shop-price');

@@ -100,6 +100,7 @@ describe('EventBus', () => {
     const h = vi.fn();
     bus.on('merged', h);
     const payload = {
+      id: 5,
       tier: 3,
       newTier: 4,
       golden: false,

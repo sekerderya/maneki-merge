@@ -1,4 +1,5 @@
 import './ui/styles/index.css';
+import { AudioEngine } from './audio';
 import { Profile } from './core/profile';
 import { anyAffordable } from './core/upgrades';
 import type { Scheduler } from './core/profile';
@@ -9,6 +10,7 @@ import { createGame } from './game';
 import {
   BackStack,
   detectInstallContext,
+  Haptics,
   InstallPrompt,
   loadFonts,
   openStorage,
@@ -49,6 +51,18 @@ async function boot(): Promise<void> {
   const profile = new Profile(store, loaded.data, { scheduler: windowScheduler });
   if (storage.persistent) void requestPersistentStorage();
 
+  // Sound and haptics (GAME_DESIGN §12): audio unlocks on the first tap (iOS needs a gesture).
+  const audio = new AudioEngine();
+  audio.setEnabled(profile.settings.sound);
+  audio.listen();
+  const haptics = Haptics.forNavigator();
+  haptics.setEnabled(profile.settings.haptics);
+  // Every button clicks, except the ones that play their own sound (data-sfx="none").
+  document.addEventListener('click', (event) => {
+    const target = event.target instanceof Element ? event.target.closest('button') : null;
+    if (target && !target.closest('[data-sfx="none"]')) audio.play('click');
+  });
+
   // UI
   const back = new BackStack(window.history, window);
   let screens: ScreenManager | null = null;
@@ -83,7 +97,8 @@ async function boot(): Promise<void> {
     onBuy: (id) => {
       if (!profile.buy(id).ok) return;
       showProfile();
-      shop.purchased(id); // From M9: purchase sound.
+      shop.purchased(id);
+      audio.play('purchase');
     },
     onClose: () => closeShop(),
   });
@@ -109,7 +124,10 @@ async function boot(): Promise<void> {
   const pause = createPauseOverlay(overlays, {
     onResume: () => session.resumeRun(),
     onToggleSound: () => toggleSound(),
-    onToggleHaptics: () => session.setSetting('haptics', !session.settings.haptics),
+    onToggleHaptics: () => {
+      session.setSetting('haptics', !session.settings.haptics);
+      haptics.play('tick');
+    },
     onQuit: () => screens?.showMenu(),
   });
   const gameOver = createGameOverOverlay(overlays, {
@@ -127,6 +145,8 @@ async function boot(): Promise<void> {
     menu.setRecords(bestScore, bestStage);
     menu.setUpgradesAffordable(anyAffordable(profile.upgrades, profile.coins));
     shop.update(profile.upgrades, profile.coins);
+    audio.setEnabled(settings.sound);
+    haptics.setEnabled(settings.haptics);
     menu.setSoundOn(settings.sound);
     pause.setSoundOn(settings.sound);
     pause.setHapticsOn(settings.haptics);
@@ -140,6 +160,10 @@ async function boot(): Promise<void> {
     coins: gameScreen.coins,
     pause,
     gameOver,
+    feedback: {
+      play: (name, value) => audio.play(name, value),
+      vibrate: (name) => haptics.play(name),
+    },
     seed: flags.seed,
     onProfileChange: showProfile,
   });
@@ -167,11 +191,9 @@ async function boot(): Promise<void> {
     onHidden: () => {
       session.autoPause();
       session.save();
-      // From M9: suspend audio.
+      audio.suspend();
     },
-    onVisible: () => {
-      // From M9: resume audio.
-    },
+    onVisible: () => audio.resume(),
   });
 
   if (flags.debug) {

@@ -1,7 +1,10 @@
-/** Platform layer: browser and OS integration. Haptics arrive in M9. */
+/** Platform layer: browser and OS integration. */
 export { BackStack } from './backButton';
 export type { BackHandler } from './backButton';
 export { loadFonts } from './fonts';
+export { Haptics } from './haptics';
+export type { HapticPattern } from './haptics';
+export { reducedMotion } from './motion';
 export { detectInstallContext, InstallPrompt, readInstallEnvironment } from './installContext';
 export type { InstallContext } from './installContext';
 export { watchPhoneLandscape } from './orientation';
