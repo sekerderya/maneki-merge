@@ -1,0 +1,268 @@
+/**
+ * The game scene (TECH_SPEC §3, §4, §6): renders a RunController and forwards pointer input to
+ * it. It owns no rules: everything it shows is read from the run each frame, and the only thing
+ * it sends back is `drop(x)`.
+ */
+import Phaser from 'phaser';
+import { AIM_LINE_ALPHA, AIM_LINE_COLOR } from '../config/skin';
+import { tierRadius } from '../config/tiers';
+import {
+  AIM_DASH,
+  AIM_GAP,
+  AIM_LINE_WIDTH,
+  DANGER_FLASH_PERIOD_MS,
+  DROPPER_POP_IN_MS,
+} from '../config/view';
+import type { GameEvents } from '../core/events';
+import { clampDropX, jarGeometry } from '../physics/geometry';
+import type { RunController } from '../run/RunController';
+import { landingY } from './aim';
+import { BallRenderer } from './BallRenderer';
+import { easeInOut, fitCamera, lerpFrame } from './cameraFit';
+import type { CameraFit, JarFrame } from './cameraFit';
+import { MergeFx } from './fx/MergeFx';
+import { JarView } from './JarView';
+import type { BallSkin } from './skins/BallSkin';
+import { PlaceholderSkin } from './skins/PlaceholderSkin';
+
+export const GAME_SCENE_KEY = 'game';
+
+export class GameScene extends Phaser.Scene {
+  private run: RunController | null = null;
+  private unsubscribe: (() => void)[] = [];
+  private skin!: BallSkin;
+  private balls!: BallRenderer;
+  private jar!: JarView;
+  private fx!: MergeFx;
+  private aimLine!: Phaser.GameObjects.Graphics;
+  private dropperBody!: Phaser.GameObjects.Image;
+  private dropperNumber!: Phaser.GameObjects.Image;
+  private countdown!: Phaser.GameObjects.Text;
+
+  /** Where the player aims, in world x (clamped per cat when shown or dropped). */
+  private aimX = 0;
+  private aiming = false;
+  private popInFromMs = -Infinity;
+  private nowMs = 0;
+  private fit: CameraFit = { zoom: 1, centerX: 0, centerY: 0 };
+  private readonly point = new Phaser.Math.Vector2();
+
+  constructor() {
+    super(GAME_SCENE_KEY);
+  }
+
+  create(): void {
+    this.skin = new PlaceholderSkin(this.textures);
+    this.skin.prewarm(9);
+
+    const layer = (): Phaser.GameObjects.Layer => this.add.layer();
+    const jarBack = layer();
+    const aim = layer();
+    const bodies = layer();
+    const numbers = layer();
+    const jarFront = layer();
+    const dropper = layer();
+    const fx = layer();
+
+    const back = this.add.graphics();
+    const front = this.add.graphics();
+    const rim = this.add.graphics();
+    jarBack.add(back);
+    jarFront.add([front, rim]);
+    this.jar = new JarView(back, front, rim);
+
+    this.aimLine = this.add.graphics();
+    aim.add(this.aimLine);
+    this.balls = new BallRenderer(this, this.skin, bodies, numbers);
+
+    const first = this.skin.body(1, false).key;
+    this.dropperBody = this.add.image(0, 0, first).setVisible(false);
+    this.dropperNumber = this.add.image(0, 0, first).setVisible(false);
+    dropper.add([this.dropperBody, this.dropperNumber]);
+
+    this.fx = new MergeFx(this, fx);
+    this.countdown = this.add
+      .text(0, 0, '', {
+        fontFamily: 'Fredoka, system-ui, sans-serif',
+        fontStyle: '700',
+        fontSize: '96px',
+        color: '#ffffff',
+        stroke: '#7a1c1c',
+        strokeThickness: 14,
+      })
+      .setOrigin(0.5)
+      .setVisible(false);
+    fx.add(this.countdown);
+
+    this.input.on(Phaser.Input.Events.POINTER_DOWN, this.onPointerDown, this);
+    this.input.on(Phaser.Input.Events.POINTER_MOVE, this.onPointerMove, this);
+    this.input.on(Phaser.Input.Events.POINTER_UP, this.onPointerUp, this);
+    this.input.on(Phaser.Input.Events.POINTER_UP_OUTSIDE, this.onPointerUp, this);
+    this.renderer.on(Phaser.Renderer.Events.RESTORE_WEBGL, () => this.skin.restore());
+
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.detach());
+  }
+
+  /** Shows a new run (the previous one, if any, is dropped). */
+  attach(run: RunController): void {
+    this.detach();
+    this.run = run;
+    this.aimX = 0;
+    this.aiming = false;
+    this.popInFromMs = this.nowMs;
+    const on = <K extends keyof GameEvents>(type: K, fn: (p: GameEvents[K]) => void): void => {
+      this.unsubscribe.push(run.events.on(type, fn));
+    };
+    on('dropReady', () => {
+      this.popInFromMs = this.nowMs;
+    });
+    on('merged', (e) =>
+      this.fx.merge(this.nowMs, e.at.x, e.at.y, e.newTier, e.score, run.geometry.scale),
+    );
+    on('jackpot', (e) =>
+      this.fx.merge(this.nowMs, e.at.x, e.at.y, e.tier, e.score, run.geometry.scale),
+    );
+    on('paused', () => {
+      this.aiming = false;
+    });
+  }
+
+  detach(): void {
+    for (const off of this.unsubscribe) off();
+    this.unsubscribe = [];
+    this.run = null;
+    this.balls?.clear();
+    this.fx?.clear();
+  }
+
+  override update(time: number, delta: number): void {
+    this.nowMs = time;
+    const run = this.run;
+    if (!run) return;
+    run.update(delta);
+    this.render(run);
+  }
+
+  // ── Rendering ──────────────────────────────────────────────────────────────
+
+  private render(run: RunController): void {
+    const frame = this.jarFrame(run);
+    const cam = this.cameras.main;
+    this.fit = fitCamera(frame, cam.width, cam.height);
+    cam.setZoom(this.fit.zoom).centerOn(this.fit.centerX, this.fit.centerY);
+    this.fx.setResolution(this.fit.zoom);
+
+    const danger = run.dangerActive;
+    const flash = danger ? Math.floor(this.nowMs / (DANGER_FLASH_PERIOD_MS / 2)) % 2 === 0 : null;
+    this.jar.draw(frame.width, frame.height, flash);
+    this.balls.sync(run.balls);
+    this.renderDropper(run);
+    this.renderCountdown(run, frame);
+    this.fx.update(this.nowMs);
+  }
+
+  /** The jar the camera frames: the stage's, or a blend while an expansion zooms out. */
+  private jarFrame(run: RunController): JarFrame {
+    const e = run.expansion;
+    if (!e || e.phase !== 'zoom') return run.geometry;
+    return lerpFrame(jarGeometry(e.from), jarGeometry(e.to), easeInOut(e.zoomProgress));
+  }
+
+  private renderDropper(run: RunController): void {
+    const show = run.state === 'playing' && run.canDrop;
+    this.dropperBody.setVisible(show);
+    this.dropperNumber.setVisible(show);
+    this.aimLine.clear();
+    if (!show) return;
+
+    const geo = run.geometry;
+    const cat = run.current;
+    const radius = tierRadius(cat.tier);
+    const x = clampDropX(this.aimX, radius, geo);
+    const t = Math.min(1, (this.nowMs - this.popInFromMs) / DROPPER_POP_IN_MS);
+    const pop = backOut(t);
+
+    const body = this.skin.body(cat.tier, cat.golden);
+    this.dropperBody
+      .setTexture(body.key)
+      .setPosition(x, geo.dropY)
+      .setRotation(0)
+      .setScale(body.unitsPerPixel * pop);
+    const number = this.skin.number(cat.tier);
+    this.dropperNumber.setVisible(number !== null);
+    if (number) {
+      this.dropperNumber
+        .setTexture(number.key)
+        .setPosition(x, geo.dropY)
+        .setScale(number.unitsPerPixel * pop);
+    }
+
+    // Aim guide: a dashed line from the cat down to where it first touches something.
+    const land = landingY(x, radius, geo.dropY, run.balls);
+    const s = geo.scale;
+    const g = this.aimLine;
+    g.lineStyle(AIM_LINE_WIDTH * s, AIM_LINE_COLOR, AIM_LINE_ALPHA);
+    const top = geo.dropY + radius;
+    const bottom = land + radius;
+    for (let y = top + AIM_GAP * s; y < bottom; y += (AIM_DASH + AIM_GAP) * s) {
+      g.lineBetween(x, y, x, Math.min(y + AIM_DASH * s, bottom));
+    }
+    // A faint ghost of the cat where it lands.
+    g.lineStyle(AIM_LINE_WIDTH * s, AIM_LINE_COLOR, AIM_LINE_ALPHA * 0.6);
+    g.strokeCircle(x, land, radius);
+  }
+
+  private renderCountdown(run: RunController, frame: JarFrame): void {
+    const show = run.dangerActive && run.state === 'playing';
+    this.countdown.setVisible(show);
+    if (!show) return;
+    const scale = frame.width / jarGeometry(1).width;
+    const resolution = this.fit.zoom * scale;
+    if (this.countdown.style.resolution !== resolution) this.countdown.setResolution(resolution);
+    this.countdown
+      .setText(String(Math.max(1, Math.ceil(run.dangerRemainingMs / 1000))))
+      .setScale(scale)
+      .setPosition(0, -frame.height * 0.82);
+  }
+
+  // ── Input (GAME_DESIGN §3) ─────────────────────────────────────────────────
+
+  private worldX(pointer: Phaser.Input.Pointer): number {
+    return this.cameras.main.getWorldPoint(pointer.x, pointer.y, this.point).x;
+  }
+
+  private onPointerDown(pointer: Phaser.Input.Pointer): void {
+    if (this.run?.state !== 'playing') return;
+    this.aiming = true;
+    this.aimX = this.clampAim(this.worldX(pointer));
+  }
+
+  /** Drag to aim; a mouse aims by moving without a button too. */
+  private onPointerMove(pointer: Phaser.Input.Pointer): void {
+    if (this.run?.state !== 'playing') return;
+    if (!this.aiming && pointer.wasTouch) return;
+    this.aimX = this.clampAim(this.worldX(pointer));
+  }
+
+  /** Release drops (ignored during the cooldown); a tap drops at the tapped x. */
+  private onPointerUp(pointer: Phaser.Input.Pointer): void {
+    if (!this.aiming) return;
+    this.aiming = false;
+    const run = this.run;
+    if (run?.state !== 'playing') return;
+    this.aimX = this.clampAim(this.worldX(pointer));
+    run.drop(this.aimX);
+  }
+
+  private clampAim(x: number): number {
+    const half = this.run?.geometry.halfWidth ?? 0;
+    return Math.max(-half, Math.min(half, x));
+  }
+}
+
+/** Ease-out with a small overshoot, for the next cat popping into the dropper. */
+function backOut(t: number): number {
+  const c = 1.70158;
+  const u = t - 1;
+  return 1 + (c + 1) * u * u * u + c * u * u;
+}
