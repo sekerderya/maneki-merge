@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Placeholder app icon (replaced from art-source/app-icon.png in M13).
+       Full-bleed square; the artwork stays inside the central maskable safe zone. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9e2a22" />
+      <stop offset="1" stop-color="#d0892a" />
+    </linearGradient>
+    <radialGradient id="coin" cx="0.4" cy="0.35" r="0.75">
+      <stop offset="0" stop-color="#ffe08a" />
+      <stop offset="1" stop-color="#e2a52b" />
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)" />
+  <circle cx="256" cy="268" r="150" fill="url(#coin)" stroke="#a8691a" stroke-width="10" />
+  <!-- ears -->
+  <path d="M168 214 L180 132 L236 182 Z" fill="#fff8ec" stroke="#5a2a1a" stroke-width="9" stroke-linejoin="round" />
+  <path d="M344 214 L332 132 L276 182 Z" fill="#fff8ec" stroke="#5a2a1a" stroke-width="9" stroke-linejoin="round" />
+  <path d="M186 186 L192 152 L218 176 Z" fill="#f29a9a" />
+  <path d="M326 186 L320 152 L294 176 Z" fill="#f29a9a" />
+  <!-- head -->
+  <ellipse cx="256" cy="262" rx="104" ry="92" fill="#fff8ec" stroke="#5a2a1a" stroke-width="9" />
+  <!-- eyes (happy arcs) -->
+  <path d="M206 254 Q222 236 238 254" fill="none" stroke="#5a2a1a" stroke-width="9" stroke-linecap="round" />
+  <path d="M274 254 Q290 236 306 254" fill="none" stroke="#5a2a1a" stroke-width="9" stroke-linecap="round" />
+  <!-- nose and mouth -->
+  <path d="M248 272 L264 272 L256 282 Z" fill="#d9534f" />
+  <path d="M256 282 Q246 296 234 290 M256 282 Q266 296 278 290" fill="none" stroke="#5a2a1a" stroke-width="6" stroke-linecap="round" />
+  <!-- cheeks -->
+  <circle cx="200" cy="282" r="12" fill="#f29a9a" opacity="0.8" />
+  <circle cx="312" cy="282" r="12" fill="#f29a9a" opacity="0.8" />
+  <!-- collar and bell -->
+  <path d="M176 332 Q256 368 336 332" fill="none" stroke="#c62828" stroke-width="16" stroke-linecap="round" />
+  <circle cx="256" cy="360" r="20" fill="#f6c343" stroke="#a8691a" stroke-width="6" />
+</svg>

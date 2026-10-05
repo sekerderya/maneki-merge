@@ -1,6 +1,14 @@
 import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+import { VitePWA } from 'vite-plugin-pwa';
 import { defineConfig } from 'vitest/config';
+import {
+  APP_DESCRIPTION,
+  APP_NAME,
+  APP_SHORT_NAME,
+  BACKGROUND_COLOR,
+  THEME_COLOR,
+} from './src/config/app.ts';
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as {
   version: string;
@@ -30,6 +38,50 @@ export default defineConfig({
   build: {
     target: 'es2022',
   },
+  plugins: [
+    VitePWA({
+      // Updates wait for the player: the menu shows a badge and tapping it reloads (TECH_SPEC §9).
+      registerType: 'prompt',
+      injectRegister: false,
+      strategies: 'generateSW',
+      // The glob below already precaches the icons.
+      includeManifestIcons: false,
+      // Icons come from `npm run icons` (pwa-assets.config.ts) and are committed in public/.
+      manifest: {
+        id: base,
+        name: APP_NAME,
+        short_name: APP_SHORT_NAME,
+        description: APP_DESCRIPTION,
+        lang: 'en',
+        start_url: base,
+        scope: base,
+        display: 'fullscreen',
+        display_override: ['fullscreen', 'standalone'],
+        orientation: 'portrait',
+        theme_color: THEME_COLOR,
+        background_color: BACKGROUND_COLOR,
+        categories: ['games'],
+        icons: [
+          { src: 'pwa-64x64.png', sizes: '64x64', type: 'image/png' },
+          { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
+          { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
+          {
+            src: 'maskable-icon-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
+        ],
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+        navigateFallback: 'index.html',
+        cleanupOutdatedCaches: true,
+        // Phaser alone is larger than Workbox's 2 MiB default.
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+      },
+    }),
+  ],
   test: {
     include: ['tests/unit/**/*.test.ts', 'tests/physics/**/*.test.ts'],
     environment: 'node',

@@ -4,13 +4,41 @@
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
+      content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no"
+    />
+    <title>Maneki Merge</title>
+    <meta
+      name="description"
+      content="Lucky-cat merge game with a growing jar. Offline PWA for iOS and Android."
     />
     <meta name="theme-color" content="#7a1c1c" />
-    <title>Maneki Merge</title>
+    <meta name="color-scheme" content="dark" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- Home-screen app (iOS ignores the manifest's display mode and orientation). -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Maneki" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/icon.svg" sizes="any" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
+    <!-- vite-plugin-pwa injects the manifest link. -->
+
+    <!-- Paint the theme color before the CSS bundle loads (no white flash on launch). -->
+    <style>
+      html {
+        background: #7a1c1c;
+      }
+    </style>
   </head>
   <body>
-    <main id="app"></main>
+    <main id="app">
+      <section id="menu-screen" class="screen" aria-label="Main menu"></section>
+      <section id="game-screen" class="screen" aria-label="Game" hidden></section>
+      <div id="overlays"></div>
+    </main>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
