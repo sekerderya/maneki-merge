@@ -46,6 +46,20 @@ export function fitCamera(jar: JarFrame, viewWidth: number, viewHeight: number):
   return { zoom, centerX: 0, centerY: region.bottom - h / zoom / 2 };
 }
 
+/** Where a world point appears in the viewport, in canvas pixels from its top-left corner. */
+export function worldToView(
+  fit: CameraFit,
+  viewWidth: number,
+  viewHeight: number,
+  x: number,
+  y: number,
+): { x: number; y: number } {
+  return {
+    x: (x - fit.centerX) * fit.zoom + viewWidth / 2,
+    y: (y - fit.centerY) * fit.zoom + viewHeight / 2,
+  };
+}
+
 /** Linear blend of two jar frames (t = 0 → a, t = 1 → b). */
 export function lerpFrame(a: JarFrame, b: JarFrame, t: number): JarFrame {
   return {

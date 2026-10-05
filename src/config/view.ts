@@ -50,8 +50,49 @@ export const FLOAT_TEXT_MS = 700;
 export const FLOAT_TEXT_RISE = 70;
 /** Font size of the floating score, in stage-1 world units. */
 export const FLOAT_TEXT_SIZE = 34;
-/** At most this many merge effects play at once; older ones are recycled. */
-export const FX_POOL_SIZE = 24;
+/**
+ * At most this many effects of each kind play at once; older ones are recycled. A cash-out can pop
+ * dozens of cats in one go.
+ */
+export const FX_POOL_SIZE = 48;
+
+/**
+ * Popping cats (cash-out, Lucky Save): each grows by POP_SCALE and fades over POP_MS. Pops of the
+ * same tick go off one after another, POP_STAGGER_MS apart but within POP_STAGGER_MAX_MS in all,
+ * so a cash-out finishes inside the expansion's reveal.
+ */
+export const POP_MS = 220;
+export const POP_SCALE = 1.3;
+export const POP_STAGGER_MS = 30;
+export const POP_STAGGER_MAX_MS = 240;
+
+/**
+ * Expansion (GAME_DESIGN §7.1): the drawn walls and rim trail the camera by this fraction of the
+ * zoom, so the view pulls back first and the jar then widens into the new frame. Both arrive
+ * together when the zoom ends. 0 keeps the jar locked to the frame.
+ */
+export const EXPANSION_WALL_LAG = 0.25;
+/** Gold sparks along the rim when an expansion starts, in stage-1 units (scaled by the stage). */
+export const EXPANSION_SPARKS = {
+  count: 44,
+  lifespanMs: { min: 650, max: 1100 },
+  speed: { min: 260, max: 640 },
+  gravity: 950,
+  /** Spark size as a fraction of its 64 px texture. */
+  scale: 0.5,
+} as const;
+/** Each frame of an expansion may spend this long drawing the next stage's cat textures. */
+export const SKIN_PREPARE_BUDGET_MS = 4;
 
 /** First-run hints (GAME_DESIGN §2.3). */
 export const HINT_MERGE_DELAY_MS = 600;
+
+/** How long banners and toasts stay (GAME_DESIGN §2.3), including their pop-in and fade-out. */
+export const BANNER_MS = 1300;
+/**
+ * Banners centre this far below the rim, as a fraction of the jar's height: right after an
+ * expansion the top of the jar is empty, and the dropper above the rim stays visible.
+ */
+export const BANNER_JAR_OFFSET = 0.15;
+export const BANNER_NEW_CATS_MS = 2000;
+export const TOAST_MS = 3200;

@@ -17,6 +17,8 @@ export interface GameView {
   sleep(): void;
   /** Re-reads the play area's size (also done automatically on resize). */
   refit(): void;
+  /** The jar's rim and floor in CSS pixels from the top of the play area, or null. */
+  jarBox(): { top: number; bottom: number } | null;
   /** Frames per second actually rendered, for the debug panel. */
   readonly fps: number;
 }
@@ -97,6 +99,10 @@ export function createGame(parent: HTMLElement): GameView {
       if (looping && game.loop.running) game.loop.sleep();
     },
     refit,
+    jarBox() {
+      const box = scene?.jarBox();
+      return box ? { top: box.top / resolution, bottom: box.bottom / resolution } : null;
+    },
     get fps() {
       return game.loop?.actualFps ?? 0;
     },

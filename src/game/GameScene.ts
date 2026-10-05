@@ -2,9 +2,14 @@
  * The game scene (TECH_SPEC §3, §4, §6): renders a RunController and forwards pointer input to
  * it. It owns no rules: everything it shows is read from the run each frame, and the only thing
  * it sends back is `drop(x)`.
+ *
+ * Expansions (GAME_DESIGN §7.1) are drawn from the run's timeline every frame: camera, walls and
+ * rim from `expansionFrames`, the next stage's textures prepared during the zoom and switched in
+ * at the reveal, the cash-out as staggered pops.
  */
 import Phaser from 'phaser';
 import { AIM_LINE_ALPHA, AIM_LINE_COLOR } from '../config/skin';
+import { FIRST_STAGE } from '../config/stages';
 import { tierRadius } from '../config/tiers';
 import {
   AIM_DASH,
@@ -12,15 +17,20 @@ import {
   AIM_LINE_WIDTH,
   DANGER_FLASH_PERIOD_MS,
   DROPPER_POP_IN_MS,
+  SKIN_PREPARE_BUDGET_MS,
 } from '../config/view';
 import type { GameEvents } from '../core/events';
 import { clampDropX, jarGeometry } from '../physics/geometry';
 import type { RunController } from '../run/RunController';
 import { landingY } from './aim';
 import { BallRenderer } from './BallRenderer';
-import { easeInOut, fitCamera, lerpFrame } from './cameraFit';
+import { fitCamera, worldToView } from './cameraFit';
 import type { CameraFit, JarFrame } from './cameraFit';
+import { expansionFrames } from './expansionView';
 import { MergeFx } from './fx/MergeFx';
+import { PopFx } from './fx/PopFx';
+import type { PopRequest } from './fx/PopFx';
+import { SparkFx } from './fx/SparkFx';
 import { JarView } from './JarView';
 import type { BallSkin } from './skins/BallSkin';
 import { PlaceholderSkin } from './skins/PlaceholderSkin';
@@ -34,6 +44,8 @@ export class GameScene extends Phaser.Scene {
   private balls!: BallRenderer;
   private jar!: JarView;
   private fx!: MergeFx;
+  private pops!: PopFx;
+  private sparks!: SparkFx;
   private aimLine!: Phaser.GameObjects.Graphics;
   private dropperBody!: Phaser.GameObjects.Image;
   private dropperNumber!: Phaser.GameObjects.Image;
@@ -46,6 +58,10 @@ export class GameScene extends Phaser.Scene {
   private nowMs = 0;
   private fit: CameraFit = { zoom: 1, centerX: 0, centerY: 0 };
   private readonly point = new Phaser.Math.Vector2();
+  /** Cats popped during this frame's ticks; they pop on screen together, staggered. */
+  private readonly popped: PopRequest[] = [];
+  /** The stage whose textures are being drawn ahead of an expansion's reveal (0: none). */
+  private preparing = 0;
 
   constructor() {
     super(GAME_SCENE_KEY);
@@ -53,7 +69,7 @@ export class GameScene extends Phaser.Scene {
 
   create(): void {
     this.skin = new PlaceholderSkin(this.textures);
-    this.skin.prewarm(9);
+    this.skin.prepare(FIRST_STAGE, Infinity);
 
     const layer = (): Phaser.GameObjects.Layer => this.add.layer();
     const jarBack = layer();
@@ -81,6 +97,8 @@ export class GameScene extends Phaser.Scene {
     dropper.add([this.dropperBody, this.dropperNumber]);
 
     this.fx = new MergeFx(this, fx);
+    this.pops = new PopFx(this.balls, this.fx);
+    this.sparks = new SparkFx(this, fx);
     this.countdown = this.add
       .text(0, 0, '', {
         fontFamily: 'Fredoka, system-ui, sans-serif',
@@ -110,6 +128,7 @@ export class GameScene extends Phaser.Scene {
     this.aimX = 0;
     this.aiming = false;
     this.popInFromMs = this.nowMs;
+    this.skin.setStage(run.stage);
     const on = <K extends keyof GameEvents>(type: K, fn: (p: GameEvents[K]) => void): void => {
       this.unsubscribe.push(run.events.on(type, fn));
     };
@@ -122,17 +141,50 @@ export class GameScene extends Phaser.Scene {
     on('jackpot', (e) =>
       this.fx.merge(this.nowMs, e.at.x, e.at.y, e.tier, e.score, run.geometry.scale),
     );
+    on('catPopped', (e) => {
+      this.popped.push({ id: e.id, tier: e.tier, x: e.at.x, y: e.at.y, coins: e.coins });
+    });
+    on('expansionStarted', (e) => {
+      this.preparing = e.to;
+      const geo = jarGeometry(e.from);
+      this.sparks.rim(geo.width, geo.rimY, geo.scale);
+    });
+    on('expansionRevealed', (e) => {
+      this.preparing = 0;
+      this.skin.setStage(e.stage);
+    });
     on('paused', () => {
       this.aiming = false;
+      this.sparks.pause();
     });
+    on('resumed', () => this.sparks.resume());
+  }
+
+  /**
+   * The current stage's jar on screen: rim and floor y in canvas pixels, or null without a run.
+   * At both ends of an expansion the jar fills the same box, so banners can anchor to it.
+   */
+  jarBox(): { top: number; bottom: number } | null {
+    const run = this.run;
+    if (!run) return null;
+    const cam = this.cameras.main;
+    const fit = fitCamera(run.geometry, cam.width, cam.height);
+    return {
+      top: worldToView(fit, cam.width, cam.height, 0, run.geometry.rimY).y,
+      bottom: worldToView(fit, cam.width, cam.height, 0, 0).y,
+    };
   }
 
   detach(): void {
     for (const off of this.unsubscribe) off();
     this.unsubscribe = [];
     this.run = null;
+    this.popped.length = 0;
+    this.preparing = 0;
+    this.pops?.clear();
     this.balls?.clear();
     this.fx?.clear();
+    this.sparks?.clear();
   }
 
   override update(time: number, delta: number): void {
@@ -140,32 +192,36 @@ export class GameScene extends Phaser.Scene {
     const run = this.run;
     if (!run) return;
     run.update(delta);
+    if (this.popped.length > 0) {
+      this.pops.popAll(this.nowMs, this.popped, run.geometry.scale);
+      this.popped.length = 0;
+    }
+    // Physics is paused during the zoom, so drawing the next stage's textures costs no frames.
+    if (this.preparing && this.skin.prepare(this.preparing, SKIN_PREPARE_BUDGET_MS)) {
+      this.preparing = 0;
+    }
     this.render(run);
   }
 
   // ── Rendering ──────────────────────────────────────────────────────────────
 
   private render(run: RunController): void {
-    const frame = this.jarFrame(run);
+    // Camera, walls and rim all come from the run's timeline (TECH_SPEC §4), so a resize or a
+    // pause in the middle of an expansion simply shows the right frame next time.
+    const frames = expansionFrames(run.geometry, run.expansion, run.renderAlpha);
     const cam = this.cameras.main;
-    this.fit = fitCamera(frame, cam.width, cam.height);
+    this.fit = fitCamera(frames.camera, cam.width, cam.height);
     cam.setZoom(this.fit.zoom).centerOn(this.fit.centerX, this.fit.centerY);
     this.fx.setResolution(this.fit.zoom);
 
     const danger = run.dangerActive;
     const flash = danger ? Math.floor(this.nowMs / (DANGER_FLASH_PERIOD_MS / 2)) % 2 === 0 : null;
-    this.jar.draw(frame.width, frame.height, flash);
+    this.jar.draw(frames.jar.width, frames.jar.height, flash);
     this.balls.sync(run.balls);
     this.renderDropper(run);
-    this.renderCountdown(run, frame);
+    this.renderCountdown(run, frames.jar);
+    this.pops.update(this.nowMs);
     this.fx.update(this.nowMs);
-  }
-
-  /** The jar the camera frames: the stage's, or a blend while an expansion zooms out. */
-  private jarFrame(run: RunController): JarFrame {
-    const e = run.expansion;
-    if (!e || e.phase !== 'zoom') return run.geometry;
-    return lerpFrame(jarGeometry(e.from), jarGeometry(e.to), easeInOut(e.zoomProgress));
   }
 
   private renderDropper(run: RunController): void {

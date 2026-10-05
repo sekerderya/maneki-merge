@@ -1,7 +1,7 @@
 /**
  * Basic merge feedback (ROADMAP M5): a ring that pops out in the tier's colour and a floating
- * "+score". Both are pooled and animated by hand in `update`, so a burst of merges allocates
- * nothing. Particles, coin flights and shakes arrive with M7 and M9.
+ * "+score" (gold "+coins" for a cat popping into coins). Both are pooled and animated by hand in
+ * `update`, so a burst of merges allocates nothing. Coin flights and shakes arrive with M7 and M9.
  */
 import type Phaser from 'phaser';
 import { tierRadius } from '../../config/tiers';
@@ -17,7 +17,10 @@ import { hexToNumber } from '../../core/color';
 import { tierColor } from '../skins/PlaceholderSkin';
 
 const RING_KEY = 'fx-ring';
-const RING_PX = 256;
+/** Big enough that the ring of a tier-15 Jackpot is not upscaled on a phone. */
+const RING_PX = 512;
+const SCORE_COLOR = '#ffe8a8';
+const COINS_COLOR = '#ffc83d';
 
 interface Pop {
   startMs: number;
@@ -50,7 +53,7 @@ export class MergeFx {
           fontFamily: 'Fredoka, system-ui, sans-serif',
           fontStyle: '700',
           fontSize: `${FLOAT_TEXT_SIZE}px`,
-          color: '#ffe8a8',
+          color: SCORE_COLOR,
           stroke: '#3b1a10',
           strokeThickness: FLOAT_TEXT_SIZE * 0.18,
         })
@@ -68,6 +71,23 @@ export class MergeFx {
 
   /** A merge into `newTier` (or a Jackpot of `tier`) at a world point; `scale` is the stage's. */
   merge(nowMs: number, x: number, y: number, tier: number, score: number, scale: number): void {
+    this.burst(nowMs, x, y, tier, `+${score}`, SCORE_COLOR, scale);
+  }
+
+  /** A cat of `tier` popping into `coins` (cash-out, Lucky Save). */
+  coins(nowMs: number, x: number, y: number, tier: number, coins: number, scale: number): void {
+    this.burst(nowMs, x, y, tier, `+${coins}`, COINS_COLOR, scale);
+  }
+
+  private burst(
+    nowMs: number,
+    x: number,
+    y: number,
+    tier: number,
+    label: string,
+    color: string,
+    scale: number,
+  ): void {
     const pop = this.pops[this.nextPop] as Pop;
     this.nextPop = (this.nextPop + 1) % this.pops.length;
     pop.startMs = nowMs;
@@ -85,7 +105,8 @@ export class MergeFx {
     const text = item.text;
     const resolution = this.resolution * scale;
     if (text.style.resolution !== resolution) text.setResolution(resolution);
-    text.setText(`+${score}`).setScale(scale).setPosition(x, y).setAlpha(1).setVisible(true);
+    if (text.style.color !== color) text.setColor(color);
+    text.setText(label).setScale(scale).setPosition(x, y).setAlpha(1).setVisible(true);
   }
 
   update(nowMs: number): void {

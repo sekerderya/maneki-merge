@@ -1,0 +1,98 @@
+/**
+ * Cats popping into coins (cash-out, Lucky Save; GAME_DESIGN §7.1). The run removes them at once;
+ * here each cat's own sprite stays where it was, then grows and fades in turn while its ring and
+ * "+coins" go off. Pops of one tick are staggered (POP_STAGGER_MS apart, POP_STAGGER_MAX_MS in
+ * all), so a cash-out ripples through the jar and ends within the expansion's reveal.
+ */
+import { POP_MS, POP_SCALE, POP_STAGGER_MAX_MS, POP_STAGGER_MS } from '../../config/view';
+import type { BallRenderer, CatSprite } from '../BallRenderer';
+import type { MergeFx } from './MergeFx';
+
+export interface PopRequest {
+  readonly id: number;
+  readonly tier: number;
+  readonly x: number;
+  readonly y: number;
+  readonly coins: number;
+}
+
+interface Popping {
+  sprite: CatSprite | null;
+  tier: number;
+  x: number;
+  y: number;
+  coins: number;
+  scale: number;
+  startMs: number;
+  started: boolean;
+  bodyScale: number;
+  numberScale: number;
+}
+
+/** Delay of the `index`-th of `count` pops that go off together. */
+export function popDelay(index: number, count: number): number {
+  if (count <= 1) return 0;
+  return index * Math.min(POP_STAGGER_MS, POP_STAGGER_MAX_MS / (count - 1));
+}
+
+export class PopFx {
+  private readonly active: Popping[] = [];
+  private readonly spare: Popping[] = [];
+
+  constructor(
+    private readonly balls: BallRenderer,
+    private readonly fx: MergeFx,
+  ) {}
+
+  /** Pops a batch of cats that left the run in the same tick; `scale` is the stage's. */
+  popAll(nowMs: number, requests: readonly PopRequest[], scale: number): void {
+    requests.forEach((r, i) => {
+      const item = this.spare.pop() ?? ({} as Popping);
+      const sprite = this.balls.detach(r.id);
+      item.sprite = sprite;
+      item.tier = r.tier;
+      item.x = r.x;
+      item.y = r.y;
+      item.coins = r.coins;
+      item.scale = scale;
+      item.startMs = nowMs + popDelay(i, requests.length);
+      item.started = false;
+      item.bodyScale = sprite?.body.scaleX ?? 1;
+      item.numberScale = sprite?.number.scaleX ?? 1;
+      this.active.push(item);
+    });
+  }
+
+  update(nowMs: number): void {
+    for (let i = this.active.length - 1; i >= 0; i--) {
+      const item = this.active[i] as Popping;
+      if (nowMs < item.startMs) continue;
+      if (!item.started) {
+        item.started = true;
+        this.fx.coins(nowMs, item.x, item.y, item.tier, item.coins, item.scale);
+      }
+      const t = (nowMs - item.startMs) / POP_MS;
+      const sprite = item.sprite;
+      if (t >= 1) {
+        this.finish(i, item);
+        continue;
+      }
+      if (!sprite) continue;
+      const grow = 1 + (POP_SCALE - 1) * (1 - (1 - t) * (1 - t));
+      sprite.body.setScale(item.bodyScale * grow).setAlpha(1 - t);
+      sprite.number.setScale(item.numberScale * grow).setAlpha(1 - t);
+    }
+  }
+
+  /** Ends every pop at once (a new run, or leaving the game). */
+  clear(): void {
+    for (let i = this.active.length - 1; i >= 0; i--) this.finish(i, this.active[i] as Popping);
+  }
+
+  private finish(index: number, item: Popping): void {
+    if (item.sprite) this.balls.recycle(item.sprite);
+    item.sprite = null;
+    this.active.splice(index, 1);
+    this.spare.push(item);
+  }
+}
