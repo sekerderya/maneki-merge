@@ -2,6 +2,43 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.5.0] - 2026-10-05
+
+### Added
+
+- M5: the first playable version. PLAY starts a run with placeholder cats; the Phaser canvas renders it and forwards input.
+- `game/GameScene.ts`: renders the run each frame and sends `drop(x)`. The dropper follows the finger or mouse, a release or tap drops, releases during the cooldown are ignored, and the next cat pops in.
+- Aim guide: a dashed line down to where the cat first touches something, with a faint ghost circle there (`game/aim.ts`, tested against the real physics).
+- `game/cameraFit.ts`: fits the jar, the dropper band and the margins into the play band, letterboxed with the floor at the bottom; re-fits on resize and rotation.
+- `game/skins/`: the `BallSkin` interface and `PlaceholderSkin`: a colour per tier, darker outline, highlight arc that shows rolling, gold ring and sparkles for golden cats, and upright tier numbers in Fredoka as separate sprites. Textures are sized so they are never upscaled.
+- `game/BallRenderer.ts`, `game/JarView.ts`, `game/fx/MergeFx.ts`: pooled cat sprites, the wooden jar with its rim, the danger flash and countdown, and merge pops with a floating "+score".
+- High-DPI canvas: rendered at devicePixelRatio (capped at 2.5) and shown at CSS size. The game loop sleeps on the menu.
+- DOM HUD: pause, score, run coins, next-cat preview, stage label and progress bar with a lock icon.
+- Pause overlay (Resume, Sound, Haptics, Quit to Menu) and Game Over overlay (score, best, stage, coins, "New best!", Play Again, Menu).
+- Back button: game → pause → menu. Backgrounding the app or turning a phone sideways pauses the run.
+- First-run hints: "Drag to aim, release to drop" and "Merge two identical cats".
+- `?debug=1` panel (FPS, body count, spawn tier, set score, jump to stage, set upgrade, add coins, game over) and the `window.__game` hooks from TECH_SPEC §11.
+- `session.ts`: the composition root that starts runs and wires their events to the HUD, overlays and hints.
+- Tests: camera fit for every stage and several viewports, aim landing, colour helpers and the placeholder palette; E2E for a whole run (10 drops, pause/resume, game over, play again, menu), tap-to-drop, backgrounding and the first expansion.
+
+### Changed
+
+- The temporary Back button on the game screen is replaced by the pause button; the E2E tests follow the new flow.
+- The ESLint layer test gets a longer timeout (its first lint is slow while the suite runs in parallel).
+
+### Decisions (where the docs were open)
+
+- Until the save system (M7), the wallet, best score, settings, upgrade levels and seen hints live in memory for the session.
+- The expansion past 500 points already works in a simple form: the camera and the drawn jar blend to the new stage during the zoom. M6 adds the full sequence.
+- The danger countdown shows whole seconds (3, 2, 1) above the middle of the jar.
+- The merge hint appears 0.6 s after the first drop and stays until the first merge.
+- `?seed=` gives every run of the session the same seed, so Play Again replays the same drops.
+
+### Known issues
+
+- A random bot at 375×667 survived more than 5 minutes without a game over, and another reached stage 2 with 6,840 points: the game may be easy. M10 tunes the balance.
+- Headless test browsers render in software at a few frames per second, and Chromium's SwiftShader drops parts of some sprites. Real GPUs are fine (checked on an NVIDIA GPU).
+
 ## [0.4.0] - 2026-10-05
 
 ### Added

@@ -36,13 +36,16 @@ Hosting: GitHub Pages from the public repo `sekerderya/maneki-merge`. It's free 
 ```
 src/
   main.ts            boot order: fonts → save → UI → Phaser → service worker
+  session.ts         composition root for play: starts runs, wires run events to the HUD,
+                     overlays and hints, owns pause / game over / quit (no rules)
   config/            pure data: app, platform, tiers, stages, upgrades, economy, physics, timings
   core/              pure rules: rng, dropQueue, economy, upgrades, progression, save, events
   physics/           matter-js wrapper: PhysicsWorld (+ FixedStepper), balls, merges, danger,
                      geometry (jar per stage), circleCollision (exact circle contacts)
   run/               RunController: the whole run, headless (drop, cooldown, queue, combo,
                      expansion timeline, cash-out, jackpot, Lucky Save, game over)
-  game/              Phaser: GameScene, camera fit and zoom, dropper + aim line, skins/, fx/
+  game/              Phaser: GameScene, cameraFit + aim (pure math), BallRenderer, JarView,
+                     skins/ (BallSkin, PlaceholderSkin), fx/ (MergeFx)
   ui/                DOM: screens/ (menu, game), panels/ (shop), overlays/ (pause, game over),
                      hud/, banners/, styles/
   audio/             procedural SFX + mixer
@@ -76,7 +79,8 @@ Data flow: pointer input (game) → `RunController.drop(x)` → PhysicsWorld ste
 - Jar geometry for each stage comes from `config/stages.ts` through `physics/geometry.ts` (`jarGeometry(stage)`: size, `rimY = −H`, dropper band, `dropY`), which the scene uses too. Walls are thick static rectangles (at least 300 units) so nothing can tunnel out. They rise `WALL_HEIGHT_FACTOR` (2) stage-5 jar heights above the floor at every stage; only the part up to the rim is drawn, and the invisible rest keeps a pile that grows past the rim from spilling over. An expansion only slides them outward.
 - The dropper band above the rim is `0.18 × W` (`DROPPER_HEADROOM_RATIO`), and a dropped cat starts at its middle, `dropY = −(H + 0.09 W)`, so every stage's biggest dropped cat starts above the rim. The drop x is clamped so the whole cat is inside the walls.
 - The screen is split into bands: HUD (safe-area top + about 72 CSS px), the play band, and the safe-area bottom.
-- Camera fit: show [jar W + 2 × side margin] × [jar H + dropper headroom (0.18 W) + floor margin] inside the play band, letterboxed, with the floor near the bottom.
+- Camera fit (`game/cameraFit.ts`): show [jar W + 2 × side margin] × [jar H + dropper headroom (0.18 W) + floor margin] inside the play band, letterboxed, with the floor margin on the bottom edge. Spare height goes above the dropper. The side margin is 0.05 W per side and the floor margin 0.04 W (`config/view.ts`), so the drawn walls (0.03 W) fit and every stage looks the same size on screen. The canvas fills the play band, which spans the full screen width below the DOM HUD.
+- Until M6 polishes the sequence, the scene blends the framed jar from the old stage to the new one over `zoomProgress` (smoothstep), so the camera zooms out and the drawn walls slide; the physics walls switch at the cash-out.
 - The RunController owns the expansion timeline: progress goes from 0 to 1 over a configured duration, instantly in the simulator. Every frame, the scene derives camera zoom and scroll plus the wall and rim visuals from that progress, so visuals and physics never drift apart.
   - `run.expansion` is `{ from, to, elapsedMs, progress (0–1 over EXPANSION_DURATION_MS), zoomProgress (0–1 over EXPANSION_ZOOM_MS), phase }`, or null outside an expansion. It counts fixed ticks, like everything else in the run.
   - Start: the state becomes `expanding`, the physics world pauses (time stop), the danger timer resets, `expansionStarted` fires.
@@ -133,18 +137,23 @@ Data flow: pointer input (game) → `RunController.drop(x)` → PhysicsWorld ste
 ## 6. Rendering
 
 - Phaser 4 with WebGL (Canvas fallback): a transparent canvas over a CSS background.
-- High-DPI: sharp at devicePixelRatio up to 3. Cap the internal resolution at 2.5 for performance.
-- The `BallSkin` interface provides the texture for (tier, golden), the hit-radius ratio, and whether to show the number. There are two implementations:
-  - `PlaceholderSkin`: generated at boot and regenerated after a WebGL context restore.
+- High-DPI: the game uses `Scale.NONE`. `game/index.ts` sizes the canvas to the play band × min(devicePixelRatio, 2.5) (`MAX_RENDER_RESOLUTION`) and shows it at CSS size through the scale zoom (1 / resolution). A `ResizeObserver` re-fits it; the camera zoom is canvas pixels per world unit.
+- The game loop sleeps (`loop.sleep()`) while the menu is visible and wakes when a run is shown.
+- The `BallSkin` interface (`game/skins/BallSkin.ts`) gives a frame per (tier, golden) and an optional upright number frame. A frame is a texture key plus world units per texture pixel at the tier's radius; that scale includes the hit-radius ratio. There are two implementations:
+  - `PlaceholderSkin`: circles and numbers drawn with the 2D canvas API on first use (tiers up to 9 are prewarmed), refreshed after a WebGL context restore.
   - `ArtSkin`: an atlas, added in M13.
     `config/app.ts` selects the skin, and `?skin=placeholder` forces placeholders.
-- Placeholder textures are generated large enough that they're never upscaled at any stage. Numbers are separate upright sprites.
-- Pool sprites, particles and floating texts. No per-frame allocations in hot paths.
+- Placeholder textures are drawn at 2.5 texture pixels per world unit (`PLACEHOLDER_PX_PER_UNIT`) divided by the scale of the first stage that can hold the tier, so they are never upscaled on phones and tablets. Numbers are separate upright sprites in a layer above all bodies, so a 6 never looks like a 9.
+- Draw order (Phaser layers): jar interior, aim guide, cat bodies, numbers, jar walls and rim, dropper, effects.
+- `BallRenderer` matches pooled body and number images to cats by id every frame; merge pops and floating scores (`MergeFx`) are pooled and animated by hand. No per-frame allocations in hot paths.
+- The aim guide is a dashed line from the dropper cat to the point where it first touches a cat or the floor (`game/aim.ts`), plus a faint ghost circle there. A unit test checks it against the real physics.
 
 ## 7. UI (DOM)
 
 - `index.html` has `#menu-screen` and `#game-screen`, and only one is visible at a time. The Phaser canvas lives in `#game-screen`, and the scene sleeps while the menu is visible.
 - The HUD, overlays and banners are absolutely positioned DOM elements with `pointer-events: none`, except on controls.
+- The HUD is a band above the play area: pause, score with run coins, the stage label with its progress bar (a lock icon when the next stage isn't unlocked), and the next-cat preview.
+- Back in the game: the screen manager keeps one history layer while the game is open. Back opens the pause overlay and re-opens the layer; back on the pause or Game Over overlay goes to the menu (`ui/screenManager.ts`, `session.ts`).
 - Use `env(safe-area-inset-*)`, `100dvh`, and `resize` / `visualViewport` listeners.
 - Touch targets are at least 48 px, with pressed states and no hover-only interactions.
 - Coin fly: convert the merge's world position to screen space through the camera, then animate a DOM coin to the HUD counter.
@@ -199,7 +208,8 @@ Data flow: pointer input (game) → `RunController.drop(x)` → PhysicsWorld ste
   - Shop purchase with debug coins.
   - Coins survive a reload.
   - Offline reload: load, wait for the service worker, go offline, reload, start a run. This one runs in the Chromium project.
-- **Hooks:** with `?debug=1`, `window.__game` exposes read-only state (score, wallet, stage, ball count, run state) and helpers (dropAt, addCoins, setUpgrade, setStage, setScore, spawnTier, forceGameOver).
+- **Hooks:** with `?debug=1`, `window.__game` exposes read-only state (`state()`: screen, run state, score, run coins, wallet, stage, ball count, canDrop, danger, ticks; `ballXs()`) and helpers (dropAt, addCoins, setUpgrade, setStage, setScore, spawnTier, forceGameOver). The debug panel shows FPS and the body count and puts the helpers on buttons.
+- **Headless browsers:** they render the DPR-3 canvas in software at a few frames per second, so the run advances slowly there (at most 5 fixed steps per frame) and E2E waits are long. Chromium's software GPU (SwiftShader) also drops parts of some cat sprites; a real GPU renders the same scene correctly, so milestone screenshots are taken with Chromium on the GPU (`--use-angle=gl`).
 - **Manual:** test on a real iPhone (home-screen app) and a real Android phone (installed app) after each milestone, using the checklist in ROADMAP.
 
 ## 12. CI/CD

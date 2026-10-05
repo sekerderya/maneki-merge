@@ -9,7 +9,7 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
 | M2  | Mobile PWA shell                    | high               | –         | done        |
 | M3  | Core rules, config and save system  | high               | –         | done        |
 | M4  | Physics and merge engine (headless) | xhigh              | yes       | done        |
-| M5  | Playable game scene                 | high               | –         | not started |
+| M5  | Playable game scene                 | high               | –         | done        |
 | M6  | Expansion system                    | xhigh              | yes       | not started |
 | M7  | Economy and persistence in play     | high               | –         | not started |
 | M8  | Main menu and upgrade shop          | high               | –         | not started |
@@ -119,16 +119,16 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
 
 **Effort:** high. **Goal:** the first playable version on the phone (stage 1, placeholder cats).
 
-- [ ] `GameScene` renders bodies with `PlaceholderSkin` (distinct colours, sharp upright numbers, golden variant)
-- [ ] Camera fit to the play band, with resize handling
-- [ ] Dropper: follows the finger, aim line, release or tap to drop, cooldown, next-cat pop-in
-- [ ] Jar and rim rendering; danger flashing + countdown
-- [ ] DOM HUD: pause, score, run coins, next preview, stage label + progress bar
-- [ ] Pause overlay, Game Over overlay, Play Again, Menu
-- [ ] PLAY starts a run; the scene sleeps on the menu
-- [ ] Basic merge feedback (pop + floating score) and first-run hints
-- [ ] Debug panel (`?debug=1`) and `window.__game` hooks (TECH_SPEC §11)
-- [ ] E2E: start a run, drop 10 cats via hooks, pause/resume, force game over, go back to the menu
+- [x] `GameScene` renders bodies with `PlaceholderSkin` (distinct colours, sharp upright numbers, golden variant)
+- [x] Camera fit to the play band, with resize handling
+- [x] Dropper: follows the finger, aim line, release or tap to drop, cooldown, next-cat pop-in
+- [x] Jar and rim rendering; danger flashing + countdown
+- [x] DOM HUD: pause, score, run coins, next preview, stage label + progress bar
+- [x] Pause overlay, Game Over overlay, Play Again, Menu
+- [x] PLAY starts a run; the scene sleeps on the menu
+- [x] Basic merge feedback (pop + floating score) and first-run hints
+- [x] Debug panel (`?debug=1`) and `window.__game` hooks (TECH_SPEC §11)
+- [x] E2E: start a run, drop 10 cats via hooks, pause/resume, force game over, go back to the menu
 
 **Acceptance:** smooth 60 fps on desktop and in mobile emulation; a clean console; screenshots at 390×844 and 375×667 in `docs/screenshots/`.
 **Owner check:** play a few runs on each phone and note how dropping, bouncing and sizes feel.
