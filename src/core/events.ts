@@ -73,6 +73,8 @@ export interface GameEvents {
   /** The cooldown is over and the dropper holds the next cat (also after an expansion). */
   dropReady: { readonly tier: number; readonly golden: boolean };
   merged: {
+    /** The new cat's id (BallView.id), so the scene can pop its sprite. */
+    readonly id: number;
     readonly tier: number;
     readonly newTier: number;
     readonly golden: boolean;
@@ -103,6 +105,8 @@ export interface GameEvents {
   runCoinsChanged: { readonly coins: number };
   comboChanged: { readonly combo: number };
   dangerChanged: { readonly active: boolean; readonly remainingMs: number };
+  /** The danger countdown reached a new whole second (3, 2, 1 for a 2.5 s timeout). */
+  dangerTick: { readonly secondsLeft: number };
   expansionStarted: { readonly from: number; readonly to: number };
   /**
    * The zoom has ended: the cash-out is done and the jar, gravity and drop pool are the new

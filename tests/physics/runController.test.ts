@@ -27,6 +27,7 @@ const EVENT_TYPES: readonly (keyof GameEvents)[] = [
   'runCoinsChanged',
   'comboChanged',
   'dangerChanged',
+  'dangerTick',
   'expansionStarted',
   'expansionFinished',
   'expansionLocked',
@@ -174,6 +175,7 @@ describe('merges and payouts (GAME_DESIGN §5, §9)', () => {
     expect(of('scoreChanged')).toEqual([{ score: 8 }]);
     expect(of('runCoinsChanged')).toEqual([{ coins: 3 }]);
     expect(run.balls.map((b) => b.tier)).toEqual([4]);
+    expect(merged!.id).toBe(run.balls[0]!.id);
     expect(run.highestTier).toBe(4);
   });
 
@@ -355,6 +357,8 @@ describe('danger, Lucky Save and game over (GAME_DESIGN §6)', () => {
     const danger = of('dangerChanged');
     expect(danger[0]!.active).toBe(true);
     expect(danger[0]!.remainingMs).toBeCloseTo(DANGER_TIMEOUT_MS - PHYSICS_STEP_MS, 6);
+    // The countdown ticks once per whole second: 3, 2, 1 for a 2.5 s timeout.
+    expect(of('dangerTick').map((t) => t.secondsLeft)).toEqual([3, 2, 1]);
     expect(of('gameOver')).toEqual([{ score: 0, stage: 1, coins: 0, highestTier: 0 }]);
 
     // Physics stops and input is ignored.

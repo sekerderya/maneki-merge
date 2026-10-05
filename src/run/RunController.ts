@@ -105,6 +105,8 @@ export class RunController {
   private dropAnnounced = false;
   private shownCombo = 0;
   private dangerShown = false;
+  /** The whole seconds left on the danger countdown that were last announced (0: none). */
+  private dangerSecond = 0;
   private savesLeft: number;
   private lockedAnnounced = false;
   private expansionState: Expansion | null = null;
@@ -347,6 +349,7 @@ export class RunController {
         const p = this.economy.merge(o.tier, o.golden, now);
         this.bankCoins(p.coins);
         this.events.emit('merged', {
+          id: o.ball?.id ?? -1,
           tier: o.tier,
           newTier: o.tier + 1,
           golden: o.golden,
@@ -410,9 +413,14 @@ export class RunController {
 
   private showDanger(): void {
     const active = this.danger.active;
-    if (active === this.dangerShown) return;
-    this.dangerShown = active;
-    this.events.emit('dangerChanged', { active, remainingMs: this.danger.remainingMs });
+    const second = active ? Math.max(1, Math.ceil(this.danger.remainingMs / 1000)) : 0;
+    if (active !== this.dangerShown) {
+      this.dangerShown = active;
+      this.events.emit('dangerChanged', { active, remainingMs: this.danger.remainingMs });
+    }
+    if (second === this.dangerSecond) return;
+    this.dangerSecond = second;
+    if (second > 0) this.events.emit('dangerTick', { secondsLeft: second });
   }
 
   private luckySave(): void {
