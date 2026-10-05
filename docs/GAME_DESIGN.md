@@ -82,9 +82,9 @@ Implement the formulas. Unit tests assert this table.
 - Two touching cats of the same tier merge into one cat of the next tier at their midpoint, with a pop. The new cat grows from the old size to its new size over about 120 ms, so neighbours get pushed but never launched.
 - A cat takes part in at most one merge per physics step. Merges are queued during collision handling and resolved after the step.
 - **Cap tier.** Each stage has a maximum tier (§7). Two cap-tier cats don't merge upward. Instead they trigger a **Jackpot**: both vanish with a big celebration, paying score `2 × S(cap)` and coins `5 × C(cap)` before multipliers.
-- **Combo.** A merge within 1.0 s of the previous merge raises the combo counter; otherwise the counter resets to 1. "Combo ×N" shows from N = 2. Combos pay extra coins only with the Combo Charm upgrade.
-- **Golden cats.** A dropped cat may be golden; the chance comes from Golden Touch and is 0% by default. If either merging cat is golden, that merge pays ×3 coins. The merged cat is a normal one.
-- **Coin payout** for any merge, Jackpot or pop: `round(base × coinMultiplier × (1 + comboBonus) × (golden ? 3 : 1))`, minimum 1.
+- **Combo.** A merge within 1.0 s of the previous merge raises the combo counter; otherwise the counter resets to 1. "Combo ×N" shows from N = 2. Combos pay extra coins only with the Combo Charm upgrade. Jackpots count as merges for the combo; pops (cash-out, Lucky Save) neither raise it nor get a combo bonus.
+- **Golden cats.** A dropped cat may be golden; the chance comes from Golden Touch and is 0% by default. If either merging cat is golden, that merge pays ×3 coins. The merged cat is a normal one. A golden cat that pops (cash-out, Lucky Save) also pays ×3.
+- **Coin payout** for any merge, Jackpot or pop: `round(base × coinMultiplier × (1 + comboBonus) × (golden ? 3 : 1))`, minimum 1. Halves round up (57.5 → 58), ignoring floating-point noise.
 - Coins go into the persistent wallet immediately. Quitting or a crash never loses earned coins.
 
 ## 6. Jar, danger line, game over
@@ -107,7 +107,7 @@ The stage-1 jar is 600 × 870 world units. Each stage scales the jar by 1.3 in b
 |     4 | 2.197 | 1318 × 1911 |       13 | tiers 3–7 |            12,000 | Shrine Expansion Lv 2 |
 |     5 | 2.856 | 1714 × 2485 |       15 | tiers 4–8 |            40,000 | Shrine Expansion Lv 3 |
 
-Thresholds are cumulative run score multiplied by the Quick Growth factor (§10).
+Thresholds are cumulative run score multiplied by the Quick Growth factor (§10), rounded to a whole number. The HUD progress bar fills from the current stage's threshold to the next one.
 
 ### 7.1 Expansion sequence (about 1.6 s)
 
@@ -131,13 +131,14 @@ If the score passes the next threshold but that stage isn't unlocked, the game s
 - Big Catch at level L sets `weight_i = base_i × (1 + 0.12 × L × i)` (i = 0 for the smallest tier), then normalizes. For example, a 5-tier pool at L = 5 gives about `[20.8, 25.9, 25.4, 16.2, 11.8] %`.
 - The first two drops of a run are always the pool's smallest tier.
 - Each drop rolls separately for golden (§5).
-- The queue comes from the seeded RNG. The next one or two cats are visible.
+- The queue comes from the seeded RNG. The next one or two cats are visible. Every queued cat rolls its tier and then its golden flag (both rolls always happen, even for the two fixed opening drops), so a seed gives the same tiers whatever the Golden Touch level.
+- After an expansion, queued cats whose tier isn't in the new pool are rolled again from it and keep their golden flag.
 
 ## 9. Score, coins, records
 
 - Score: `S(t)` per merge and `2 × S(cap)` per Jackpot. Score only drives expansions and best-score records.
 - Coins: merges, Jackpots, cash-outs and Lucky Save pops all pay out by the rule in §5.
-- Number formatting: thousands separators below 10,000, short format above it (12.5K, 3.2M).
+- Number formatting: thousands separators below 10,000, short format from 10,000 (12.5K, 125K, 3.2M, then B and T): one decimal below 100 units, none from 100. The short format truncates instead of rounding, so a balance never looks bigger than it is (59,960 shows 59.9K, not 60K).
 
 ## 10. Upgrades (permanent, bought in the shop)
 
@@ -175,6 +176,8 @@ Everything is stored locally, with a version number:
 - flags: which first-run hints have been seen
 
 A run in progress isn't saved. Closing the app ends it, but its coins are already banked.
+
+If a save can't be read, or some of its fields are invalid, a copy is kept (TECH_SPEC §8) and the game continues with the valid fields and defaults for the rest.
 
 ## 12. Feedback and juice
 

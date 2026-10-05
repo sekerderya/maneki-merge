@@ -57,9 +57,14 @@ tests/
 
 Dependency rules, enforced with ESLint `no-restricted-imports`:
 
-- `config` imports nothing except types.
+- `config` imports nothing except types (`import type` from `core`).
 - `core` may import `config`. `physics` may import `config` and `core`. `run` may import `config`, `core` and `physics`.
-- `config`, `core`, `physics` and `run` never import Phaser, DOM-only code, `game`, `ui`, `audio`, `platform` or `debug`. They must run in Node.
+- `config`, `core`, `physics` and `run` never import Phaser, DOM-only code, `game`, `ui`, `audio`, `platform` or `debug`. They must run in Node. They can't use browser globals (`window`, `document`, `navigator`, `localStorage`, `fetch`, …) or `Math.random`.
+- Only `physics` (and `run` through it) imports matter-js.
+- `tests/unit/layers.test.ts` lints snippets inside each layer to prove ESLint really blocks all of the above.
+
+Randomness: `core/rng.ts` is sfc32 seeded through splitmix32. Its state is four unsigned 32-bit integers (`state()` / `Rng.fromState()`), and a unit test pins the sequence for one seed, so changing it is always deliberate. The caller picks the seed (`?seed=`, or a time-based one from the presentation layer).
+
 - `game` and `ui` talk to each other only through the typed event bus (`core/events.ts`) and the RunController API, never by reaching into each other.
 
 Data flow: pointer input (game) → `RunController.drop(x)` → PhysicsWorld steps → merge events → economy (score, coins) → event bus → HUD, FX, audio, haptics, save.
@@ -112,8 +117,11 @@ Data flow: pointer input (game) → `RunController.drop(x)` → PhysicsWorld ste
 
 ## 8. Persistence
 
-- The `localStorage` key `maneki-merge:save` holds `{ version, data }`. `core/save.ts` provides `defaultSave()`, `migrate(raw)`, `load()` and `save()` behind a `StorageAdapter`, with localStorage and in-memory (for tests) implementations.
-- Corrupt data: keep a copy under `maneki-merge:save:corrupt:<timestamp>` and start from defaults.
+- The `localStorage` key `maneki-merge:save` holds `{ version, data }` (schema v1: wallet, upgrades, records, stats, settings, flags). `core/save.ts` provides `defaultSave()`, `decodeSave()` / `migrate()`, `sanitize()` and a `SaveStore` (`load()`, `save()`) behind a `StorageAdapter`. Implementations: `WebStorageAdapter` (wraps the localStorage that `platform/storage.ts` hands in after a probe write) and `MemoryStorage` (tests, the simulator, and browsers that block storage).
+- Migrations: `MIGRATIONS[n]` turns version n data into version n + 1; they run in order up to `SAVE_VERSION`. A migrated save is rewritten in the new format right away.
+- Repair: every known field is validated. A missing field silently takes its default, so adding a field needs no migration. An invalid field (wrong type, negative, above an upgrade's max level, …) takes its default or the nearest valid value and is reported. Unknown fields are dropped.
+- Corrupt data (unreadable JSON, no version, a failed migration) and repaired saves: keep a copy of the raw text under `maneki-merge:save:corrupt:<timestamp>` (only the newest 3), then rewrite the save in clean form. A save from a newer app version is backed up the same way and loaded with the fields this version knows.
+- Storage errors never crash the game: a failed read starts from defaults in memory, and `save()` returns false when a write fails (storage full or blocked).
 - Write on:
   - purchase
   - coin changes (throttled to at most 1 write per second)
@@ -147,7 +155,7 @@ Data flow: pointer input (game) → `RunController.drop(x)` → PhysicsWorld ste
 
 ## 11. Testing
 
-- **Unit tests (Vitest):** config tables vs GAME_DESIGN, RNG determinism, drop weights and Big Catch, economy, upgrade prices/effects/purchase rules, thresholds and locks, save defaults/migrations/corruption.
+- **Unit tests (Vitest):** config tables vs GAME_DESIGN, RNG determinism, drop weights and Big Catch, economy, upgrade prices/effects/purchase rules, thresholds and locks, save defaults/migrations/corruption, the event bus, number formatting, and the layer import rules. `npm run test:coverage` (part of `npm run check` and CI) fails below 90% line coverage on `src/core`.
 - **Headless physics (Vitest):** merge rules (a pair → the next tier, three touching → one merge, cap → Jackpot), growth without launches, the danger timer, Lucky Save, expansion geometry and cash-out, determinism, and the stability stress test.
 - **E2E (Playwright, iPhone and Pixel profiles, Chromium + WebKit):**
   - Boot with a clean console.
@@ -161,7 +169,7 @@ Data flow: pointer input (game) → `RunController.drop(x)` → PhysicsWorld ste
 ## 12. CI/CD
 
 - Development happens directly on `main` (no side branches or PRs), so `deploy.yml`'s checks are the gate before every deploy.
-- `ci.yml` runs on PRs and on pushes to branches other than main (kept for the rare case one is used): `npm ci` → typecheck → lint → unit tests → build → Playwright (`npx playwright install --with-deps chromium webkit`).
+- `ci.yml` runs on PRs and on pushes to branches other than main (kept for the rare case one is used): `npm ci` → typecheck → lint → format check → unit tests with coverage → build → Playwright (`npx playwright install --with-deps chromium webkit`).
 - `deploy.yml` runs on pushes to `main`: the same checks, then a build with the Pages base → `actions/upload-pages-artifact` → `actions/deploy-pages`. The Pages source is GitHub Actions.
 - Versioning: the `package.json` version (0.x during development, 1.0.0 at release) plus the short commit hash, injected at build time and shown on the menu. Tag `vX.Y.Z` after each milestone merge.
 - Optional `android.yml` (M14): on tags, run Capacitor sync and a Gradle release build signed with a keystore from repo secrets, and attach the APK to the GitHub Release.

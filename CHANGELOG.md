@@ -2,6 +2,36 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.3.0] - 2026-10-05
+
+### Added
+
+- M3: every game rule from GAME_DESIGN as pure, headless TypeScript.
+- `src/config/`: tiers (radius, score and coin formulas), stages (jar sizes, tier caps, drop pools, thresholds), upgrades (names, prices, per-level effects), economy, timings and physics tunables.
+- `core/rng.ts`: seeded sfc32 generator with serializable state.
+- `core/dropQueue.ts`: per-stage drop pools, base weights, Big Catch, the two smallest opening drops, golden rolls and one or two previews.
+- `core/economy.ts`: score, coin payout (multiplier, combo, golden, minimum 1), Jackpot, cash-out and Lucky Save pops, combo counter, per-run bookkeeping.
+- `core/upgrades.ts`: derived stats, prices, `canBuy`, `buy`, and the "anything affordable" check for the menu dot.
+- `core/progression.ts`: thresholds × Quick Growth, stage locks, next expansion (one stage at a time) and HUD progress.
+- `core/save.ts`: save schema v1, defaults, migration framework, field-level repair, corrupt-save backups, `SaveStore` over a `StorageAdapter` (localStorage + memory); `platform/storage.ts` opens localStorage safely.
+- `core/events.ts`: typed event bus and the game's event catalogue.
+- `core/format.ts`: number formatting (1,684 · 12.5K · 3.2M); the menu uses it.
+- About 280 unit tests, including every table in GAME_DESIGN (§4, §7, the §8 example, §10) and lint tests that prove the layer import rules.
+
+### Changed
+
+- ESLint now enforces the full layer order (config → core → physics → run), keeps matter-js inside `physics`, and blocks more browser globals (`fetch`, `location`, `indexedDB`, …) in the headless layers.
+- `npm run check` and CI run the unit tests with coverage and fail below 90% line coverage on `src/core`.
+
+### Decisions (where GAME_DESIGN was open)
+
+- Jackpots count as merges for the combo; cash-out and Lucky Save pops don't touch the combo, but a golden cat that pops still pays ×3.
+- Coin payouts and thresholds round halves up and ignore floating-point noise (50 × 1.15 = 57.5 → 58).
+- After an expansion, queued cats outside the new drop pool are rolled again and keep their golden flag.
+- The short number format truncates instead of rounding, so a balance never looks bigger than it is.
+- Every queued cat always rolls both tier and golden, so a seed gives the same tiers at any Golden Touch level.
+- A save from a newer app version is backed up and loaded with the fields this version knows. Only the newest 3 save backups are kept.
+
 ## [0.2.0] - 2026-10-05
 
 ### Added

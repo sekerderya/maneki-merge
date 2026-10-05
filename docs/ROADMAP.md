@@ -7,7 +7,7 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
 | M0  | Owner setup                         | –                  | –         | done        |
 | M1  | Repository, toolchain and CI/CD     | medium             | –         | done        |
 | M2  | Mobile PWA shell                    | high               | –         | done        |
-| M3  | Core rules, config and save system  | high               | –         | not started |
+| M3  | Core rules, config and save system  | high               | –         | done        |
 | M4  | Physics and merge engine (headless) | xhigh              | yes       | not started |
 | M5  | Playable game scene                 | high               | –         | not started |
 | M6  | Expansion system                    | xhigh              | yes       | not started |
@@ -79,15 +79,15 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
 
 **Effort:** high. **Goal:** every game rule from GAME_DESIGN as pure, tested TypeScript.
 
-- [ ] `config/`: tiers (formulas), stages, upgrades, economy, timings, physics tunables, app
-- [ ] `core/rng.ts` (seeded, with serializable state)
-- [ ] `core/dropQueue.ts`: pools per stage, weights, Big Catch, the first-two-smallest rule, golden roll, preview count
-- [ ] `core/economy.ts`: score, coin payout (multiplier, combo, golden), Jackpot, cash-out
-- [ ] `core/upgrades.ts`: derived stats, prices, `canBuy`, `buy`
-- [ ] `core/progression.ts`: thresholds × factor, `maxStage`, next expansion or locked state
-- [ ] `core/save.ts`: schema v1, defaults, migration framework, corrupt-data handling, `StorageAdapter` (localStorage + memory)
-- [ ] `core/events.ts`: typed event bus
-- [ ] Tests that assert every table in GAME_DESIGN (§4, §7, the §8 example, §10)
+- [x] `config/`: tiers (formulas), stages, upgrades, economy, timings, physics tunables, app
+- [x] `core/rng.ts` (seeded, with serializable state)
+- [x] `core/dropQueue.ts`: pools per stage, weights, Big Catch, the first-two-smallest rule, golden roll, preview count
+- [x] `core/economy.ts`: score, coin payout (multiplier, combo, golden), Jackpot, cash-out
+- [x] `core/upgrades.ts`: derived stats, prices, `canBuy`, `buy`
+- [x] `core/progression.ts`: thresholds × factor, `maxStage`, next expansion or locked state
+- [x] `core/save.ts`: schema v1, defaults, migration framework, corrupt-data handling, `StorageAdapter` (localStorage + memory)
+- [x] `core/events.ts`: typed event bus
+- [x] Tests that assert every table in GAME_DESIGN (§4, §7, the §8 example, §10)
 
 **Acceptance:** at least 90% line coverage on `src/core`; ESLint blocks Phaser/DOM imports in the headless layers.
 **Owner check:** nothing visible; Claude's report lists the tests.

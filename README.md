@@ -34,7 +34,7 @@ Requires Node.js 24 (see `.nvmrc`).
 | `npm install`                       | Install dependencies                                                           |
 | `npm run dev`                       | Dev server (`npm run dev -- --host` to open it from a phone on the same Wi-Fi) |
 | `npm run build` / `npm run preview` | Production build / serve the build                                             |
-| `npm run check`                     | Typecheck + lint + unit tests                                                  |
+| `npm run check`                     | Typecheck + lint + unit tests with the coverage gate                           |
 | `npm run test:e2e`                  | Playwright end-to-end tests (`npx playwright install chromium webkit` first)   |
 | `npm run icons`                     | Regenerate the PWA icons in `public/` from `public/icon.svg`                   |
 
