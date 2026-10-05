@@ -92,7 +92,7 @@ Implement the formulas. Unit tests assert this table.
 - The jar is an open-top box, and its rim is the danger line.
 - A cat is _over the line_ when its top edge is above the rim. A cat is ignored until 0.5 s after it lands (first contact).
 - If at least one cat is over the line continuously for 2.5 s, the game is over. While that timer runs, the rim flashes red and a short countdown shows.
-- **Lucky Save** (from the Second Chance upgrade) replaces the game over: every cat over the line plus the 6 smallest cats pop into coins, the timer resets, and a 2 s grace period follows. You get one save per run per upgrade level.
+- **Lucky Save** (from the Second Chance upgrade) replaces the game over: every cat over the line plus the 6 smallest other cats (smaller tier first, then older first) pop into coins, the timer resets, and a 2 s grace period follows. Only landed cats count, so a cat still falling from the dropper is left alone. You get one save per run per upgrade level.
 - At game over, physics stops and the Game Over overlay appears. Play Again starts a new run immediately.
 
 ## 7. Expansion stages (signature mechanic)

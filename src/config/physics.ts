@@ -8,6 +8,14 @@ import { tierRadius } from './tiers';
 export const PHYSICS_STEP_MS = 1000 / 120;
 export const PHYSICS_MAX_SUBSTEPS = 5;
 
+/**
+ * Whole fixed steps that cover `ms`. Timers count steps instead of adding up milliseconds, so
+ * floating-point noise can't move a deadline by a step (2500 ms is exactly 300 steps).
+ */
+export function stepsFor(ms: number): number {
+  return Math.max(0, Math.ceil(ms / PHYSICS_STEP_MS - 1e-9));
+}
+
 export const POSITION_ITERATIONS = 10;
 export const VELOCITY_ITERATIONS = 8;
 
