@@ -21,6 +21,34 @@ export const ENABLE_SLEEPING = false;
 /** Jar walls are static rectangles at least this thick, so nothing tunnels out. */
 export const WALL_THICKNESS = 300;
 
+/**
+ * The walls rise this many stage-5 jar heights above the floor at every stage. Only the part up
+ * to the rim is drawn; the rest keeps a pile that grows past the rim from spilling over.
+ */
+export const WALL_HEIGHT_FACTOR = 2;
+
+/**
+ * Contacts are exact circles (physics/circleCollision.ts). A cat's matter-js body is still a
+ * polygon with this many sides drawn around the circle; it only feeds the broadphase bounds.
+ */
+export const BALL_HULL_SIDES = 12;
+
+/** matter-js turns bodies more slowly than real discs (inertia × 4); cats keep that feel. */
+export const BALL_INERTIA_SCALE = 4;
+
+/**
+ * Speed limits in world units per second at stage 1; stage s multiplies them by scale_s, like
+ * gravity. MAX_SPEED applies to every cat on every step and sits above a natural fall from the
+ * dropper, so it only catches launches.
+ */
+export const MAX_SPEED_BASE = 1500;
+/** A merged cat starts with its parents' average velocity, capped at this. */
+export const MERGE_MAX_SPEED_BASE = 400;
+/** While a merged cat grows, every cat touching it is capped at this. */
+export const GROWTH_NEIGHBOUR_MAX_SPEED_BASE = 500;
+/** Radians per second, the same at every stage (zooming out doesn't change spin on screen). */
+export const MAX_ANGULAR_SPEED = 30;
+
 /** Stage-1 gravity (matter-js gravity.y); stage s uses GRAVITY_BASE × scale_s. */
 export const GRAVITY_BASE = 1;
 

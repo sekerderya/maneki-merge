@@ -3,14 +3,20 @@ import { HINT_IDS, SAVE_BACKUP_PREFIX, SAVE_KEY, STORAGE_PREFIX } from '../../sr
 import {
   BASE_DENSITY,
   densityForTier,
+  GRAVITY_BASE,
   gravityForScale,
+  GROWTH_NEIGHBOUR_MAX_SPEED_BASE,
+  MAX_SPEED_BASE,
+  MERGE_MAX_SPEED_BASE,
   PHYSICS_STEP_MS,
+  WALL_HEIGHT_FACTOR,
   WALL_THICKNESS,
 } from '../../src/config/physics';
 import {
   BASE_JAR_HEIGHT,
   BASE_JAR_WIDTH,
   DROP_POOL_WEIGHTS,
+  DROPPER_HEADROOM_RATIO,
   isStage,
   STAGE_COUNT,
   stageInfo,
@@ -191,6 +197,26 @@ describe('physics tunables (TECH_SPEC §5)', () => {
       const mass = densityForTier(t) * Math.PI * r * r;
       const mass1 = BASE_DENSITY * Math.PI * tierRadius(1) ** 2;
       expect(mass / mass1).toBeCloseTo((r / tierRadius(1)) ** 1.5, 6);
+    }
+  });
+
+  it('leaves room for the dropper above the rim (TECH_SPEC §4)', () => {
+    expect(DROPPER_HEADROOM_RATIO).toBe(0.18);
+    expect(WALL_HEIGHT_FACTOR).toBeGreaterThan(1);
+  });
+
+  it('caps speeds above a natural fall but keeps merges gentle', () => {
+    // Free fall (no air friction) from the stage-1 dropper to the floor, in units per second.
+    const g = GRAVITY_BASE * 1000;
+    const fall = Math.sqrt(2 * g * 924);
+    expect(MAX_SPEED_BASE).toBeGreaterThan(fall);
+    expect(MERGE_MAX_SPEED_BASE).toBeLessThan(MAX_SPEED_BASE);
+    expect(GROWTH_NEIGHBOUR_MAX_SPEED_BASE).toBeLessThan(MAX_SPEED_BASE);
+    // At the speed cap, the smallest cat a stage can hold (its smallest drop tier; smaller ones
+    // pop at the expansion) moves less than its radius per step: no tunnelling.
+    for (const info of STAGES) {
+      const perStep = (MAX_SPEED_BASE * info.scale * PHYSICS_STEP_MS) / 1000;
+      expect(perStep).toBeLessThan(tierRadius(info.dropPool[0]!));
     }
   });
 

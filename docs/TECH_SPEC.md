@@ -72,7 +72,8 @@ Data flow: pointer input (game) → `RunController.drop(x)` → PhysicsWorld ste
 ## 4. World, coordinates and camera
 
 - One world unit is roughly one stage-1 pixel. The origin is the centre of the jar floor and y grows downward, so the rim is at `y = −H`.
-- Jar geometry for each stage comes from `config/stages.ts`. Walls are thick static rectangles (at least 300 units) so nothing can tunnel out.
+- Jar geometry for each stage comes from `config/stages.ts` through `physics/geometry.ts` (`jarGeometry(stage)`: size, `rimY = −H`, dropper band, `dropY`), which the scene uses too. Walls are thick static rectangles (at least 300 units) so nothing can tunnel out. They rise `WALL_HEIGHT_FACTOR` (2) stage-5 jar heights above the floor at every stage; only the part up to the rim is drawn, and the invisible rest keeps a pile that grows past the rim from spilling over. An expansion only slides them outward.
+- The dropper band above the rim is `0.18 × W` (`DROPPER_HEADROOM_RATIO`), and a dropped cat starts at its middle, `dropY = −(H + 0.09 W)`, so every stage's biggest dropped cat starts above the rim. The drop x is clamped so the whole cat is inside the walls.
 - The screen is split into bands: HUD (safe-area top + about 72 CSS px), the play band, and the safe-area bottom.
 - Camera fit: show [jar W + 2 × side margin] × [jar H + dropper headroom (0.18 W) + floor margin] inside the play band, letterboxed, with the floor near the bottom.
 - The RunController owns the expansion timeline: progress goes from 0 to 1 over a configured duration, instantly in the simulator. Every frame, the scene derives camera zoom and scroll plus the wall and rim visuals from that progress, so visuals and physics never drift apart.

@@ -8,6 +8,12 @@ export const BASE_JAR_WIDTH = 600;
 export const BASE_JAR_HEIGHT = 870;
 export const STAGE_SCALE_STEP = 1.3;
 
+/**
+ * Above the rim the camera keeps this fraction of the jar width free for the dropper
+ * (TECH_SPEC §4). A cat waiting in the dropper sits in the middle of that band.
+ */
+export const DROPPER_HEADROOM_RATIO = 0.18;
+
 /** Stages 1 and 2 are always open; each Shrine Expansion level opens one more. */
 export const BASE_MAX_STAGE = 2;
 
