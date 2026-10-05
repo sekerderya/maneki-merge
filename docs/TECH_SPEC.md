@@ -82,6 +82,7 @@ Data flow: pointer input (game) → `RunController.drop(x)` → PhysicsWorld ste
 ## 5. Physics
 
 - matter-js engine with a fixed timestep of 1/120 s and an accumulator (at most 5 substeps per frame). Physics never depends on frame rate.
+- **Exact circle contacts** (`physics/circleCollision.ts`). Stock matter-js treats every body as a polygon and runs SAT on its vertices: with 150 cats SAT took 55–65% of a step, and polygon cats roll over facets (a 20-gon won't roll on slopes under ~9°). `installCircleCollisions()` wraps `Matter.Collision.collides` once: a cat–cat pair uses an analytic circle test and a cat–wall pair a circle-vs-axis-aligned-box test, each with one contact point midway through the overlap; every other pair keeps SAT. A cat's body is still a polygon (12 sides drawn around the circle) because matter-js needs vertices for its broadphase bounds, but its mass and inertia are set from the true circle. The returned record follows matter-js 0.20.0's internal contract (record reuse through the pairs table, `bodyA` = smaller id, normal from bodyB to bodyA, one persistent support point so warm-starting carries over), so matter-js is pinned to exactly `0.20.0`, and tests check the contract and agreement with SAT before any upgrade.
 - Starting values in `config/physics.ts`, to be tuned in M4 and M10:
   - positionIterations 10, velocityIterations 8
   - friction 0.2, frictionStatic 0.5, restitution 0.1, frictionAir 0.01
