@@ -196,13 +196,18 @@ If a save can't be read, or some of its fields are invalid, a copy is kept (TECH
 ## 12. Feedback and juice
 
 - Merge: a pop scale, a particle burst in the tier's colour, a floating "+coins", and a coin icon that flies to the HUD counter. A Jackpot shows a bigger "+coins", a gold spark burst and a shower of coins; golden merges burst gold sparks.
-- Combo: "Combo ×N" over the jar, with the Combo Charm bonus ("+16%") when it has one.
+- Merges also bump the new cat (a short scale pop on top of its growth) and burst particles in its colour, more for bigger cats.
+- Combo: "Combo ×N" over the jar, with the Combo Charm bonus ("+16%") when it has one. The label heats up (bigger, brighter) at ×4 and ×7.
+- Danger: the countdown number pulses on each new second, with a tick that rises in pitch (3, 2, 1).
+- Expansion: gold sparks along the rim when it starts and again along the grown rim at the reveal.
 - Sound effects are procedural Web Audio, no files:
   - drop plop; merge pop (lower pitch for bigger tiers); coin ching
   - rising combo notes; Jackpot fanfare; expansion whoosh + chime
   - danger tick; game over; UI click; purchase
-- Haptics (Android only, toggled in Pause): a light tick per merge and a stronger pattern for Jackpots and expansions.
-- A small camera shake for merges of tier 10 and above and for Jackpots. Respect `prefers-reduced-motion`: no shake and fewer particles.
+- Haptics (Android only, toggled in Pause): a light tick per merge (at most one every 70 ms) and a stronger pattern for Jackpots, expansions and Lucky Saves.
+- A small camera shake for merges of tier 10 and above (stronger for bigger cats), for Jackpots, and a light one that grows with the combo from ×5. Respect `prefers-reduced-motion`: no shake and about a third of the particles.
+- Menu: the title floats, PLAY sends out a soft ring every few seconds, the UPGRADES dot nudges, and buttons press down when tapped.
+- Every button clicks; a purchase plays its own sound. Sound off (menu or Pause) silences everything.
 
 ## 13. Art
 

@@ -13,7 +13,7 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
 | M6  | Expansion system                    | xhigh              | yes       | done        |
 | M7  | Economy and persistence in play     | high               | –         | done        |
 | M8  | Main menu and upgrade shop          | high               | –         | done        |
-| M9  | Audio, haptics and juice            | medium             | –         | not started |
+| M9  | Audio, haptics and juice            | medium             | –         | done        |
 | M10 | Balance simulation and tuning       | xhigh              | yes       | not started |
 | M11 | QA, performance and hardening       | high               | –         | not started |
 | M12 | Owner playtest and polish loop      | per issue          | –         | not started |
@@ -185,15 +185,15 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
 
 **Effort:** medium
 
-- [ ] Procedural SFX set (GAME_DESIGN §12) with a mixer, master mute and per-sound throttling
-- [ ] Haptics (Android) with a setting
-- [ ] Effects:
+- [x] Procedural SFX set (GAME_DESIGN §12) with a mixer, master mute and per-sound throttling
+- [x] Haptics (Android) with a setting
+- [x] Effects:
   - particles (pooled) and the merge pop
   - shake for big merges and combo escalation
   - Jackpot fanfare and expansion polish
   - danger tick
-- [ ] Menu micro-animations (button press, idle bob)
-- [ ] Settings respected; `prefers-reduced-motion`; iOS audio unlock and resume
+- [x] Menu micro-animations (button press, idle bob)
+- [x] Settings respected; `prefers-reduced-motion`; iOS audio unlock and resume
 
 **Acceptance:** 10 or more simultaneous merges stay smooth with no audio clipping.
 **Owner check:** sound on the iPhone (ringer on) and on Android; vibration on Android.

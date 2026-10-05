@@ -2,6 +2,33 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.9.0] - 2026-10-06
+
+### Added
+
+- M9: audio, haptics and juice.
+- Procedural Web Audio sound effects, no files (GAME_DESIGN §12): drop plop, merge pop (lower for bigger cats), coin ching, rising combo notes, Jackpot fanfare, expansion whoosh and chime, danger tick (rising 3, 2, 1), game over, UI click and purchase.
+- Mixer: per-sound gains, a master gain and a limiter; per-sound throttling (minimum interval, voice count) and a global voice cap, so 10+ simultaneous merges never clip.
+- iOS audio unlock: the AudioContext is created inside the first tap and resumed on later taps until it runs; it is suspended in the background and when sound is off.
+- Haptics on Android (`navigator.vibrate`): a light tick per merge (rate-limited), stronger patterns for Jackpots, expansions and Lucky Saves; the Pause toggle is respected. Nothing on iOS.
+- Juice: particles in the new cat's colour on every merge, a scale bump on the merged cat, camera shake for tier 10+ merges, Jackpots and long combos, a "Combo ×N" label that heats up at ×4 and ×7, a pulsing danger countdown, and gold sparks along the grown rim at an expansion's reveal.
+- Menu micro-animations: a floating title, a ripple ring on PLAY, a nudging UPGRADES dot and a deeper button press.
+- `prefers-reduced-motion`: no shake, about a third of the particles, no menu idle animations.
+- Run event `dangerTick { secondsLeft }`; `merged` now carries the new cat's `id`.
+- Debug: `mergeBurst(pairs, tier)` (and a "Merge ×10" button), `audio()` (context state and output peak), `renderPeak(merges)` (offline render through the real mixer).
+- Tests: pitches, voice throttle, haptics, shake, feedback wiring, the danger ticks and the merged id (unit/headless), and `juice.spec.ts` (audio unlock and toggle, 12 simultaneous merges peaking below 1).
+
+### Decisions (where the docs were open)
+
+- "Shake for combo escalation": a light shake from ×5 that grows with the combo (capped), plus the heating label and rising notes.
+- "Expansion polish": a second spark sweep along the new rim at the reveal, a whoosh at the start and a chime at the reveal, and a haptic pattern.
+- The clipping acceptance is checked by rendering the sounds offline (OfflineAudioContext) through the real mixer, because a live meter in headless browsers depends on the machine's audio device and load.
+- Audio E2E runs in Chromium only: Playwright's WebKit build has no reliable Web Audio (none on Windows). Real iPhones are checked by the owner.
+
+### Known issues
+
+- iOS plays no sound with the silent switch on (a web audio limit). iOS has no vibration API for the web.
+
 ## [0.8.0] - 2026-10-06
 
 ### Added
