@@ -1,30 +1,28 @@
-import { button, el } from '../dom';
-import { ICON_BACK } from '../icons';
+import { createHint } from '../banners/hint';
+import type { HintView } from '../banners/hint';
+import { el } from '../dom';
+import { createHud } from '../hud/hud';
+import type { HudActions, HudView } from '../hud/hud';
 
-export interface GameScreenActions {
-  /** The temporary Back control (replaced by the pause button in M5). */
-  onBack(): void;
+export interface GameScreenView {
+  readonly hud: HudView;
+  readonly hint: HintView;
+  /** The Phaser canvas mounts here; it fills the play band below the HUD. */
+  readonly playArea: HTMLElement;
 }
 
-/**
- * Game screen skeleton: a HUD row and an empty play area. The Phaser canvas mounts into the
- * play area in M5.
- */
-export function createGameScreen(root: HTMLElement, actions: GameScreenActions): HTMLElement {
+/** Game screen (GAME_DESIGN §2.3): the DOM HUD on top, the play band with the canvas below. */
+export function createGameScreen(root: HTMLElement, actions: HudActions): GameScreenView {
   root.replaceChildren();
   root.classList.add('game-screen');
 
-  const hud = el('header', 'game-hud');
-  const back = button('icon-btn back-btn', '', ICON_BACK);
-  back.setAttribute('aria-label', 'Back to menu');
-  back.dataset['testid'] = 'back';
-  back.addEventListener('click', actions.onBack);
-  hud.append(back);
+  const hudRoot = el('header');
+  const hud = createHud(hudRoot, actions);
 
   const playArea = el('div', 'play-area');
   playArea.dataset['testid'] = 'play-area';
-  playArea.append(el('p', 'play-area-placeholder', 'The jar arrives soon'));
+  const hint = createHint(playArea);
 
-  root.append(hud, playArea);
-  return playArea;
+  root.append(hudRoot, playArea);
+  return { hud, hint, playArea };
 }

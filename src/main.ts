@@ -1,6 +1,7 @@
 import './ui/styles/index.css';
 import { parseUrlFlags } from './core/urlFlags';
 import { installDebugHooks } from './debug';
+import { createGame } from './game';
 import {
   BackStack,
   detectInstallContext,
@@ -13,7 +14,10 @@ import {
   watchLifecycle,
   watchPhoneLandscape,
 } from './platform';
+import { GameSession } from './session';
 import { byId } from './ui/dom';
+import { createGameOverOverlay } from './ui/overlays/gameOverOverlay';
+import { createPauseOverlay } from './ui/overlays/pauseOverlay';
 import { createRotateOverlay } from './ui/overlays/rotateOverlay';
 import { ScreenManager } from './ui/screenManager';
 import { createGameScreen } from './ui/screens/gameScreen';
@@ -28,8 +32,7 @@ async function boot(): Promise<void> {
 
   await loadFonts();
 
-  // Save: loaded here from M7. Until then settings live in memory.
-  const settings = { sound: true };
+  // Save: loaded here from M7. Until then the session keeps settings and coins in memory.
 
   // UI
   const back = new BackStack(window.history, window);
@@ -47,35 +50,78 @@ async function boot(): Promise<void> {
   });
 
   const menu = createMenuScreen(byId('menu-screen'), {
-    onPlay: () => screens?.showGame(),
-    onUpgrades: () => undefined, // The shop panel arrives in M8.
-    onToggleSound: () => {
-      settings.sound = !settings.sound;
-      menu.setSoundOn(settings.sound);
+    onPlay: () => {
+      screens?.showGame();
+      session.startRun();
     },
+    onUpgrades: () => undefined, // The shop panel arrives in M8.
+    onToggleSound: () => toggleSound(),
     onApplyUpdate: () => void gate.apply(),
     onInstall: () => void installPrompt.prompt(),
   });
-  menu.setSoundOn(settings.sound);
+
   menu.setUpgradesAvailable(false);
   menu.setInstallHint(installHintFor(installContext, installPrompt.available));
 
-  createGameScreen(byId('game-screen'), { onBack: () => screens?.showMenu() });
+  const gameScreen = createGameScreen(byId('game-screen'), {
+    onPause: () => session.pauseRun(),
+  });
+  const overlays = byId('overlays');
+  const pause = createPauseOverlay(overlays, {
+    onResume: () => session.resumeRun(),
+    onToggleSound: () => toggleSound(),
+    onToggleHaptics: () => {
+      session.settings.haptics = !session.settings.haptics;
+      pause.setHapticsOn(session.settings.haptics);
+    },
+    onQuit: () => screens?.showMenu(),
+  });
+  const gameOver = createGameOverOverlay(overlays, {
+    onPlayAgain: () => session.startRun(),
+    onMenu: () => screens?.showMenu(),
+  });
+
+  // Phaser renders into the play area; its loop sleeps while the menu is up.
+  const game = createGame(gameScreen.playArea);
+  const session = new GameSession({
+    game,
+    hud: gameScreen.hud,
+    hint: gameScreen.hint,
+    pause,
+    gameOver,
+    seed: flags.seed,
+    onWalletChange: (coins) => menu.setCoins(coins),
+  });
+
+  const toggleSound = (): void => {
+    session.settings.sound = !session.settings.sound;
+    menu.setSoundOn(session.settings.sound);
+    pause.setSoundOn(session.settings.sound);
+  };
+  menu.setSoundOn(session.settings.sound);
+  pause.setSoundOn(session.settings.sound);
+  pause.setHapticsOn(session.settings.haptics);
+
   screens = new ScreenManager(
     { menu: byId('menu-screen'), game: byId('game-screen') },
     back,
-    (screen) => gate.setMenuActive(screen === 'menu'),
+    (screen) => {
+      gate.setMenuActive(screen === 'menu');
+      if (screen === 'menu') session.endRun();
+    },
+    () => session.onBack(),
   );
 
   const setRotateOverlay = createRotateOverlay(byId('overlays'));
   watchPhoneLandscape((landscape) => {
     setRotateOverlay(landscape);
-    // From M5: pause the run while the phone is sideways.
+    if (landscape) session.autoPause();
   });
 
   watchLifecycle({
     onHidden: () => {
-      // From M5: pause the run. From M7: save. From M9: suspend audio.
+      session.autoPause();
+      // From M7: save. From M9: suspend audio.
     },
     onVisible: () => {
       // From M9: resume audio.
@@ -85,12 +131,12 @@ async function boot(): Promise<void> {
   if (flags.debug) {
     installDebugHooks({
       flags,
+      session,
+      game,
       screen: () => screens?.screen ?? 'menu',
       simulateUpdateReady: () => gate.markReady(),
     });
   }
-
-  // Phaser: created here from M5.
 
   const sw = registerServiceWorker(gate);
 }

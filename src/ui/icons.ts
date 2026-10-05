@@ -34,3 +34,18 @@ export const ICON_ROTATE = svg(
     '<path d="M30 2l0 6 6 0" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>',
   '0 0 48 48',
 );
+
+export const ICON_PAUSE = svg(
+  '<rect x="6" y="5" width="4.5" height="14" rx="1.5" fill="currentColor"/>' +
+    '<rect x="13.5" y="5" width="4.5" height="14" rx="1.5" fill="currentColor"/>',
+);
+
+export const ICON_LOCK = svg(
+  '<rect x="5" y="11" width="14" height="10" rx="2" fill="currentColor"/>' +
+    '<path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2.4"/>',
+);
+
+export const ICON_VIBRATE = svg(
+  '<rect x="8" y="4" width="8" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>' +
+    '<path d="M4 9v6M20 9v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+);

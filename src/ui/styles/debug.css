@@ -1,0 +1,60 @@
+/* `?debug=1` panel (not part of the player-facing UI). */
+.debug-panel {
+  position: fixed;
+  z-index: 500;
+  left: calc(var(--safe-left) + 4px);
+  bottom: calc(var(--safe-bottom) + 4px);
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-start;
+  gap: 4px;
+  font:
+    12px/1.3 ui-monospace,
+    Menlo,
+    Consolas,
+    monospace;
+}
+
+.debug-toggle {
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #9f9;
+  font: inherit;
+}
+
+.debug-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: calc(100vw - 16px);
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.85);
+  color: #dfd;
+}
+
+.debug-stats {
+  margin: 0;
+  font: inherit;
+  white-space: pre;
+}
+
+.debug-row {
+  display: flex;
+  gap: 4px;
+}
+
+.debug-input {
+  width: 92px;
+  min-width: 0;
+  font: inherit;
+}
+
+.debug-btn {
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: #2f4f2f;
+  font: inherit;
+  white-space: nowrap;
+}
