@@ -1,5 +1,5 @@
-import { stageInfo, STAGE_COUNT } from '../config/stages';
-import { MAX_TIER, tierRadius } from '../config/tiers';
+import { STAGE_COUNT, stageHoldsTier, stageInfo } from '../config/stages';
+import { SIZE_COUNT } from '../config/tiers';
 import { AudioEngine } from '../audio';
 import type { SoundName } from '../audio';
 import { UPGRADE_IDS, UPGRADES } from '../config/upgrades';
@@ -38,11 +38,16 @@ export interface GameStateSnapshot {
   readonly danger: boolean;
   /** The next stage exists but isn't unlocked (the HUD shows a lock). */
   readonly locked: boolean;
+  /** The stage's smallest and last cat (making the last one clears the stage). */
+  readonly firstTier: number;
+  readonly lastTier: number;
+  /** The HUD bar: the biggest cat in the jar against the last cat, 0–1. */
+  readonly progress: number;
   /** The running expansion, or null. */
   readonly expansion: {
     readonly from: number;
     readonly to: number;
-    readonly phase: 'zoom' | 'reveal';
+    readonly phase: 'clear' | 'zoom' | 'reveal';
   } | null;
   readonly ticks: number;
 }
@@ -61,16 +66,18 @@ export interface GameHooks {
   /** Applies from the next run. */
   setUpgrade(id: UpgradeId, level: number): void;
   /**
-   * Plays every expansion up to `stage`, one at a time, even past a locked stage (it opens them
-   * for this run only).
+   * Clears stage after stage up to `stage`, playing each expansion in turn, even past a locked
+   * stage (it opens them for this run only).
    */
   setStage(stage: number): void;
-  /** Sets the run score; the stage locks still apply. */
+  /** Sets the run score (records only). */
   setScore(score: number): void;
+  /** Drops a cat of `tier` at world x from the dropper's height; ignored if the stage can't hold it. */
   spawnTier(tier: number, x?: number, golden?: boolean): void;
   /**
    * Places `pairs` touching pairs of `tier` cats in rows on the jar floor, so they all merge on
-   * the next physics step (M9: many simultaneous merges).
+   * the next physics step (M9: many simultaneous merges). `tier` defaults to the stage's smallest
+   * and must be below its last cat.
    */
   mergeBurst(pairs?: number, tier?: number): void;
   /** The audio context's state and the output's current peak (0–1; ≥ 1 clips). */
@@ -114,6 +121,9 @@ export function installDebugHooks(ctx: DebugContext): GameHooks {
         canDrop: run?.canDrop ?? false,
         danger: run?.dangerActive ?? false,
         locked: run?.progress.locked ?? false,
+        firstTier: stageInfo(run?.stage ?? 1).firstTier,
+        lastTier: stageInfo(run?.stage ?? 1).lastTier,
+        progress: run?.progress.fraction ?? 0,
         expansion: run?.expansion
           ? { from: run.expansion.from, to: run.expansion.to, phase: run.expansion.phase }
           : null,
@@ -140,13 +150,16 @@ export function installDebugHooks(ctx: DebugContext): GameHooks {
     },
     spawnTier(tier, x = 0, golden = false) {
       const run = session.run;
-      if (!run || tier < 1 || tier > MAX_TIER) return;
+      if (!run || !stageHoldsTier(run.stage, tier)) return;
       run.spawnBall(tier, x, undefined, golden);
     },
-    mergeBurst(pairs = 10, tier = 1) {
+    mergeBurst(pairs = 10, tier) {
       const run = session.run;
-      if (!run || tier < 1 || tier >= MAX_TIER) return;
-      const r = tierRadius(tier);
+      if (!run) return;
+      const { firstTier, lastTier } = stageInfo(run.stage);
+      const t = tier ?? firstTier;
+      if (!stageHoldsTier(run.stage, t) || t >= lastTier) return;
+      const r = run.radiusOf(t);
       const half = run.geometry.halfWidth;
       const slot = 4 * r + 16;
       const perRow = Math.max(1, Math.floor((2 * half) / slot));
@@ -154,8 +167,8 @@ export function installDebugHooks(ctx: DebugContext): GameHooks {
         const row = Math.floor(i / perRow);
         const x = -half + slot * ((i % perRow) + 0.5);
         const y = -r - row * (2 * r + 12);
-        run.spawnBall(tier, x - r + 1, y);
-        run.spawnBall(tier, x + r - 1, y);
+        run.spawnBall(t, x - r + 1, y);
+        run.spawnBall(t, x + r - 1, y);
       }
     },
     audio() {
@@ -213,10 +226,14 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
     return node;
   };
 
-  const tier = select(
-    Array.from({ length: MAX_TIER }, (_, i) => i + 1),
+  // Sizes 1–12: the buttons spawn the current stage's tier of that size.
+  const size = select(
+    Array.from({ length: SIZE_COUNT }, (_, i) => i + 1),
     1,
   );
+  size.title = "Size (1 = the stage's smallest cat)";
+  const tierOfSize = (): number =>
+    stageInfo(hooks.state().stage).firstTier + Number(size.value) - 1;
   const golden = el('input');
   golden.type = 'checkbox';
   golden.title = 'Golden';
@@ -227,7 +244,7 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
   );
   const score = el('input', 'debug-input');
   score.type = 'number';
-  score.value = String(stageInfo(2).threshold);
+  score.value = '5000';
   const upgrade = el('select', 'debug-input');
   for (const id of UPGRADE_IDS) upgrade.append(new Option(UPGRADES[id].name, id));
   const level = el('input', 'debug-input');
@@ -246,10 +263,10 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
   body.append(
     stats,
     row(
-      tier,
+      size,
       golden,
-      action('Spawn tier', () => hooks.spawnTier(Number(tier.value), 0, golden.checked)),
-      action('Merge ×10', () => hooks.mergeBurst(10, Number(tier.value))),
+      action('Spawn size', () => hooks.spawnTier(tierOfSize(), 0, golden.checked)),
+      action('Merge ×10', () => hooks.mergeBurst(10, tierOfSize())),
     ),
     row(
       score,

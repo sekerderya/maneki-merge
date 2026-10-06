@@ -4,10 +4,10 @@ import { comboShake, mergeParticleCount, mergeShake, Shake } from '../../src/gam
 
 describe('camera shake (GAME_DESIGN §12)', () => {
   it('shakes only for big merges, more for bigger cats', () => {
-    expect(mergeShake(SHAKE.minTier - 1)).toBe(0);
-    expect(mergeShake(SHAKE.minTier)).toBe(SHAKE.mergeBase);
-    expect(mergeShake(15)).toBeGreaterThan(mergeShake(12));
-    expect(mergeShake(15)).toBeLessThan(SHAKE.jackpot * 1.5);
+    expect(mergeShake(SHAKE.minSize - 1)).toBe(0);
+    expect(mergeShake(SHAKE.minSize)).toBe(SHAKE.mergeBase);
+    expect(mergeShake(12)).toBeGreaterThan(mergeShake(11));
+    expect(mergeShake(12)).toBeLessThan(SHAKE.jackpot * 1.5);
   });
 
   it('escalates with the combo, capped', () => {
@@ -48,8 +48,8 @@ describe('camera shake (GAME_DESIGN §12)', () => {
 
   it('bursts more particles for bigger cats, fewer with reduced motion', () => {
     expect(mergeParticleCount(3, false)).toBeLessThan(mergeParticleCount(9, false));
-    expect(mergeParticleCount(15, false)).toBe(MERGE_PARTICLES.max);
-    expect(mergeParticleCount(15, true)).toBeLessThan(mergeParticleCount(15, false) / 2);
+    expect(mergeParticleCount(12, false)).toBeLessThanOrEqual(MERGE_PARTICLES.max);
+    expect(mergeParticleCount(12, true)).toBeLessThan(mergeParticleCount(12, false) / 2);
     expect(mergeParticleCount(1, true)).toBeGreaterThanOrEqual(1);
   });
 });

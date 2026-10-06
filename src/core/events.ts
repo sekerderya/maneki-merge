@@ -77,12 +77,15 @@ export interface GameEvents {
     readonly id: number;
     readonly tier: number;
     readonly newTier: number;
+    /** The new cat's size at the current stage (1–12), for effects that grow with the cat. */
+    readonly newSize: number;
     readonly golden: boolean;
     readonly at: WorldPoint;
     readonly score: number;
     readonly coins: number;
     readonly combo: number;
   };
+  /** Two of a stage's last cat met (only where the jar can't grow): both vanished. */
   jackpot: {
     readonly tier: number;
     readonly golden: boolean;
@@ -91,7 +94,7 @@ export interface GameEvents {
     readonly coins: number;
     readonly combo: number;
   };
-  /** A single cat popped into coins (cash-out or Lucky Save). */
+  /** A single cat popped into coins: its value (half of C(t)), at a stage clear or a Lucky Save. */
   catPopped: {
     /** The cat's id (BallView.id), so the scene can pop the cat's own sprite. */
     readonly id: number;
@@ -107,11 +110,22 @@ export interface GameEvents {
   dangerChanged: { readonly active: boolean; readonly remainingMs: number };
   /** The danger countdown reached a new whole second (3, 2, 1 for a 2.5 s timeout). */
   dangerTick: { readonly secondsLeft: number };
+  /**
+   * A stage's last cat was made (GAME_DESIGN §7): every other cat has just popped (`catPopped`,
+   * reason `cashOut`). `next` says what follows: the jar grows (the run is now `expanding`), the
+   * next stage is locked (`expansionLocked` follows), or this is the last stage.
+   */
+  stageCleared: {
+    readonly stage: number;
+    readonly tier: number;
+    readonly next: 'expand' | 'locked' | 'final';
+  };
+  /** The stage clear is over and the camera starts zooming out (whoosh, rim sparks). */
   expansionStarted: { readonly from: number; readonly to: number };
   /**
-   * The zoom has ended: the cash-out is done and the jar, gravity and drop pool are the new
-   * stage's. Physics stays paused until `expansionFinished`. `newTiers`: the tiers the new cap
-   * allows ("New cats unlocked!").
+   * The zoom has ended: the world is rescaled to the new stage (its last cat is now the new
+   * stage's first) and the drop pool is the new stage's. Physics stays paused until
+   * `expansionFinished`. `newTiers`: the tiers the new stage adds ("New cats unlocked!").
    */
   expansionRevealed: { readonly stage: number; readonly newTiers: readonly number[] };
   expansionFinished: { readonly stage: number; readonly newTiers: readonly number[] };

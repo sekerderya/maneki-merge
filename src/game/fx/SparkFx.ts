@@ -1,8 +1,8 @@
 /**
  * Sparks and particles: gold along the rim when the shrine grows and again when the new jar is
  * revealed (GAME_DESIGN §7.1), gold bursts for golden merges and Jackpots, and a burst in the new
- * cat's colour for every merge (§12). Three pooled Phaser particle emitters in stage-1 units; each
- * emitter's scale is set to the stage's, so particles look the same at every zoom.
+ * cat's colour for every merge (§12). Three pooled Phaser particle emitters in world units (the
+ * world has the same scale at every stage).
  */
 import type Phaser from 'phaser';
 import { BURST_SPARKS, EXPANSION_SPARKS, MERGE_PARTICLES } from '../../config/view';
@@ -54,24 +54,21 @@ export class SparkFx {
     layer.add([this.merges, this.emitter, this.bursts]);
   }
 
-  /** A burst of `count` particles tinted `color` at a world point of a stage with `scale`. */
-  mergeBurst(x: number, y: number, count: number, color: number, scale: number): void {
-    this.merges.setScale(scale);
+  /** A burst of `count` particles tinted `color` at a world point. */
+  mergeBurst(x: number, y: number, count: number, color: number): void {
     this.merges.setParticleTint(color);
-    this.merges.emitParticleAt(x / scale, y / scale, count);
+    this.merges.emitParticleAt(x, y, count);
   }
 
-  /** A round burst of `count` sparks at a world point of a stage with `scale`. */
-  burst(x: number, y: number, count: number, scale: number): void {
-    this.bursts.setScale(scale);
-    this.bursts.emitParticleAt(x / scale, y / scale, count);
+  /** A round burst of `count` sparks at a world point. */
+  burst(x: number, y: number, count: number): void {
+    this.bursts.emitParticleAt(x, y, count);
   }
 
-  /** Sparks along a rim `width` wide at height `rimY` (world units) of a stage with `scale`. */
-  rim(width: number, rimY: number, scale: number): void {
-    this.emitter.setScale(scale);
-    const half = width / 2 / scale;
-    const y = rimY / scale;
+  /** Sparks along a rim `width` wide at height `rimY` (world units). */
+  rim(width: number, rimY: number): void {
+    const half = width / 2;
+    const y = rimY;
     const count = EXPANSION_SPARKS.count;
     for (let i = 0; i < count; i++) {
       const x = -half + (2 * half * (i + 0.5)) / count;

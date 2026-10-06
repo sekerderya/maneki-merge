@@ -1,8 +1,8 @@
 /**
- * Cats popping into coins (cash-out, Lucky Save; GAME_DESIGN §7.1). The run removes them at once;
+ * Cats popping into coins (stage clear, Lucky Save; GAME_DESIGN §7.1). The run removes them at once;
  * here each cat's own sprite stays where it was, then grows and fades in turn while its ring and
  * "+coins" go off. Pops of one tick are staggered (POP_STAGGER_MS apart, POP_STAGGER_MAX_MS in
- * all), so a cash-out ripples through the jar and ends within the expansion's reveal.
+ * all), so a stage clear ripples through the jar and ends before the zoom starts.
  */
 import { POP_MS, POP_SCALE, POP_STAGGER_MAX_MS, POP_STAGGER_MS } from '../../config/view';
 import type { BallRenderer, CatSprite } from '../BallRenderer';
@@ -11,6 +11,8 @@ import type { MergeFx } from './MergeFx';
 export interface PopRequest {
   readonly id: number;
   readonly tier: number;
+  /** The cat's radius in world units. */
+  readonly radius: number;
   readonly x: number;
   readonly y: number;
   readonly coins: number;
@@ -19,10 +21,10 @@ export interface PopRequest {
 interface Popping {
   sprite: CatSprite | null;
   tier: number;
+  radius: number;
   x: number;
   y: number;
   coins: number;
-  scale: number;
   startMs: number;
   started: boolean;
   bodyScale: number;
@@ -44,17 +46,17 @@ export class PopFx {
     private readonly fx: MergeFx,
   ) {}
 
-  /** Pops a batch of cats that left the run in the same tick; `scale` is the stage's. */
-  popAll(nowMs: number, requests: readonly PopRequest[], scale: number): void {
+  /** Pops a batch of cats that left the run in the same tick. */
+  popAll(nowMs: number, requests: readonly PopRequest[]): void {
     requests.forEach((r, i) => {
       const item = this.spare.pop() ?? ({} as Popping);
       const sprite = this.balls.detach(r.id);
       item.sprite = sprite;
       item.tier = r.tier;
+      item.radius = r.radius;
       item.x = r.x;
       item.y = r.y;
       item.coins = r.coins;
-      item.scale = scale;
       item.startMs = nowMs + popDelay(i, requests.length);
       item.started = false;
       item.bodyScale = sprite?.body.scaleX ?? 1;
@@ -69,7 +71,7 @@ export class PopFx {
       if (nowMs < item.startMs) continue;
       if (!item.started) {
         item.started = true;
-        this.fx.coins(nowMs, item.x, item.y, item.tier, item.coins, item.scale);
+        this.fx.payout(nowMs, item.x, item.y, item.tier, item.radius, item.coins);
       }
       const t = (nowMs - item.startMs) / POP_MS;
       const sprite = item.sprite;

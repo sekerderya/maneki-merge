@@ -1,5 +1,5 @@
 /** The queue of cats the dropper hands out (GAME_DESIGN §8). */
-import { DROP_POOL_WEIGHTS, FIRST_DROPS_SMALLEST_COUNT, stageInfo } from '../config/stages';
+import { DROP_WEIGHTS, FIRST_DROPS_SMALLEST_COUNT, stageInfo } from '../config/stages';
 import { UPGRADES } from '../config/upgrades';
 import type { Rng } from './rng';
 
@@ -9,14 +9,12 @@ export interface Drop {
 }
 
 /**
- * Normalized drop probabilities for a pool, smallest tier first.
+ * Normalized drop probabilities for a stage's pool, smallest tier first.
  * Big Catch at level L: weight_i = base_i × (1 + 0.12 × L × i), then normalize.
  */
-export function dropWeights(poolSize: number, bigCatchLevel: number): number[] {
-  const base = DROP_POOL_WEIGHTS[poolSize];
-  if (!base) throw new RangeError(`No drop weights for a pool of ${poolSize} tiers`);
+export function dropWeights(bigCatchLevel: number): number[] {
   const step = UPGRADES.bigCatch.perLevel * bigCatchLevel;
-  const weights = base.map((w, i) => w * (1 + step * i));
+  const weights = DROP_WEIGHTS.map((w, i) => w * (1 + step * i));
   const total = weights.reduce((sum, w) => sum + w, 0);
   return weights.map((w) => w / total);
 }
@@ -73,22 +71,22 @@ export class DropQueue {
   }
 
   /**
-   * Switches to a new stage's pool (after an expansion). Queued cats whose tier isn't in the new
-   * pool are rolled again from it; they keep their golden flag.
+   * Switches to a new stage's pool (after an expansion). Queued cats keep their size and golden
+   * flag: each takes the tier at the same place in the new pool, so the preview the player saw
+   * still holds (a 3 becomes a 14 of the same size).
    */
   setStage(stage: number): void {
+    const shift = stageInfo(stage).firstTier - (this.pool[0] as number);
     this.usePool(stage);
     for (let i = 0; i < this.items.length; i++) {
       const item = this.items[i] as Drop;
-      if (!this.pool.includes(item.tier)) {
-        this.items[i] = { tier: this.rollTier(), golden: item.golden };
-      }
+      this.items[i] = { tier: item.tier + shift, golden: item.golden };
     }
   }
 
   private usePool(stage: number): void {
     this.pool = stageInfo(stage).dropPool;
-    this.weights = dropWeights(this.pool.length, this.bigCatchLevel);
+    this.weights = dropWeights(this.bigCatchLevel);
   }
 
   private generate(): Drop {

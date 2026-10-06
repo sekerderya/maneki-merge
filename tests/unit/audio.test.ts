@@ -7,10 +7,10 @@ import { VoiceThrottle } from '../../src/audio/throttle';
 describe('sound pitches (GAME_DESIGN §12)', () => {
   it('pops lower for bigger cats', () => {
     expect(mergePitch(2)).toBeCloseTo(MERGE_PITCH_TOP_HZ, 6);
-    for (let tier = 3; tier <= 15; tier++) {
-      expect(mergePitch(tier)).toBeLessThan(mergePitch(tier - 1));
+    for (let size = 3; size <= 12; size++) {
+      expect(mergePitch(size)).toBeLessThan(mergePitch(size - 1));
     }
-    expect(mergePitch(15)).toBeGreaterThan(150);
+    expect(mergePitch(12)).toBeGreaterThan(150);
   });
 
   it('raises the combo notes along a pentatonic scale, then holds', () => {

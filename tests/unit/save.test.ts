@@ -6,6 +6,7 @@ import {
   defaultSave,
   MemoryStorage,
   migrate,
+  QUICK_GROWTH_PRICES,
   sanitize,
   SAVE_VERSION,
   SaveStore,
@@ -83,7 +84,7 @@ describe('decodeSave and migrate', () => {
   it('round-trips a valid save unchanged', () => {
     const result = decodeSave(envelope(sampleSave()));
     expect(result.status).toBe('ok');
-    expect(result.fromVersion).toBe(1);
+    expect(result.fromVersion).toBe(SAVE_VERSION);
     expect(result.data).toEqual(sampleSave());
   });
 
@@ -162,8 +163,8 @@ describe('sanitize', () => {
   it('repairs invalid fields and reports each one', () => {
     const result = sanitize({
       wallet: { coins: -5 },
-      upgrades: { luckyPaw: 99, bigCatch: 2.7, quickGrowth: 'max', goldenTouch: null },
-      records: { bestScore: Number.NaN, bestStage: 0, highestTier: 40 },
+      upgrades: { luckyPaw: 99, bigCatch: 2.7, goldenTouch: null, secondChance: 'max' },
+      records: { bestScore: Number.NaN, bestStage: 0, highestTier: 99 },
       stats: 'lots',
       settings: { sound: 'yes', haptics: false },
       flags: { hintsSeen: { aim: 1, merge: true } },
@@ -172,8 +173,8 @@ describe('sanitize', () => {
       'wallet.coins',
       'upgrades.luckyPaw',
       'upgrades.bigCatch',
-      'upgrades.quickGrowth',
       'upgrades.goldenTouch',
+      'upgrades.secondChance',
       'records.bestScore',
       'records.bestStage',
       'records.highestTier',
@@ -185,12 +186,18 @@ describe('sanitize', () => {
     expect(d.wallet.coins).toBe(0);
     expect(d.upgrades.luckyPaw).toBe(10); // clamped to max
     expect(d.upgrades.bigCatch).toBe(2); // floored
-    expect(d.upgrades.quickGrowth).toBe(0);
     expect(d.upgrades.goldenTouch).toBe(0);
-    expect(d.records).toEqual({ bestScore: 0, bestStage: 1, highestTier: 15 });
+    expect(d.upgrades.secondChance).toBe(0);
+    expect(d.records).toEqual({ bestScore: 0, bestStage: 1, highestTier: 56 });
     expect(d.stats).toEqual(defaultSave().stats);
     expect(d.settings).toEqual({ sound: true, haptics: false });
     expect(d.flags.hintsSeen).toEqual({ aim: false, merge: true });
+  });
+
+  it('keeps scores beyond 2^53 (later stages score in the quadrillions)', () => {
+    const result = sanitize({ records: { bestScore: 2 ** 56, bestStage: 5, highestTier: 56 } });
+    expect(result.issues).toEqual([]);
+    expect(result.data.records.bestScore).toBe(2 ** 56);
   });
 
   it('drops unknown fields and upgrade ids', () => {
@@ -200,13 +207,71 @@ describe('sanitize', () => {
   });
 });
 
+describe('v1 → v2: Quick Growth refund (v0.10)', () => {
+  const v1 = (quickGrowth: unknown, coins: unknown = 100) => ({
+    version: 1,
+    data: {
+      wallet: { coins },
+      upgrades: { luckyPaw: 2, quickGrowth, goldenTouch: 1 },
+      records: { bestScore: 900, bestStage: 2, highestTier: 7 },
+    },
+  });
+
+  it('is the current version', () => {
+    expect(SAVE_VERSION).toBe(2);
+  });
+
+  it.each([
+    [0, 0],
+    [1, 150],
+    [3, 1050],
+    [5, 4650],
+  ])('gives back the coins spent on %i levels (%i)', (level, refund) => {
+    const result = migrate(v1(level));
+    expect(result.status).toBe('migrated');
+    expect(result.issues).toEqual([]);
+    expect(result.data.wallet.coins).toBe(100 + refund);
+    expect(result.data.upgrades).toEqual({
+      ...defaultSave().upgrades,
+      luckyPaw: 2,
+      goldenTouch: 1,
+    });
+    expect(result.data.upgrades).not.toHaveProperty('quickGrowth');
+    expect(result.data.records).toEqual({ bestScore: 900, bestStage: 2, highestTier: 7 });
+  });
+
+  it('refunds at most the five levels there were, and nothing for a broken level', () => {
+    const all = QUICK_GROWTH_PRICES.reduce((a, b) => a + b, 0);
+    expect(migrate(v1(9)).data.wallet.coins).toBe(100 + all);
+    expect(migrate(v1('max')).data.wallet.coins).toBe(100);
+    expect(migrate(v1(undefined)).data.wallet.coins).toBe(100);
+    // A broken wallet stays broken for the repair to report.
+    const broken = migrate(v1(2, 'lots'));
+    expect(broken.status).toBe('repaired');
+    expect(broken.issues).toEqual(['wallet.coins']);
+  });
+
+  it('rewrites the save as v2 when it loads', () => {
+    const storage = new MemoryStorage();
+    storage.setItem(SAVE_KEY, JSON.stringify(v1(2)));
+    expect(new SaveStore(storage).load()).toMatchObject({
+      status: 'migrated',
+      data: { wallet: { coins: 550 } },
+    });
+    expect(JSON.parse(storage.getItem(SAVE_KEY)!).version).toBe(2);
+  });
+});
+
 describe('SaveStore', () => {
   it('writes { version, data } under maneki-merge:save and reads it back', () => {
     const storage = new MemoryStorage();
     const store = new SaveStore(storage);
     expect(store.load().status).toBe('empty');
     expect(store.save(sampleSave())).toBe(true);
-    expect(JSON.parse(storage.getItem(SAVE_KEY)!)).toEqual({ version: 1, data: sampleSave() });
+    expect(JSON.parse(storage.getItem(SAVE_KEY)!)).toEqual({
+      version: SAVE_VERSION,
+      data: sampleSave(),
+    });
     expect(new SaveStore(storage).load()).toMatchObject({ status: 'ok', data: sampleSave() });
     expect(store.backups()).toEqual([]);
   });

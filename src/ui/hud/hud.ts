@@ -18,11 +18,18 @@ export interface HudView {
   /** The next one or two cats (Fortune Teller), next first. */
   setPreview(cats: readonly HudCat[]): void;
   /**
-   * Stage label and the bar towards the next expansion (a lock when it isn't unlocked). A new
-   * stage resets the bar without animating it backwards and makes the label glow.
+   * Stage label, the bar towards the stage's last cat and that cat (the goal), with a lock when
+   * the next stage isn't unlocked. A new stage resets the bar without animating it backwards and
+   * makes the label glow.
    */
-  setStage(stage: number, fraction: number, locked: boolean, final: boolean): void;
-  /** Draws attention to the lock (the score reached a stage that isn't unlocked). */
+  setStage(
+    stage: number,
+    fraction: number,
+    goalTier: number,
+    locked: boolean,
+    final: boolean,
+  ): void;
+  /** Draws attention to the lock (the stage was cleared but the next one isn't unlocked). */
   pulseLock(): void;
   /** A coin landed on the counter. */
   pulseCoins(): void;
@@ -56,7 +63,7 @@ export function createHud(root: HTMLElement, actions: HudActions): HudView {
   stageLabel.dataset['testid'] = 'hud-stage';
   const bar = el('div', 'hud-bar');
   bar.setAttribute('role', 'progressbar');
-  bar.setAttribute('aria-label', 'Progress to the next stage');
+  bar.setAttribute('aria-label', "Progress to the stage's last cat");
   bar.setAttribute('aria-valuemin', '0');
   bar.setAttribute('aria-valuemax', '100');
   const fill = el('div', 'hud-bar-fill');
@@ -66,7 +73,11 @@ export function createHud(root: HTMLElement, actions: HudActions): HudView {
   lock.setAttribute('aria-label', 'Next stage locked');
   lock.dataset['testid'] = 'hud-lock';
   lock.hidden = true;
-  stage.append(stageLabel, bar, lock);
+  // The stage's last cat: making it grows the jar.
+  const goal = catIcon(1, false);
+  goal.classList.add('hud-goal');
+  goal.dataset['testid'] = 'hud-goal';
+  stage.append(stageLabel, bar, goal, lock);
   main.append(top, stage);
 
   const next = el('div', 'hud-next');
@@ -103,7 +114,7 @@ export function createHud(root: HTMLElement, actions: HudActions): HudView {
       });
       next.classList.toggle('has-two', cats.length > 1);
     },
-    setStage(value, fraction, locked, final) {
+    setStage(value, fraction, goalTier, locked, final) {
       const percent = Math.round(fraction * 100);
       if (value !== shownStage) {
         // A run start or an expansion: jump to the new fill instead of sliding back.
@@ -117,6 +128,8 @@ export function createHud(root: HTMLElement, actions: HudActions): HudView {
       } else {
         fill.style.transform = `scaleX(${fraction})`;
       }
+      if (goal.dataset['tier'] !== String(goalTier)) paintCatIcon(goal, goalTier, false);
+      goal.setAttribute('aria-label', `Goal: cat ${goalTier}`);
       bar.setAttribute('aria-valuenow', String(percent));
       bar.classList.toggle('is-locked', locked);
       bar.classList.toggle('is-final', final);

@@ -4,13 +4,13 @@ import { PhysicsWorld } from '../../src/physics/PhysicsWorld';
 import { RunController } from '../../src/run/RunController';
 import { STEPS_PER_SECOND, upgrades } from './fixtures';
 
-/** A drop input, keyed to the tick it arrived before. */
+/** A drop input (or a debug stage clear), keyed to the tick it arrived before. */
 interface DropInput {
   readonly tick: number;
-  readonly x: number;
+  readonly x: number | 'clear';
 }
 
-const LEVELS = upgrades({ shrineExpansion: 1, quickGrowth: 5, goldenTouch: 3, secondChance: 1 });
+const LEVELS = upgrades({ shrineExpansion: 1, goldenTouch: 3, secondChance: 1 });
 const TICKS = 25 * STEPS_PER_SECOND;
 
 function newRun(seed: number): RunController {
@@ -19,11 +19,14 @@ function newRun(seed: number): RunController {
 
 /**
  * Plays `TICKS` ticks driven by `update(frameMs)` with random frame lengths, dropping at a random
- * x whenever a frame starts with the dropper ready. Records each drop with its tick.
+ * x whenever a frame starts with the dropper ready. Records each drop with its tick. With
+ * `clearAt`, the first frame from that tick on clears the stage (debug jump), so the expansion
+ * timeline replays too.
  */
 function playWithFrames(
   seed: number,
   frameSeed: number,
+  clearAt = Infinity,
 ): { inputs: DropInput[]; hashes: string[] } {
   const run = newRun(seed);
   const frames = new Rng(frameSeed);
@@ -31,7 +34,13 @@ function playWithFrames(
   const inputs: DropInput[] = [];
   const hashes: string[] = [];
   let nextCheck = 500;
+  let cleared = false;
   while (run.ticks < TICKS) {
+    if (!cleared && run.ticks >= clearAt && run.state === 'playing') {
+      cleared = true;
+      run.jumpToStage(run.stage + 1);
+      inputs.push({ tick: run.ticks, x: 'clear' });
+    }
     if (run.canDrop) {
       const x = (aim.next() * 2 - 1) * 300;
       if (run.drop(x)) inputs.push({ tick: run.ticks, x });
@@ -53,7 +62,9 @@ function replay(seed: number, inputs: readonly DropInput[], checkTicks: readonly
   const end = Math.max(TICKS, ...checkTicks);
   while (run.ticks < end) {
     while (next < inputs.length && inputs[next]!.tick === run.ticks) {
-      expect(run.drop(inputs[next]!.x)).toBe(true);
+      const { x } = inputs[next]!;
+      if (x === 'clear') run.jumpToStage(run.stage + 1);
+      else expect(run.drop(x)).toBe(true);
       next++;
     }
     run.tick();
@@ -79,8 +90,8 @@ describe('determinism (TECH_SPEC §5)', () => {
     expect(again.hashes).toEqual(recorded.hashes);
   });
 
-  it('reaches an expansion, so the timeline is covered as well', () => {
-    const recorded = playWithFrames(9, 2);
+  it('replays a stage clear and its expansion, so the timeline is covered as well', () => {
+    const recorded = playWithFrames(9, 2, 10 * STEPS_PER_SECOND);
     const ticks = recorded.hashes.map((h) => Number(h.split(':')[0]));
     const { run, hashes } = replay(9, recorded.inputs, ticks);
     expect(hashes).toEqual(recorded.hashes);

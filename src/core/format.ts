@@ -2,6 +2,8 @@
 import { SHORT_NUMBER_FROM } from '../config/economy';
 
 const SUFFIXES: readonly (readonly [number, string])[] = [
+  [1e18, 'Qi'],
+  [1e15, 'Qa'],
   [1e12, 'T'],
   [1e9, 'B'],
   [1e6, 'M'],
@@ -10,7 +12,8 @@ const SUFFIXES: readonly (readonly [number, string])[] = [
 
 /**
  * Below 10,000: whole number with thousands separators ("9,999").
- * From 10,000: short format with at most 3 significant digits ("12.5K", "125K", "3.2M").
+ * From 10,000: short format with at most 3 significant digits ("12.5K", "125K", "3.2M"), then
+ * B, T, Qa (10^15) and Qi (10^18): later stages pay in the trillions.
  * The short format truncates instead of rounding, so a balance never looks bigger than it is
  * (59,960 coins shows "59.9K", not "60K" next to a 60K price).
  */

@@ -1,13 +1,14 @@
 /**
- * The matter-js world of one run (TECH_SPEC §4–§5): the jar walls of the current stage, the cats,
- * and one fixed step at a time. Each step also tracks first contacts, collects same-tier contacts
+ * The matter-js world of one run (TECH_SPEC §4–§5): the jar walls, the cats of the current stage,
+ * and one fixed step at a time. Every stage has the same jar and gravity; moving to the next stage
+ * rescales the cats instead (`setStage`). Each step also tracks first contacts, collects same-tier contacts
  * for the merge resolver, grows merged cats and clamps speeds. No randomness and no wall clock:
  * the same calls always give the same world.
  */
 import Matter from 'matter-js';
 import {
   ENABLE_SLEEPING,
-  gravityForScale,
+  GRAVITY_BASE,
   GROWTH_NEIGHBOUR_MAX_SPEED_BASE,
   MAX_ANGULAR_SPEED,
   MAX_SPEED_BASE,
@@ -18,10 +19,14 @@ import {
   WALL_HEIGHT_FACTOR,
   WALL_THICKNESS,
 } from '../config/physics';
-import { FIRST_STAGE, STAGE_COUNT } from '../config/stages';
+import { FIRST_STAGE, tierSize } from '../config/stages';
+import { isSize, STAGE_ZOOM } from '../config/tiers';
 import type { StateHasher } from '../core/hash';
 import { ballOf, createBall, MATTER_TICKS_PER_SECOND } from './balls';
 import type { Ball, BallSpec } from './balls';
+
+/** A cat to add: the world works out its size at the current stage. */
+export type NewBall = Omit<BallSpec, 'size'>;
 import { installCircleCollisions } from './circleCollision';
 import { jarGeometry } from './geometry';
 import type { JarGeometry } from './geometry';
@@ -100,9 +105,9 @@ export class PhysicsWorld {
   private stepCount = 0;
   private nextId = 1;
   private isPaused = false;
-  /** Speed limits in matter-js units (per base tick), scaled to the stage. */
-  private maxSpeed = 0;
-  private neighbourMaxSpeed = 0;
+  /** Speed limits in matter-js units (per base tick). */
+  private readonly maxSpeed = MAX_SPEED_BASE / MATTER_TICKS_PER_SECOND;
+  private readonly neighbourMaxSpeed = GROWTH_NEIGHBOUR_MAX_SPEED_BASE / MATTER_TICKS_PER_SECOND;
   private readonly maxAngularSpeed = MAX_ANGULAR_SPEED / MATTER_TICKS_PER_SECOND;
 
   constructor(options: PhysicsWorldOptions = {}) {
@@ -112,13 +117,12 @@ export class PhysicsWorld {
       positionIterations: POSITION_ITERATIONS,
       velocityIterations: VELOCITY_ITERATIONS,
       enableSleeping: ENABLE_SLEEPING,
-      gravity: { x: 0, y: 0, scale: MATTER_GRAVITY_SCALE },
+      gravity: { x: 0, y: GRAVITY_BASE, scale: MATTER_GRAVITY_SCALE },
     });
 
-    // The walls are tall enough for every stage and only slide sideways; the floor is wide
-    // enough to stay under them at stage 5.
-    const last = jarGeometry(STAGE_COUNT);
-    const top = -WALL_HEIGHT_FACTOR * last.height;
+    // The walls stand WALL_HEIGHT_FACTOR jar heights tall; the floor reaches under them.
+    const jar = this.geo;
+    const top = -WALL_HEIGHT_FACTOR * jar.height;
     const wallHeight = WALL_THICKNESS - top;
     const wallY = (WALL_THICKNESS + top) / 2;
     const wall = (): Matter.Body =>
@@ -131,12 +135,14 @@ export class PhysicsWorld {
     const floor = Matter.Bodies.rectangle(
       0,
       WALL_THICKNESS / 2,
-      last.width + 2 * WALL_THICKNESS,
+      jar.width + 2 * WALL_THICKNESS,
       WALL_THICKNESS,
       { isStatic: true, label: 'floor' },
     );
+    const offset = jar.halfWidth + WALL_THICKNESS / 2;
+    Matter.Body.setPosition(this.leftWall, { x: -offset, y: wallY });
+    Matter.Body.setPosition(this.rightWall, { x: offset, y: wallY });
     Matter.Composite.add(this.engine.world, [floor, this.leftWall, this.rightWall]);
-    this.applyStage();
   }
 
   /** Every cat in the world, oldest first. */
@@ -161,7 +167,7 @@ export class PhysicsWorld {
     return this.stepCount;
   }
 
-  /** matter-js gravity.y; 1 at stage 1. */
+  /** matter-js gravity.y. */
   get gravity(): number {
     return this.engine.gravity.y;
   }
@@ -171,7 +177,7 @@ export class PhysicsWorld {
     return this.rightWall.position.x - WALL_THICKNESS / 2;
   }
 
-  /** The speed limit for every cat at the current stage, in world units per second. */
+  /** The speed limit for every cat, in world units per second. */
   get speedLimit(): number {
     return this.maxSpeed * MATTER_TICKS_PER_SECOND;
   }
@@ -188,14 +194,28 @@ export class PhysicsWorld {
     this.isPaused = false;
   }
 
-  /** Moves the walls to the stage's jar and scales gravity and the speed limits with it. */
+  /**
+   * Moves on to the next stage (GAME_DESIGN §7): the jar has grown by STAGE_ZOOM, so the world
+   * shrinks by as much around the floor's centre and the new stage plays in the same jar. The
+   * last cat of the old stage becomes the first of the new one. Every cat must fit the new stage;
+   * the run pops the others first.
+   */
   setStage(stage: number): void {
+    if (stage !== this.geo.stage + 1)
+      throw new RangeError(`Can't move from stage ${this.geo.stage} to ${stage}`);
+    const sizes = this.list.map((ball) => tierSize(ball.tier, stage));
+    if (!sizes.every(isSize)) throw new RangeError(`Stage ${stage} can't hold every cat`);
     this.geo = jarGeometry(stage);
-    this.applyStage();
+    this.list.forEach((ball, i) => ball.rescale(1 / STAGE_ZOOM, sizes[i] as number));
   }
 
-  addBall(spec: BallSpec): Ball {
-    const ball = createBall(this.nextId++, spec);
+  /** The size a tier has at the current stage (outside 1–12 when the stage can't hold it). */
+  sizeOf(tier: number): number {
+    return tierSize(tier, this.geo.stage);
+  }
+
+  addBall(spec: NewBall): Ball {
+    const ball = createBall(this.nextId++, { ...spec, size: this.sizeOf(spec.tier) });
     this.list.push(ball);
     Matter.Composite.add(this.engine.world, ball.body);
     if (spec.vx || spec.vy) this.limitSpeed(ball.body, this.maxSpeed);
@@ -255,16 +275,6 @@ export class PhysicsWorld {
       hasher.number(angle).number(anglePrev);
       hasher.number(ball.radius).number(ball.landedMs);
     }
-  }
-
-  private applyStage(): void {
-    const { halfWidth, scale } = this.geo;
-    const offset = halfWidth + WALL_THICKNESS / 2;
-    Matter.Body.setPosition(this.leftWall, { x: -offset, y: this.leftWall.position.y });
-    Matter.Body.setPosition(this.rightWall, { x: offset, y: this.rightWall.position.y });
-    this.engine.gravity.y = gravityForScale(scale);
-    this.maxSpeed = (MAX_SPEED_BASE * scale) / MATTER_TICKS_PER_SECOND;
-    this.neighbourMaxSpeed = (GROWTH_NEIGHBOUR_MAX_SPEED_BASE * scale) / MATTER_TICKS_PER_SECOND;
   }
 
   /**

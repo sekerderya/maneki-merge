@@ -29,6 +29,11 @@ describe('formatNumber (GAME_DESIGN §9)', () => {
     [45_000_000, '45M'],
     [1_500_000_000, '1.5B'],
     [2_000_000_000_000, '2T'],
+    [4_728_143_791_952, '4.7T'],
+    [35_184_372_088_832, '35.1T'],
+    [1_500_000_000_000_000, '1.5Qa'],
+    [72_057_594_037_927_940, '72Qa'],
+    [2 ** 70, '1180Qi'],
   ])('shortens %i to %s and never rounds up', (value, text) => {
     expect(formatNumber(value)).toBe(text);
   });

@@ -5,7 +5,7 @@ import {
   COMBO_SCALE_SEMITONES,
   DANGER_TICK_HZ,
   MERGE_PITCH_TOP_HZ,
-  MERGE_SEMITONES_PER_TIER,
+  MERGE_SEMITONES_PER_SIZE,
 } from '../config/audio';
 
 /** A frequency shifted by a number of semitones. */
@@ -13,9 +13,9 @@ export function semitones(hz: number, steps: number): number {
   return hz * 2 ** (steps / 12);
 }
 
-/** The merge pop for a merge into `newTier`: lower for bigger cats. */
-export function mergePitch(newTier: number): number {
-  return semitones(MERGE_PITCH_TOP_HZ, -MERGE_SEMITONES_PER_TIER * Math.max(0, newTier - 2));
+/** The merge pop for a merge into a cat of `newSize`: lower for bigger cats. */
+export function mergePitch(newSize: number): number {
+  return semitones(MERGE_PITCH_TOP_HZ, -MERGE_SEMITONES_PER_SIZE * Math.max(0, newSize - 2));
 }
 
 /** The note for combo level `combo` (2 is the first combo): a rising pentatonic, capped. */

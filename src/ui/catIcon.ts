@@ -1,4 +1,4 @@
-import { GOLD_RING, OUTLINE_DARKEN, TIER_COLORS } from '../config/skin';
+import { GOLD_RING, OUTLINE_DARKEN, tierColor } from '../config/skin';
 import { darken } from '../core/color';
 import { el } from './dom';
 
@@ -13,7 +13,7 @@ export function catIcon(tier: number, golden: boolean): HTMLElement {
 }
 
 export function paintCatIcon(icon: HTMLElement, tier: number, golden: boolean): void {
-  const color = TIER_COLORS[tier - 1] ?? '#cccccc';
+  const color = tierColor(tier);
   icon.textContent = String(tier);
   icon.style.setProperty('--cat-color', color);
   icon.style.setProperty('--cat-outline', golden ? GOLD_RING : darken(color, OUTLINE_DARKEN));

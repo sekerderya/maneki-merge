@@ -117,7 +117,7 @@ export class GameSession {
 
     const showProgress = (): void => {
       const p = run.progress;
-      hud.setStage(run.stage, p.fraction, p.locked, p.target === null);
+      hud.setStage(run.stage, p.fraction, p.goalTier, p.locked, p.final);
     };
     const showPreview = (): void => hud.setPreview(run.preview);
     hud.setScore(run.score);
@@ -129,9 +129,16 @@ export class GameSession {
       hud.setScore(e.score);
       showProgress();
     });
-    // The menu catches up with the wallet when the run ends (it is hidden until then).
-    events.on('runCoinsChanged', (e) => hud.setCoins(e.coins));
-    events.on('catDropped', showPreview);
+    // The menu catches up with the wallet when the run ends (it is hidden until then). Coins also
+    // change when cats pop, which can shrink the biggest cat in the jar.
+    events.on('runCoinsChanged', (e) => {
+      hud.setCoins(e.coins);
+      showProgress();
+    });
+    events.on('catDropped', () => {
+      showPreview();
+      showProgress();
+    });
 
     // Banners sit in the empty top of the jar (GAME_DESIGN §2.3).
     const jarY = (fraction: number): number | undefined => {
@@ -162,16 +169,20 @@ export class GameSession {
       }),
     );
 
-    // Expansions (GAME_DESIGN §7.1, §7.2).
-    events.on('expansionStarted', () => {
+    // Stage clears and expansions (GAME_DESIGN §7, §7.1, §7.2).
+    events.on('stageCleared', (e) => {
       banners.combo(0, 0);
-      banners.show('The shrine grows!', { y: bannerY() });
+      showProgress();
+      banners.show(e.next === 'expand' ? 'The shrine grows!' : 'Stage clear!', { y: bannerY() });
     });
     events.on('expansionRevealed', (e) => {
       showPreview();
       showProgress();
+      // The new stage's last cat is the next goal.
+      const goal = e.newTiers[e.newTiers.length - 1];
       banners.show('New cats unlocked!', {
-        tiers: e.newTiers,
+        detail: 'Next goal',
+        tiers: goal === undefined ? [] : [goal],
         durationMs: BANNER_NEW_CATS_MS,
         y: bannerY(),
       });

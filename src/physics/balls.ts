@@ -1,6 +1,7 @@
 /**
  * Cats in the physics world: a matter-js body plus the game data the world tracks for it
- * (tier, golden, growth after a merge, first contact). Contacts use the exact circle
+ * (tier, size, golden, growth after a merge, first contact). The tier is the cat's number; the
+ * size (its place in the current stage, 1–12) sets its radius and density. Contacts use the exact circle
  * (circleCollision.ts); the body's polygon only feeds matter-js's broadphase bounds.
  */
 import Matter from 'matter-js';
@@ -11,9 +12,9 @@ import {
   BALL_HULL_SIDES,
   BALL_INERTIA_SCALE,
   BALL_RESTITUTION,
-  densityForTier,
+  densityForSize,
 } from '../config/physics';
-import { isTier, tierRadius } from '../config/tiers';
+import { isSize, isTier, sizeRadius } from '../config/tiers';
 import { MERGE_GROW_MS } from '../config/timings';
 import type { CircleShape } from './circleCollision';
 
@@ -24,6 +25,8 @@ export const MATTER_TICKS_PER_SECOND = 60;
 export interface BallView {
   readonly id: number;
   readonly tier: number;
+  /** The cat's size at the current stage (1–12). */
+  readonly size: number;
   readonly golden: boolean;
   readonly x: number;
   readonly y: number;
@@ -33,8 +36,10 @@ export interface BallView {
   readonly vy: number;
   /** World units per second. */
   readonly speed: number;
-  /** The current radius; a merged cat grows into its tier's radius. */
+  /** The current radius; a merged cat grows into its size's radius. */
   readonly radius: number;
+  /** The radius of the cat's size, which a growing cat is on its way to. */
+  readonly targetRadius: number;
   readonly growing: boolean;
   /** Play time of the cat's first contact with anything, or −1 while it is still falling. */
   readonly landedMs: number;
@@ -42,6 +47,8 @@ export interface BallView {
 
 export interface BallSpec {
   readonly tier: number;
+  /** 1–12: the tier's place in the world's stage (the world works it out). */
+  readonly size: number;
   readonly golden?: boolean;
   readonly x: number;
   readonly y: number;
@@ -56,25 +63,26 @@ export interface BallSpec {
 
 export class Ball implements BallView, CircleShape {
   radius: number;
-  readonly targetRadius: number;
+  targetRadius: number;
   /** Play time of the first contact, or −1. */
   landedMs: number;
   /** Set once the world has removed the cat. */
   removed = false;
   /** Set by the world during a step when the cat touches a growing cat. */
   touchesGrowth = false;
-  private readonly growFrom: number;
+  private growFrom: number;
   private growAgeMs = 0;
 
   constructor(
     readonly id: number,
     readonly tier: number,
+    public size: number,
     readonly golden: boolean,
     readonly body: Matter.Body,
     startRadius: number,
     landedMs: number,
   ) {
-    this.targetRadius = tierRadius(tier);
+    this.targetRadius = sizeRadius(size);
     this.radius = Math.min(startRadius, this.targetRadius);
     this.growFrom = this.radius;
     this.landedMs = landedMs;
@@ -109,7 +117,7 @@ export class Ball implements BallView, CircleShape {
     return this.radius < this.targetRadius;
   }
 
-  /** Grows linearly from the start radius to the tier's radius over MERGE_GROW_MS. */
+  /** Grows linearly from the start radius to the size's radius over MERGE_GROW_MS. */
   grow(dtMs: number): void {
     if (!this.growing) return;
     this.growAgeMs += dtMs;
@@ -119,23 +127,44 @@ export class Ball implements BallView, CircleShape {
     const factor = radius / this.radius;
     Matter.Body.scale(this.body, factor, factor);
     this.radius = radius;
-    setCircleMass(this.body, this.tier, radius);
+    setCircleMass(this.body, this.size, radius);
+  }
+
+  /**
+   * The world was rescaled by `factor` around the floor's centre (the jar grew into the next
+   * stage): the cat moves and shrinks with it and takes `size`, whose radius must be the old one
+   * times `factor`. Its velocity scales too, so it keeps moving the same way on screen.
+   */
+  rescale(factor: number, size: number): void {
+    const { position, velocity } = this.body;
+    const vx = velocity.x * factor;
+    const vy = velocity.y * factor;
+    Matter.Body.setPosition(this.body, { x: position.x * factor, y: position.y * factor });
+    Matter.Body.scale(this.body, factor, factor);
+    Matter.Body.setVelocity(this.body, { x: vx, y: vy });
+    this.size = size;
+    this.targetRadius = sizeRadius(size);
+    this.radius *= factor;
+    this.growFrom *= factor;
+    setCircleMass(this.body, size, this.radius);
   }
 }
 
-/** Mass and inertia of a solid disc of the tier's density (the hull polygon is a bit bigger). */
-function setCircleMass(body: Matter.Body, tier: number, radius: number): void {
-  const mass = densityForTier(tier) * Math.PI * radius * radius;
+/** Mass and inertia of a solid disc of the size's density (the hull polygon is a bit bigger). */
+function setCircleMass(body: Matter.Body, size: number, radius: number): void {
+  const mass = densityForSize(size) * Math.PI * radius * radius;
   Matter.Body.setMass(body, mass);
   Matter.Body.setInertia(body, BALL_INERTIA_SCALE * 0.5 * mass * radius * radius);
 }
 
 export function createBall(id: number, spec: BallSpec): Ball {
   if (!isTier(spec.tier)) throw new RangeError(`Unknown tier: ${spec.tier}`);
+  if (!isSize(spec.size)) throw new RangeError(`Tier ${spec.tier} has no size here: ${spec.size}`);
   if (!Number.isFinite(spec.x) || !Number.isFinite(spec.y)) {
     throw new RangeError(`Invalid position: ${spec.x}, ${spec.y}`);
   }
-  const radius = Math.min(spec.startRadius ?? tierRadius(spec.tier), tierRadius(spec.tier));
+  const full = sizeRadius(spec.size);
+  const radius = Math.min(spec.startRadius ?? full, full);
   if (!(radius > 0)) throw new RangeError(`Invalid start radius: ${spec.startRadius}`);
   const hull = radius / Math.cos(Math.PI / BALL_HULL_SIDES);
   const body = Matter.Bodies.circle(
@@ -151,9 +180,17 @@ export function createBall(id: number, spec: BallSpec): Ball {
     },
     BALL_HULL_SIDES,
   );
-  const ball = new Ball(id, spec.tier, spec.golden ?? false, body, radius, spec.landedMs ?? -1);
+  const ball = new Ball(
+    id,
+    spec.tier,
+    spec.size,
+    spec.golden ?? false,
+    body,
+    radius,
+    spec.landedMs ?? -1,
+  );
   (body.plugin as { circle?: Ball }).circle = ball;
-  setCircleMass(body, spec.tier, radius);
+  setCircleMass(body, spec.size, radius);
   if (spec.vx || spec.vy) {
     Matter.Body.setVelocity(body, {
       x: (spec.vx ?? 0) / MATTER_TICKS_PER_SECOND,

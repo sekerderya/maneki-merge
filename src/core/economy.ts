@@ -1,11 +1,11 @@
-/** Score, coin payouts, combo, Jackpot and cash-out (GAME_DESIGN §5, §7.1, §9). */
+/** Score, coin payouts, combo, Jackpot and pops (GAME_DESIGN §5, §7.1, §9). */
 import {
   GOLDEN_COIN_MULTIPLIER,
   JACKPOT_COIN_MULTIPLIER,
   JACKPOT_SCORE_MULTIPLIER,
   MIN_COIN_PAYOUT,
+  POP_VALUE_SHARE,
 } from '../config/economy';
-import { stageInfo } from '../config/stages';
 import { tierCoins, tierScore } from '../config/tiers';
 import { COMBO_WINDOW_MS } from '../config/timings';
 import { roundStable } from './math';
@@ -31,24 +31,22 @@ export function mergeScore(tier: number): number {
   return tierScore(tier);
 }
 
-/** Score for a Jackpot at the cap tier: 2 × S(cap). */
+/** Score for a Jackpot of two `capTier` cats (a stage's last cat): 2 × S(cap). */
 export function jackpotScore(capTier: number): number {
   return JACKPOT_SCORE_MULTIPLIER * tierScore(capTier);
 }
 
-/** Base coins for a Jackpot at the cap tier, before multipliers: 5 × C(cap). */
+/** Base coins for a Jackpot of two `capTier` cats, before multipliers: 5 × C(cap). */
 export function jackpotBaseCoins(capTier: number): number {
   return JACKPOT_COIN_MULTIPLIER * tierCoins(capTier);
 }
 
-/** Coins for a single cat popping (cash-out, Lucky Save): C(t) with multipliers, no combo. */
+/**
+ * Coins for a single cat popping (stage clear, Lucky Save): its value, half of C(t), with
+ * multipliers and no combo. Two cats that pop pay as much as their merge would.
+ */
 export function popCoins(tier: number, golden: boolean, coinMultiplier: number): number {
-  return coinPayout(tierCoins(tier), coinMultiplier, 0, golden);
-}
-
-/** Cats below this tier pop into coins when the jar expands into `stage` (its smallest drop). */
-export function cashOutBelow(stage: number): number {
-  return stageInfo(stage).dropPool[0] ?? 1;
+  return coinPayout(tierCoins(tier) * POP_VALUE_SHARE, coinMultiplier, 0, golden);
 }
 
 /**
@@ -94,7 +92,7 @@ export interface Payout {
 export type EconomyStats = Pick<DerivedStats, 'coinMultiplier' | 'comboCharmLevel'>;
 
 /**
- * Per-run score and coin bookkeeping. Merges and Jackpots raise the combo; pops (cash-out and
+ * Per-run score and coin bookkeeping. Merges and Jackpots raise the combo; pops (stage clear and
  * Lucky Save) pay coins only. The caller banks `coins` into the wallet immediately.
  */
 export class RunEconomy {
@@ -146,7 +144,7 @@ export class RunEconomy {
     return this.pay(mergeScore(tier), tierCoins(tier), golden, timeMs);
   }
 
-  /** Two cap-tier cats vanished in a Jackpot. */
+  /** Two of a stage's last cat vanished in a Jackpot. */
   jackpot(capTier: number, golden: boolean, timeMs: number): Payout {
     this.jackpotCount++;
     return this.pay(jackpotScore(capTier), jackpotBaseCoins(capTier), golden, timeMs);
@@ -158,7 +156,7 @@ export class RunEconomy {
     this.scoreTotal = score;
   }
 
-  /** A single cat popped into coins (cash-out or Lucky Save). */
+  /** A single cat popped into coins (stage clear or Lucky Save). */
   pop(tier: number, golden: boolean): Payout {
     const coins = popCoins(tier, golden, this.stats.coinMultiplier);
     this.coinsTotal += coins;

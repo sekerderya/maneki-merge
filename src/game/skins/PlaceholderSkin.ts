@@ -1,9 +1,9 @@
 /**
- * Placeholder cats (GAME_DESIGN §13.1): a flat circle per tier with a darker outline, a gold ring
+ * Placeholder cats (GAME_DESIGN §13.1): a flat circle per size with a darker outline, a gold ring
  * for golden cats, and the tier number as a separate upright sprite. Textures are drawn with the
- * 2D canvas API, one set per stage at that stage's zoom (skinSets.ts), so they are never upscaled
- * and never shrunk much. A set is drawn ahead of time during the expansion into its stage; any
- * frame still missing when asked for is drawn on the spot.
+ * 2D canvas API at PLACEHOLDER_PX_PER_UNIT, so they are never upscaled. Bodies are shared by size
+ * across stages (skinSets.ts); each stage adds its numbers, drawn ahead of time during the zoom
+ * into it. Any frame still missing when asked for is drawn on the spot.
  */
 import type Phaser from 'phaser';
 import {
@@ -14,22 +14,24 @@ import {
   NUMBER_STROKE,
   NUMBER_STROKE_RATIO,
   OUTLINE_DARKEN,
-  TIER_COLORS,
+  tierColor,
 } from '../../config/skin';
-import { FIRST_STAGE, STAGES } from '../../config/stages';
-import { tierRadius } from '../../config/tiers';
+import { FIRST_STAGE, STAGES, tierSize } from '../../config/stages';
+import { SIZE_COUNT, sizeRadius } from '../../config/tiers';
 import {
   NUMBER_HEIGHT_RATIO,
   NUMBER_HEIGHT_RATIO_TWO_DIGITS,
   PLACEHOLDER_GOLD_RING_RATIO,
   PLACEHOLDER_OUTLINE_RATIO,
+  PLACEHOLDER_PX_PER_UNIT,
 } from '../../config/view';
 import { darken } from '../../core/color';
 import type { BallSkin, SkinFrame } from './BallSkin';
-import { stageSkinSet, texturePxPerUnit } from './skinSets';
+import { stageSkinSet } from './skinSets';
 
 const PAD_PX = 2;
 const FONT_FAMILY = 'Fredoka, system-ui, sans-serif';
+const UNITS_PER_PIXEL = 1 / PLACEHOLDER_PX_PER_UNIT;
 
 /** A body ('b'), a golden body ('g') or an upright number ('n'). */
 type FrameKind = 'b' | 'g' | 'n';
@@ -47,14 +49,17 @@ const STAGE_ITEMS: readonly (readonly FrameItem[])[] = STAGES.map(({ stage }) =>
   return items;
 });
 
-export function tierColor(tier: number): string {
-  return TIER_COLORS[tier - 1] ?? '#cccccc';
+/** The size a tier is drawn at on `stage` (kept in 1–12, so a stray tier still renders). */
+function drawnSize(tier: number, stage: number): number {
+  return Math.min(SIZE_COUNT, Math.max(1, tierSize(tier, stage)));
 }
 
 export class PlaceholderSkin implements BallSkin {
   readonly id = 'placeholder';
-  /** Frames per stage, keyed by kind + tier ('b4', 'g4', 'n4'). */
-  private readonly sets = new Map<number, Map<string, SkinFrame>>();
+  /** Bodies by kind + size ('b4', 'g4'), shared by every stage. */
+  private readonly bodies = new Map<string, SkinFrame>();
+  /** Numbers per stage, by tier. */
+  private readonly numbers = new Map<number, Map<number, SkinFrame>>();
   private active = FIRST_STAGE;
   private previous = FIRST_STAGE;
   private rev = 0;
@@ -70,20 +75,21 @@ export class PlaceholderSkin implements BallSkin {
   }
 
   body(tier: number, golden: boolean): SkinFrame {
-    return this.frame(this.active, tier, golden ? 'g' : 'b');
+    return this.bodyFrame(drawnSize(tier, this.active), golden);
   }
 
   number(tier: number): SkinFrame {
-    return this.frame(this.active, tier, 'n');
+    return this.numberFrame(this.active, tier);
   }
 
   prepare(stage: number, budgetMs: number): boolean {
     const start = performance.now();
     let drew = false;
     for (const [tier, kind] of STAGE_ITEMS[stage - 1] ?? []) {
-      if (this.sets.get(stage)?.has(kind + tier)) continue;
+      if (this.has(stage, tier, kind)) continue;
       if (drew && performance.now() - start >= budgetMs) return false;
-      this.frame(stage, tier, kind);
+      if (kind === 'n') this.numberFrame(stage, tier);
+      else this.bodyFrame(drawnSize(tier, stage), kind === 'g');
       drew = true;
     }
     return true;
@@ -95,50 +101,60 @@ export class PlaceholderSkin implements BallSkin {
     this.previous = this.active;
     this.active = stage;
     this.rev++;
-    // Keep stage 1 (every run starts there) and the previous set: cats popped at the cash-out
-    // still show it while they fade.
-    for (const kept of [...this.sets.keys()]) {
+    // Keep stage 1's numbers (every run starts there) and the previous stage's: a cat popped just
+    // before the switch may still show them while it fades.
+    for (const kept of [...this.numbers.keys()]) {
       if (kept !== FIRST_STAGE && kept !== this.active && kept !== this.previous) {
-        this.dispose(kept);
+        for (const { key } of this.numbers.get(kept)?.values() ?? []) this.textures.remove(key);
+        this.numbers.delete(kept);
       }
     }
   }
 
   restore(): void {
-    for (const frames of this.sets.values()) {
-      for (const { key } of frames.values()) {
-        (this.textures.get(key) as Phaser.Textures.CanvasTexture).refresh();
-      }
+    const all = [...this.bodies.values()];
+    for (const frames of this.numbers.values()) all.push(...frames.values());
+    for (const { key } of all) {
+      (this.textures.get(key) as Phaser.Textures.CanvasTexture).refresh();
     }
   }
 
-  private frame(stage: number, tier: number, kind: FrameKind): SkinFrame {
-    let frames = this.sets.get(stage);
-    if (!frames) {
-      frames = new Map();
-      this.sets.set(stage, frames);
-    }
-    const id = kind + tier;
-    const existing = frames.get(id);
-    if (existing) return existing;
+  private has(stage: number, tier: number, kind: FrameKind): boolean {
+    if (kind === 'n') return this.numbers.get(stage)?.has(tier) ?? false;
+    return this.bodies.has(kind + drawnSize(tier, stage));
+  }
 
-    const pxPerUnit = texturePxPerUnit(tier, stage);
+  private bodyFrame(size: number, golden: boolean): SkinFrame {
+    const id = (golden ? 'g' : 'b') + size;
+    const existing = this.bodies.get(id);
+    if (existing) return existing;
     const canvas = document.createElement('canvas');
-    if (kind === 'n') drawNumber(canvas, tier, pxPerUnit);
-    else drawBody(canvas, tier, kind === 'g', pxPerUnit);
-    const key = `ph-s${stage}-${id}`;
-    if (this.textures.exists(key)) this.textures.remove(key);
-    this.textures.addCanvas(key, canvas);
-    const frame = { key, unitsPerPixel: 1 / pxPerUnit };
-    frames.set(id, frame);
+    drawBody(canvas, size, golden, PLACEHOLDER_PX_PER_UNIT);
+    const frame = { key: this.addTexture(`ph-${id}`, canvas), unitsPerPixel: UNITS_PER_PIXEL };
+    this.bodies.set(id, frame);
     return frame;
   }
 
-  private dispose(stage: number): void {
-    const frames = this.sets.get(stage);
-    if (!frames) return;
-    for (const { key } of frames.values()) this.textures.remove(key);
-    this.sets.delete(stage);
+  private numberFrame(stage: number, tier: number): SkinFrame {
+    let frames = this.numbers.get(stage);
+    if (!frames) {
+      frames = new Map();
+      this.numbers.set(stage, frames);
+    }
+    const existing = frames.get(tier);
+    if (existing) return existing;
+    const canvas = document.createElement('canvas');
+    drawNumber(canvas, tier, sizeRadius(drawnSize(tier, stage)) * PLACEHOLDER_PX_PER_UNIT);
+    const key = this.addTexture(`ph-s${stage}-n${tier}`, canvas);
+    const frame = { key, unitsPerPixel: UNITS_PER_PIXEL };
+    frames.set(tier, frame);
+    return frame;
+  }
+
+  private addTexture(key: string, canvas: HTMLCanvasElement): string {
+    if (this.textures.exists(key)) this.textures.remove(key);
+    this.textures.addCanvas(key, canvas);
+    return key;
   }
 }
 
@@ -156,15 +172,16 @@ function context(
 
 function drawBody(
   canvas: HTMLCanvasElement,
-  tier: number,
+  size: number,
   golden: boolean,
   pxPerUnit: number,
 ): void {
-  const r = tierRadius(tier) * pxPerUnit;
-  const size = 2 * r + 2 * PAD_PX;
-  const ctx = context(canvas, size, size);
+  const r = sizeRadius(size) * pxPerUnit;
+  const side = 2 * r + 2 * PAD_PX;
+  const ctx = context(canvas, side, side);
   const c = canvas.width / 2;
-  const color = tierColor(tier);
+  // Sizes and tiers share their colour cycle, so a size's colour is its stage-1 tier's.
+  const color = tierColor(size);
 
   // Body with a darker outline (inside the radius, so the circle is exactly r).
   const outline = r * PLACEHOLDER_OUTLINE_RATIO;
@@ -217,9 +234,9 @@ function sparkle(ctx: CanvasRenderingContext2D, x: number, y: number, s: number)
   ctx.fill();
 }
 
-function drawNumber(canvas: HTMLCanvasElement, tier: number, pxPerUnit: number): void {
+/** The tier's number for a cat whose radius is `r` texture pixels. */
+function drawNumber(canvas: HTMLCanvasElement, tier: number, r: number): void {
   const text = String(tier);
-  const r = tierRadius(tier) * pxPerUnit;
   const fontPx = r * (text.length > 1 ? NUMBER_HEIGHT_RATIO_TWO_DIGITS : NUMBER_HEIGHT_RATIO);
   const font = `700 ${fontPx}px ${FONT_FAMILY}`;
   const stroke = fontPx * NUMBER_STROKE_RATIO;

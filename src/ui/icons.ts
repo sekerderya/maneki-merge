@@ -72,9 +72,6 @@ export const UPGRADE_ICONS: Readonly<Record<UpgradeId, string>> = {
     '<path d="M2.5 5.5c6 1.4 13 1.4 19 0" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>' +
       '<path d="M5 10h14M7 7v14M17 7v14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
   ),
-  quickGrowth: svg(
-    '<path d="M6 12l6-6 6 6M6 19l6-6 6 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>',
-  ),
   goldenTouch: svg(
     '<path d="M12 2.5l2.2 7.3 7.3 2.2-7.3 2.2L12 21.5l-2.2-7.3L2.5 12l7.3-2.2z" fill="currentColor"/>',
   ),

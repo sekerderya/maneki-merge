@@ -18,6 +18,12 @@ export const DANGER_TIMEOUT_MS = 2500;
 /** After a Lucky Save the danger check is off for this long. */
 export const LUCKY_SAVE_GRACE_MS = 2000;
 
-/** The whole expansion sequence, and the camera zoom/pan plus wall slide inside it. */
-export const EXPANSION_DURATION_MS = 1600;
+/**
+ * The expansion sequence (GAME_DESIGN §7.1): the stage clear (the other cats pop and the last cat
+ * settles), then the camera zoom with the wall slide, then the reveal. The whole sequence lasts
+ * EXPANSION_DURATION_MS.
+ */
+export const EXPANSION_CLEAR_MS = 500;
 export const EXPANSION_ZOOM_MS = 1200;
+export const EXPANSION_REVEAL_MS = 400;
+export const EXPANSION_DURATION_MS = EXPANSION_CLEAR_MS + EXPANSION_ZOOM_MS + EXPANSION_REVEAL_MS;

@@ -28,7 +28,6 @@ describe('deriveStats (GAME_DESIGN §10)', () => {
       bigCatchLevel: 0,
       comboCharmLevel: 0,
       maxStage: 2,
-      thresholdFactor: 1,
       goldenChance: 0,
       luckySaves: 0,
       previewCount: 1,
@@ -41,7 +40,6 @@ describe('deriveStats (GAME_DESIGN §10)', () => {
     expect(s.bigCatchLevel).toBe(5);
     expect(s.comboCharmLevel).toBe(5);
     expect(s.maxStage).toBe(5); // 2 + 3
-    expect(s.thresholdFactor).toBeCloseTo(0.7, 10); // 1 − 0.06 × 5
     expect(s.goldenChance).toBeCloseTo(0.15, 10); // 0.03 × 5
     expect(s.luckySaves).toBe(2);
     expect(s.previewCount).toBe(2);
@@ -63,15 +61,6 @@ describe('deriveStats (GAME_DESIGN §10)', () => {
     [3, 5],
   ])('Shrine Expansion %i opens up to stage %i', (level, maxStage) => {
     expect(deriveStats(levels({ shrineExpansion: level })).maxStage).toBe(maxStage);
-  });
-
-  it.each([
-    [0, 1],
-    [1, 0.94],
-    [3, 0.82],
-    [5, 0.7],
-  ])('Quick Growth %i gives a threshold factor of %f', (level, factor) => {
-    expect(deriveStats(levels({ quickGrowth: level })).thresholdFactor).toBeCloseTo(factor, 10);
   });
 
   it('never opens more stages than exist', () => {

@@ -16,8 +16,6 @@ export interface DerivedStats {
   readonly comboCharmLevel: number;
   /** 2 + shrineExpansion: the highest stage the jar may expand to. */
   readonly maxStage: number;
-  /** 1 − 0.06 × quickGrowth. Multiplies every expansion threshold. */
-  readonly thresholdFactor: number;
   /** 0.03 × goldenTouch: the chance that a dropped cat is golden. */
   readonly goldenChance: number;
   /** Lucky Saves per run. */
@@ -43,7 +41,6 @@ export function deriveStats(levels: UpgradeLevels): DerivedStats {
     bigCatchLevel: levels.bigCatch,
     comboCharmLevel: levels.comboCharm,
     maxStage: Math.min(STAGE_COUNT, BASE_MAX_STAGE + perLevel('shrineExpansion')),
-    thresholdFactor: 1 - perLevel('quickGrowth'),
     goldenChance: perLevel('goldenTouch'),
     luckySaves: perLevel('secondChance'),
     previewCount: BASE_PREVIEW_COUNT + perLevel('fortuneTeller'),

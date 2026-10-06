@@ -1,8 +1,14 @@
 /** Score and coin rules (GAME_DESIGN §5, §6, §9). */
 
-/** A Jackpot (two cap-tier cats) pays these multiples of the cap tier's S(t) and C(t). */
+/** A Jackpot (two of a stage's last cat) pays these multiples of that tier's S(t) and C(t). */
 export const JACKPOT_SCORE_MULTIPLIER = 2;
 export const JACKPOT_COIN_MULTIPLIER = 5;
+
+/**
+ * A cat's value: what it pays when it pops (stage clear, Lucky Save) is this share of what
+ * merging two of its tier pays, C(t). Two cats that pop pay as much as their merge would.
+ */
+export const POP_VALUE_SHARE = 0.5;
 
 /** A merge involving a golden cat, or a golden cat popping, pays this many times the coins. */
 export const GOLDEN_COIN_MULTIPLIER = 3;

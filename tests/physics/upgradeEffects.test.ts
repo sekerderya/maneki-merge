@@ -5,7 +5,7 @@
 import { describe, expect, it } from 'vitest';
 import { stepsFor } from '../../src/config/physics';
 import { DROP_COOLDOWN_MS } from '../../src/config/timings';
-import { tierRadius } from '../../src/config/tiers';
+import { stageInfo } from '../../src/config/stages';
 import { UPGRADES } from '../../src/config/upgrades';
 import type { UpgradeId } from '../../src/config/upgrades';
 import type { Drop } from '../../src/core/dropQueue';
@@ -42,10 +42,24 @@ function drops(run: RunController, count: number): Drop[] {
 
 /** Two same-tier cats resting side by side on the floor, overlapping by 2 units. */
 function mergePair(run: RunController, tier: number, centre: number): void {
-  const r = tierRadius(tier);
+  const r = run.radiusOf(tier);
   run.spawnBall(tier, centre - r + 1, -r);
   run.spawnBall(tier, centre + r - 1, -r);
   run.tick();
+}
+
+/** Makes the stage's last cat from two cats one below it, stacked in the middle of the jar. */
+function clearStage(run: RunController): void {
+  const stage = run.stage;
+  const tier = stageInfo(stage).lastTier - 1;
+  const r = run.radiusOf(tier);
+  run.spawnBall(tier, 0, -r);
+  run.spawnBall(tier, 0, -3 * r + 8);
+  let cleared = false;
+  const off = run.events.on('stageCleared', () => (cleared = true));
+  for (let i = 0; i < 120 && !cleared; i++) run.tick();
+  off();
+  expect(cleared).toBe(true);
 }
 
 describe('upgrade effects in runs (GAME_DESIGN §10)', () => {
@@ -69,19 +83,16 @@ describe('upgrade effects in runs (GAME_DESIGN §10)', () => {
   it('Shrine Expansion: stage 3 opens', () => {
     const [plain, shrine] = [0, 1].map((level) => {
       const run = runAfterBuying('shrineExpansion', level, true);
-      run.setScore(3000);
-      run.tick();
+      clearStage(run);
+      expect(run.stage).toBe(2);
+      clearStage(run);
       return run;
     });
     expect(plain!.stage).toBe(2);
     expect(plain!.progress.locked).toBe(true);
     // Stage 4 is the next lock.
     expect(shrine!.stage).toBe(3);
-  });
-
-  it('Quick Growth: lower expansion thresholds', () => {
-    const targets = [0, 1, 5].map((level) => runAfterBuying('quickGrowth', level).progress.target);
-    expect(targets).toEqual([500, 470, 350]);
+    expect(shrine!.progress.locked).toBe(true);
   });
 
   it('Golden Touch: golden cats in the queue', () => {

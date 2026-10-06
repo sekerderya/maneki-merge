@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { fillStage5, inJar, maxOverlap, maxWallPenetration, STEPS_PER_SECOND } from './fixtures';
+import { fillJar, inJar, maxOverlap, maxWallPenetration, STEPS_PER_SECOND } from './fixtures';
 
 /** "Settled": every cat slower than this fraction of the speed limit (a slow roll at most). */
 const SETTLED_SPEED_FRACTION = 0.05;
 
 describe('stability stress test (TECH_SPEC §5)', () => {
   it.each([1, 2, 3])(
-    '150 random cats settle in a stage-5 jar within 10 s (seed %i)',
+    '150 random cats settle in a stage-5 jar, past the rim, within 10 s (seed %i)',
     (seed) => {
-      const world = fillStage5(seed);
+      const world = fillJar(seed);
       const { halfWidth } = world.geometry;
       const limit = world.speedLimit;
       let settledAt = -1;

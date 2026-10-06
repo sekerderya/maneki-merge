@@ -103,9 +103,9 @@ export const RECIPES: Readonly<Record<SoundName, Recipe>> = {
     tone(v, { from: 540, to: 170, glide: 0.09, decay: 0.12 });
     noise(v, { filter: 'lowpass', from: 900, attack: 0.002, decay: 0.05, gain: 0.25 });
   },
-  // A bubbly pop, lower for bigger cats (value: the new tier).
-  merge(v, tier) {
-    const hz = mergePitch(tier);
+  // A bubbly pop, lower for bigger cats (value: the new cat's size).
+  merge(v, size) {
+    const hz = mergePitch(size);
     tone(v, { from: hz * 1.7, to: hz, glide: 0.05, decay: 0.16 });
     tone(v, { type: 'triangle', from: hz * 2, to: hz * 1.5, glide: 0.08, decay: 0.08, gain: 0.3 });
     noise(v, { filter: 'bandpass', from: 2400, q: 0.8, attack: 0.001, decay: 0.03, gain: 0.35 });

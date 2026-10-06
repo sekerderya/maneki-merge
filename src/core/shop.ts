@@ -1,5 +1,4 @@
 /** What each shop card shows (GAME_DESIGN §2.2): level, price state and "current → next" value. */
-import { FIRST_STAGE, stageInfo } from '../config/stages';
 import { UPGRADE_IDS, UPGRADES } from '../config/upgrades';
 import type { UpgradeId } from '../config/upgrades';
 import { dropWeights } from './dropQueue';
@@ -57,14 +56,12 @@ export function upgradeValue(id: UpgradeId, level: number): string {
     case 'luckyPaw':
       return `+${percent(stats.coinMultiplier - 1)}`;
     case 'bigCatch': {
-      // The share of the biggest cat in the first stage's pool.
-      const weights = dropWeights(stageInfo(FIRST_STAGE).dropPool.length, stats.bigCatchLevel);
+      // The share of the biggest cat in a stage's drop pool.
+      const weights = dropWeights(stats.bigCatchLevel);
       return percent(weights[weights.length - 1] ?? 0);
     }
     case 'shrineExpansion':
       return String(stats.maxStage);
-    case 'quickGrowth':
-      return percent(stats.thresholdFactor);
     case 'goldenTouch':
       return percent(stats.goldenChance);
     case 'comboCharm':

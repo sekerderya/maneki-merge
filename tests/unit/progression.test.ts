@@ -1,98 +1,73 @@
 import { describe, expect, it } from 'vitest';
-import { BASE_MAX_STAGE } from '../../src/config/stages';
+import { BASE_MAX_STAGE, STAGE_COUNT, stageInfo } from '../../src/config/stages';
 import {
   isStageUnlocked,
-  nextExpansion,
+  nextStage,
   shrineLevelForStage,
   stageProgress,
-  stageThreshold,
 } from '../../src/core/progression';
 import { defaultUpgradeLevels, deriveStats } from '../../src/core/upgrades';
 
-const stats = (quickGrowth = 0, shrineExpansion = 0) =>
-  deriveStats({ ...defaultUpgradeLevels(), quickGrowth, shrineExpansion });
+const maxStage = (shrineExpansion = 0) =>
+  deriveStats({ ...defaultUpgradeLevels(), shrineExpansion }).maxStage;
 
-describe('stageThreshold (GAME_DESIGN §7, §10)', () => {
-  // Thresholds for stages 2–5 at Quick Growth 0–5 (factor 1 − 0.06 × level).
-  const TABLE: readonly [number, number[]][] = [
-    [0, [500, 3000, 12000, 40000]],
-    [1, [470, 2820, 11280, 37600]],
-    [2, [440, 2640, 10560, 35200]],
-    [3, [410, 2460, 9840, 32800]],
-    [4, [380, 2280, 9120, 30400]],
-    [5, [350, 2100, 8400, 28000]],
-  ];
-
-  it.each(TABLE)('Quick Growth %i: %j', (level, thresholds) => {
-    const factor = stats(level).thresholdFactor;
-    expect([2, 3, 4, 5].map((s) => stageThreshold(s, factor))).toEqual(thresholds);
-  });
-
-  it('starts every run at stage 1 (threshold 0)', () => {
-    expect(stageThreshold(1, 0.7)).toBe(0);
-  });
-});
-
-describe('stage locks', () => {
-  // The "Unlocked by" column: stages 1–2 are free, 3–5 need Shrine Expansion 1–3.
-  it.each([
-    [1, 0],
-    [2, 0],
-    [3, 1],
-    [4, 2],
-    [5, 3],
-  ])('stage %i needs Shrine Expansion %i', (stage, level) => {
-    expect(shrineLevelForStage(stage, BASE_MAX_STAGE)).toBe(level);
-    expect(isStageUnlocked(stage, stats(0, level).maxStage)).toBe(true);
-    if (level > 0) expect(isStageUnlocked(stage, stats(0, level - 1).maxStage)).toBe(false);
-  });
-});
-
-describe('nextExpansion', () => {
-  it('waits until the score reaches the threshold', () => {
-    expect(nextExpansion(0, 1, stats())).toEqual({ kind: 'none', stage: 2 });
-    expect(nextExpansion(499, 1, stats())).toEqual({ kind: 'none', stage: 2 });
-    expect(nextExpansion(500, 1, stats())).toEqual({ kind: 'expand', stage: 2 });
-    expect(nextExpansion(350, 1, stats(5))).toEqual({ kind: 'expand', stage: 2 });
-  });
-
-  it('reports a locked stage instead of expanding', () => {
-    expect(nextExpansion(3000, 2, stats())).toEqual({ kind: 'locked', stage: 3 });
-    expect(nextExpansion(3000, 2, stats(0, 1))).toEqual({ kind: 'expand', stage: 3 });
-    expect(nextExpansion(99_999, 4, stats(0, 2))).toEqual({ kind: 'locked', stage: 5 });
-  });
-
-  it('expands one stage at a time when several thresholds pass at once', () => {
-    const s = stats(0, 3);
-    const steps: number[] = [];
-    let stage = 1;
-    for (let next = nextExpansion(50_000, stage, s); next.kind === 'expand';) {
-      steps.push(next.stage);
-      stage = next.stage;
-      next = nextExpansion(50_000, stage, s);
+describe('stage locks (GAME_DESIGN §7.2, §10)', () => {
+  it('opens stages 1–2 for free and one more per Shrine Expansion level', () => {
+    expect([0, 1, 2, 3].map(maxStage)).toEqual([2, 3, 4, 5]);
+    for (let stage = 1; stage <= STAGE_COUNT; stage++) {
+      expect(isStageUnlocked(stage, maxStage(0))).toBe(stage <= 2);
+      expect(isStageUnlocked(stage, maxStage(3))).toBe(true);
     }
-    expect(steps).toEqual([2, 3, 4, 5]);
-    expect(nextExpansion(50_000, 5, s)).toEqual({ kind: 'final' });
+    expect(isStageUnlocked(6, 99)).toBe(false);
+    expect([1, 2, 3, 4, 5].map((s) => shrineLevelForStage(s, BASE_MAX_STAGE))).toEqual([
+      0, 0, 1, 2, 3,
+    ]);
+  });
+});
+
+describe('nextStage (GAME_DESIGN §7)', () => {
+  it('grows into the next stage when it is open', () => {
+    expect(nextStage(1, maxStage(0))).toEqual({ kind: 'expand', stage: 2 });
+    expect(nextStage(4, maxStage(3))).toEqual({ kind: 'expand', stage: 5 });
+  });
+
+  it('reports a locked next stage', () => {
+    expect(nextStage(2, maxStage(0))).toEqual({ kind: 'locked', stage: 3 });
+    expect(nextStage(4, maxStage(2))).toEqual({ kind: 'locked', stage: 5 });
+  });
+
+  it('knows the last stage', () => {
+    expect(nextStage(STAGE_COUNT, maxStage(3))).toEqual({ kind: 'final' });
   });
 });
 
 describe('stageProgress (HUD bar)', () => {
-  it('fills from the current threshold to the next one', () => {
-    expect(stageProgress(0, 1, stats())).toEqual({ fraction: 0, target: 500, locked: false });
-    expect(stageProgress(250, 1, stats())).toEqual({ fraction: 0.5, target: 500, locked: false });
-    expect(stageProgress(1750, 2, stats(0, 1))).toEqual({
-      fraction: 0.5,
-      target: 3000,
+  it('measures the biggest cat in the jar against the stage last cat', () => {
+    expect(stageProgress(0, 1, 2)).toEqual({
+      fraction: 0,
+      goalTier: 12,
       locked: false,
+      final: false,
     });
+    expect(stageProgress(1, 1, 2).fraction).toBe(0);
+    expect(stageProgress(6, 1, 2).fraction).toBeCloseTo(5 / 11, 12);
+    expect(stageProgress(11, 1, 2).fraction).toBeCloseTo(10 / 11, 12);
+    expect(stageProgress(12, 1, 2).fraction).toBe(1);
   });
 
-  it('clamps to 0–1 and shows a lock when the next stage is closed', () => {
-    expect(stageProgress(9000, 2, stats())).toEqual({ fraction: 1, target: 3000, locked: true });
-    expect(stageProgress(100, 2, stats()).fraction).toBe(0);
+  it('counts sizes, so every stage fills the same way', () => {
+    for (let stage = 1; stage <= STAGE_COUNT; stage++) {
+      const { firstTier, lastTier } = stageInfo(stage);
+      const p = stageProgress(firstTier + 5, stage, 5);
+      expect(p.fraction).toBeCloseTo(5 / 11, 12);
+      expect(p.goalTier).toBe(lastTier);
+      expect(stageProgress(lastTier, stage, 5).fraction).toBe(1);
+    }
   });
 
-  it('is full with no target at the last stage', () => {
-    expect(stageProgress(0, 5, stats(0, 3))).toEqual({ fraction: 1, target: null, locked: false });
+  it('shows the lock and the last stage', () => {
+    expect(stageProgress(20, 2, 2)).toMatchObject({ goalTier: 23, locked: true, final: false });
+    expect(stageProgress(20, 2, 3)).toMatchObject({ locked: false, final: false });
+    expect(stageProgress(50, 5, 5)).toMatchObject({ goalTier: 56, locked: false, final: true });
   });
 });

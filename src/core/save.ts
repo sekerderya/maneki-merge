@@ -11,7 +11,7 @@ import { UPGRADE_IDS, UPGRADES } from '../config/upgrades';
 import type { UpgradeId } from '../config/upgrades';
 
 /** Bump when the shape changes, and add MIGRATIONS[old] that converts old data to the new one. */
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 
 export interface SaveData {
   wallet: { coins: number };
@@ -59,8 +59,36 @@ export function defaultSave(): SaveData {
 /** Turns data of version n into data of version n + 1. Receives untrusted data. */
 export type Migration = (data: unknown) => unknown;
 
-/** MIGRATIONS[n] upgrades version n to n + 1. Empty while v1 is the only version. */
-export const MIGRATIONS: Readonly<Record<number, Migration>> = {};
+/**
+ * Prices of the levels of Quick Growth, the upgrade v0.10 removed (score thresholds made way for
+ * stage clears). Frozen here: the config no longer knows it.
+ */
+export const QUICK_GROWTH_PRICES: readonly number[] = [150, 300, 600, 1200, 2400];
+
+/**
+ * v1 → v2 (v0.10): Quick Growth is gone. The coins spent on its levels go back into the wallet,
+ * and its level is dropped. Anything malformed is left for `sanitize` to repair.
+ */
+export function refundQuickGrowth(data: unknown): unknown {
+  if (!isRecord(data) || !isRecord(data['upgrades'])) return data;
+  const { quickGrowth, ...upgrades } = data['upgrades'];
+  const level =
+    typeof quickGrowth === 'number' && Number.isInteger(quickGrowth)
+      ? Math.min(Math.max(quickGrowth, 0), QUICK_GROWTH_PRICES.length)
+      : 0;
+  const refund = QUICK_GROWTH_PRICES.slice(0, level).reduce((sum, price) => sum + price, 0);
+  const wallet = data['wallet'];
+  const coins = isRecord(wallet) ? wallet['coins'] : undefined;
+  if (refund === 0 || !isRecord(wallet) || typeof coins !== 'number' || !Number.isFinite(coins)) {
+    return { ...data, upgrades };
+  }
+  return { ...data, upgrades, wallet: { ...wallet, coins: coins + refund } };
+}
+
+/** MIGRATIONS[n] upgrades version n to n + 1. */
+export const MIGRATIONS: Readonly<Record<number, Migration>> = {
+  1: refundQuickGrowth,
+};
 
 export type LoadStatus =
   /** Nothing stored yet: defaults. */
@@ -206,12 +234,15 @@ class Reader {
     return {};
   }
 
-  /** A non-negative integer in [min, max]. */
+  /**
+   * A non-negative integer in [min, max]. Scores of later stages pass 2^53, so the default max
+   * is the largest finite number (every double that big is an integer).
+   */
   count(
     parent: Record<string, unknown>,
     path: string,
     fallback: number,
-    max = Number.MAX_SAFE_INTEGER,
+    max = Number.MAX_VALUE,
     min = 0,
   ): number {
     const value = parent[lastKey(path)];

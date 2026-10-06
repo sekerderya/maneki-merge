@@ -4,7 +4,6 @@ export const UPGRADE_IDS = [
   'luckyPaw',
   'bigCatch',
   'shrineExpansion',
-  'quickGrowth',
   'goldenTouch',
   'comboCharm',
   'secondChance',
@@ -55,15 +54,6 @@ export const UPGRADES: Readonly<Record<UpgradeId, UpgradeDef>> = {
     maxLevel: 3,
     prices: [1500, 10_000, 60_000],
     perLevel: 1,
-  },
-  quickGrowth: {
-    id: 'quickGrowth',
-    name: 'Quick Growth',
-    description: '−6% expansion thresholds',
-    statLabel: 'Thresholds',
-    maxLevel: 5,
-    prices: [150, 300, 600, 1200, 2400],
-    perLevel: 0.06,
   },
   goldenTouch: {
     id: 'goldenTouch',

@@ -3,14 +3,13 @@
  * it. It owns no rules: everything it shows is read from the run each frame, and the only thing
  * it sends back is `drop(x)`.
  *
- * Expansions (GAME_DESIGN §7.1) are drawn from the run's timeline every frame: camera, walls and
- * rim from `expansionFrames`, the next stage's textures prepared during the zoom and switched in
- * at the reveal, the cash-out as staggered pops.
+ * Expansions (GAME_DESIGN §7.1) are drawn from the run's timeline every frame: the stage clear as
+ * staggered pops, then camera, walls and rim from `expansionFrames`, with the next stage's
+ * textures prepared during the zoom and switched in at the reveal.
  */
 import Phaser from 'phaser';
-import { AIM_LINE_ALPHA, AIM_LINE_COLOR } from '../config/skin';
-import { FIRST_STAGE } from '../config/stages';
-import { tierRadius } from '../config/tiers';
+import { AIM_LINE_ALPHA, AIM_LINE_COLOR, tierColor } from '../config/skin';
+import { FIRST_STAGE, JAR_WIDTH } from '../config/stages';
 import {
   AIM_DASH,
   AIM_GAP,
@@ -42,7 +41,7 @@ import { SparkFx } from './fx/SparkFx';
 import { JarView } from './JarView';
 import { comboShake, mergeParticleCount, mergeShake, Shake } from './shake';
 import type { BallSkin } from './skins/BallSkin';
-import { PlaceholderSkin, tierColor } from './skins/PlaceholderSkin';
+import { PlaceholderSkin } from './skins/PlaceholderSkin';
 
 export const GAME_SCENE_KEY = 'game';
 
@@ -158,42 +157,44 @@ export class GameScene extends Phaser.Scene {
     // Merge juice (GAME_DESIGN §12): pop ring, "+coins", the new cat's bump, particles in its
     // colour, gold sparks for golden merges, and a shake for big cats.
     on('merged', (e) => {
-      const scale = run.geometry.scale;
       const reduced = reducedMotion();
-      this.fx.merge(this.nowMs, e.at.x, e.at.y, e.newTier, e.coins, scale);
+      const { x, y } = e.at;
+      this.fx.payout(this.nowMs, x, y, e.newTier, run.radiusOf(e.newTier), e.coins);
       this.balls.bump(e.id, this.nowMs);
       const color = hexToNumber(tierColor(e.newTier));
-      const count = mergeParticleCount(e.newTier, reduced);
-      this.sparks.mergeBurst(e.at.x, e.at.y, count, color, scale);
-      if (e.golden) this.sparks.burst(e.at.x, e.at.y, this.particles(BURST_SPARKS.golden), scale);
-      this.addShake(mergeShake(e.newTier), SHAKE.mergeMs, scale);
+      this.sparks.mergeBurst(x, y, mergeParticleCount(e.newSize, reduced), color);
+      if (e.golden) this.sparks.burst(x, y, this.particles(BURST_SPARKS.golden));
+      this.addShake(mergeShake(e.newSize), SHAKE.mergeMs);
     });
     on('jackpot', (e) => {
-      const scale = run.geometry.scale;
-      this.fx.jackpot(this.nowMs, e.at.x, e.at.y, e.tier, e.coins, scale);
-      this.sparks.burst(e.at.x, e.at.y, this.particles(BURST_SPARKS.jackpot), scale);
-      this.addShake(SHAKE.jackpot, SHAKE.jackpotMs, scale);
+      const { x, y } = e.at;
+      this.fx.payout(this.nowMs, x, y, e.tier, run.radiusOf(e.tier), e.coins, true);
+      this.sparks.burst(x, y, this.particles(BURST_SPARKS.jackpot));
+      this.addShake(SHAKE.jackpot, SHAKE.jackpotMs);
     });
     on('comboChanged', (e) => {
-      this.addShake(comboShake(e.combo), SHAKE.comboMs, run.geometry.scale);
+      this.addShake(comboShake(e.combo), SHAKE.comboMs);
     });
     on('dangerTick', () => {
       this.countdownPulseMs = this.nowMs;
     });
     on('catPopped', (e) => {
-      this.popped.push({ id: e.id, tier: e.tier, x: e.at.x, y: e.at.y, coins: e.coins });
+      const { x, y } = e.at;
+      const radius = run.radiusOf(e.tier);
+      this.popped.push({ id: e.id, tier: e.tier, radius, x, y, coins: e.coins });
     });
     on('expansionStarted', (e) => {
+      // The zoom starts: the rim sparkles, and the next stage's textures get drawn meanwhile.
       this.preparing = e.to;
       const geo = jarGeometry(e.from);
-      this.sparks.rim(geo.width, geo.rimY, geo.scale);
+      this.sparks.rim(geo.width, geo.rimY);
     });
     on('expansionRevealed', (e) => {
       this.preparing = 0;
       this.skin.setStage(e.stage);
       // The grown jar's rim sparkles as it settles.
       const geo = jarGeometry(e.stage);
-      this.sparks.rim(geo.width, geo.rimY, geo.scale);
+      this.sparks.rim(geo.width, geo.rimY);
     });
     on('paused', () => {
       this.aiming = false;
@@ -208,10 +209,10 @@ export class GameScene extends Phaser.Scene {
     return reducedMotion() ? Math.max(1, Math.round(count * REDUCED_MOTION_PARTICLES)) : count;
   }
 
-  /** A shake of `amplitude` stage-1 units; none with `prefers-reduced-motion`. */
-  private addShake(amplitude: number, durationMs: number, scale: number): void {
+  /** A shake of `amplitude` world units; none with `prefers-reduced-motion`. */
+  private addShake(amplitude: number, durationMs: number): void {
     if (amplitude <= 0 || reducedMotion()) return;
-    this.shake.add(this.nowMs, amplitude * scale, durationMs);
+    this.shake.add(this.nowMs, amplitude, durationMs);
   }
 
   /** Where payouts appear on screen, for the coin flights to the HUD. */
@@ -261,7 +262,7 @@ export class GameScene extends Phaser.Scene {
     if (!run) return;
     run.update(delta);
     if (this.popped.length > 0) {
-      this.pops.popAll(this.nowMs, this.popped, run.geometry.scale);
+      this.pops.popAll(this.nowMs, this.popped);
       this.popped.length = 0;
     }
     // Physics is paused during the zoom, so drawing the next stage's textures costs no frames.
@@ -303,7 +304,7 @@ export class GameScene extends Phaser.Scene {
 
     const geo = run.geometry;
     const cat = run.current;
-    const radius = tierRadius(cat.tier);
+    const radius = run.radiusOf(cat.tier);
     const x = clampDropX(this.aimX, radius, geo);
     const t = Math.min(1, (this.nowMs - this.popInFromMs) / DROPPER_POP_IN_MS);
     const pop = backOut(t);
@@ -326,16 +327,15 @@ export class GameScene extends Phaser.Scene {
 
     // Aim guide: a dashed line from the cat down to where it first touches something.
     const land = landingY(x, radius, geo.dropY, run.balls);
-    const s = geo.scale;
     const g = this.aimLine;
-    g.lineStyle(AIM_LINE_WIDTH * s, AIM_LINE_COLOR, AIM_LINE_ALPHA);
+    g.lineStyle(AIM_LINE_WIDTH, AIM_LINE_COLOR, AIM_LINE_ALPHA);
     const top = geo.dropY + radius;
     const bottom = land + radius;
-    for (let y = top + AIM_GAP * s; y < bottom; y += (AIM_DASH + AIM_GAP) * s) {
-      g.lineBetween(x, y, x, Math.min(y + AIM_DASH * s, bottom));
+    for (let y = top + AIM_GAP; y < bottom; y += AIM_DASH + AIM_GAP) {
+      g.lineBetween(x, y, x, Math.min(y + AIM_DASH, bottom));
     }
     // A faint ghost of the cat where it lands.
-    g.lineStyle(AIM_LINE_WIDTH * s, AIM_LINE_COLOR, AIM_LINE_ALPHA * 0.6);
+    g.lineStyle(AIM_LINE_WIDTH, AIM_LINE_COLOR, AIM_LINE_ALPHA * 0.6);
     g.strokeCircle(x, land, radius);
   }
 
@@ -343,7 +343,8 @@ export class GameScene extends Phaser.Scene {
     const show = run.dangerActive && run.state === 'playing';
     this.countdown.setVisible(show);
     if (!show) return;
-    const scale = frame.width / jarGeometry(1).width;
+    // The jar grows during the zoom; the countdown grows with it.
+    const scale = frame.width / JAR_WIDTH;
     const resolution = this.fit.zoom * scale * (1 + COUNTDOWN_PULSE_SCALE);
     const t = (this.nowMs - this.countdownPulseMs) / COUNTDOWN_PULSE_MS;
     const pulse = t >= 0 && t < 1 ? 1 + COUNTDOWN_PULSE_SCALE * (1 - t) * (1 - t) : 1;

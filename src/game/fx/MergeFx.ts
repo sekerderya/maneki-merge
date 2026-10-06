@@ -5,7 +5,7 @@
  * (world position), where the coin flight to the HUD starts. Shakes arrive with M9.
  */
 import type Phaser from 'phaser';
-import { tierRadius } from '../../config/tiers';
+import { tierColor } from '../../config/skin';
 import {
   FLOAT_TEXT_MS,
   FLOAT_TEXT_RISE,
@@ -16,10 +16,10 @@ import {
   MERGE_POP_SCALE,
 } from '../../config/view';
 import { hexToNumber } from '../../core/color';
-import { tierColor } from '../skins/PlaceholderSkin';
+import { formatNumber } from '../../core/format';
 
 const RING_KEY = 'fx-ring';
-/** Big enough that the ring of a tier-15 Jackpot is not upscaled on a phone. */
+/** Big enough that the ring of the biggest cat's Jackpot is not upscaled on a phone. */
 const RING_PX = 512;
 const COINS_COLOR = '#ffc83d';
 
@@ -77,34 +77,24 @@ export class MergeFx {
     this.resolution = Math.max(0.25, pixelsPerUnit);
   }
 
-  /** A merge into `newTier` paying `coins` at a world point; `scale` is the stage's. */
-  merge(nowMs: number, x: number, y: number, tier: number, coins: number, scale: number): void {
-    this.burst(nowMs, x, y, tier, coins, scale, false);
-  }
-
-  /** A Jackpot of two `tier` cats: a bigger "+coins" and a coin shower. */
-  jackpot(nowMs: number, x: number, y: number, tier: number, coins: number, scale: number): void {
-    this.burst(nowMs, x, y, tier, coins, scale, true);
-  }
-
-  /** A cat of `tier` popping into `coins` (cash-out, Lucky Save). */
-  coins(nowMs: number, x: number, y: number, tier: number, coins: number, scale: number): void {
-    this.burst(nowMs, x, y, tier, coins, scale, false);
-  }
-
-  private burst(
+  /**
+   * A payout at a world point: the ring of a `tier` cat of `radius` (world units) and a floating
+   * "+coins". `big` (a Jackpot) makes the text bigger and sends a coin shower to the HUD. Merges
+   * show the new cat's ring, pops the popping cat's.
+   */
+  payout(
     nowMs: number,
     x: number,
     y: number,
     tier: number,
+    radius: number,
     coins: number,
-    scale: number,
-    big: boolean,
+    big = false,
   ): void {
     const pop = this.pops[this.nextPop] as Pop;
     this.nextPop = (this.nextPop + 1) % this.pops.length;
     pop.startMs = nowMs;
-    pop.radius = tierRadius(tier);
+    pop.radius = radius;
     pop.ring
       .setPosition(x, y)
       .setTint(hexToNumber(tierColor(tier)))
@@ -114,12 +104,17 @@ export class MergeFx {
     this.nextText = (this.nextText + 1) % this.texts.length;
     item.startMs = nowMs;
     item.y = y;
-    item.rise = FLOAT_TEXT_RISE * scale;
+    item.rise = FLOAT_TEXT_RISE;
     const text = item.text;
-    const size = big ? scale * JACKPOT_TEXT_SCALE : scale;
+    const size = big ? JACKPOT_TEXT_SCALE : 1;
     const resolution = this.resolution * size;
     if (text.style.resolution !== resolution) text.setResolution(resolution);
-    text.setText(`+${coins}`).setScale(size).setPosition(x, y).setAlpha(1).setVisible(true);
+    text
+      .setText(`+${formatNumber(coins)}`)
+      .setScale(size)
+      .setPosition(x, y)
+      .setAlpha(1)
+      .setVisible(true);
     this.onCoins(x, y, big);
   }
 

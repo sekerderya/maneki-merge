@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { OUTLINE_DARKEN, TIER_COLORS } from '../../src/config/skin';
-import { TIER_COUNT } from '../../src/config/tiers';
+import { STAGE_TIER_STEP } from '../../src/config/tiers';
 import { darken, hexToNumber, lighten, numberToHex } from '../../src/core/color';
 
 describe('colour helpers', () => {
@@ -22,10 +22,10 @@ describe('colour helpers', () => {
 });
 
 describe('placeholder palette (GAME_DESIGN §13.1)', () => {
-  it('has one valid, distinct colour per tier', () => {
-    expect(TIER_COLORS).toHaveLength(TIER_COUNT);
+  it('has one valid, distinct colour per size, repeating every stage', () => {
+    expect(TIER_COLORS).toHaveLength(STAGE_TIER_STEP);
     for (const color of TIER_COLORS) expect(() => hexToNumber(color)).not.toThrow();
-    expect(new Set(TIER_COLORS).size).toBe(TIER_COUNT);
+    expect(new Set(TIER_COLORS).size).toBe(STAGE_TIER_STEP);
   });
 
   it('gives neighbouring tiers clearly different colours', () => {
@@ -33,9 +33,10 @@ describe('placeholder palette (GAME_DESIGN §13.1)', () => {
       const n = hexToNumber(hex);
       return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
     };
-    for (let i = 1; i < TIER_COLORS.length; i++) {
+    // Size 11 is followed by size 12, which has size 1's colour.
+    for (let i = 1; i <= TIER_COLORS.length; i++) {
       const a = rgb(TIER_COLORS[i - 1] as string);
-      const b = rgb(TIER_COLORS[i] as string);
+      const b = rgb(TIER_COLORS[i % TIER_COLORS.length] as string);
       expect(Math.hypot(a[0]! - b[0]!, a[1]! - b[1]!, a[2]! - b[2]!)).toBeGreaterThan(90);
     }
   });

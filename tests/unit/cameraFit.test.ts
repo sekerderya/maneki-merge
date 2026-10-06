@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { STAGE_COUNT } from '../../src/config/stages';
-import { easeInOut, fitCamera, framedRegion, lerpFrame } from '../../src/game/cameraFit';
+import { STAGE_ZOOM } from '../../src/config/tiers';
+import { CAMERA_SPARE_BELOW_RATIO } from '../../src/config/view';
+import {
+  easeInOut,
+  fitCamera,
+  framedRegion,
+  growFrame,
+  scaleFrame,
+  worldToView,
+} from '../../src/game/cameraFit';
 import { jarGeometry } from '../../src/physics/geometry';
 
 /** The world rectangle a fit shows in a viewport. */
@@ -22,48 +30,85 @@ describe('camera fit (TECH_SPEC §4)', () => {
     [820 * 2, 1080 * 2], // tablet
     [1200, 700], // wide desktop window
   ];
+  const geo = jarGeometry(1);
 
-  for (let stage = 1; stage <= STAGE_COUNT; stage++) {
-    it.each(viewports)(`shows the whole stage-${stage} jar in %ix%i`, (w, h) => {
-      const geo = jarGeometry(stage);
+  it.each(viewports)('shows the whole jar in %ix%i', (w, h) => {
+    const fit = fitCamera(geo, w, h);
+    const view = visible(fit, w, h);
+    const region = framedRegion(geo);
+    const eps = 1e-6;
+    expect(view.left).toBeLessThanOrEqual(-region.width / 2 + eps);
+    expect(view.right).toBeGreaterThanOrEqual(region.width / 2 - eps);
+    expect(view.top).toBeLessThanOrEqual(region.top + eps);
+    expect(view.bottom).toBeGreaterThanOrEqual(region.bottom - eps);
+    // The dropper band (and the biggest dropped cat in it) is on screen.
+    expect(view.top).toBeLessThan(geo.dropY - geo.headroom / 2 + eps);
+    // Letterboxed: one of the two axes is used fully.
+    const fillsWidth = Math.abs(view.right - view.left - region.width) < 1e-6;
+    const fillsHeight = Math.abs(view.bottom - view.top - region.height) < 1e-6;
+    expect(fillsWidth || fillsHeight).toBe(true);
+  });
+
+  it.each(viewports)(
+    'shares spare height: 45%% below the floor, the rest above (%ix%i)',
+    (w, h) => {
       const fit = fitCamera(geo, w, h);
       const view = visible(fit, w, h);
       const region = framedRegion(geo);
-      const eps = 1e-6;
-      expect(view.left).toBeLessThanOrEqual(-region.width / 2 + eps);
-      expect(view.right).toBeGreaterThanOrEqual(region.width / 2 - eps);
-      expect(view.top).toBeLessThanOrEqual(region.top + eps);
-      // The floor margin sits exactly on the bottom edge: the floor stays near the bottom.
-      expect(view.bottom).toBeCloseTo(region.bottom, 6);
-      // The dropper band (and the biggest dropped cat in it) is on screen.
-      expect(view.top).toBeLessThan(geo.dropY - geo.headroom / 2 + eps);
-      // Letterboxed: one of the two axes is used fully.
-      const fillsWidth = Math.abs(view.right - view.left - region.width) < 1e-6;
-      const fillsHeight = Math.abs(view.bottom - view.top - region.height) < 1e-6;
-      expect(fillsWidth || fillsHeight).toBe(true);
-    });
-  }
+      const below = view.bottom - region.bottom;
+      const above = region.top - view.top;
+      expect(below).toBeGreaterThanOrEqual(-1e-6);
+      if (below + above > 1e-6) {
+        expect(below / (below + above)).toBeCloseTo(CAMERA_SPARE_BELOW_RATIO, 9);
+      }
+      // 0 keeps the floor margin on the bottom edge.
+      expect(visible(fitCamera(geo, w, h, 0), w, h).bottom).toBeCloseTo(region.bottom, 6);
+    },
+  );
 
-  it('keeps the same on-screen jar size at every stage', () => {
+  it("lifts the jar like the owner's sketch on a 435 × 967 phone", () => {
+    // The play band under a 110 px HUD. The rim and floor land where the sketch put the jar's
+    // top (277 px) and bottom (884 px) edges, within about 20 px.
+    const [w, h, hud] = [435, 857, 110];
+    const fit = fitCamera(geo, w, h);
+    const rim = hud + worldToView(fit, w, h, 0, geo.rimY).y;
+    const floor = hud + worldToView(fit, w, h, 0, geo.width * 0.03).y;
+    expect(Math.abs(rim - 277)).toBeLessThan(20);
+    expect(Math.abs(floor - 884)).toBeLessThan(20);
+  });
+
+  it('keeps the floor and the jar width still on screen while the jar grows', () => {
     const [w, h] = [975, 1750];
-    const widths = [1, 2, 3, 4, 5].map(
-      (s) => jarGeometry(s).width * fitCamera(jarGeometry(s), w, h).zoom,
-    );
-    for (const width of widths) expect(width).toBeCloseTo(widths[0] as number, 0);
+    const at = (t: number) => {
+      const frame = growFrame(geo, STAGE_ZOOM, t);
+      const fit = fitCamera(frame, w, h);
+      return { floor: worldToView(fit, w, h, 0, 0).y, width: frame.width * fit.zoom };
+    };
+    for (const t of [0.25, 0.5, 1]) {
+      expect(at(t).floor).toBeCloseTo(at(0).floor, 6);
+      expect(at(t).width).toBeCloseTo(at(0).width, 6);
+    }
   });
 
   it('survives a zero-sized viewport', () => {
-    const fit = fitCamera(jarGeometry(1), 0, 0);
+    const fit = fitCamera(geo, 0, 0);
     expect(Number.isFinite(fit.zoom)).toBe(true);
     expect(fit.zoom).toBeGreaterThan(0);
   });
 
-  it('blends two jars and eases in and out', () => {
-    const a = jarGeometry(1);
-    const b = jarGeometry(2);
-    expect(lerpFrame(a, b, 0)).toEqual({ width: a.width, height: a.height, headroom: a.headroom });
-    expect(lerpFrame(a, b, 1)).toEqual({ width: b.width, height: b.height, headroom: b.headroom });
-    expect(lerpFrame(a, b, 0.5).width).toBeCloseTo((a.width + b.width) / 2);
+  it('grows a jar by a constant ratio and eases in and out', () => {
+    const frame = { width: geo.width, height: geo.height, headroom: geo.headroom };
+    expect(growFrame(geo, STAGE_ZOOM, 0)).toEqual(frame);
+    expect(growFrame(geo, STAGE_ZOOM, 1).width).toBeCloseTo(geo.width * STAGE_ZOOM, 9);
+    expect(growFrame(geo, STAGE_ZOOM, 0.5).height).toBeCloseTo(
+      geo.height * Math.sqrt(STAGE_ZOOM),
+      9,
+    );
+    expect(scaleFrame(geo, 2)).toEqual({
+      width: 2 * geo.width,
+      height: 2 * geo.height,
+      headroom: 2 * geo.headroom,
+    });
     expect(easeInOut(0)).toBe(0);
     expect(easeInOut(1)).toBe(1);
     expect(easeInOut(0.5)).toBe(0.5);

@@ -7,8 +7,7 @@ import {
   PHYSICS_MAX_SUBSTEPS,
   PHYSICS_STEP_MS,
 } from '../../src/config/physics';
-import { stageInfo } from '../../src/config/stages';
-import { tierRadius } from '../../src/config/tiers';
+import { sizeRadius, STAGE_ZOOM } from '../../src/config/tiers';
 import { MERGE_GROW_MS } from '../../src/config/timings';
 import { StateHasher } from '../../src/core/hash';
 import { FixedStepper, PhysicsWorld } from '../../src/physics/PhysicsWorld';
@@ -66,7 +65,7 @@ describe('PhysicsWorld', () => {
     const cat = world.addBall({ tier: 3, x: 0, y: world.geometry.dropY });
     expect(cat.landedMs).toBe(-1);
     run(world, 3);
-    expect(cat.y).toBeCloseTo(-tierRadius(3), 0);
+    expect(cat.y).toBeCloseTo(-sizeRadius(3), 0);
     expect(cat.speed).toBeLessThan(1);
     // Free fall from y = −924 to the floor takes about 1.3 s.
     expect(cat.landedMs).toBeGreaterThan(1100);
@@ -89,7 +88,7 @@ describe('PhysicsWorld', () => {
 
   it('keeps cats inside the jar walls', () => {
     const world = new PhysicsWorld();
-    const r = tierRadius(2);
+    const r = sizeRadius(2);
     const left = world.addBall({ tier: 2, x: -200, y: -100, vx: -1400 });
     const right = world.addBall({ tier: 2, x: 200, y: -100, vx: 1400 });
     for (let i = 0; i < 240; i++) {
@@ -99,25 +98,49 @@ describe('PhysicsWorld', () => {
     }
   });
 
-  it('moves the walls and scales gravity and speed limits with the stage', () => {
+  it('rescales the world into the next stage: the last cat becomes the first', () => {
     const world = new PhysicsWorld();
     expect(world.gravity).toBe(1);
     expect(world.speedLimit).toBeCloseTo(MAX_SPEED_BASE, 9);
+    const half = world.wallInnerX;
 
-    world.setStage(3);
-    const { scale, width } = stageInfo(3);
-    expect(world.stage).toBe(3);
-    expect(world.geometry.halfWidth).toBe(width / 2);
-    expect(world.gravity).toBeCloseTo(scale, 12);
-    expect(world.speedLimit).toBeCloseTo(MAX_SPEED_BASE * scale, 9);
-
-    // A cat just outside the stage-1 walls falls freely now and stops at the stage-3 wall.
-    const cat = world.addBall({ tier: 2, x: 450, y: -300, vx: 800 });
+    const last = world.addBall({ tier: 12, x: 20, y: -400, vx: 90, vy: 180 });
+    expect(last.size).toBe(12);
+    expect(last.radius).toBe(250);
+    const angle = last.angle;
+    const [vx, vy] = [last.vx, last.vy];
+    world.setStage(2);
+    expect(world.stage).toBe(2);
+    // Same jar, same gravity, same speed limit: only the cat changed.
+    expect(world.wallInnerX).toBe(half);
+    expect(world.gravity).toBe(1);
+    expect(world.speedLimit).toBeCloseTo(MAX_SPEED_BASE, 9);
+    expect(last.tier).toBe(12);
+    expect(last.size).toBe(1);
+    expect(last.radius).toBeCloseTo(sizeRadius(1), 9);
+    expect(last.targetRadius).toBe(sizeRadius(1));
+    expect(last.x).toBeCloseTo(20 / STAGE_ZOOM, 9);
+    expect(last.y).toBeCloseTo(-400 / STAGE_ZOOM, 9);
+    expect(last.vx).toBeCloseTo(vx / STAGE_ZOOM, 6);
+    expect(last.vy).toBeCloseTo(vy / STAGE_ZOOM, 6);
+    expect(last.angle).toBe(angle);
+    expect(last.body.mass).toBeCloseTo(
+      new PhysicsWorld({ stage: 2 }).addBall({ tier: 12, x: 0, y: -50 }).body.mass,
+      9,
+    );
+    // It lands like any size-1 cat, and stage 2's cats join it.
+    const next = world.addBall({ tier: 13, x: 150, y: -300 });
+    expect(next.size).toBe(2);
     run(world, 2);
-    expect(cat.x).toBeGreaterThan(400);
-    expect(cat.x).toBeLessThanOrEqual(width / 2 - tierRadius(2) + 1);
-    expect(cat.y).toBeCloseTo(-tierRadius(2), 0);
-    expect(() => world.setStage(6)).toThrow(RangeError);
+    expect(last.y).toBeCloseTo(-sizeRadius(1), 0);
+    expect(next.y).toBeCloseTo(-sizeRadius(2), 0);
+
+    // One stage at a time, and only with cats the next stage can hold.
+    expect(() => world.setStage(4)).toThrow(RangeError);
+    expect(() => world.setStage(3)).toThrow(RangeError);
+    expect(world.stage).toBe(2);
+    expect(world.sizeOf(23)).toBe(12);
+    expect(world.sizeOf(5)).toBeLessThan(1);
   });
 
   it('keeps a pile from spilling over the rim', () => {
@@ -173,8 +196,8 @@ describe('PhysicsWorld', () => {
   it('grows a cat into its radius in MERGE_GROW_MS and pushes neighbours gently', () => {
     const world = new PhysicsWorld();
     const neighbour = world.addBall({ tier: 3, x: 90, y: -40 });
-    const cat = world.addBall({ tier: 5, x: 0, y: -49, startRadius: tierRadius(4) });
-    expect(cat.radius).toBe(tierRadius(4));
+    const cat = world.addBall({ tier: 5, x: 0, y: -49, startRadius: sizeRadius(4) });
+    expect(cat.radius).toBe(sizeRadius(4));
     expect(cat.growing).toBe(true);
     const massBefore = cat.body.mass;
     const steps = Math.ceil(MERGE_GROW_MS / PHYSICS_STEP_MS);
@@ -185,12 +208,12 @@ describe('PhysicsWorld', () => {
       last = cat.radius;
       expect(neighbour.speed).toBeLessThanOrEqual(GROWTH_NEIGHBOUR_MAX_SPEED_BASE + 1e-6);
     }
-    expect(cat.radius).toBe(tierRadius(5));
+    expect(cat.radius).toBe(sizeRadius(5));
     expect(cat.growing).toBe(false);
     expect(cat.body.mass).toBeGreaterThan(massBefore);
     run(world, 2);
     const gap = Math.hypot(neighbour.x - cat.x, neighbour.y - cat.y);
-    expect(gap).toBeGreaterThan(tierRadius(5) + tierRadius(3) - 1);
+    expect(gap).toBeGreaterThan(sizeRadius(5) + sizeRadius(3) - 1);
   });
 
   it('adds and removes cats with increasing ids', () => {
@@ -211,7 +234,11 @@ describe('PhysicsWorld', () => {
   it('rejects invalid cats', () => {
     const world = new PhysicsWorld();
     expect(() => world.addBall({ tier: 0, x: 0, y: 0 })).toThrow(RangeError);
-    expect(() => world.addBall({ tier: 16, x: 0, y: 0 })).toThrow(RangeError);
+    expect(() => world.addBall({ tier: 13, x: 0, y: 0 })).toThrow(RangeError);
+    expect(() => world.addBall({ tier: 57, x: 0, y: 0 })).toThrow(RangeError);
+    expect(() => new PhysicsWorld({ stage: 2 }).addBall({ tier: 11, x: 0, y: 0 })).toThrow(
+      RangeError,
+    );
     expect(() => world.addBall({ tier: 1, x: Number.NaN, y: 0 })).toThrow(RangeError);
     expect(() => world.addBall({ tier: 1, x: 0, y: 0, startRadius: 0 })).toThrow(RangeError);
   });
@@ -219,8 +246,8 @@ describe('PhysicsWorld', () => {
   it('hashes the full state', () => {
     const build = () => {
       const world = new PhysicsWorld({ stage: 2 });
-      world.addBall({ tier: 4, x: 10, y: -300 });
-      world.addBall({ tier: 4, x: -10, y: -500 });
+      world.addBall({ tier: 15, x: 10, y: -300 });
+      world.addBall({ tier: 15, x: -10, y: -500 });
       run(world, 1);
       return world;
     };

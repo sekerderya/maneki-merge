@@ -2,81 +2,148 @@ import { describe, expect, it } from 'vitest';
 import { HINT_IDS, SAVE_BACKUP_PREFIX, SAVE_KEY, STORAGE_PREFIX } from '../../src/config/app';
 import {
   BASE_DENSITY,
-  densityForTier,
-  GRAVITY_BASE,
-  gravityForScale,
+  densityForSize,
   GROWTH_NEIGHBOUR_MAX_SPEED_BASE,
+  GRAVITY_BASE,
   MAX_SPEED_BASE,
   MERGE_MAX_SPEED_BASE,
   PHYSICS_STEP_MS,
   WALL_HEIGHT_FACTOR,
   WALL_THICKNESS,
 } from '../../src/config/physics';
+import { TIER_COLORS, tierColor } from '../../src/config/skin';
 import {
-  BASE_JAR_HEIGHT,
-  BASE_JAR_WIDTH,
-  DROP_POOL_WEIGHTS,
+  catRadius,
+  DROP_SIZES,
+  DROP_WEIGHTS,
   DROPPER_HEADROOM_RATIO,
   isStage,
+  JAR_HEIGHT,
+  JAR_WIDTH,
   STAGE_COUNT,
+  stageHoldsTier,
   stageInfo,
   STAGES,
+  tierSize,
 } from '../../src/config/stages';
-import { isTier, TIER_COUNT, tierInfo, tierRadius, TIERS } from '../../src/config/tiers';
+import {
+  isSize,
+  isTier,
+  SIZE_COUNT,
+  sizeRadius,
+  STAGE_TIER_STEP,
+  STAGE_ZOOM,
+  TIER_COUNT,
+  tierInfo,
+  TIERS,
+} from '../../src/config/tiers';
 import * as timings from '../../src/config/timings';
 import { UPGRADE_IDS, UPGRADES } from '../../src/config/upgrades';
 
-describe('tiers (GAME_DESIGN §4)', () => {
-  // Tier, radius, score S(t), coins C(t), smallest stage that drops it (null: never dropped).
-  const TABLE: readonly [number, number, number, number, number | null][] = [
-    [1, 27, 2, 1, 1],
-    [2, 33, 4, 2, 1],
-    [3, 40, 8, 3, 1],
-    [4, 49, 16, 5, 1],
-    [5, 60, 32, 8, 2],
-    [6, 73, 64, 14, 3],
-    [7, 89, 128, 24, 4],
-    [8, 109, 256, 41, 5],
-    [9, 133, 512, 70, null],
-    [10, 162, 1_024, 119, null],
-    [11, 197, 2_048, 202, null],
-    [12, 241, 4_096, 343, null],
-    [13, 294, 8_192, 583, null],
-    [14, 358, 16_384, 990, null],
-    [15, 437, 32_768, 1_684, null],
+describe('cat sizes (GAME_DESIGN §4)', () => {
+  // Size and radius: every stage holds these 12 sizes.
+  const SIZES: readonly [number, number][] = [
+    [1, 28],
+    [2, 34],
+    [3, 42],
+    [4, 51],
+    [5, 62],
+    [6, 76],
+    [7, 92],
+    [8, 113],
+    [9, 137],
+    [10, 168],
+    [11, 205],
+    [12, 250],
   ];
 
-  it('has 15 tiers', () => {
-    expect(TIER_COUNT).toBe(15);
-    expect(TIERS).toHaveLength(15);
+  it("has 12 sizes per stage, the last one becoming the next stage's first", () => {
+    expect(SIZE_COUNT).toBe(12);
+    expect(STAGE_TIER_STEP).toBe(11);
   });
 
-  it.each(TABLE)('tier %i: radius %i, score %i, coins %i', (tier, radius, score, coins) => {
-    expect(tierInfo(tier)).toEqual({ tier, radius, score, coins });
+  it.each(SIZES)('size %i: radius %i', (size, radius) => {
+    expect(sizeRadius(size)).toBe(radius);
   });
 
-  it.each(TABLE)('tier %i is first dropped from stage %s', (tier, _r, _s, _c, firstStage) => {
-    const stage = STAGES.find((s) => s.dropPool.includes(tier));
-    expect(stage?.stage ?? null).toBe(firstStage);
+  it('zooms out so the last cat shrinks to exactly the first one', () => {
+    expect(STAGE_ZOOM).toBeCloseTo(250 / 28, 12);
+    expect(sizeRadius(SIZE_COUNT) / STAGE_ZOOM).toBeCloseTo(sizeRadius(1), 12);
+  });
+
+  it('covers about as much of the jar as Suika Game: sizes 11, 9, 8, 7, 6 and 5 fill ~55%', () => {
+    const area = [11, 9, 8, 7, 6, 5].reduce((sum, s) => sum + Math.PI * sizeRadius(s) ** 2, 0);
+    expect(area / (JAR_WIDTH * JAR_HEIGHT)).toBeCloseTo(0.55, 2);
+  });
+
+  it('rejects unknown sizes', () => {
+    expect(isSize(0)).toBe(false);
+    expect(isSize(13)).toBe(false);
+    expect(isSize(1.5)).toBe(false);
+    expect(isSize(12)).toBe(true);
+  });
+});
+
+describe('tiers (GAME_DESIGN §4)', () => {
+  // Tier, score S(t), coins C(t).
+  const TABLE: readonly [number, number, number][] = [
+    [1, 2, 1],
+    [2, 4, 2],
+    [3, 8, 3],
+    [4, 16, 5],
+    [5, 32, 8],
+    [6, 64, 14],
+    [7, 128, 24],
+    [8, 256, 41],
+    [9, 512, 70],
+    [10, 1_024, 119],
+    [11, 2_048, 202],
+    [12, 4_096, 343],
+    [23, 8_388_608, 117_456],
+    [34, 17_179_869_184, 40_254_497],
+    [45, 35_184_372_088_832, 13_795_979_509],
+    [56, 72_057_594_037_927_940, 4_728_143_791_952],
+  ];
+
+  it('has 56 tiers: stage 5 ends at tier 56', () => {
+    expect(TIER_COUNT).toBe(56);
+    expect(TIERS).toHaveLength(56);
+    expect(TIER_COUNT).toBe(stageInfo(STAGE_COUNT).lastTier);
+  });
+
+  it.each(TABLE)('tier %i: score %i, coins %i', (tier, score, coins) => {
+    expect(tierInfo(tier)).toEqual({ tier, score, coins });
   });
 
   it('rejects unknown tiers', () => {
     expect(isTier(0)).toBe(false);
-    expect(isTier(16)).toBe(false);
+    expect(isTier(57)).toBe(false);
     expect(isTier(2.5)).toBe(false);
     expect(() => tierInfo(0)).toThrow(RangeError);
-    expect(() => tierInfo(16)).toThrow(RangeError);
+    expect(() => tierInfo(57)).toThrow(RangeError);
+  });
+
+  it('repeats the colours with the sizes, so every stage looks the same', () => {
+    expect(TIER_COLORS).toHaveLength(STAGE_TIER_STEP);
+    expect(new Set(TIER_COLORS).size).toBe(TIER_COLORS.length);
+    for (const info of STAGES) {
+      for (let size = 1; size <= SIZE_COUNT; size++) {
+        expect(tierColor(info.firstTier + size - 1)).toBe(tierColor(size));
+      }
+    }
+    // The last cat takes the first one's colour: it becomes the next stage's first cat.
+    expect(tierColor(12)).toBe(tierColor(1));
   });
 });
 
 describe('stages (GAME_DESIGN §7)', () => {
-  // Stage, scale, width, height, tier cap, drop pool, threshold.
-  const TABLE: readonly [number, number, number, number, number, [number, number], number][] = [
-    [1, 1.0, 600, 870, 7, [1, 4], 0],
-    [2, 1.3, 780, 1131, 9, [1, 5], 500],
-    [3, 1.69, 1014, 1470, 11, [2, 6], 3_000],
-    [4, 2.197, 1318, 1911, 13, [3, 7], 12_000],
-    [5, 2.856, 1714, 2485, 15, [4, 8], 40_000],
+  // Stage, first tier, last tier, drop pool.
+  const TABLE: readonly [number, number, number, [number, number]][] = [
+    [1, 1, 12, [1, 4]],
+    [2, 12, 23, [12, 15]],
+    [3, 23, 34, [23, 26]],
+    [4, 34, 45, [34, 37]],
+    [5, 45, 56, [45, 48]],
   ];
 
   it('has 5 stages', () => {
@@ -84,38 +151,30 @@ describe('stages (GAME_DESIGN §7)', () => {
     expect(STAGES).toHaveLength(5);
   });
 
-  it.each(TABLE)(
-    'stage %i: scale %f, jar %i × %i, cap %i, pool %j, threshold %i',
-    (stage, scale, width, height, tierCap, [min, max], threshold) => {
-      const info = stageInfo(stage);
-      expect(info.stage).toBe(stage);
-      expect(info.scale).toBeCloseTo(scale, 3);
-      expect(info.width).toBe(width);
-      expect(info.height).toBe(height);
-      expect(info.tierCap).toBe(tierCap);
-      expect(info.dropPool).toEqual(Array.from({ length: max - min + 1 }, (_, i) => min + i));
-      expect(info.threshold).toBe(threshold);
-    },
-  );
-
-  it('keeps the 1 : 1.45 aspect ratio and a 600 × 870 stage-1 jar', () => {
-    expect(BASE_JAR_WIDTH).toBe(600);
-    expect(BASE_JAR_HEIGHT).toBe(870);
-    for (const s of STAGES) expect(s.height / s.width).toBeCloseTo(1.45, 2);
+  it.each(TABLE)('stage %i: tiers %i–%i, pool %j', (stage, firstTier, lastTier, [min, max]) => {
+    const info = stageInfo(stage);
+    expect(info).toEqual({
+      stage,
+      firstTier,
+      lastTier,
+      dropPool: Array.from({ length: max - min + 1 }, (_, i) => min + i),
+    });
+    expect(tierSize(firstTier, stage)).toBe(1);
+    expect(tierSize(lastTier, stage)).toBe(SIZE_COUNT);
+    expect(stageHoldsTier(stage, firstTier - 1)).toBe(false);
+    expect(stageHoldsTier(stage, lastTier + 1)).toBe(false);
+    expect(catRadius(lastTier, stage)).toBe(sizeRadius(SIZE_COUNT));
+    expect(() => catRadius(lastTier + 1, stage)).toThrow(RangeError);
   });
 
-  it('has base weights for every pool size, and every dropped tier stays below the cap', () => {
-    for (const s of STAGES) {
-      expect(DROP_POOL_WEIGHTS[s.dropPool.length]).toBeDefined();
-      expect(Math.max(...s.dropPool)).toBeLessThan(s.tierCap);
-      expect(s.tierCap).toBeLessThanOrEqual(TIER_COUNT);
-    }
+  it('has the same 600 × 870 jar (1 : 1.45) at every stage', () => {
+    expect(JAR_WIDTH).toBe(600);
+    expect(JAR_HEIGHT).toBe(870);
   });
 
-  it('has thresholds that only go up', () => {
-    for (let i = 1; i < STAGES.length; i++) {
-      expect(STAGES[i]!.threshold).toBeGreaterThan(STAGES[i - 1]!.threshold);
-    }
+  it('drops the four smallest sizes with weights for each', () => {
+    expect(DROP_SIZES).toBe(4);
+    expect(DROP_WEIGHTS).toEqual([40, 30, 20, 10]);
   });
 
   it('rejects unknown stages', () => {
@@ -131,14 +190,13 @@ describe('upgrades (GAME_DESIGN §10)', () => {
     ['luckyPaw', 'Lucky Paw', 10, [50, 80, 125, 200, 320, 500, 800, 1250, 2000, 3200]],
     ['bigCatch', 'Big Catch', 5, [100, 250, 600, 1500, 3500]],
     ['shrineExpansion', 'Shrine Expansion', 3, [1500, 10000, 60000]],
-    ['quickGrowth', 'Quick Growth', 5, [150, 300, 600, 1200, 2400]],
     ['goldenTouch', 'Golden Touch', 5, [120, 240, 480, 960, 1900]],
     ['comboCharm', 'Combo Charm', 5, [80, 160, 320, 640, 1280]],
     ['secondChance', 'Second Chance', 2, [500, 4000]],
     ['fortuneTeller', 'Fortune Teller', 1, [400]],
   ];
 
-  it('lists the 8 upgrades in shop order', () => {
+  it('lists the 7 upgrades in shop order', () => {
     expect([...UPGRADE_IDS]).toEqual(TABLE.map(([id]) => id));
   });
 
@@ -156,7 +214,6 @@ describe('upgrades (GAME_DESIGN §10)', () => {
     expect(UPGRADES.luckyPaw.perLevel).toBe(0.15);
     expect(UPGRADES.bigCatch.perLevel).toBe(0.12);
     expect(UPGRADES.shrineExpansion.perLevel).toBe(1);
-    expect(UPGRADES.quickGrowth.perLevel).toBe(0.06);
     expect(UPGRADES.goldenTouch.perLevel).toBe(0.03);
     expect(UPGRADES.comboCharm.perLevel).toBe(0.08);
     expect(UPGRADES.secondChance.perLevel).toBe(1);
@@ -179,8 +236,10 @@ describe('timings (GAME_DESIGN §3, §5, §6, §7.1)', () => {
     expect(timings.LANDING_GRACE_MS).toBe(500);
     expect(timings.DANGER_TIMEOUT_MS).toBe(2500);
     expect(timings.LUCKY_SAVE_GRACE_MS).toBe(2000);
-    expect(timings.EXPANSION_DURATION_MS).toBe(1600);
-    expect(timings.EXPANSION_ZOOM_MS).toBeLessThan(timings.EXPANSION_DURATION_MS);
+    expect(timings.EXPANSION_CLEAR_MS).toBe(500);
+    expect(timings.EXPANSION_ZOOM_MS).toBe(1200);
+    expect(timings.EXPANSION_REVEAL_MS).toBe(400);
+    expect(timings.EXPANSION_DURATION_MS).toBe(2100);
   });
 });
 
@@ -191,12 +250,12 @@ describe('physics tunables (TECH_SPEC §5)', () => {
   });
 
   it('makes mass grow like r^1.5', () => {
-    expect(densityForTier(1)).toBe(BASE_DENSITY);
-    for (let t = 2; t <= TIER_COUNT; t++) {
-      const r = tierRadius(t);
-      const mass = densityForTier(t) * Math.PI * r * r;
-      const mass1 = BASE_DENSITY * Math.PI * tierRadius(1) ** 2;
-      expect(mass / mass1).toBeCloseTo((r / tierRadius(1)) ** 1.5, 6);
+    expect(densityForSize(1)).toBe(BASE_DENSITY);
+    for (let s = 2; s <= SIZE_COUNT; s++) {
+      const r = sizeRadius(s);
+      const mass = densityForSize(s) * Math.PI * r * r;
+      const mass1 = BASE_DENSITY * Math.PI * sizeRadius(1) ** 2;
+      expect(mass / mass1).toBeCloseTo((r / sizeRadius(1)) ** 1.5, 6);
     }
   });
 
@@ -206,23 +265,20 @@ describe('physics tunables (TECH_SPEC §5)', () => {
   });
 
   it('caps speeds above a natural fall but keeps merges gentle', () => {
-    // Free fall (no air friction) from the stage-1 dropper to the floor, in units per second.
+    // Free fall (no air friction) from the dropper to the floor, in units per second.
     const g = GRAVITY_BASE * 1000;
     const fall = Math.sqrt(2 * g * 924);
     expect(MAX_SPEED_BASE).toBeGreaterThan(fall);
     expect(MERGE_MAX_SPEED_BASE).toBeLessThan(MAX_SPEED_BASE);
     expect(GROWTH_NEIGHBOUR_MAX_SPEED_BASE).toBeLessThan(MAX_SPEED_BASE);
-    // At the speed cap, the smallest cat a stage can hold (its smallest drop tier; smaller ones
-    // pop at the expansion) moves less than its radius per step: no tunnelling.
-    for (const info of STAGES) {
-      const perStep = (MAX_SPEED_BASE * info.scale * PHYSICS_STEP_MS) / 1000;
-      expect(perStep).toBeLessThan(tierRadius(info.dropPool[0]!));
-    }
+    // At the speed cap, the smallest cat (size 1, at every stage) moves less than its radius per
+    // step: no tunnelling.
+    const perStep = (MAX_SPEED_BASE * PHYSICS_STEP_MS) / 1000;
+    expect(perStep).toBeLessThan(sizeRadius(1));
   });
 
-  it('scales gravity with the stage', () => {
-    expect(gravityForScale(stageInfo(1).scale)).toBe(1);
-    expect(gravityForScale(stageInfo(5).scale)).toBeCloseTo(2.8561, 4);
+  it('keeps gravity at 1000 units/s² (the same at every stage)', () => {
+    expect(GRAVITY_BASE).toBe(1);
   });
 });
 

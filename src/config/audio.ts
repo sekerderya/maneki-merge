@@ -56,11 +56,11 @@ export const SOUNDS: Readonly<Record<SoundName, SoundSpec>> = {
 };
 
 /**
- * Merge pop pitch (lower for bigger cats): the pop of a merge into tier 2 sounds at
- * MERGE_PITCH_TOP_HZ, and every tier above that is MERGE_SEMITONES_PER_TIER lower.
+ * Merge pop pitch (lower for bigger cats): the pop of a merge into size 2 sounds at
+ * MERGE_PITCH_TOP_HZ, and every size above that is MERGE_SEMITONES_PER_SIZE lower.
  */
 export const MERGE_PITCH_TOP_HZ = 880;
-export const MERGE_SEMITONES_PER_TIER = 1.5;
+export const MERGE_SEMITONES_PER_SIZE = 1.5;
 
 /** Rising combo notes: a major pentatonic from COMBO_BASE_HZ, one step per combo level. */
 export const COMBO_BASE_HZ = 523.25;

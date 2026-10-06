@@ -41,10 +41,10 @@ export class Shake {
   }
 }
 
-/** Shake amplitude (stage-1 units) for a merge into `newTier`; 0 below SHAKE.minTier. */
-export function mergeShake(newTier: number): number {
-  if (newTier < SHAKE.minTier) return 0;
-  return SHAKE.mergeBase + (newTier - SHAKE.minTier) * SHAKE.mergePerTier;
+/** Shake amplitude (world units) for a merge into a cat of `newSize`; 0 below SHAKE.minSize. */
+export function mergeShake(newSize: number): number {
+  if (newSize < SHAKE.minSize) return 0;
+  return SHAKE.mergeBase + (newSize - SHAKE.minSize) * SHAKE.mergePerSize;
 }
 
 /** Shake amplitude for combo level `combo`; 0 below SHAKE.comboMin, capped at SHAKE.comboMax. */
@@ -53,9 +53,9 @@ export function comboShake(combo: number): number {
   return Math.min(SHAKE.comboMax, (combo - SHAKE.comboMin + 1) * SHAKE.comboStep);
 }
 
-/** Particles of a merge into `newTier`, fewer with reduced motion. */
-export function mergeParticleCount(newTier: number, reduced: boolean): number {
+/** Particles of a merge into a cat of `newSize`, fewer with reduced motion. */
+export function mergeParticleCount(newSize: number, reduced: boolean): number {
   const p = MERGE_PARTICLES;
-  const count = Math.min(p.max, p.base + p.perTier * newTier);
+  const count = Math.min(p.max, p.base + p.perSize * newSize);
   return Math.max(1, Math.round(reduced ? count * REDUCED_MOTION_PARTICLES : count));
 }

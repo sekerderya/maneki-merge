@@ -17,7 +17,8 @@ export function connectRunFeedback(events: EventBus<GameEvents>, out: FeedbackOu
   const offs = [
     events.on('catDropped', () => out.play('drop')),
     events.on('merged', (e) => {
-      out.play('merge', e.newTier);
+      // Lower for bigger cats: every stage sounds the same.
+      out.play('merge', e.newSize);
       out.play('coin');
       out.vibrate('tick');
     }),
@@ -29,6 +30,11 @@ export function connectRunFeedback(events: EventBus<GameEvents>, out: FeedbackOu
       out.vibrate('jackpot');
     }),
     events.on('catPopped', () => out.play('coin')),
+    // The stage's last cat: the big fanfare, whether or not the jar can grow.
+    events.on('stageCleared', () => {
+      out.play('jackpot');
+      out.vibrate('jackpot');
+    }),
     events.on('expansionStarted', () => {
       out.play('whoosh');
       out.vibrate('expansion');

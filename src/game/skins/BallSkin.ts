@@ -3,11 +3,14 @@
  * frame per (tier, golden) and for the upright number, so placeholder art can be swapped for the
  * final art (ArtSkin, M13) without touching gameplay.
  *
- * Frames belong to the active stage: a skin may draw each stage's textures at that stage's zoom
- * (game/skins/skinSets.ts), so they stay sharp as the camera zooms out.
+ * Frames belong to the active stage: a tier's size, and so its radius and look, depends on the
+ * stage (game/skins/skinSets.ts), and so do the numbers a stage needs.
  */
 
-/** A texture plus its scale: world units per texture pixel when the cat has its tier's radius. */
+/**
+ * A texture plus its scale: world units per texture pixel when the cat has the radius of its size
+ * at the active stage.
+ */
 export interface SkinFrame {
   readonly key: string;
   /**

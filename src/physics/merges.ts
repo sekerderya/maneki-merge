@@ -6,7 +6,7 @@
  *    The order comes from our own ids, not from matter-js internals.
  * 2. A cat takes part in at most one merge per step: a pair whose cat is already used is
  *    skipped. Three touching cats give one merge; the third can merge on a later step.
- * 3. Two cats at (or above) the stage's cap tier make a Jackpot and vanish. Otherwise both
+ * 3. Two of the stage's last cat (the cap tier) make a Jackpot and vanish. Otherwise both
  *    vanish and a cat of the next tier is born at their midpoint with their average velocity
  *    (capped), and grows from the old size into its own over MERGE_GROW_MS.
  *
@@ -58,7 +58,6 @@ export class MergeResolver {
 
     const used = this.used;
     used.clear();
-    const mergeSpeedCap = MERGE_MAX_SPEED_BASE * world.geometry.scale;
     for (const [a, b] of pairs) {
       if (a.removed || b.removed || used.has(a) || used.has(b)) continue;
       used.add(a);
@@ -81,7 +80,7 @@ export class MergeResolver {
       // so a pile that is over the line keeps counting.
       const landedMs = Math.min(a.landedMs, b.landedMs);
       const ball = world.addBall({ tier: a.tier + 1, x, y, vx, vy, startRadius, landedMs });
-      world.capSpeed(ball, mergeSpeedCap);
+      world.capSpeed(ball, MERGE_MAX_SPEED_BASE);
       outcomes.push({ kind: 'merge', tier: a.tier, golden, x, y, ball });
     }
     used.clear();

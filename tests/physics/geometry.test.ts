@@ -1,35 +1,28 @@
 import { describe, expect, it } from 'vitest';
 import { STAGE_COUNT, stageInfo } from '../../src/config/stages';
-import { tierRadius } from '../../src/config/tiers';
+import { catRadius } from '../../src/config/stages';
 import { clampDropX, jarGeometry } from '../../src/physics/geometry';
 
 describe('jarGeometry (GAME_DESIGN §7, TECH_SPEC §4)', () => {
-  it('matches the stage table, with the rim at y = −H', () => {
-    const sizes = [1, 2, 3, 4, 5].map((s) => {
+  it('is the same 600 × 870 jar at every stage, with the rim at y = −H', () => {
+    for (let s = 1; s <= STAGE_COUNT; s++) {
       const g = jarGeometry(s);
-      return [g.width, g.height, g.rimY, g.halfWidth];
-    });
-    expect(sizes).toEqual([
-      [600, 870, -870, 300],
-      [780, 1131, -1131, 390],
-      [1014, 1470, -1470, 507],
-      [1318, 1911, -1911, 659],
-      [1714, 2485, -2485, 857],
-    ]);
+      expect(g.stage).toBe(s);
+      expect([g.width, g.height, g.rimY, g.halfWidth]).toEqual([600, 870, -870, 300]);
+    }
   });
 
   it('puts the dropper in the middle of a 0.18 W band above the rim', () => {
     const g = jarGeometry(1);
     expect(g.headroom).toBeCloseTo(108, 10);
     expect(g.dropY).toBeCloseTo(-924, 10);
-    expect(g.scale).toBe(1);
   });
 
   it('keeps every stage’s biggest dropped cat above the rim', () => {
     for (let s = 1; s <= STAGE_COUNT; s++) {
       const g = jarGeometry(s);
       const pool = stageInfo(s).dropPool;
-      const biggest = tierRadius(pool[pool.length - 1]!);
+      const biggest = catRadius(pool[pool.length - 1]!, s);
       expect(g.dropY + biggest).toBeLessThan(g.rimY);
     }
   });

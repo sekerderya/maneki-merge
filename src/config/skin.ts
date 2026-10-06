@@ -1,9 +1,14 @@
 /**
  * Placeholder art data (GAME_DESIGN §13.1). The game's PlaceholderSkin and the DOM icons (HUD
- * preview, later the shop) both read it, so a cat looks the same everywhere.
+ * preview, banners, Game Over) both read it, so a cat looks the same everywhere.
  */
+import { STAGE_TIER_STEP } from './tiers';
 
-/** Body colour per tier, index 0 is tier 1. Neighbouring tiers differ in hue and lightness. */
+/**
+ * Body colour per size, index 0 is size 1. Neighbouring sizes differ in hue and lightness. The
+ * colours repeat every STAGE_TIER_STEP tiers: a stage's last cat (size 12) has the colour of size
+ * 1, because it becomes the next stage's first cat, and every stage looks the same.
+ */
 export const TIER_COLORS: readonly string[] = [
   '#9be7ff', // 1 light cyan
   '#7ed957', // 2 green
@@ -16,11 +21,12 @@ export const TIER_COLORS: readonly string[] = [
   '#4dabf7', // 9 blue
   '#f8f9fa', // 10 white
   '#a1724e', // 11 brown
-  '#3d4a5c', // 12 slate
-  '#e03131', // 13 red
-  '#7048e8', // 14 violet
-  '#0ca678', // 15 emerald
 ];
+
+/** The body colour of a cat of `tier` (sprites and DOM icons alike). */
+export function tierColor(tier: number): string {
+  return TIER_COLORS[(tier - 1) % STAGE_TIER_STEP] ?? '#cccccc';
+}
 
 /** The outline is the body colour darkened by this fraction. */
 export const OUTLINE_DARKEN = 0.38;

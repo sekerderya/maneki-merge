@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { PHYSICS_STEP_MS, stepsFor } from '../../src/config/physics';
-import { tierRadius } from '../../src/config/tiers';
+import { sizeRadius } from '../../src/config/tiers';
 import { DANGER_TIMEOUT_MS, LANDING_GRACE_MS, LUCKY_SAVE_GRACE_MS } from '../../src/config/timings';
 import type { BallView } from '../../src/physics/balls';
 import {
@@ -17,6 +17,7 @@ function cat(tier: number, y: number, landedMs = 0): BallView {
   return {
     id: nextId++,
     tier,
+    size: tier,
     golden: false,
     x: 0,
     y,
@@ -24,7 +25,8 @@ function cat(tier: number, y: number, landedMs = 0): BallView {
     vx: 0,
     vy: 0,
     speed: 0,
-    radius: tierRadius(tier),
+    radius: sizeRadius(tier),
+    targetRadius: sizeRadius(tier),
     growing: false,
     landedMs,
   };
@@ -53,7 +55,7 @@ describe('stepsFor', () => {
 
 describe('the danger line (GAME_DESIGN §6)', () => {
   it('puts a cat over the line when its top edge is above the rim', () => {
-    const r = tierRadius(3);
+    const r = sizeRadius(3);
     expect(isOverLine(cat(3, RIM + r - 0.1), RIM)).toBe(true);
     expect(isOverLine(cat(3, RIM + r), RIM)).toBe(false);
   });

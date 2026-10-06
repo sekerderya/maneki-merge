@@ -93,6 +93,16 @@
   color: var(--color-gold-100);
 }
 
+/* The stage's goal: its last cat, small, at the end of the bar. */
+.hud-goal.cat-icon {
+  --size: 22px;
+  margin-left: -4px;
+}
+
+.hud-bar.is-final + .hud-goal {
+  box-shadow: 0 0 8px rgba(246, 195, 67, 0.8);
+}
+
 .hud-next {
   display: flex;
   flex-direction: column;

@@ -1,6 +1,5 @@
 /** Shared setups for the headless physics tests. */
-import { stageInfo } from '../../src/config/stages';
-import { tierRadius } from '../../src/config/tiers';
+import { catRadius, stageInfo } from '../../src/config/stages';
 import { dropWeights } from '../../src/core/dropQueue';
 import { Rng } from '../../src/core/rng';
 import { defaultUpgradeLevels } from '../../src/core/upgrades';
@@ -15,17 +14,17 @@ export function upgrades(levels: Partial<UpgradeLevels>): UpgradeLevels {
 }
 
 /**
- * TECH_SPEC §5 stress setup: `count` cats rolled from the stage-5 drop pool with its weights,
- * spread over a grid that starts at the floor and reaches about twice the jar height, so they
- * all fall at once.
+ * TECH_SPEC §5 stress setup: `count` cats rolled from a stage's drop pool with its weights,
+ * spread over a grid that starts at the floor and reaches about four jar heights, so they all
+ * fall at once. 150 of them overfill the jar: the pile rises past the rim.
  */
-export function fillStage5(seed: number, count = 150): PhysicsWorld {
-  const world = new PhysicsWorld({ stage: 5 });
+export function fillJar(seed: number, count = 150, stage = 5): PhysicsWorld {
+  const world = new PhysicsWorld({ stage });
   const rng = new Rng(seed);
-  const pool = stageInfo(5).dropPool;
-  const weights = dropWeights(pool.length, 0);
+  const pool = stageInfo(stage).dropPool;
+  const weights = dropWeights(0);
   const { halfWidth } = world.geometry;
-  const cell = 2 * tierRadius(pool[pool.length - 1]!) + 12;
+  const cell = 2 * catRadius(pool[pool.length - 1]!, stage) + 12;
   const perRow = Math.floor((2 * halfWidth) / cell);
   for (let i = 0; i < count; i++) {
     const tier = pool[rng.weightedIndex(weights)]!;

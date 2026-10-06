@@ -5,7 +5,7 @@
 import { describe, expect, it } from 'vitest';
 import { SAVE_KEY } from '../../src/config/app';
 import { stageInfo } from '../../src/config/stages';
-import { tierRadius } from '../../src/config/tiers';
+import { sizeRadius } from '../../src/config/tiers';
 import { EventBus } from '../../src/core/events';
 import type { GameEvents } from '../../src/core/events';
 import { Profile } from '../../src/core/profile';
@@ -38,7 +38,7 @@ function setup(levels: Partial<UpgradeLevels> = {}, instantExpansion = false) {
 
 /** Two same-tier cats resting side by side on the floor, overlapping by 2 units. */
 function spawnPair(run: RunController, tier: number, centre: number, golden = false): void {
-  const r = tierRadius(tier);
+  const r = run.radiusOf(tier);
   run.spawnBall(tier, centre - r + 1, -r, golden);
   run.spawnBall(tier, centre + r - 1, -r);
 }
@@ -63,32 +63,43 @@ describe('payout pipeline (GAME_DESIGN §5, §9)', () => {
     expect(profile.records).toEqual({ bestScore: 32, bestStage: 1, highestTier: 5 });
   });
 
-  it('pays a Jackpot at the cap: 5 × C(cap) with multipliers', () => {
+  it('pays a Jackpot of two last cats: 5 × C(last) with multipliers', () => {
     const { run, profile, coins } = setup({ luckyPaw: 1 });
-    const cap = stageInfo(1).tierCap;
-    spawnPair(run, cap, 0, true);
+    const last = stageInfo(1).lastTier;
+    const r = sizeRadius(12);
+    run.spawnBall(last, 0, -r, true);
+    run.spawnBall(last, 0, -3 * r + 2);
     run.tick();
-    // 5 × 24 × 1.15 × 3 = 414
-    expect(coins).toEqual([414]);
-    expect(profile.coins).toBe(414);
+    // 5 × 343 × 1.15 × 3 = 5916.75 → 5917
+    expect(coins).toEqual([5917]);
+    expect(profile.coins).toBe(5917);
     expect(profile.stats).toMatchObject({ jackpots: 1, totalMerges: 0 });
-    expect(profile.records.bestScore).toBe(256);
+    expect(profile.records.bestScore).toBe(8192);
   });
 
-  it('pays the cash-out of every expansion and records the stage reached', () => {
+  it('pays every stage clear and records the stage reached', () => {
     const { run, profile, coins } = setup({ shrineExpansion: 1, luckyPaw: 2 }, true);
-    run.spawnBall(1, -200, -27, true);
-    run.spawnBall(1, 0, -27);
-    run.spawnBall(2, 200, -33, true);
+    run.spawnBall(1, -270, -28, true);
+    run.spawnBall(1, 270, -28);
+    run.spawnBall(2, -265, -100, true);
+    for (let i = 0; i < 60; i++) run.tick();
+    // Two 11s, one on the other: they merge into the stage's last cat and clear the stage.
+    run.spawnBall(11, 0, -205);
+    run.spawnBall(11, 0, -614);
     run.tick();
-    run.setScore(stageInfo(3).threshold);
-    run.tick();
+    expect(run.stage).toBe(2);
+    // The merge: 202 × 1.3 = 262.6 → 263. Then each cat pays its value, half of C(t), oldest
+    // first: golden 1 → 0.5 × 1.3 × 3 = 1.95 → 2; 1 → 0.65 → 1; golden 2 → 1 × 1.3 × 3 = 3.9 → 4.
+    expect(coins).toEqual([263, 2, 1, 4]);
+    expect(profile.coins).toBe(270);
+    expect(profile.records).toEqual({ bestScore: 2048, bestStage: 2, highestTier: 12 });
+    expect(profile.stats.totalMerges).toBe(1);
+
+    // The next clear pops the 12, now stage 2's smallest cat: 343 / 2 × 1.3 = 222.95 → 223.
+    run.jumpToStage(3);
     expect(run.stage).toBe(3);
-    // Stage 3 drops from tier 2: both tier-1 cats pop. Golden 1 × 1.3 × 3 = 3.9 → 4; 1.3 → 1.
-    expect(coins).toEqual([4, 1]);
-    expect(profile.coins).toBe(5);
-    expect(profile.records).toMatchObject({ bestScore: 3000, bestStage: 3 });
-    expect(profile.stats.totalMerges).toBe(0);
+    expect(coins.slice(4)).toEqual([223]);
+    expect(profile.records.bestStage).toBe(3);
   });
 
   it('pays Lucky Save pops, then a forced timeout without saves ends the run', () => {
@@ -98,13 +109,14 @@ describe('payout pipeline (GAME_DESIGN §5, §9)', () => {
     run.forceDangerTimeout();
     expect(run.luckySavesLeft).toBe(0);
     expect(run.state).toBe('playing');
-    expect(coins).toEqual([2, 2, 2, 2]);
-    expect(profile.coins).toBe(8);
+    // Each tier-2 cat pays its value: half of C(2) = 2.
+    expect(coins).toEqual([1, 1, 1, 1]);
+    expect(profile.coins).toBe(4);
 
     run.forceDangerTimeout();
     expect(run.state).toBe('over');
     // The run's end wrote everything.
-    expect(stored().wallet.coins).toBe(8);
+    expect(stored().wallet.coins).toBe(4);
     expect(stored().stats.runsPlayed).toBe(1);
   });
 

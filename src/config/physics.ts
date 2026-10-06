@@ -2,7 +2,7 @@
  * Physics tunables (TECH_SPEC §5). These are starting values: M4 tunes them and records the
  * reasoning in TECH_SPEC §5, and M10 may retune them.
  */
-import { tierRadius } from './tiers';
+import { sizeRadius } from './tiers';
 
 /** Fixed timestep, and the most substeps one frame may run. */
 export const PHYSICS_STEP_MS = 1000 / 120;
@@ -30,10 +30,10 @@ export const ENABLE_SLEEPING = false;
 export const WALL_THICKNESS = 300;
 
 /**
- * The walls rise this many stage-5 jar heights above the floor at every stage. Only the part up
- * to the rim is drawn; the rest keeps a pile that grows past the rim from spilling over.
+ * The walls rise this many jar heights above the floor. Only the part up to the rim is drawn; the
+ * rest keeps a pile that grows past the rim from spilling over.
  */
-export const WALL_HEIGHT_FACTOR = 2;
+export const WALL_HEIGHT_FACTOR = 4;
 
 /**
  * Contacts are exact circles (physics/circleCollision.ts). A cat's matter-js body is still a
@@ -45,31 +45,26 @@ export const BALL_HULL_SIDES = 12;
 export const BALL_INERTIA_SCALE = 4;
 
 /**
- * Speed limits in world units per second at stage 1; stage s multiplies them by scale_s, like
- * gravity. MAX_SPEED applies to every cat on every step and sits above a natural fall from the
- * dropper, so it only catches launches.
+ * Speed limits in world units per second (the world has the same scale at every stage).
+ * MAX_SPEED applies to every cat on every step and sits above a natural fall from the dropper, so
+ * it only catches launches.
  */
 export const MAX_SPEED_BASE = 1500;
 /** A merged cat starts with its parents' average velocity, capped at this. */
 export const MERGE_MAX_SPEED_BASE = 400;
 /** While a merged cat grows, every cat touching it is capped at this. */
 export const GROWTH_NEIGHBOUR_MAX_SPEED_BASE = 500;
-/** Radians per second, the same at every stage (zooming out doesn't change spin on screen). */
+/** Radians per second. */
 export const MAX_ANGULAR_SPEED = 30;
 
-/** Stage-1 gravity (matter-js gravity.y); stage s uses GRAVITY_BASE × scale_s. */
+/** matter-js gravity.y (1000 units/s²), the same at every stage. */
 export const GRAVITY_BASE = 1;
 
-/** Density of a tier-1 cat. Bigger tiers are lighter per area (see densityForTier). */
+/** Density of a size-1 cat. Bigger sizes are lighter per area (see densityForSize). */
 export const BASE_DENSITY = 0.001;
 export const DENSITY_EXPONENT = 0.5;
 
-/** density(t) = BASE_DENSITY × (r(1) / r(t))^0.5, so mass grows like r^1.5 instead of r². */
-export function densityForTier(tier: number): number {
-  return BASE_DENSITY * (tierRadius(1) / tierRadius(tier)) ** DENSITY_EXPONENT;
-}
-
-/** Gravity scales with the stage so on-screen motion feels the same at every zoom. */
-export function gravityForScale(scale: number): number {
-  return GRAVITY_BASE * scale;
+/** density(s) = BASE_DENSITY × (r(1) / r(s))^0.5, so mass grows like r^1.5 instead of r². */
+export function densityForSize(size: number): number {
+  return BASE_DENSITY * (sizeRadius(1) / sizeRadius(size)) ** DENSITY_EXPONENT;
 }

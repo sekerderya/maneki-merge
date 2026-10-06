@@ -11,7 +11,7 @@ const levels = (overrides: Partial<Record<UpgradeId, number>> = {}): UpgradeLeve
 });
 
 describe('shop cards (GAME_DESIGN §2.2)', () => {
-  it('lists all 8 upgrades in shop order', () => {
+  it('lists all 7 upgrades in shop order', () => {
     const cards = shopCards(levels(), 0);
     expect(cards.map((c) => c.id)).toEqual([...UPGRADE_IDS]);
     for (const card of cards) {
@@ -49,14 +49,12 @@ describe('shop cards (GAME_DESIGN §2.2)', () => {
   it.each<[UpgradeId, number, string]>([
     ['luckyPaw', 0, '+0%'],
     ['luckyPaw', 10, '+150%'],
-    // The biggest stage-1 drop: 10 / 100, then 13.6 / 112 … 28 / 160 (GAME_DESIGN §8).
+    // The biggest drop of a stage: 10 / 100, then 13.6 / 112 … 28 / 160 (GAME_DESIGN §8).
     ['bigCatch', 0, '10%'],
     ['bigCatch', 1, '12%'],
     ['bigCatch', 5, '18%'],
     ['shrineExpansion', 0, '2'],
     ['shrineExpansion', 3, '5'],
-    ['quickGrowth', 0, '100%'],
-    ['quickGrowth', 5, '70%'],
     ['goldenTouch', 3, '9%'],
     ['goldenTouch', 5, '15%'],
     ['comboCharm', 2, '+16%'],

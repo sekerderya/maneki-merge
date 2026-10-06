@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { tierRadius } from '../../src/config/tiers';
+import { sizeRadius } from '../../src/config/tiers';
 import { landingY } from '../../src/game/aim';
 import { jarGeometry } from '../../src/physics/geometry';
 import { RunController } from '../../src/run/RunController';
@@ -35,9 +35,9 @@ describe('aim guide landing point', () => {
   it('matches where a dropped cat first lands in the real physics', () => {
     const run = new RunController({ seed: 7 });
     const geo = jarGeometry(1);
-    run.spawnBall(5, 0, -tierRadius(5));
+    run.spawnBall(5, 0, -sizeRadius(5));
     for (let i = 0; i < 240; i++) run.tick();
-    const predicted = landingY(20, tierRadius(run.current.tier), geo.dropY, run.balls);
+    const predicted = landingY(20, run.radiusOf(run.current.tier), geo.dropY, run.balls);
     const before = run.balls.length;
     expect(run.drop(20)).toBe(true);
     const cat = run.balls[before];

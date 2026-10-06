@@ -21,12 +21,11 @@ const takeMany = (queue: DropQueue, n: number): Drop[] =>
 
 describe('dropWeights (GAME_DESIGN §8)', () => {
   it('uses the base weights without Big Catch', () => {
-    expect(percent(dropWeights(4, 0))).toEqual([40, 30, 20, 10]);
-    expect(percent(dropWeights(5, 0))).toEqual([36, 28, 20, 10, 6]);
+    expect(percent(dropWeights(0))).toEqual([40, 30, 20, 10]);
   });
 
-  it('matches the §8 example: a 5-tier pool at Big Catch 5', () => {
-    expect(percent(dropWeights(5, 5))).toEqual([20.8, 25.9, 25.4, 16.2, 11.8]);
+  it('matches the §8 example: Big Catch 5', () => {
+    expect(percent(dropWeights(5))).toEqual([25, 30, 27.5, 17.5]);
   });
 
   it('applies weight_i = base_i × (1 + 0.12 × L × i) for every level', () => {
@@ -34,22 +33,18 @@ describe('dropWeights (GAME_DESIGN §8)', () => {
       const raw = [40, 30, 20, 10].map((w, i) => w * (1 + 0.12 * level * i));
       const total = raw.reduce((a, b) => a + b, 0);
       const expected = raw.map((w) => w / total);
-      dropWeights(4, level).forEach((w, i) => expect(w).toBeCloseTo(expected[i]!, 12));
+      dropWeights(level).forEach((w, i) => expect(w).toBeCloseTo(expected[i]!, 12));
     }
   });
 
   it('normalizes to 1 and shifts weight toward bigger tiers as Big Catch rises', () => {
     let previousSmallest = 1;
     for (let level = 0; level <= 5; level++) {
-      const w = dropWeights(5, level);
+      const w = dropWeights(level);
       expect(w.reduce((a, b) => a + b, 0)).toBeCloseTo(1, 12);
       expect(w[0]!).toBeLessThanOrEqual(previousSmallest);
       previousSmallest = w[0]!;
     }
-  });
-
-  it('rejects pool sizes without weights', () => {
-    expect(() => dropWeights(3, 0)).toThrow(RangeError);
   });
 });
 
@@ -83,7 +78,7 @@ describe('DropQueue', () => {
       const counts = new Map<number, number>();
       takeMany(q, 2); // the fixed opening drops
       for (const d of takeMany(q, n)) counts.set(d.tier, (counts.get(d.tier) ?? 0) + 1);
-      const expected = dropWeights(pool.length, bigCatchLevel);
+      const expected = dropWeights(bigCatchLevel);
       pool.forEach((tier, i) => expect((counts.get(tier) ?? 0) / n).toBeCloseTo(expected[i]!, 2));
     };
     check(1, 0);
@@ -126,19 +121,22 @@ describe('DropQueue', () => {
     expect(tiers(0.15)).toEqual(tiers(0));
   });
 
-  it('rerolls queued cats that fall out of the pool when the stage changes', () => {
-    // Stage 3 drops tiers 2–6; a tier-1 cat can't be in its queue.
+  it('keeps each queued cat size and golden flag when the stage changes', () => {
+    // Stage 2 drops tiers 12–15, stage 3 tiers 23–26: a queued 13 becomes a 24.
     for (let seed = 0; seed < 50; seed++) {
-      const q = makeQueue({ rng: new Rng(seed), stage: 2, previewCount: 2, goldenChance: 0.5 });
+      const rng = new Rng(seed);
+      const q = makeQueue({ rng, stage: 2, previewCount: 2, goldenChance: 0.5 });
+      takeMany(q, 3);
       const before = [q.current, ...q.preview];
+      const state = rng.state();
       q.setStage(3);
       const after = [q.current, ...q.preview];
       const pool = stageInfo(3).dropPool;
       after.forEach((drop, i) => {
-        expect(pool).toContain(drop.tier);
-        expect(drop.golden).toBe(before[i]!.golden);
-        if (pool.includes(before[i]!.tier)) expect(drop).toEqual(before[i]);
+        expect(drop).toEqual({ tier: before[i]!.tier + 11, golden: before[i]!.golden });
       });
+      // No rolls: the seed's sequence goes on unchanged.
+      expect(rng.state()).toEqual(state);
       for (const d of takeMany(q, 100)) expect(pool).toContain(d.tier);
     }
   });

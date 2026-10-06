@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  cashOutBelow,
   coinPayout,
   ComboCounter,
   jackpotBaseCoins,
@@ -46,22 +45,22 @@ describe('score and Jackpot (GAME_DESIGN §5, §9)', () => {
   });
 
   it('pays 2 × S(cap) score and 5 × C(cap) base coins for a Jackpot', () => {
-    // Cap tiers per stage: 7, 9, 11, 13, 15.
-    expect([7, 9, 11, 13, 15].map(jackpotScore)).toEqual([256, 1024, 4096, 16_384, 65_536]);
-    expect([7, 9, 11, 13, 15].map(jackpotBaseCoins)).toEqual([120, 350, 1010, 2915, 8420]);
+    // A Jackpot is two of a stage's last cat: tiers 12 and 23 (stages 1 and 2).
+    expect([12, 23].map(jackpotScore)).toEqual([8192, 16_777_216]);
+    expect([12, 23].map(jackpotBaseCoins)).toEqual([1715, 587_280]);
   });
 });
 
-describe('cash-out (GAME_DESIGN §7.1)', () => {
-  it('pops cats below the new stage’s smallest drop tier', () => {
-    expect([1, 2, 3, 4, 5].map(cashOutBelow)).toEqual([1, 1, 2, 3, 4]);
-  });
-
-  it('pays C(t) per cat with multipliers and golden, without combo', () => {
-    expect(popCoins(1, false, 1)).toBe(1);
-    expect(popCoins(3, false, 1)).toBe(3);
-    expect(popCoins(3, true, 1)).toBe(9);
-    expect(popCoins(4, false, 2.5)).toBe(13); // 12.5
+describe('a cat’s value (GAME_DESIGN §5, §7)', () => {
+  it('pays half of C(t) per popping cat, with multipliers and golden, without combo', () => {
+    // Merging two tier-5 cats pays C(5) = 8, so each one is worth 4.
+    expect(popCoins(5, false, 1)).toBe(4);
+    expect(popCoins(5, false, 1) * 2).toBe(coinPayout(8, 1, 0, false));
+    expect(popCoins(1, false, 1)).toBe(1); // 0.5, but every payout pays at least 1
+    expect(popCoins(3, false, 1)).toBe(2); // 1.5, halves round up
+    expect(popCoins(3, true, 1)).toBe(5); // 4.5
+    expect(popCoins(4, false, 2.5)).toBe(6); // 2.5 × 2.5 = 6.25
+    expect(popCoins(23, false, 1)).toBe(58_728);
   });
 });
 
@@ -128,10 +127,10 @@ describe('RunEconomy', () => {
   it('pays pops in coins only, leaving score and combo alone', () => {
     const e = new RunEconomy({ coinMultiplier: 2, comboCharmLevel: 5 });
     e.merge(1, false, 0);
-    expect(e.pop(2, true)).toEqual({ score: 0, coins: 12, combo: 0 });
+    expect(e.pop(2, true)).toEqual({ score: 0, coins: 6, combo: 0 });
     expect(e.score).toBe(2);
     expect(e.combo).toBe(1);
-    expect(e.coins).toBe(2 + 12);
+    expect(e.coins).toBe(2 + 6);
   });
 
   it('reports the combo as it stands at a time', () => {

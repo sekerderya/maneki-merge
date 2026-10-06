@@ -1,12 +1,19 @@
 /**
  * Rendering and camera tunables (TECH_SPEC §4, §6). Lengths ending in `_RATIO` are fractions of
- * the current jar width, so every stage looks the same once the camera has zoomed out.
+ * the current jar width, so the jar keeps its look while it grows. Other lengths are world units;
+ * the world has the same scale at every stage.
  */
 
 /** Space shown left and right of the jar's inner walls, each side (includes the wall art). */
 export const CAMERA_SIDE_MARGIN_RATIO = 0.05;
 /** Space shown below the jar floor (includes the floor art). */
 export const CAMERA_FLOOR_MARGIN_RATIO = 0.04;
+/**
+ * Where the play band's spare height goes when the screen is taller than the framed jar: this
+ * share below the floor, the rest above the dropper. 0 keeps the floor at the bottom edge and 0.5
+ * centres the jar; 0.45 lifts it as far as the owner's sketch on a phone (v0.10).
+ */
+export const CAMERA_SPARE_BELOW_RATIO = 0.45;
 
 /** Drawn thickness of the jar walls and floor, outside the physics walls. */
 export const JAR_WALL_RATIO = 0.03;
@@ -19,9 +26,8 @@ export const JAR_RIM_RATIO = 0.012;
 export const MAX_RENDER_RESOLUTION = 2.5;
 
 /**
- * Placeholder textures are drawn at this many texture pixels per world unit for a tier's first
- * stage (a CSS zoom of about 1 at the resolution cap), so they are never upscaled on a phone or
- * tablet. A tier that first appears at a later stage is drawn smaller by that stage's scale.
+ * Placeholder textures are drawn at this many texture pixels per world unit (a CSS zoom of about 1
+ * at the resolution cap), so they are never upscaled on a phone or tablet.
  */
 export const PLACEHOLDER_PX_PER_UNIT = 2.5;
 /** Outline width of a placeholder cat, as a fraction of its radius. */
@@ -32,7 +38,7 @@ export const PLACEHOLDER_GOLD_RING_RATIO = 0.13;
 export const NUMBER_HEIGHT_RATIO = 0.95;
 export const NUMBER_HEIGHT_RATIO_TWO_DIGITS = 0.78;
 
-/** Aim guide: line width and dash pattern in stage-1 world units (scaled by the stage). */
+/** Aim guide: line width and dash pattern in world units. */
 export const AIM_LINE_WIDTH = 3;
 export const AIM_DASH = 14;
 export const AIM_GAP = 10;
@@ -46,9 +52,9 @@ export const DANGER_FLASH_PERIOD_MS = 400;
 export const MERGE_POP_MS = 280;
 export const MERGE_POP_SCALE = 1.6;
 export const FLOAT_TEXT_MS = 700;
-/** How far the floating score rises, in stage-1 world units. */
+/** How far the floating score rises, in world units. */
 export const FLOAT_TEXT_RISE = 70;
-/** Font size of the floating score, in stage-1 world units. */
+/** Font size of the floating score, in world units. */
 export const FLOAT_TEXT_SIZE = 34;
 /**
  * At most this many effects of each kind play at once; older ones are recycled. A cash-out can pop
@@ -72,7 +78,7 @@ export const POP_STAGGER_MAX_MS = 240;
  * together when the zoom ends. 0 keeps the jar locked to the frame.
  */
 export const EXPANSION_WALL_LAG = 0.25;
-/** Gold sparks along the rim when an expansion starts, in stage-1 units (scaled by the stage). */
+/** Gold sparks along the rim when the zoom starts and at the reveal, in world units. */
 export const EXPANSION_SPARKS = {
   count: 44,
   lifespanMs: { min: 650, max: 1100 },
@@ -81,7 +87,7 @@ export const EXPANSION_SPARKS = {
   /** Spark size as a fraction of its 64 px texture. */
   scale: 0.5,
 } as const;
-/** Each frame of an expansion may spend this long drawing the next stage's cat textures. */
+/** Each frame of an expansion may spend this long drawing the next stage's number textures. */
 export const SKIN_PREPARE_BUDGET_MS = 4;
 
 /** First-run hints (GAME_DESIGN §2.3). */
@@ -116,7 +122,7 @@ export const COIN_FLY_ARC = 0.22;
 
 /** A Jackpot's floating "+coins" is this much bigger than a merge's. */
 export const JACKPOT_TEXT_SCALE = 1.7;
-/** Spark bursts (stage-1 units, scaled by the stage): golden merges and Jackpots. */
+/** Spark bursts (world units): golden merges and Jackpots. */
 export const BURST_SPARKS = {
   golden: 12,
   jackpot: 40,
@@ -137,11 +143,11 @@ export const SHOP_BALANCE_COUNT_MS = 450;
 /**
  * Merge juice (GAME_DESIGN §12). Every merge bursts particles in the new cat's colour (more for
  * bigger cats), and the new cat bumps up by MERGE_BUMP_SCALE and settles over MERGE_BUMP_MS on top
- * of its physical growth. Stage-1 units, scaled by the stage.
+ * of its physical growth. World units; `perSize` counts the new cat's size.
  */
 export const MERGE_PARTICLES = {
   base: 7,
-  perTier: 0.8,
+  perSize: 0.8,
   max: 18,
   lifespanMs: { min: 320, max: 620 },
   speed: { min: 140, max: 420 },
@@ -154,14 +160,14 @@ export const MERGE_BUMP_SCALE = 0.14;
 export const REDUCED_MOTION_PARTICLES = 0.35;
 
 /**
- * Camera shake (GAME_DESIGN §12): merges into tier SHAKE.minTier and above, Jackpots, and combo
- * escalation from SHAKE.comboMin. Amplitudes are stage-1 world units (scaled by the stage); a
- * stronger shake replaces a weaker one, and each fades out over its duration.
+ * Camera shake (GAME_DESIGN §12): merges into size SHAKE.minSize and above, Jackpots, and combo
+ * escalation from SHAKE.comboMin. Amplitudes are world units; a stronger shake replaces a weaker
+ * one, and each fades out over its duration.
  */
 export const SHAKE = {
-  minTier: 10,
+  minSize: 10,
   mergeBase: 5,
-  mergePerTier: 2,
+  mergePerSize: 2,
   mergeMs: 260,
   jackpot: 15,
   jackpotMs: 450,

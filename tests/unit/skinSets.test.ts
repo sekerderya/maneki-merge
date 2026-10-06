@@ -1,61 +1,30 @@
 import { describe, expect, it } from 'vitest';
 import { STAGE_COUNT, stageInfo } from '../../src/config/stages';
-import { MAX_TIER } from '../../src/config/tiers';
-import { PLACEHOLDER_PX_PER_UNIT, POP_STAGGER_MAX_MS, POP_STAGGER_MS } from '../../src/config/view';
-import { cashOutBelow } from '../../src/core/economy';
+import { SIZE_COUNT } from '../../src/config/tiers';
+import { POP_STAGGER_MAX_MS, POP_STAGGER_MS } from '../../src/config/view';
 import { fitCamera, worldToView } from '../../src/game/cameraFit';
 import { popDelay } from '../../src/game/fx/PopFx';
-import { stageSkinSet, texturePxPerUnit } from '../../src/game/skins/skinSets';
+import { stageSkinSet } from '../../src/game/skins/skinSets';
 import { jarGeometry } from '../../src/physics/geometry';
 
 describe('cat textures per stage (TECH_SPEC §6)', () => {
   it('covers every tier a stage can hold, and golden cats only where they are dropped', () => {
     expect(stageSkinSet(1)).toEqual({
       stage: 1,
-      tiers: [1, 2, 3, 4, 5, 6, 7],
+      tiers: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       golden: [1, 2, 3, 4],
     });
-    expect(stageSkinSet(5)).toEqual({
-      stage: 5,
-      tiers: [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
-      golden: [4, 5, 6, 7, 8],
+    expect(stageSkinSet(2)).toEqual({
+      stage: 2,
+      tiers: [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
+      golden: [12, 13, 14, 15],
     });
     for (let stage = 1; stage <= STAGE_COUNT; stage++) {
       const set = stageSkinSet(stage);
-      // Smaller cats were cashed out on the way here; bigger ones can't be made yet.
-      expect(set.tiers[0]).toBe(cashOutBelow(stage));
-      expect(set.tiers[set.tiers.length - 1]).toBe(stageInfo(stage).tierCap);
+      expect(set.tiers).toHaveLength(SIZE_COUNT);
+      expect(set.tiers[0]).toBe(stageInfo(stage).firstTier);
+      expect(set.tiers[set.tiers.length - 1]).toBe(stageInfo(stage).lastTier);
       expect(set.golden).toEqual(stageInfo(stage).dropPool);
-    }
-  });
-
-  it("draws each stage's set at that stage's zoom", () => {
-    for (let stage = 1; stage <= STAGE_COUNT; stage++) {
-      const { scale } = stageInfo(stage);
-      for (const tier of stageSkinSet(stage).tiers) {
-        expect(texturePxPerUnit(tier, stage)).toBeCloseTo(PLACEHOLDER_PX_PER_UNIT / scale, 12);
-      }
-    }
-    // A tier bigger than the stage allows (a debug spawn) never gets a bigger texture than its
-    // own first stage needs.
-    expect(texturePxPerUnit(MAX_TIER, 1)).toBeCloseTo(
-      PLACEHOLDER_PX_PER_UNIT / stageInfo(5).scale,
-      12,
-    );
-  });
-
-  it('shows textures at the same texture-to-screen ratio at every stage', () => {
-    for (const [w, h] of [
-      [975, 1750],
-      [750, 1180],
-      [1640, 2160],
-    ] as const) {
-      const ratios = Array.from({ length: STAGE_COUNT }, (_, i) => {
-        const stage = i + 1;
-        const zoom = fitCamera(jarGeometry(stage), w, h).zoom;
-        return texturePxPerUnit(cashOutBelow(stage), stage) / zoom;
-      });
-      for (const ratio of ratios) expect(ratio / ratios[0]!).toBeCloseTo(1, 2);
     }
   });
 });
@@ -71,7 +40,7 @@ describe('world to screen', () => {
 });
 
 describe('pop stagger', () => {
-  it('spaces pops of one tick out, but ends them within the reveal', () => {
+  it('spaces pops of one tick out, but ends them before the zoom', () => {
     expect(popDelay(0, 1)).toBe(0);
     expect(popDelay(1, 2)).toBe(POP_STAGGER_MS);
     for (const count of [2, 5, 9, 40]) {

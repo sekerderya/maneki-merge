@@ -1,34 +1,34 @@
 /**
  * One run, headless (TECH_SPEC §3–§5): dropping cats, the cooldown and queue, merges and their
- * payouts, the combo timer, the expansion timeline with its cash-out, the danger line, Lucky
- * Saves and game over. The game scene renders it and forwards input; the HUD, FX, audio and save
- * listen to its events.
+ * payouts, the combo timer, stage clears and the expansion timeline, the danger line, Lucky Saves
+ * and game over. The game scene renders it and forwards input; the HUD, FX, audio and save listen
+ * to its events.
  *
  * Time comes in fixed ticks of PHYSICS_STEP_MS. `update(frameMs)` only decides how many ticks a
  * frame runs, and every timer counts ticks, so a run is a pure function of its seed and of the
  * tick at which each input arrives: the same inputs replay the same run at any frame rate.
  *
  * Tick pipeline while playing: physics step → merges (payouts and events, oldest first) → combo
- * expiry → drop ready → expansion check → danger. The expansion check goes first, so a merge that
- * reaches the next threshold saves the jar even on the step the danger timer would run out.
+ * expiry → stage clear → drop ready → danger. The stage clear goes first, so making the stage's
+ * last cat saves the jar even on the step the danger timer would run out.
  */
 import { PHYSICS_STEP_MS, stepsFor } from '../config/physics';
-import { STAGE_COUNT, stageInfo } from '../config/stages';
-import { tierRadius } from '../config/tiers';
+import { catRadius, STAGE_COUNT, stageHoldsTier, stageInfo } from '../config/stages';
 import {
   DROP_COOLDOWN_MS,
+  EXPANSION_CLEAR_MS,
   EXPANSION_DURATION_MS,
   EXPANSION_ZOOM_MS,
   LUCKY_SAVE_GRACE_MS,
 } from '../config/timings';
 import type { Drop } from '../core/dropQueue';
 import { DropQueue } from '../core/dropQueue';
-import { cashOutBelow, RunEconomy } from '../core/economy';
+import { RunEconomy } from '../core/economy';
 import { EventBus } from '../core/events';
 import type { GameEvents } from '../core/events';
 import { StateHasher } from '../core/hash';
-import { nextExpansion, stageProgress, stageThreshold } from '../core/progression';
-import type { ProgressionStats, StageProgress } from '../core/progression';
+import { nextStage, stageProgress } from '../core/progression';
+import type { StageProgress } from '../core/progression';
 import { Rng } from '../core/rng';
 import { defaultUpgradeLevels, deriveStats } from '../core/upgrades';
 import type { DerivedStats, UpgradeLevels } from '../core/upgrades';
@@ -53,7 +53,12 @@ export interface RunOptions {
   readonly instantExpansion?: boolean;
 }
 
-/** The expansion sequence (GAME_DESIGN §7.1); the scene derives camera and jar visuals from it. */
+/**
+ * The expansion sequence (GAME_DESIGN §7.1). `clear`: the other cats have popped and the last cat
+ * settles while the jar holds still; `zoom`: time stops and the camera zooms out while the jar
+ * grows; `reveal`: the world is the new stage's ("New cats unlocked!"). The scene derives camera
+ * and jar visuals from it.
+ */
 export interface ExpansionView {
   readonly from: number;
   readonly to: number;
@@ -62,8 +67,7 @@ export interface ExpansionView {
   readonly progress: number;
   /** 0 → 1 over the camera zoom, wall slide and rim rise (EXPANSION_ZOOM_MS). */
   readonly zoomProgress: number;
-  /** 'zoom' until the cash-out at the end of the zoom, then 'reveal' ("New cats unlocked!"). */
-  readonly phase: 'zoom' | 'reveal';
+  readonly phase: 'clear' | 'zoom' | 'reveal';
 }
 
 interface Expansion {
@@ -73,10 +77,11 @@ interface Expansion {
   elapsedMs: number;
   progress: number;
   zoomProgress: number;
-  phase: 'zoom' | 'reveal';
+  phase: 'clear' | 'zoom' | 'reveal';
 }
 
 const COOLDOWN_STEPS = stepsFor(DROP_COOLDOWN_MS);
+const CLEAR_STEPS = stepsFor(EXPANSION_CLEAR_MS);
 const ZOOM_STEPS = stepsFor(EXPANSION_ZOOM_MS);
 const EXPANSION_STEPS = stepsFor(EXPANSION_DURATION_MS);
 
@@ -108,10 +113,11 @@ export class RunController {
   /** The whole seconds left on the danger countdown that were last announced (0: none). */
   private dangerSecond = 0;
   private savesLeft: number;
-  private lockedAnnounced = false;
   private expansionState: Expansion | null = null;
   /** Debug only (`jumpToStage`): stages up to this one open regardless of Shrine Expansion. */
   private debugMaxStage = 0;
+  /** Debug only (`jumpToStage`): the stage the jump keeps clearing towards. */
+  private debugTargetStage = 0;
 
   constructor(options: RunOptions) {
     if (!Number.isFinite(options.seed)) throw new RangeError(`Invalid seed: ${options.seed}`);
@@ -173,7 +179,7 @@ export class RunController {
     return this.economy.comboAt(this.world.timeMs);
   }
 
-  /** Play time: physics steps × PHYSICS_STEP_MS. Pauses and expansions don't count. */
+  /** Play time: physics steps × PHYSICS_STEP_MS. Pauses and the expansion's time stop don't count. */
   get playTimeMs(): number {
     return this.world.timeMs;
   }
@@ -214,9 +220,16 @@ export class RunController {
     return this.savesLeft;
   }
 
-  /** The HUD progress bar towards the next stage. */
+  /** The HUD's progress bar: the biggest cat in the jar against the stage's last cat. */
   get progress(): StageProgress {
-    return stageProgress(this.economy.score, this.world.stage, this.progression);
+    let biggest = 0;
+    for (const cat of this.world.balls) biggest = Math.max(biggest, cat.tier);
+    return stageProgress(biggest, this.world.stage, this.maxStage);
+  }
+
+  /** The radius of a `tier` cat at the current stage, in world units. */
+  radiusOf(tier: number): number {
+    return catRadius(tier, this.world.stage);
   }
 
   /** The running expansion sequence, or null. */
@@ -242,7 +255,7 @@ export class RunController {
     if (!this.canDrop || !Number.isFinite(x)) return false;
     const cat = this.queue.take();
     const geo = this.world.geometry;
-    const at = clampDropX(x, tierRadius(cat.tier), geo);
+    const at = clampDropX(x, this.radiusOf(cat.tier), geo);
     this.world.addBall({ tier: cat.tier, golden: cat.golden, x: at, y: geo.dropY });
     this.dropAllowedAt = this.world.steps + COOLDOWN_STEPS;
     this.dropAnnounced = false;
@@ -274,34 +287,41 @@ export class RunController {
   tick(): void {
     if (this.runState === 'paused' || this.runState === 'over') return;
     this.tickCount++;
-    if (this.runState === 'expanding') this.advanceExpansion(1);
+    if (this.runState === 'expanding') this.expansionTick();
     else this.playStep();
   }
 
   // ── Debug and test hooks (`?debug=1`, TECH_SPEC §11) ──────────────────────
 
-  /** Puts a cat into the jar, ignoring the queue and the cooldown. */
+  /**
+   * Puts a cat into the jar, ignoring the queue and the cooldown. The current stage must hold its
+   * tier (its first to its last tier).
+   */
   spawnBall(tier: number, x: number, y?: number, golden = false): BallView {
+    if (!stageHoldsTier(this.world.stage, tier)) {
+      throw new RangeError(`Stage ${this.world.stage} can't hold tier ${tier}`);
+    }
     const geo = this.world.geometry;
-    const at = clampDropX(x, tierRadius(tier), geo);
+    const at = clampDropX(x, this.radiusOf(tier), geo);
     return this.world.addBall({ tier, golden, x: at, y: y ?? geo.dropY });
   }
 
-  /** Sets the run score; an expansion it unlocks starts on the next tick. */
+  /** Sets the run score (it only counts for records). */
   setScore(score: number): void {
     this.economy.setScore(score);
     this.events.emit('scoreChanged', { score });
   }
 
   /**
-   * Opens every stage up to `stage` for this run, whatever the Shrine Expansion level, and raises
-   * the score to that stage's threshold. Each expansion then plays in turn, one stage at a time.
+   * Opens every stage up to `stage` for this run, whatever the Shrine Expansion level, and clears
+   * the current stage as if its last cat had just been made. Each expansion then plays in turn,
+   * one stage at a time, until the run reaches `stage`.
    */
   jumpToStage(stage: number): void {
     if (!Number.isInteger(stage) || stage <= this.world.stage || stage > STAGE_COUNT) return;
     this.debugMaxStage = Math.max(this.debugMaxStage, stage);
-    const threshold = stageThreshold(stage, this.stats.thresholdFactor);
-    if (this.economy.score < threshold) this.setScore(threshold);
+    this.debugTargetStage = Math.max(this.debugTargetStage, stage);
+    if (this.runState === 'playing') this.debugClear();
   }
 
   forceGameOver(): void {
@@ -325,11 +345,11 @@ export class RunController {
     for (const value of this.rng.state()) h.number(value);
     h.number(this.queue.current.tier).bool(this.queue.current.golden);
     for (const next of this.queue.preview) h.number(next.tier).bool(next.golden);
-    h.number(this.dropAllowedAt).number(this.savesLeft).bool(this.lockedAnnounced);
-    h.number(this.debugMaxStage);
+    h.number(this.dropAllowedAt).number(this.savesLeft);
+    h.number(this.debugMaxStage).number(this.debugTargetStage);
     h.number(this.danger.remainingMs).bool(this.danger.inGrace);
     const e = this.expansionState;
-    if (e) h.number(e.from).number(e.to).number(e.elapsedSteps);
+    if (e) h.number(e.from).number(e.to).number(e.elapsedSteps).string(e.phase);
     this.world.hashInto(h);
     return h.digest();
   }
@@ -340,24 +360,28 @@ export class RunController {
     const world = this.world;
     world.step();
     const now = world.timeMs;
-    const cap = stageInfo(world.stage).tierCap;
+    const last = stageInfo(world.stage).lastTier;
 
-    const outcomes = this.merges.resolve(world, cap);
+    const outcomes = this.merges.resolve(world, last);
+    /** The first cat this step made of the stage's last tier: it clears the stage. */
+    let cleared: Ball | null = null;
     for (const o of outcomes) {
       const at = { x: o.x, y: o.y };
       if (o.kind === 'merge') {
         const p = this.economy.merge(o.tier, o.golden, now);
         this.bankCoins(p.coins);
+        if (o.ball && o.ball.tier === last) cleared ??= o.ball;
         this.events.emit('merged', {
           id: o.ball?.id ?? -1,
           tier: o.tier,
           newTier: o.tier + 1,
+          newSize: o.ball?.size ?? world.sizeOf(o.tier + 1),
           golden: o.golden,
           at,
           ...p,
         });
       } else {
-        const p = this.economy.jackpot(cap, o.golden, now);
+        const p = this.economy.jackpot(last, o.golden, now);
         this.bankCoins(p.coins);
         this.events.emit('jackpot', { tier: o.tier, golden: o.golden, at, ...p });
       }
@@ -371,8 +395,11 @@ export class RunController {
       this.shownCombo = combo;
       this.events.emit('comboChanged', { combo });
     }
+    if (cleared) {
+      this.clearStage(cleared);
+      if (this.runState !== 'playing') return;
+    }
     this.announceDropIfReady();
-    if (this.checkExpansion()) return;
     this.updateDanger(now);
   }
 
@@ -383,24 +410,32 @@ export class RunController {
     this.events.emit('dropReady', { tier, golden });
   }
 
-  /** Thresholds and the stage lock, including the debug override. */
-  private get progression(): ProgressionStats {
-    if (this.debugMaxStage <= this.stats.maxStage) return this.stats;
-    return { thresholdFactor: this.stats.thresholdFactor, maxStage: this.debugMaxStage };
+  /** The highest stage open in this run: Shrine Expansion, or a debug jump. */
+  private get maxStage(): number {
+    return Math.max(this.stats.maxStage, this.debugMaxStage);
   }
 
-  /** Starts the next expansion if the score allows it; returns whether one started. */
-  private checkExpansion(): boolean {
-    const next = nextExpansion(this.economy.score, this.world.stage, this.progression);
-    if (next.kind === 'expand') {
-      this.startExpansion(next.stage);
-      return true;
-    }
-    if (next.kind === 'locked' && !this.lockedAnnounced) {
-      this.lockedAnnounced = true;
-      this.events.emit('expansionLocked', { stage: next.stage });
-    }
-    return false;
+  /**
+   * The stage's last cat exists (GAME_DESIGN §7): every other cat pops into its value, oldest
+   * first. Then the jar grows into the next stage if it is open; otherwise play goes on with the
+   * last cat in the jar.
+   */
+  private clearStage(last: Ball): void {
+    const stage = this.world.stage;
+    this.pop(
+      this.world.balls.filter((cat) => cat !== last),
+      'cashOut',
+    );
+    const next = nextStage(stage, this.maxStage);
+    this.events.emit('stageCleared', { stage, tier: last.tier, next: next.kind });
+    if (next.kind === 'expand') this.startExpansion(next.stage);
+    else if (next.kind === 'locked') this.events.emit('expansionLocked', { stage: next.stage });
+  }
+
+  /** Debug: puts the stage's last cat on the floor and clears the stage with it. */
+  private debugClear(): void {
+    const tier = stageInfo(this.world.stage).lastTier;
+    this.clearStage(this.spawnBall(tier, 0, -this.radiusOf(tier)) as Ball);
   }
 
   private updateDanger(now: number): void {
@@ -444,7 +479,7 @@ export class RunController {
     });
   }
 
-  /** Pops cats into coins (cash-out, Lucky Save): no score, no combo. */
+  /** Pops cats into their value in coins (stage clear, Lucky Save): no score, no combo. */
   private pop(cats: readonly Ball[], reason: 'cashOut' | 'luckySave'): void {
     if (cats.length === 0) return;
     for (const cat of cats) {
@@ -469,7 +504,6 @@ export class RunController {
   private startExpansion(to: number): void {
     const from = this.world.stage;
     this.runState = 'expanding';
-    this.world.pause();
     this.danger.reset();
     this.showDanger();
     this.expansionState = {
@@ -479,36 +513,49 @@ export class RunController {
       elapsedMs: 0,
       progress: 0,
       zoomProgress: 0,
-      phase: 'zoom',
+      phase: 'clear',
     };
-    this.events.emit('expansionStarted', { from, to });
-    if (this.instant) this.advanceExpansion(EXPANSION_STEPS);
+    if (this.instant) {
+      const running = this.expansionState;
+      while (this.expansionState === running) this.expansionTick();
+    }
   }
 
-  private advanceExpansion(steps: number): void {
+  private expansionTick(): void {
     const e = this.expansionState;
     if (!e) return;
-    e.elapsedSteps = Math.min(e.elapsedSteps + steps, EXPANSION_STEPS);
+    e.elapsedSteps++;
     e.elapsedMs = (e.elapsedSteps / EXPANSION_STEPS) * EXPANSION_DURATION_MS;
     e.progress = e.elapsedSteps / EXPANSION_STEPS;
-    e.zoomProgress = Math.min(1, e.elapsedSteps / ZOOM_STEPS);
-    if (e.phase === 'zoom' && e.elapsedSteps >= ZOOM_STEPS) {
+    e.zoomProgress = Math.min(1, Math.max(0, (e.elapsedSteps - CLEAR_STEPS) / ZOOM_STEPS));
+    if (e.phase === 'clear') {
+      // Only the last cat is left: it finishes growing and settles while the jar holds still.
+      this.world.step();
+      if (e.elapsedSteps >= CLEAR_STEPS) {
+        e.phase = 'zoom';
+        this.world.pause();
+        this.events.emit('expansionStarted', { from: e.from, to: e.to });
+      }
+    } else if (e.phase === 'zoom' && e.elapsedSteps >= CLEAR_STEPS + ZOOM_STEPS) {
       e.phase = 'reveal';
-      this.cashOut(e.to);
-      this.events.emit('expansionRevealed', { stage: e.to, newTiers: newTiers(e.from, e.to) });
+      this.reveal(e);
     }
     if (e.elapsedSteps >= EXPANSION_STEPS) this.finishExpansion(e);
   }
 
-  /** At the end of the zoom: pop the cats too small for the new stage, then grow the jar. */
-  private cashOut(to: number): void {
-    const below = cashOutBelow(to);
+  /**
+   * At the end of the zoom the jar has grown by STAGE_ZOOM: the world shrinks by as much, so the
+   * last cat becomes the new stage's first, and the dropper switches to the new stage's pool.
+   */
+  private reveal(e: Expansion): void {
+    // Only the last cat should be left; anything else (a debug spawn) pops.
     this.pop(
-      this.world.balls.filter((cat) => cat.tier < below),
+      this.world.balls.filter((cat) => !stageHoldsTier(e.to, cat.tier)),
       'cashOut',
     );
-    this.world.setStage(to);
-    this.queue.setStage(to);
+    this.world.setStage(e.to);
+    this.queue.setStage(e.to);
+    this.events.emit('expansionRevealed', { stage: e.to, newTiers: newTiers(e.from, e.to) });
   }
 
   private finishExpansion(e: Expansion): void {
@@ -517,16 +564,16 @@ export class RunController {
     this.world.resume();
     this.danger.reset();
     this.events.emit('expansionFinished', { stage: e.to, newTiers: newTiers(e.from, e.to) });
-    // The dropper comes back, maybe with a re-rolled cat.
+    // The dropper comes back with the new stage's cats.
     this.dropAnnounced = false;
     this.announceDropIfReady();
-    this.checkExpansion();
+    if (this.world.stage < this.debugTargetStage) this.debugClear();
   }
 }
 
-/** The tiers a stage's cap allows that the previous stage's didn't ("New cats unlocked!"). */
+/** The tiers a stage adds to the previous one ("New cats unlocked!"): up to its last cat. */
 function newTiers(from: number, to: number): number[] {
-  const fromCap = stageInfo(from).tierCap;
-  const toCap = stageInfo(to).tierCap;
-  return Array.from({ length: toCap - fromCap }, (_, i) => fromCap + 1 + i);
+  const fromLast = stageInfo(from).lastTier;
+  const toLast = stageInfo(to).lastTier;
+  return Array.from({ length: toLast - fromLast }, (_, i) => fromLast + 1 + i);
 }

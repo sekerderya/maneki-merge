@@ -8,7 +8,6 @@
  * pool when the effect ends (`recycle`). A freshly merged cat bumps up and settles (`bump`).
  */
 import type Phaser from 'phaser';
-import { tierRadius } from '../config/tiers';
 import { MERGE_BUMP_MS, MERGE_BUMP_SCALE } from '../config/view';
 import type { BallView } from '../physics/balls';
 import { createGlintTexture, GLINT_KEY, glintPhase, placeGlint } from './fx/glint';
@@ -56,7 +55,7 @@ export class BallRenderer {
     for (const ball of balls) {
       const sprite = this.live.get(ball.id) ?? this.acquire(ball);
       sprite.seen = frame;
-      const grow = (ball.radius / tierRadius(ball.tier)) * this.bumpAt(ball.id, nowMs);
+      const grow = (ball.radius / ball.targetRadius) * this.bumpAt(ball.id, nowMs);
       const body = this.skin.body(ball.tier, ball.golden);
       sprite.body
         .setPosition(ball.x, ball.y)

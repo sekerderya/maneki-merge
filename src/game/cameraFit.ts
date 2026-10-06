@@ -1,9 +1,14 @@
 /**
  * Camera fit (TECH_SPEC §4): show the jar plus its side margins, the dropper band above the rim
- * and a floor margin inside the play band, letterboxed, with the floor near the bottom. Pure
- * math, no Phaser, so it is unit-tested in Node.
+ * and a floor margin inside the play band, letterboxed. Spare height is shared between the space
+ * above the dropper and below the floor (CAMERA_SPARE_BELOW_RATIO), which lifts the jar off the
+ * bottom edge on tall phones. Pure math, no Phaser, so it is unit-tested in Node.
  */
-import { CAMERA_FLOOR_MARGIN_RATIO, CAMERA_SIDE_MARGIN_RATIO } from '../config/view';
+import {
+  CAMERA_FLOOR_MARGIN_RATIO,
+  CAMERA_SIDE_MARGIN_RATIO,
+  CAMERA_SPARE_BELOW_RATIO,
+} from '../config/view';
 
 /** The jar size the camera frames (a stage's geometry, or a blend of two during an expansion). */
 export interface JarFrame {
@@ -35,15 +40,23 @@ export function framedRegion(jar: JarFrame): {
 }
 
 /**
- * Fits the jar into a viewport of `viewWidth` × `viewHeight` canvas pixels. Spare height goes
- * above the dropper, so the floor stays near the bottom of the play band.
+ * Fits the jar into a viewport of `viewWidth` × `viewHeight` canvas pixels. When the viewport is
+ * taller than the framed region, `spareBelow` of the spare height goes below the floor and the
+ * rest above the dropper. Frames of the same shape (every stage, every moment of an expansion)
+ * get the same spare in pixels, so the floor never moves on screen.
  */
-export function fitCamera(jar: JarFrame, viewWidth: number, viewHeight: number): CameraFit {
+export function fitCamera(
+  jar: JarFrame,
+  viewWidth: number,
+  viewHeight: number,
+  spareBelow = CAMERA_SPARE_BELOW_RATIO,
+): CameraFit {
   const region = framedRegion(jar);
   const w = Math.max(1, viewWidth);
   const h = Math.max(1, viewHeight);
   const zoom = Math.min(w / region.width, h / region.height);
-  return { zoom, centerX: 0, centerY: region.bottom - h / zoom / 2 };
+  const spare = Math.max(0, h / zoom - region.height);
+  return { zoom, centerX: 0, centerY: region.bottom + spare * spareBelow - h / zoom / 2 };
 }
 
 /** Where a world point appears in the viewport, in canvas pixels from its top-left corner. */
@@ -60,13 +73,21 @@ export function worldToView(
   };
 }
 
-/** Linear blend of two jar frames (t = 0 → a, t = 1 → b). */
-export function lerpFrame(a: JarFrame, b: JarFrame, t: number): JarFrame {
+/** `jar` grown by `factor` in every direction (the floor stays at y = 0). */
+export function scaleFrame(jar: JarFrame, factor: number): JarFrame {
   return {
-    width: a.width + (b.width - a.width) * t,
-    height: a.height + (b.height - a.height) * t,
-    headroom: a.headroom + (b.headroom - a.headroom) * t,
+    width: jar.width * factor,
+    height: jar.height * factor,
+    headroom: jar.headroom * factor,
   };
+}
+
+/**
+ * `jar` grown by `zoom^t` (t = 0 → jar, t = 1 → zoom × jar). Growing by a constant ratio per
+ * moment looks like an even zoom on screen, even when the jar grows almost ninefold.
+ */
+export function growFrame(jar: JarFrame, zoom: number, t: number): JarFrame {
+  return scaleFrame(jar, zoom ** t);
 }
 
 /** Smooth ease in-out on 0–1. */
