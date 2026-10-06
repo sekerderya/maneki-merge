@@ -13,8 +13,7 @@ test('boots into the menu with a clean console', async ({ page }) => {
   await expect(page.getByTestId('play')).toBeVisible();
   await expect(page.getByTestId('upgrades')).toBeVisible();
   await expect(page.getByTestId('coin-balance')).toHaveText('0');
-  await expect(page.getByTestId('sound-toggle')).toBeVisible();
-  await expect(page.getByTestId('version')).toHaveText(/^v\d+\.\d+\.\d+/);
+  await expect(page.getByTestId('settings')).toBeVisible();
   await expect(page.locator('#game-screen')).toBeHidden();
   await expect(page.getByTestId('update-badge')).toBeHidden();
   await expect(page.getByTestId('rotate-overlay')).toBeHidden();
@@ -53,12 +52,8 @@ test('shows the right install hint for the platform', async ({ page }, testInfo)
   }
 });
 
-test('toggles the sound icon', async ({ page }) => {
+test('the settings panel shows the version', async ({ page }) => {
   await page.goto('./');
-  const sound = page.getByTestId('sound-toggle');
-  await expect(sound).toHaveAttribute('aria-pressed', 'true');
-  await sound.click();
-  await expect(sound).toHaveAttribute('aria-pressed', 'false');
-  await sound.click();
-  await expect(sound).toHaveAttribute('aria-pressed', 'true');
+  await page.getByTestId('settings').click();
+  await expect(page.getByTestId('version')).toHaveText(/^v\d+\.\d+\.\d+/);
 });

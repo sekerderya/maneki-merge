@@ -102,12 +102,14 @@ test('settings, records, stats and hints persist', async ({ page }) => {
   await page.reload();
   await expect(page.getByTestId('best-score')).toHaveText(String(score));
   await expect(page.getByTestId('best-stage')).toHaveText('1');
-  await expect(page.getByTestId('sound-toggle')).toHaveAttribute('aria-pressed', 'false');
+  await page.getByTestId('settings').click();
+  await expect(page.getByTestId('setting-sound')).toHaveAttribute('aria-checked', 'false');
+  await page.getByTestId('settings-close').click();
   const saved = await page.evaluate(
     (key) => JSON.parse(localStorage.getItem(key) ?? '{}'),
     SAVE_KEY,
   );
-  expect(saved.data.settings).toEqual({ sound: false, haptics: false });
+  expect(saved.data.settings).toEqual({ sound: false, haptics: false, reduceMotion: false });
   expect(saved.data.stats.runsPlayed).toBe(1);
   expect(saved.data.records.highestTier).toBe(6);
   expect(saved.data.flags.hintsSeen.aim).toBe(true);
