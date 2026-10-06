@@ -45,7 +45,7 @@ test('buying with debug coins: prices, states, feedback and persistence', async 
   await page.getByTestId('upgrades').click();
   const shop = page.getByTestId('shop');
   await expect(shop).toBeVisible();
-  await expect(shop.locator('.shop-card')).toHaveCount(8);
+  await expect(shop.locator('.shop-card')).toHaveCount(7);
   await expect(page.getByTestId('shop-balance')).toHaveText('600');
 
   // Lucky Paw 0 → 1 for 50.
@@ -131,11 +131,20 @@ test('Shrine Expansion Lv 1 lets the jar grow into stage 3', async ({ page }) =>
 
   await page.getByTestId('play').click();
   await expect.poll(async () => (await state(page)).canDrop, WAIT).toBe(true);
-  // 3,000 points: stage 2, then stage 3, one expansion at a time.
+  // Clear stage 1, then stage 2: both expansions play, one after the other.
   // Two expansions in a row take long in software rendering (WebKit especially).
   const long = { timeout: 120_000 };
-  await page.evaluate(() => window.__game?.setScore(3000));
-  await expect.poll(async () => (await state(page)).stage, long).toBe(3);
+  for (const stage of [2, 3]) {
+    await page.evaluate(() => {
+      const game = window.__game;
+      if (!game) return;
+      const tier = game.state().lastTier - 1;
+      game.spawnTier(tier, 0);
+      game.spawnTier(tier, 0);
+    });
+    await expect.poll(async () => (await state(page)).stage, long).toBe(stage);
+    await expect.poll(async () => (await state(page)).runState, long).toBe('playing');
+  }
   await expect.poll(async () => (await state(page)).runState, long).toBe('playing');
   await expect(page.getByTestId('hud-stage')).toHaveText('Stage 3');
   await expect(page.getByTestId('toast')).toBeHidden();

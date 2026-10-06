@@ -26,49 +26,74 @@ async function startRun(page: Page, seed: number): Promise<void> {
   await page.goto(`./?debug=1&seed=${seed}`);
   await page.getByTestId('play').click();
   await expect.poll(async () => (await state(page)).canDrop, WAIT).toBe(true);
-  // A few cats, so the expansion has something to carry along.
+  // A few cats, so the stage clear has something to pop.
   for (const x of [-150, 150]) {
     await expect.poll(async () => (await state(page)).canDrop, WAIT).toBe(true);
     await page.evaluate((at) => window.__game?.dropAt(at), x);
   }
 }
 
-test('reaching 500 points grows the jar into stage 2', async ({ page }) => {
+/**
+ * Makes the stage's last cat the way a player does: two cats one tier below it meet (here both
+ * spawn at the dropper, on top of each other) and merge into it.
+ */
+async function makeLastCat(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const game = window.__game;
+    if (!game) return;
+    const tier = game.state().lastTier - 1;
+    game.spawnTier(tier, 0);
+    game.spawnTier(tier, 0);
+  });
+}
+
+test('making the last cat (two 11s) clears stage 1 and grows the jar', async ({ page }) => {
   const errors = watchConsole(page);
   await startRun(page, 3);
   await expect(page.getByTestId('hud-stage')).toHaveText('Stage 1');
+  await expect(page.getByTestId('hud-goal')).toHaveText('12');
 
-  await page.evaluate(() => window.__game?.setScore(500));
+  await makeLastCat(page);
   await expect(page.getByTestId('banner')).toHaveText('The shrine grows!', WAIT);
-  // Time stops: the run is expanding and nothing can be dropped.
-  expect((await state(page)).expansion?.to).toBe(2);
+  // The other cats popped into coins; drops wait until the jar has grown.
+  const clearing = await state(page);
+  expect(clearing.expansion?.to).toBe(2);
+  expect(clearing.runCoins).toBeGreaterThan(202);
   expect(await page.evaluate(() => window.__game?.dropAt(0))).toBe(false);
 
-  // The reveal: stage 2's cap allows tiers 8 and 9.
+  // The reveal: the 12 is stage 2's smallest cat, and 23 is the next goal.
   const banner = page.getByTestId('banner');
   await expect(banner).toContainText('New cats unlocked!', WAIT);
-  await expect(banner.locator('.cat-icon')).toHaveText(['8', '9']);
+  await expect(banner.locator('.cat-icon')).toHaveText(['23']);
   await expect(page.getByTestId('hud-stage')).toHaveText('Stage 2');
+  await expect(page.getByTestId('hud-goal')).toHaveText('23');
 
   await expect.poll(async () => (await state(page)).runState, WAIT).toBe('playing');
-  expect((await state(page)).stage).toBe(2);
+  const s = await state(page);
+  expect(s.stage).toBe(2);
+  expect([s.firstTier, s.lastTier]).toEqual([12, 23]);
+  expect(s.balls).toBe(1);
   await expect.poll(async () => (await state(page)).canDrop, WAIT).toBe(true);
   expect(await page.evaluate(() => window.__game?.dropAt(0))).toBe(true);
   expect(errors).toEqual([]);
 });
 
-test('a stage the Shrine does not unlock shows the lock and a toast once', async ({ page }) => {
+test('clearing a stage whose next one is locked shows the lock and a toast', async ({ page }) => {
   const errors = watchConsole(page);
   await startRun(page, 4);
   await expect(page.getByTestId('hud-lock')).toBeHidden();
+  await makeLastCat(page);
+  await expect.poll(async () => (await state(page)).stage, WAIT).toBe(2);
+  await expect.poll(async () => (await state(page)).runState, WAIT).toBe('playing');
+  // Stage 3 needs Shrine Expansion Lv 1: the HUD shows the lock already.
+  await expect(page.getByTestId('hud-lock')).toBeVisible();
 
-  // 3,000 points: stage 2 opens, stage 3 needs Shrine Expansion Lv 1.
-  await page.evaluate(() => window.__game?.setScore(3000));
+  await makeLastCat(page);
   await expect(page.getByTestId('toast')).toHaveText(
     'Expansion locked — upgrade the Shrine in the shop',
     WAIT,
   );
-  await expect(page.getByTestId('hud-lock')).toBeVisible();
+  await expect(page.getByTestId('banner')).toHaveText('Stage clear!');
   const s = await state(page);
   expect(s.stage).toBe(2);
   expect(s.locked).toBe(true);
@@ -82,7 +107,7 @@ test('a resize and a pause in the middle of an expansion are safe', async ({ pag
   const size = page.viewportSize();
   if (!size) throw new Error('No viewport');
 
-  await page.evaluate(() => window.__game?.setScore(500));
+  await page.evaluate(() => window.__game?.setStage(2));
   await expect.poll(async () => (await state(page)).expansion?.phase ?? null, WAIT).toBe('zoom');
 
   // Turn into a bigger phone and back while the camera zooms.
@@ -112,5 +137,6 @@ test('the debug jump plays every expansion, past a locked stage', async ({ page 
   await expect.poll(async () => (await state(page)).stage, { timeout: 80_000 }).toBe(3);
   await expect.poll(async () => (await state(page)).runState, WAIT).toBe('playing');
   await expect(page.getByTestId('hud-stage')).toHaveText('Stage 3');
+  await expect(page.getByTestId('hud-goal')).toHaveText('34');
   expect(errors).toEqual([]);
 });

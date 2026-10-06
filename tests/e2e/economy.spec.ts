@@ -163,7 +163,8 @@ test('a Lucky Save pops cats into coins instead of ending the run', async ({ pag
   const s = await state(page);
   expect(s.runState).toBe('playing');
   expect(s.luckySaves).toBe(0);
-  expect(s.runCoins).toBe(8);
+  // Each tier-2 cat pays its value: half of C(2) = 2.
+  expect(s.runCoins).toBe(4);
   expect(s.balls).toBe(0);
 
   // Without a save left, the timeout ends the run.
@@ -179,7 +180,8 @@ test('combos and Jackpots show their banners', async ({ page }) => {
   await expect(page.getByTestId('combo')).toContainText('Combo ×');
   await expect(page.getByTestId('combo')).toBeHidden(WAIT);
 
-  await mergePair(page, 7, 0);
+  // Two of the stage's last cat: a Jackpot of 5 × C(12) = 1,715 coins.
+  await mergePair(page, 12, 0);
   await expect(page.getByTestId('banner')).toContainText('Jackpot!', WAIT);
-  await expect(page.getByTestId('banner-coins')).toHaveText('+120');
+  await expect(page.getByTestId('banner-coins')).toHaveText('+1,715');
 });
