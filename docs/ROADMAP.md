@@ -14,9 +14,9 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
 | M7  | Economy and persistence in play     | high               | –         | done        |
 | M8  | Main menu and upgrade shop          | high               | –         | done        |
 | M9  | Audio, haptics and juice            | medium             | –         | done        |
-| M10 | Balance simulation and tuning       | xhigh              | yes       | not started |
+| M10 | Balance simulation and tuning       | xhigh              | yes       | skipped     |
 | M11 | QA, performance and hardening       | high               | –         | not started |
-| M12 | Owner playtest and polish loop      | per issue          | –         | not started |
+| M12 | Owner playtest and polish loop      | per issue          | –         | in progress |
 | M13 | Final art integration               | high               | yes       | not started |
 | M14 | Release v1.0                        | medium (APK: high) | –         | not started |
 
@@ -200,6 +200,8 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
 
 ## M10: Balance simulation and tuning
 
+**Status:** skipped by the owner (v0.10). The half-done simulator is kept in a local git stash (`M10 balance simulator WIP`), not in the repo; it was written for score thresholds and would need rework for stage clears.
+
 **Effort:** xhigh. **Plan mode:** yes. **Goal:** numbers that hit GAME_DESIGN §14.
 
 - [ ] `tools/simulate.ts` (`npm run sim`): headless runs on worker threads, with options for runs, seed, policy and upgrade levels; JSON + Markdown output
@@ -241,6 +243,13 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
 
 - [ ] The owner plays on real devices for a few days and collects notes
 - [ ] Feedback is sent in batches with the Feedback and Bug prompts, one session per batch
+- [x] Batch 1 (v0.10.0), the stage loop (GAME_DESIGN §4–§8):
+  - [x] the jar lifted off the bottom of tall screens, as far as the owner's sketch
+  - [x] 12 cats per stage; making the 12th (from two 11s) is the only way to the next stage
+  - [x] at that moment every other cat pops into its value (half of what its merge pays)
+  - [x] every stage the same: the jar grows until the 12th cat is as small as the 1st, and it becomes the next stage's 1st; scores and coins keep growing with the numbers
+  - [x] cat sizes like Suika Game's: sizes 11, 9, 8, 7, 6 and 5 cover 55% of the jar
+  - [x] Quick Growth removed (no more score thresholds), its coins refunded by a save migration
 
 ## M13: Final art integration
 

@@ -1,6 +1,6 @@
 # Maneki Merge
 
-A portrait merge game with lucky cats (maneki-neko). Drop cats into a shrine jar; two identical cats merge into a bigger one and pay out coins. Pass score thresholds and the jar grows: the camera zooms out and bigger cats unlock. Coins buy permanent upgrades between runs.
+A portrait merge game with lucky cats (maneki-neko). Drop cats into a shrine jar; two identical cats merge into a bigger one and pay out coins. Make a stage's 12th cat and every other cat pays out, then the jar grows: the camera zooms out until the 12th cat is as small as the first, and a new stage of bigger-numbered cats begins. Coins buy permanent upgrades between runs.
 
 **Play:** https://sekerderya.github.io/maneki-merge/
 

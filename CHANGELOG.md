@@ -2,6 +2,45 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.10.0] - 2026-10-06
+
+The stage loop: the owner's first feedback batch (M12). M10 (balance simulator) is set aside.
+
+### Changed
+
+- Every stage has 12 cats. The only way to the next stage is to make the stage's last cat, the 12th, from two 11s (stage 1: two 11s → a 12). Score thresholds are gone; the score only counts for records.
+- Stage clear: the moment the last cat is made, every other cat in the jar pops into its value, half of what merging two of them pays (merging two 4s pays C(4) = 5, so each pays 2.5 → 3). Lucky Save pops pay the same value now.
+- The loop: the jar then grows by r(12) / r(1) ≈ 8.93 and the camera zooms out by as much, so the 12 ends up exactly as big as a 1 was and takes its place as the new stage's smallest cat (same size and colour, its own number). Stage 2 holds tiers 12–23, stage 3 23–34, stage 4 34–45, stage 5 45–56. Every stage plays the same (same jar, sizes, drops and goal); score S(t) = 2^t and coins C(t) = round(1.7^(t−1)) keep growing with the numbers.
+- Cat sizes follow Suika Game: r(size) = round(28 × 1.22^(size−1)), so cats 11, 9, 8, 7, 6 and 5 cover 55% of the jar and pile up to 88% of its height, like the same six fruits in Suika's box (about 55% and 86%).
+- The jar sits higher on tall screens: 45% of the spare height now goes below the floor (on a 435 × 967 phone the rim moved from 378 to 289 px and the floor from 963 to 875 px, where the owner's sketch put 277 and 884).
+- Expansion sequence (2.1 s): the clear (0.5 s, the other cats pop and the 12 settles), the zoom (1.2 s, time stop, an even zoom even across ninefold), the reveal (0.4 s). The physics world is rescaled at the reveal instead of growing, so the jar, gravity and speed limits are the same at every stage.
+- Queued cats keep their size across an expansion (a queued 3 becomes a 14), with no new rolls.
+- HUD: the bar shows the biggest cat in the jar against the stage's last cat, and that cat sits after the bar as a small goal icon. Banners: "The shrine grows!" at a clear that grows the jar, "Stage clear!" at one that can't, "New cats unlocked!" with the next goal at the reveal.
+- Locked or last stage: the clear still pops and pays, the last cat stays and play goes on; a locked clear shows the "Expansion locked" toast every time. Two last cats make a Jackpot.
+- Placeholder colours repeat every 11 tiers (size 12 = size 1's colour), so every stage looks the same. Body textures are shared by all stages; only the numbers are drawn per stage.
+- Merge pitch, particles and camera shake follow the cat's size, not its tier, so every stage sounds and feels the same. A stage clear plays the Jackpot fanfare.
+- Numbers from 10^15 show as Qa and from 10^18 as Qi.
+- The invisible part of the walls is 4 jar heights tall.
+- Debug: the spawn list counts sizes 1–12 of the current stage; `setStage(n)` clears stage after stage; `state()` adds the stage's first and last tier and the bar's progress.
+
+### Removed
+
+- Quick Growth (−6% expansion thresholds): there are no thresholds any more. The save format is now version 2: a version-1 save gets every coin spent on Quick Growth back (150 + 300 + 600 + 1200 + 2400 for all 5 levels).
+
+### Decisions (where the request was open)
+
+- The pop value is half of the base C(t), with multipliers, golden ×3 and the 1-coin minimum, rounded once when paid.
+- Shrine Expansion still opens stages 3, 4 and 5. A clear at a locked stage pays but keeps the jar; the last cat stays in it.
+- The 12 finishes growing and settles alone for 0.5 s before the zoom (physics runs, input waits), so it never pokes through a wall; time stops for the zoom and the reveal.
+- 5 stages, as before (tiers up to 56). Stage-5 scores pass 2^53; the save accepts them.
+- The jar keeps its 600 × 870 shape (the sketch kept it); only the cat sizes follow Suika.
+
+### Known issues
+
+- Making the 12th cat means having two 11s in the jar at once, about as hard as two watermelons in Suika Game. Clearing stage 1 may be rare; the owner's playtest decides.
+- After stage 2 the coins grow very fast (C(23) = 117,456 per merge), so every upgrade becomes cheap. Balance was not tuned (M10 skipped).
+- During the ninefold zoom the old stage's textures are shrunk a lot for about a second (no mipmaps in WebGL1); at the reveal everything is sharp again.
+
 ## [0.9.0] - 2026-10-06
 
 ### Added
