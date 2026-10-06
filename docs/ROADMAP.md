@@ -256,6 +256,14 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
   - [x] main menu: settings on the left, coins on the right, the lucky cat on its cushion, a next-goal card, a round PLAY
   - [x] settings panel: sound effects, haptics, reduce motion, how to play, version (no music row: there is no music)
   - [x] HUD, shop (with "Need N more"), pause, Game Over, banners and toasts in the new style
+- [x] Batch 3 (v0.12.0), physics and balance (GAME_DESIGN §4–§10, TECH_SPEC §5):
+  - [x] lighter, bouncier cats that push each other more easily (friction 0.1 / 0.3, restitution 0.25, gravity 0.9, mass ∝ r^1.4, inertia × 3)
+  - [x] no stage locks: every stage is open; Shrine Expansion is gone and its coins are refunded
+  - [x] Big Catch: +3 points of biggest drop per level (10% → 25%), about twice as much as before
+  - [x] Fortune Teller removed (refunded); the HUD shows one next cat
+  - [x] Golden Touch became Golden Merge: +3% per level that a merge pays ×3 coins (no more golden cats)
+  - [x] a stage is cleared by merging two 10s: 11 cats per stage (tiers 1–51), the jar grows by 205 / 28 ≈ 7.32
+  - [x] save format v3 with the refunds and the Golden Merge level
 
 ## M13: Final art integration
 

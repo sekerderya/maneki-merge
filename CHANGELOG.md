@@ -2,6 +2,37 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.12.0] - 2026-10-06
+
+Physics and balance: the owner's third feedback batch (M12).
+
+### Changed
+
+- Physics: the cats are lighter, a bit more elastic and push each other more easily. Friction 0.2 / 0.5 → 0.1 / 0.3, restitution 0.1 → 0.25 (a dropped cat bounces about its own radius instead of a few units), gravity 1000 → 900 u/s², mass ∝ r^1.5 → r^1.4 (big cats are lighter next to small ones), inertia × 4 → × 3. Measured headless: a small cat rolling into a big one moves it 45% further, a cat dropped into a narrow gap pushes its neighbours 20% further apart; piles still settle in about 4 s.
+- A stage is cleared by merging two 10s: every stage holds 11 cats now (size 12 is gone), so stage 1 has tiers 1–11, stage 2 11–21, … stage 5 41–51. The 11 is the stage's last cat: it wears the first cat's look, the other cats pop into their value, and the jar grows by r(11) / r(1) = 205 / 28 ≈ 7.32 into the next stage.
+- Every stage is open: no locks, no "Expansion locked" toast, no lock on the HUD. A clear at stage 5 says "Stage clear!" and play goes on.
+- Big Catch: each level moves 3 points of the drop chances from the smallest cat to the biggest (and 1 point from size 2 to size 3), so the biggest drop goes 10% → 13% → 16% → 19% → 22% → 25% (it was 10% → 12% … 18%; the old formula gave less and less per level).
+- Golden Touch is now **Golden Merge**: +3% per level (3% at level 1, 15% at 5) that a merge pays ×3 coins, Jackpots included. A golden merge shows a bigger "+coins", bursts gold sparks, rings a bell and sends three coins to the counter. Dropped cats are never golden any more. Same prices; the level carries over.
+- The HUD shows one next cat.
+
+### Removed
+
+- Shrine Expansion and Fortune Teller. The save format is now version 3: a version-2 save gets back every coin spent on them (1500 + 10000 + 60000 and 400), its Golden Touch level becomes Golden Merge, and a record tier above 51 is capped at 51.
+- The menu's "Unlock Stage N" goal card, golden cats (gold ring, sparkles, glint, HUD shimmer) and the toast.
+- The eleventh cat look (Kimono): with 11 sizes the last one wears look 1, so ten looks are used. It is in the git history.
+
+### Decisions (where the request was open)
+
+- "Lighter": a uniform change of density does nothing in matter-js (gravity accelerates every mass alike), so lighter means a little less gravity, big cats lighter relative to small ones, and less grip.
+- Big Catch's old formula could not give 1.5–2× more per level (its last levels add about 1 point however high the factor), so it became a straight 3-points-per-level tilt.
+- Golden merges roll on their own seeded generator, once per merge at every level, so a seed drops the same cats whatever the Golden Merge level.
+- The chaos test now allows the one-step poke into a wall that matter-js makes about once in 300 000 ticks (a light cat squeezed by a newly merged neighbour, back inside on the next step). It happened with the old physics too.
+
+### Known issues
+
+- Jackpots need two last cats in the jar at once, but a clear pops the older one, so in play they practically never happen (as before).
+- Balance is still untested on phones: coins after stage 2 grow very fast, and every stage is now reachable from the first run.
+
 ## [0.11.0] - 2026-10-06
 
 The new look: the owner's second feedback batch (M12), built from the design canvas the owner approved and the mobile game UX research.
