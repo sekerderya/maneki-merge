@@ -1,10 +1,9 @@
 import { APP_NAME } from '../../config/app';
 import { catLook } from '../../config/catArt';
 import { formatNumber } from '../../core/format';
-import type { ShrineGoal } from '../../core/shop';
 import { catSvg } from '../catIcon';
 import { button, el } from '../dom';
-import { ICON_ARROW_UP, ICON_COIN, ICON_GEAR, ICON_PAW, ICON_SHARE, ICON_TORII } from '../icons';
+import { ICON_ARROW_UP, ICON_COIN, ICON_GEAR, ICON_PAW, ICON_SHARE } from '../icons';
 
 /** What the install area shows (GAME_DESIGN §2.1). */
 export type InstallHint = 'none' | 'ios-share' | 'install-button';
@@ -20,8 +19,6 @@ export interface MenuActions {
 export interface MenuView {
   setCoins(coins: number): void;
   setRecords(bestScore: number, bestStage: number): void;
-  /** The next goal card (the next Shrine Expansion level), hidden once every stage is open. */
-  setGoal(goal: ShrineGoal | null): void;
   setUpdateReady(ready: boolean): void;
   setInstallHint(hint: InstallHint): void;
   /** The dot on UPGRADES: at least one upgrade is affordable. */
@@ -70,7 +67,7 @@ const BUSH = `<svg class="menu-bush" viewBox="0 -90 90 90" aria-hidden="true" fo
 <ellipse cx="62" cy="-62" rx="4.5" ry="2.6" fill="#f2a7b8" transform="rotate(60 62 -62)"/>
 </svg>`;
 
-/** Main menu (GAME_DESIGN §2.1). UPGRADES and the goal card open the shop; the gear opens Settings. */
+/** Main menu (GAME_DESIGN §2.1). UPGRADES opens the shop; the gear opens Settings. */
 export function createMenuScreen(root: HTMLElement, actions: MenuActions): MenuView {
   root.replaceChildren();
   root.classList.add('menu-screen');
@@ -103,11 +100,11 @@ export function createMenuScreen(root: HTMLElement, actions: MenuActions): MenuV
   }
   figure.insertAdjacentHTML('beforeend', CUSHION);
   const cat = el('span', 'hero-cat');
-  cat.innerHTML = catSvg(catLook(HERO_LOOK), false);
+  cat.innerHTML = catSvg(catLook(HERO_LOOK));
   figure.append(cat);
   hero.append(figure);
 
-  // Below the hero, on the ground: records, the next goal, PLAY and UPGRADES.
+  // Below the hero, on the ground: records, PLAY and UPGRADES.
   const lower = el('div', 'menu-lower');
   lower.insertAdjacentHTML('beforeend', BUSH);
   lower.insertAdjacentHTML(
@@ -127,24 +124,6 @@ export function createMenuScreen(root: HTMLElement, actions: MenuActions): MenuV
   };
   const bestScoreValue = record('Best score', 'best-score');
   const bestStageValue = record('Best stage', 'best-stage');
-
-  const goal = button('menu-goal', '');
-  goal.dataset['testid'] = 'menu-goal';
-  goal.addEventListener('click', actions.onUpgrades);
-  const goalIcon = el('span', 'menu-goal-icon');
-  goalIcon.insertAdjacentHTML('beforeend', ICON_TORII);
-  const goalBody = el('span', 'menu-goal-body');
-  const goalHead = el('span', 'menu-goal-head');
-  const goalTitle = el('span', 'menu-goal-title');
-  const goalLeft = el('span', 'menu-goal-left');
-  goalLeft.dataset['testid'] = 'menu-goal-left';
-  goalHead.append(goalTitle, goalLeft);
-  const goalBar = el('span', 'menu-goal-bar');
-  const goalFill = el('span', 'menu-goal-fill');
-  goalBar.append(goalFill);
-  goalBody.append(goalHead, goalBar);
-  goal.append(goalIcon, goalBody);
-  goal.hidden = true;
 
   const actionsRow = el('div', 'menu-actions');
   const play = button('btn-play', 'PLAY', ICON_PAW);
@@ -181,7 +160,7 @@ export function createMenuScreen(root: HTMLElement, actions: MenuActions): MenuV
   install.addEventListener('click', actions.onInstall);
 
   bottom.append(update, iosHint, install);
-  lower.append(records, goal, actionsRow, bottom);
+  lower.append(records, actionsRow, bottom);
   root.append(top, title, hero, lower);
 
   const syncBottom = (): void => {
@@ -195,21 +174,6 @@ export function createMenuScreen(root: HTMLElement, actions: MenuActions): MenuV
     setRecords(bestScore, bestStage) {
       bestScoreValue.textContent = formatNumber(bestScore);
       bestStageValue.textContent = String(bestStage);
-    },
-    setGoal(next) {
-      goal.hidden = next === null;
-      if (!next) return;
-      goalTitle.textContent = `Unlock Stage ${next.stage}`;
-      goalLeft.textContent =
-        next.remaining > 0 ? `${formatNumber(next.remaining)} to go` : 'Ready!';
-      goal.classList.toggle('is-ready', next.remaining === 0);
-      goalFill.style.transform = `scaleX(${next.fraction})`;
-      goal.setAttribute(
-        'aria-label',
-        next.remaining > 0
-          ? `Next goal: unlock stage ${next.stage}, ${formatNumber(next.remaining)} coins to go`
-          : `Next goal: unlock stage ${next.stage}, ready in the shop`,
-      );
     },
     setUpdateReady(ready) {
       update.hidden = !ready;

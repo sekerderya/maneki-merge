@@ -11,7 +11,7 @@ import { UPGRADE_IDS, UPGRADES } from '../config/upgrades';
 import type { UpgradeId } from '../config/upgrades';
 
 /** Bump when the shape changes, and add MIGRATIONS[old] that converts old data to the new one. */
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 export interface SaveData {
   wallet: { coins: number };
@@ -72,22 +72,67 @@ export const QUICK_GROWTH_PRICES: readonly number[] = [150, 300, 600, 1200, 2400
 export function refundQuickGrowth(data: unknown): unknown {
   if (!isRecord(data) || !isRecord(data['upgrades'])) return data;
   const { quickGrowth, ...upgrades } = data['upgrades'];
-  const level =
-    typeof quickGrowth === 'number' && Number.isInteger(quickGrowth)
-      ? Math.min(Math.max(quickGrowth, 0), QUICK_GROWTH_PRICES.length)
+  return withRefund({ ...data, upgrades }, spent(QUICK_GROWTH_PRICES, quickGrowth));
+}
+
+/**
+ * Prices of the levels of the upgrades v0.12 removed: Shrine Expansion (every stage is open now)
+ * and Fortune Teller. Frozen here: the config no longer knows them.
+ */
+export const SHRINE_EXPANSION_PRICES: readonly number[] = [1500, 10_000, 60_000];
+export const FORTUNE_TELLER_PRICES: readonly number[] = [400];
+
+/** The highest tier before v0.12, when stages held 12 cats (stage 5 ended at tier 56). */
+const V2_TIER_COUNT = 56;
+
+/**
+ * v2 → v3 (v0.12): Shrine Expansion and Fortune Teller are gone, and the coins spent on their
+ * levels go back into the wallet. Golden Touch became Golden Merge: its level carries over. Stages
+ * hold 11 cats now (tiers up to 51), so a higher record tier is capped. Anything malformed is left
+ * for `sanitize` to repair.
+ */
+export function retireUpgrades(data: unknown): unknown {
+  if (!isRecord(data) || !isRecord(data['upgrades'])) return data;
+  const { shrineExpansion, fortuneTeller, goldenTouch, ...upgrades } = data['upgrades'];
+  if (goldenTouch !== undefined && upgrades['goldenMerge'] === undefined) {
+    upgrades['goldenMerge'] = goldenTouch;
+  }
+  const refund =
+    spent(SHRINE_EXPANSION_PRICES, shrineExpansion) + spent(FORTUNE_TELLER_PRICES, fortuneTeller);
+  let out: Record<string, unknown> = { ...data, upgrades };
+  const records = data['records'];
+  if (isRecord(records)) {
+    const tier = records['highestTier'];
+    if (typeof tier === 'number' && tier > TIER_COUNT && tier <= V2_TIER_COUNT) {
+      out = { ...out, records: { ...records, highestTier: TIER_COUNT } };
+    }
+  }
+  return withRefund(out, refund);
+}
+
+/** The coins spent on `level` levels of an upgrade with these prices (0 for a bad level). */
+function spent(prices: readonly number[], level: unknown): number {
+  const levels =
+    typeof level === 'number' && Number.isInteger(level)
+      ? Math.min(Math.max(level, 0), prices.length)
       : 0;
-  const refund = QUICK_GROWTH_PRICES.slice(0, level).reduce((sum, price) => sum + price, 0);
+  return prices.slice(0, levels).reduce((sum, price) => sum + price, 0);
+}
+
+/** Adds `refund` coins to the wallet, unless it is malformed (`sanitize` repairs it). */
+function withRefund(data: Record<string, unknown>, refund: number): Record<string, unknown> {
   const wallet = data['wallet'];
   const coins = isRecord(wallet) ? wallet['coins'] : undefined;
   if (refund === 0 || !isRecord(wallet) || typeof coins !== 'number' || !Number.isFinite(coins)) {
-    return { ...data, upgrades };
+    return data;
   }
-  return { ...data, upgrades, wallet: { ...wallet, coins: coins + refund } };
+  return { ...data, wallet: { ...wallet, coins: coins + refund } };
 }
 
 /** MIGRATIONS[n] upgrades version n to n + 1. */
 export const MIGRATIONS: Readonly<Record<number, Migration>> = {
   1: refundQuickGrowth,
+  2: retireUpgrades,
 };
 
 export type LoadStatus =

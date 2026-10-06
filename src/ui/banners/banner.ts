@@ -1,4 +1,4 @@
-import { BANNER_MS, COMBO_HEAT_LEVELS, TOAST_MS } from '../../config/view';
+import { BANNER_MS, COMBO_HEAT_LEVELS } from '../../config/view';
 import { formatNumber } from '../../core/format';
 import { catIcon } from '../catIcon';
 import { el } from '../dom';
@@ -21,8 +21,6 @@ export interface BannerOptions {
 export interface BannerView {
   /** A big banner over the jar (GAME_DESIGN §2.3). It replaces the one showing. */
   show(text: string, options?: BannerOptions): void;
-  /** A smaller message at the top of the play area, e.g. "Expansion locked". */
-  toast(text: string, durationMs?: number): void;
   /**
    * "Combo ×N" (GAME_DESIGN §5) with the Combo Charm bonus when there is one (0.16 → "+16%").
    * Each step pops it again; a count of 0 fades it out. `y` as for banners.
@@ -34,7 +32,7 @@ export interface BannerView {
 }
 
 /**
- * Short banners and toasts over the play area. They never block input, and each one runs a single
+ * Short banners over the play area. They never block input, and each one runs a single
  * CSS animation (pop in, hold, fade out) and removes itself when it ends, so pausing the
  * animation pauses the banner's whole life.
  */
@@ -42,7 +40,6 @@ export function createBanners(root: HTMLElement): BannerView {
   const layer = el('div', 'banners');
   root.append(layer);
   let banner: HTMLElement | null = null;
-  let toast: HTMLElement | null = null;
 
   // The combo label is one node that stays, and pops again with every step.
   const combo = el('div', 'combo');
@@ -88,17 +85,11 @@ export function createBanners(root: HTMLElement): BannerView {
       if (options.detail) node.append(el('p', 'banner-detail', options.detail));
       if (options.tiers && options.tiers.length > 0) {
         const cats = el('div', 'banner-cats');
-        for (const tier of options.tiers) cats.append(catIcon(tier, false));
+        for (const tier of options.tiers) cats.append(catIcon(tier));
         node.append(cats);
       }
       if (options.y !== undefined) node.style.top = `${Math.round(options.y)}px`;
       banner = mount(node, options.durationMs ?? BANNER_MS, banner);
-    },
-    toast(text, durationMs = TOAST_MS) {
-      const node = el('p', 'toast', text);
-      node.dataset['testid'] = 'toast';
-      node.setAttribute('role', 'status');
-      toast = mount(node, durationMs, toast);
     },
     combo(count, bonus, y) {
       if (count <= 0) {
@@ -125,9 +116,7 @@ export function createBanners(root: HTMLElement): BannerView {
     },
     clear() {
       banner?.remove();
-      toast?.remove();
       banner = null;
-      toast = null;
       hideCombo();
       layer.classList.remove('is-paused');
     },

@@ -187,8 +187,8 @@ button:focus-visible {
 }
 
 /* Reduced motion (GAME_DESIGN §12): the OS setting or the in-game one sets this class on <html>.
-   Transitions snap; each stylesheet stops its own decorative animations, while banners and
-   toasts keep their lifetime animation as a plain fade. */
+   Transitions snap; each stylesheet stops its own decorative animations, while banners keep
+   their lifetime animation as a plain fade. */
 .reduce-motion *,
 .reduce-motion *::before,
 .reduce-motion *::after {

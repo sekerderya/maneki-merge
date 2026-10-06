@@ -209,7 +209,7 @@ export class PhysicsWorld {
     this.list.forEach((ball, i) => ball.rescale(1 / STAGE_ZOOM, sizes[i] as number));
   }
 
-  /** The size a tier has at the current stage (outside 1–12 when the stage can't hold it). */
+  /** The size a tier has at the current stage (outside 1–11 when the stage can't hold it). */
   sizeOf(tier: number): number {
     return tierSize(tier, this.geo.stage);
   }
@@ -269,7 +269,7 @@ export class PhysicsWorld {
     for (const ball of this.list) {
       const { position, angle } = ball.body;
       const { positionPrev, anglePrev } = ball.body as unknown as VerletBody;
-      hasher.number(ball.id).number(ball.tier).bool(ball.golden);
+      hasher.number(ball.id).number(ball.tier);
       hasher.number(position.x).number(position.y);
       hasher.number(positionPrev.x).number(positionPrev.y);
       hasher.number(angle).number(anglePrev);

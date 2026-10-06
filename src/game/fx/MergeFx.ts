@@ -11,6 +11,7 @@ import {
   FLOAT_TEXT_RISE,
   FLOAT_TEXT_SIZE,
   FX_POOL_SIZE,
+  GOLDEN_TEXT_SCALE,
   JACKPOT_TEXT_SCALE,
   MERGE_POP_MS,
   MERGE_POP_SCALE,
@@ -22,8 +23,11 @@ const RING_KEY = 'fx-ring';
 /** Big enough that the ring of the biggest cat's Jackpot is not upscaled on a phone. */
 const RING_PX = 512;
 
-/** A payout appeared at a world point; `big` for a Jackpot. */
-export type CoinsListener = (x: number, y: number, big: boolean) => void;
+/** What paid: a plain merge or pop, a golden merge (×3 coins) or a Jackpot. */
+export type PayoutKind = 'plain' | 'golden' | 'jackpot';
+
+/** A payout appeared at a world point. */
+export type CoinsListener = (x: number, y: number, kind: PayoutKind) => void;
 
 interface Pop {
   startMs: number;
@@ -80,8 +84,8 @@ export class MergeFx {
 
   /**
    * A payout at a world point: the ring of a `tier` cat of `radius` (world units) and a floating
-   * "+coins". `big` (a Jackpot) makes the text bigger and sends a coin shower to the HUD. Merges
-   * show the new cat's ring, pops the popping cat's.
+   * "+coins". A golden merge and, more so, a Jackpot make the text bigger and send more coins to
+   * the HUD. Merges show the new cat's ring, pops the popping cat's.
    */
   payout(
     nowMs: number,
@@ -90,7 +94,7 @@ export class MergeFx {
     tier: number,
     radius: number,
     coins: number,
-    big = false,
+    kind: PayoutKind = 'plain',
   ): void {
     const pop = this.pops[this.nextPop] as Pop;
     this.nextPop = (this.nextPop + 1) % this.pops.length;
@@ -107,7 +111,8 @@ export class MergeFx {
     item.y = y;
     item.rise = FLOAT_TEXT_RISE;
     const text = item.text;
-    const size = big ? JACKPOT_TEXT_SCALE : 1;
+    const size =
+      kind === 'jackpot' ? JACKPOT_TEXT_SCALE : kind === 'golden' ? GOLDEN_TEXT_SCALE : 1;
     const resolution = this.resolution * size;
     if (text.style.resolution !== resolution) text.setResolution(resolution);
     text
@@ -116,7 +121,7 @@ export class MergeFx {
       .setPosition(x, y)
       .setAlpha(1)
       .setVisible(true);
-    this.onCoins(x, y, big);
+    this.onCoins(x, y, kind);
   }
 
   update(nowMs: number): void {

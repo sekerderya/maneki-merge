@@ -17,9 +17,6 @@ export const JAR_HEIGHT = 870;
  */
 export const DROPPER_HEADROOM_RATIO = 0.18;
 
-/** Stages 1 and 2 are always open; each Shrine Expansion level opens one more. */
-export const BASE_MAX_STAGE = 2;
-
 /**
  * The dropper hands out a stage's smallest DROP_SIZES sizes, with these base weights (smallest
  * first). Big Catch shifts them towards the bigger ones (core/dropQueue.ts).
@@ -34,7 +31,7 @@ export interface StageInfo {
   readonly stage: number;
   /** The stage's smallest cat (size 1): the previous stage's last cat. */
   readonly firstTier: number;
-  /** The stage's last cat (size 12). Making it clears the stage and grows the jar. */
+  /** The stage's last cat (size 11). Making it clears the stage and grows the jar. */
   readonly lastTier: number;
   /** Tiers the dropper can produce, smallest first. */
   readonly dropPool: readonly number[];
@@ -61,7 +58,7 @@ export function stageInfo(stage: number): StageInfo {
   return info;
 }
 
-/** A tier's size (1–12) at `stage`; outside 1–12 when the stage can't hold that tier. */
+/** A tier's size (1–11) at `stage`; outside 1–11 when the stage can't hold that tier. */
 export function tierSize(tier: number, stage: number): number {
   return tier - stageInfo(stage).firstTier + 1;
 }

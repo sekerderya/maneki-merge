@@ -33,8 +33,8 @@ import { BallRenderer } from './BallRenderer';
 import { fitCamera, worldToView } from './cameraFit';
 import type { CameraFit, JarFrame } from './cameraFit';
 import { expansionFrames } from './expansionView';
-import { createGlintTexture, GLINT_KEY, placeGlint } from './fx/glint';
 import { MergeFx } from './fx/MergeFx';
+import type { PayoutKind } from './fx/MergeFx';
 import { PopFx } from './fx/PopFx';
 import type { PopRequest } from './fx/PopFx';
 import { SparkFx } from './fx/SparkFx';
@@ -49,8 +49,8 @@ export type SceneSkin = 'cat' | 'placeholder';
 
 export const GAME_SCENE_KEY = 'game';
 
-/** A payout showed up on screen at (x, y) in canvas pixels; `big` for a Jackpot. */
-export type ScreenCoinsListener = (x: number, y: number, big: boolean) => void;
+/** A payout showed up on screen at (x, y) in canvas pixels. */
+export type ScreenCoinsListener = (x: number, y: number, kind: PayoutKind) => void;
 
 export class GameScene extends Phaser.Scene {
   private run: RunController | null = null;
@@ -64,7 +64,6 @@ export class GameScene extends Phaser.Scene {
   private aimLine!: Phaser.GameObjects.Graphics;
   private dropperBody!: Phaser.GameObjects.Image;
   private dropperNumber!: Phaser.GameObjects.Image;
-  private dropperGlint!: Phaser.GameObjects.Image;
   private countdown!: Phaser.GameObjects.Text;
   private coinsListener: ScreenCoinsListener | null = null;
 
@@ -115,17 +114,15 @@ export class GameScene extends Phaser.Scene {
     aim.add(this.aimLine);
     this.balls = new BallRenderer(this, this.skin, bodies, numbers);
 
-    const first = this.skin.body(1, false).key;
+    const first = this.skin.body(1).key;
     this.dropperBody = this.add.image(0, 0, first).setVisible(false);
     this.dropperNumber = this.add.image(0, 0, first).setVisible(false);
-    createGlintTexture(this.textures);
-    this.dropperGlint = this.add.image(0, 0, GLINT_KEY).setVisible(false);
-    dropper.add([this.dropperBody, this.dropperNumber, this.dropperGlint]);
+    dropper.add([this.dropperBody, this.dropperNumber]);
 
     this.fx = new MergeFx(
       this,
       fx,
-      (x, y, big) => this.reportCoins(x, y, big),
+      (x, y, kind) => this.reportCoins(x, y, kind),
       (tier) => this.skin.color(tier),
     );
     this.pops = new PopFx(this.balls, this.fx);
@@ -171,7 +168,8 @@ export class GameScene extends Phaser.Scene {
     on('merged', (e) => {
       const reduced = reducedMotion();
       const { x, y } = e.at;
-      this.fx.payout(this.nowMs, x, y, e.newTier, run.radiusOf(e.newTier), e.coins);
+      const kind = e.golden ? 'golden' : 'plain';
+      this.fx.payout(this.nowMs, x, y, e.newTier, run.radiusOf(e.newTier), e.coins, kind);
       this.balls.bump(e.id, this.nowMs);
       const color = hexToNumber(this.skin.color(e.newTier));
       this.sparks.mergeBurst(x, y, mergeParticleCount(e.newSize, reduced), color);
@@ -180,8 +178,9 @@ export class GameScene extends Phaser.Scene {
     });
     on('jackpot', (e) => {
       const { x, y } = e.at;
-      this.fx.payout(this.nowMs, x, y, e.tier, run.radiusOf(e.tier), e.coins, true);
+      this.fx.payout(this.nowMs, x, y, e.tier, run.radiusOf(e.tier), e.coins, 'jackpot');
       this.sparks.burst(x, y, this.particles(BURST_SPARKS.jackpot));
+      if (e.golden) this.sparks.burst(x, y, this.particles(BURST_SPARKS.golden));
       this.addShake(SHAKE.jackpot, SHAKE.jackpotMs);
     });
     on('comboChanged', (e) => {
@@ -232,11 +231,11 @@ export class GameScene extends Phaser.Scene {
     this.coinsListener = listener;
   }
 
-  private reportCoins(x: number, y: number, big: boolean): void {
+  private reportCoins(x: number, y: number, kind: PayoutKind): void {
     if (!this.coinsListener) return;
     const cam = this.cameras.main;
     const at = worldToView(this.fit, cam.width, cam.height, x, y);
-    this.coinsListener(at.x, at.y, big);
+    this.coinsListener(at.x, at.y, kind);
   }
 
   /**
@@ -310,7 +309,6 @@ export class GameScene extends Phaser.Scene {
     const show = run.state === 'playing' && run.canDrop;
     this.dropperBody.setVisible(show);
     this.dropperNumber.setVisible(show);
-    this.dropperGlint.setVisible(false);
     this.aimLine.clear();
     if (!show) return;
 
@@ -321,7 +319,7 @@ export class GameScene extends Phaser.Scene {
     const t = Math.min(1, (this.nowMs - this.popInFromMs) / DROPPER_POP_IN_MS);
     const pop = backOut(t);
 
-    const body = this.skin.body(cat.tier, cat.golden);
+    const body = this.skin.body(cat.tier);
     this.dropperBody
       .setTexture(body.key)
       .setPosition(x, geo.dropY)
@@ -335,7 +333,6 @@ export class GameScene extends Phaser.Scene {
         .setPosition(x, geo.dropY + number.offset * radius * pop)
         .setScale(number.unitsPerPixel * pop);
     }
-    if (cat.golden) placeGlint(this.dropperGlint, x, geo.dropY, radius * pop, this.nowMs, 0);
 
     // Aim guide: a dashed line from the cat down to where it first touches something.
     const land = landingY(x, radius, geo.dropY, run.balls);

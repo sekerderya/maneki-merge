@@ -7,7 +7,7 @@ import { STAGE_TIER_STEP } from './tiers';
 
 /**
  * Body colour per size, index 0 is size 1. Neighbouring sizes differ in hue and lightness. The
- * colours repeat every STAGE_TIER_STEP tiers: a stage's last cat (size 12) has the colour of size
+ * colours repeat every STAGE_TIER_STEP tiers: a stage's last cat (size 11) has the colour of size
  * 1, because it becomes the next stage's first cat, and every stage looks the same.
  */
 export const TIER_COLORS: readonly string[] = [
@@ -21,7 +21,6 @@ export const TIER_COLORS: readonly string[] = [
   '#f06595', // 8 magenta
   '#4dabf7', // 9 blue
   '#f8f9fa', // 10 white
-  '#a1724e', // 11 brown
 ];
 
 /** The body colour of a cat of `tier` (sprites and DOM icons alike). */
@@ -36,10 +35,6 @@ export const NUMBER_FILL = '#ffffff';
 export const NUMBER_STROKE = '#3b1a10';
 /** Stroke width of the tier number, as a fraction of its height. */
 export const NUMBER_STROKE_RATIO = 0.16;
-
-export const GOLD_RING = '#f6c343';
-export const GOLD_RING_DARK = '#a8691a';
-export const GOLD_SHIMMER = '#fff4c2';
 
 /**
  * The jar (GAME_DESIGN §13): a glass jar in a bamboo frame on a wooden floor, gold knobs on the

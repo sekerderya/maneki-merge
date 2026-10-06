@@ -11,8 +11,6 @@ const makeQueue = (overrides: Partial<DropQueueOptions> = {}): DropQueue =>
     rng: new Rng(1),
     stage: 1,
     bigCatchLevel: 0,
-    goldenChance: 0,
-    previewCount: 1,
     ...overrides,
   });
 
@@ -24,26 +22,32 @@ describe('dropWeights (GAME_DESIGN §8)', () => {
     expect(percent(dropWeights(0))).toEqual([40, 30, 20, 10]);
   });
 
-  it('matches the §8 example: Big Catch 5', () => {
-    expect(percent(dropWeights(5))).toEqual([25, 30, 27.5, 17.5]);
+  it('matches the §8 table: 3 points per level from the smallest to the biggest', () => {
+    expect(percent(dropWeights(1))).toEqual([37, 29, 21, 13]);
+    expect(percent(dropWeights(2))).toEqual([34, 28, 22, 16]);
+    expect(percent(dropWeights(3))).toEqual([31, 27, 23, 19]);
+    expect(percent(dropWeights(4))).toEqual([28, 26, 24, 22]);
+    expect(percent(dropWeights(5))).toEqual([25, 25, 25, 25]);
   });
 
-  it('applies weight_i = base_i × (1 + 0.12 × L × i) for every level', () => {
+  it('applies share_i = base_i + 0.03 × L × (2i − 3) / 3 for every level', () => {
     for (let level = 0; level <= 5; level++) {
-      const raw = [40, 30, 20, 10].map((w, i) => w * (1 + 0.12 * level * i));
-      const total = raw.reduce((a, b) => a + b, 0);
-      const expected = raw.map((w) => w / total);
+      const expected = [0.4, 0.3, 0.2, 0.1].map((w, i) => w + (0.03 * level * (2 * i - 3)) / 3);
       dropWeights(level).forEach((w, i) => expect(w).toBeCloseTo(expected[i]!, 12));
     }
   });
 
-  it('normalizes to 1 and shifts weight toward bigger tiers as Big Catch rises', () => {
+  it('sums to 1 and shifts weight toward bigger tiers as Big Catch rises', () => {
     let previousSmallest = 1;
+    let previousBiggest = 0;
     for (let level = 0; level <= 5; level++) {
       const w = dropWeights(level);
       expect(w.reduce((a, b) => a + b, 0)).toBeCloseTo(1, 12);
-      expect(w[0]!).toBeLessThanOrEqual(previousSmallest);
+      expect(w.every((share) => share > 0)).toBe(true);
+      expect(w[0]!).toBeLessThan(previousSmallest);
+      expect(w[3]!).toBeGreaterThan(previousBiggest);
       previousSmallest = w[0]!;
+      previousBiggest = w[3]!;
     }
   });
 });
@@ -55,7 +59,7 @@ describe('DropQueue', () => {
         const q = makeQueue({ rng: new Rng(seed), stage, bigCatchLevel: 5 });
         const smallest = stageInfo(stage).dropPool[0];
         expect(q.current.tier).toBe(smallest);
-        expect(q.preview[0]!.tier).toBe(smallest);
+        expect(q.next.tier).toBe(smallest);
         expect(q.take().tier).toBe(smallest);
         expect(q.take().tier).toBe(smallest);
       }
@@ -85,55 +89,47 @@ describe('DropQueue', () => {
     check(3, 5);
   });
 
-  it('shows one preview by default and two with Fortune Teller', () => {
-    expect(makeQueue({ previewCount: 1 }).preview).toHaveLength(1);
-    expect(makeQueue({ previewCount: 2 }).preview).toHaveLength(2);
-    expect(() => makeQueue({ previewCount: -1 })).toThrow(RangeError);
-    expect(() => makeQueue({ previewCount: 1.5 })).toThrow(RangeError);
-  });
-
-  it('hands out exactly what the dropper and preview showed', () => {
-    const q = makeQueue({ rng: new Rng(5), previewCount: 2 });
+  it('hands out exactly what the dropper and the preview showed', () => {
+    const q = makeQueue({ rng: new Rng(5) });
     for (let i = 0; i < 50; i++) {
-      const shown = [q.current, ...q.preview];
+      const shown = [q.current, q.next];
       expect(q.take()).toEqual(shown[0]);
       expect(q.current).toEqual(shown[1]);
-      expect(q.preview[0]).toEqual(shown[2]);
     }
   });
 
   it('is deterministic for a seed', () => {
-    const a = takeMany(makeQueue({ rng: new Rng(9), goldenChance: 0.15 }), 300);
-    const b = takeMany(makeQueue({ rng: new Rng(9), goldenChance: 0.15 }), 300);
+    const a = takeMany(makeQueue({ rng: new Rng(9), bigCatchLevel: 2 }), 300);
+    const b = takeMany(makeQueue({ rng: new Rng(9), bigCatchLevel: 2 }), 300);
     expect(a).toEqual(b);
   });
 
-  it('rolls golden per drop at the Golden Touch rate', () => {
-    expect(takeMany(makeQueue({ goldenChance: 0 }), 2000).some((d) => d.golden)).toBe(false);
-    expect(takeMany(makeQueue({ goldenChance: 1 }), 50).every((d) => d.golden)).toBe(true);
-    const drops = takeMany(makeQueue({ rng: new Rng(4), goldenChance: 0.15 }), 50_000);
-    expect(drops.filter((d) => d.golden).length / drops.length).toBeCloseTo(0.15, 2);
+  it('rolls once per cat, the fixed opening drops included', () => {
+    const rng = new Rng(12);
+    const q = makeQueue({ rng });
+    const twin = new Rng(12);
+    // The dropper and the preview: two rolls, both forced to the smallest.
+    twin.next();
+    twin.next();
+    expect(rng.state()).toEqual(twin.state());
+    q.take();
+    twin.next();
+    expect(rng.state()).toEqual(twin.state());
   });
 
-  it('keeps the tier sequence of a seed independent of Golden Touch', () => {
-    const tiers = (goldenChance: number): number[] =>
-      takeMany(makeQueue({ rng: new Rng(31), goldenChance }), 200).map((d) => d.tier);
-    expect(tiers(0.15)).toEqual(tiers(0));
-  });
-
-  it('keeps each queued cat size and golden flag when the stage changes', () => {
-    // Stage 2 drops tiers 12–15, stage 3 tiers 23–26: a queued 13 becomes a 24.
+  it('keeps each queued cat size when the stage changes', () => {
+    // Stage 2 drops tiers 11–14, stage 3 tiers 21–24: a queued 12 becomes a 22.
     for (let seed = 0; seed < 50; seed++) {
       const rng = new Rng(seed);
-      const q = makeQueue({ rng, stage: 2, previewCount: 2, goldenChance: 0.5 });
+      const q = makeQueue({ rng, stage: 2 });
       takeMany(q, 3);
-      const before = [q.current, ...q.preview];
+      const before = [q.current, q.next];
       const state = rng.state();
       q.setStage(3);
-      const after = [q.current, ...q.preview];
+      const after = [q.current, q.next];
       const pool = stageInfo(3).dropPool;
       after.forEach((drop, i) => {
-        expect(drop).toEqual({ tier: before[i]!.tier + 11, golden: before[i]!.golden });
+        expect(drop).toEqual({ tier: before[i]!.tier + 10 });
       });
       // No rolls: the seed's sequence goes on unchanged.
       expect(rng.state()).toEqual(state);

@@ -1,7 +1,6 @@
 import './ui/styles/index.css';
 import { AudioEngine } from './audio';
 import { Profile } from './core/profile';
-import { shrineGoal } from './core/shop';
 import { anyAffordable } from './core/upgrades';
 import type { Scheduler } from './core/profile';
 import { SaveStore } from './core/save';
@@ -177,7 +176,6 @@ async function boot(): Promise<void> {
     menu.setCoins(profile.coins);
     menu.setRecords(bestScore, bestStage);
     menu.setUpgradesAffordable(anyAffordable(profile.upgrades, profile.coins));
-    menu.setGoal(shrineGoal(profile.upgrades, profile.coins));
     shop.update(profile.upgrades, profile.coins);
     audio.setEnabled(settings.sound);
     haptics.setEnabled(settings.haptics);

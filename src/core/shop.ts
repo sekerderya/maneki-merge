@@ -47,34 +47,6 @@ export function shopCard(id: UpgradeId, levels: UpgradeLevels, coins: number): S
   };
 }
 
-/**
- * The menu's next goal (GAME_DESIGN §2.1): the next Shrine Expansion level, which opens one more
- * stage. Null once every stage is open.
- */
-export interface ShrineGoal {
-  /** The stage the next level opens. */
-  readonly stage: number;
-  readonly price: number;
-  /** Coins still missing; 0 when it is affordable. */
-  readonly remaining: number;
-  /** How far the wallet is towards the price, 0–1. */
-  readonly fraction: number;
-}
-
-export function shrineGoal(levels: UpgradeLevels, coins: number): ShrineGoal | null {
-  const def = UPGRADES.shrineExpansion;
-  const level = levels.shrineExpansion;
-  const price = def.prices[level];
-  if (level >= def.maxLevel || price === undefined) return null;
-  const have = Math.max(0, Math.min(coins, price));
-  return {
-    stage: deriveStats(levels).maxStage + 1,
-    price,
-    remaining: price - have,
-    fraction: price > 0 ? have / price : 1,
-  };
-}
-
 /** Every card, in shop order. */
 export function shopCards(levels: UpgradeLevels, coins: number): ShopCard[] {
   return UPGRADE_IDS.map((id) => shopCard(id, levels, coins));
@@ -91,16 +63,12 @@ export function upgradeValue(id: UpgradeId, level: number): string {
       const weights = dropWeights(stats.bigCatchLevel);
       return percent(weights[weights.length - 1] ?? 0);
     }
-    case 'shrineExpansion':
-      return String(stats.maxStage);
-    case 'goldenTouch':
+    case 'goldenMerge':
       return percent(stats.goldenChance);
     case 'comboCharm':
       return `+${percent(UPGRADES.comboCharm.perLevel * stats.comboCharmLevel)}`;
     case 'secondChance':
       return String(stats.luckySaves);
-    case 'fortuneTeller':
-      return String(stats.previewCount);
   }
 }
 

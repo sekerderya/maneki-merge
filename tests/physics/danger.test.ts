@@ -18,7 +18,6 @@ function cat(tier: number, y: number, landedMs = 0): BallView {
     id: nextId++,
     tier,
     size: tier,
-    golden: false,
     x: 0,
     y,
     angle: 0,

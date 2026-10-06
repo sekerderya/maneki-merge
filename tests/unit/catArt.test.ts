@@ -7,7 +7,6 @@ import {
   CAT_LOOKS,
   catLook,
   circlePath,
-  GOLDEN_SHAPES,
   numberOffset,
 } from '../../src/config/catArt';
 import type { ArtShape } from '../../src/config/catArt';
@@ -19,7 +18,7 @@ const HEX = /^#[0-9A-Fa-f]{6}$/;
 const numbersIn = (d: string): number[] => (d.match(/-?\d*\.?\d+/g) ?? []).map(Number);
 
 describe('lucky-cat art (GAME_DESIGN §13)', () => {
-  it('has one look per size of a stage, and size 12 wears size 1’s', () => {
+  it('has one look per size of a stage, and size 11 wears size 1’s', () => {
     expect(CAT_LOOKS).toHaveLength(STAGE_TIER_STEP);
     expect(new Set(CAT_LOOKS.map((l) => l.name)).size).toBe(CAT_LOOKS.length);
     for (const { stage, firstTier } of STAGES) {
@@ -28,7 +27,9 @@ describe('lucky-cat art (GAME_DESIGN §13)', () => {
         expect(look, `stage ${stage} size ${size}`).toBe(CAT_LOOKS[(size - 1) % STAGE_TIER_STEP]);
       }
     }
-    expect(catLook(12)).toBe(catLook(1));
+    expect(CAT_LOOKS).toHaveLength(10);
+    expect(catLook(11)).toBe(catLook(1));
+    expect(catLook(10).name).toBe('Kuro');
   });
 
   it('gives every look a body that fills the circle and an outline on top', () => {
@@ -68,7 +69,6 @@ describe('lucky-cat art (GAME_DESIGN §13)', () => {
       expect(look.color, look.name).toMatch(HEX);
       look.shapes.forEach((s, i) => check(s, `${look.name} #${i}`));
     }
-    GOLDEN_SHAPES.forEach((s, i) => check(s, `golden #${i}`));
   });
 
   it('puts every number on a plate in the lower half of the body', () => {
@@ -84,12 +84,9 @@ describe('lucky-cat art (GAME_DESIGN §13)', () => {
 
   it('draws the same shapes as inline SVG for the DOM icons', () => {
     const look = catLook(6);
-    const plain = catSvg(look, false);
+    const plain = catSvg(look);
     expect(plain.match(/<path /g)).toHaveLength(look.shapes.length);
-    expect(catSvg(look, true).match(/<path /g)).toHaveLength(
-      look.shapes.length + GOLDEN_SHAPES.length,
-    );
     expect(plain).toContain(`viewBox="${-ART_PAD} ${-ART_PAD} ${ART_BOX + 2 * ART_PAD}`);
-    expect(catSvg(look, false)).toBe(plain);
+    expect(catSvg(look)).toBe(plain);
   });
 });

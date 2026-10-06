@@ -109,20 +109,6 @@
   transition: transform 220ms ease-out;
 }
 
-.hud-bar.is-locked .hud-bar-fill {
-  background: #c9b8a4;
-}
-
-.hud-lock {
-  display: inline-flex;
-}
-
-.hud-lock svg {
-  width: 18px;
-  height: 18px;
-  color: var(--color-ink);
-}
-
 /* The stage's goal: its last cat, small, at the end of the bar. */
 .hud-goal.cat-icon {
   --size: 30px;
@@ -132,7 +118,7 @@
   filter: drop-shadow(0 0 5px rgba(242, 184, 59, 0.9));
 }
 
-/* The next cat in a bubble with a "Next" tag; Fortune Teller's second cat sits beside it. */
+/* The next cat in a bubble with a "Next" tag. */
 .hud-next {
   position: relative;
   flex: none;
@@ -157,11 +143,6 @@
 
 .hud-next-cats .cat-icon {
   --size: 42px;
-}
-
-.hud-next.has-two .cat-icon:nth-child(2) {
-  --size: 28px;
-  opacity: 0.9;
 }
 
 .hud-next-label {
@@ -212,32 +193,6 @@
     -1px 0 0 var(--num-halo),
     0 1px 0 var(--num-halo),
     0 -1px 0 var(--num-halo);
-}
-
-/* Golden cats shimmer, like their sprites twinkle. */
-.cat-icon.is-golden::after {
-  content: '';
-  position: absolute;
-  inset: 4%;
-  border-radius: 50%;
-  background: linear-gradient(
-      115deg,
-      transparent 40%,
-      rgba(255, 244, 194, 0.8) 50%,
-      transparent 60%
-    )
-    no-repeat;
-  background-size: 300% 100%;
-  background-position: 100% 0;
-  pointer-events: none;
-  animation: golden-shimmer 1.8s ease-in-out infinite;
-}
-
-@keyframes golden-shimmer {
-  60%,
-  100% {
-    background-position: 0 0;
-  }
 }
 
 /* The flat placeholder look (`?skin=placeholder`). */
@@ -338,18 +293,7 @@
   background: linear-gradient(90deg, var(--color-gold), var(--color-gold-light), var(--color-gold));
 }
 
-.hud-lock.is-pulsing svg {
-  animation: lock-pulse 450ms ease-in-out 3;
-}
-
-@keyframes lock-pulse {
-  50% {
-    color: var(--color-red);
-    transform: scale(1.35);
-  }
-}
-
-/* Banners and toasts (GAME_DESIGN §2.3): over the jar, never in the way of a touch. Each runs one
+/* Banners (GAME_DESIGN §2.3): over the jar, never in the way of a touch. Each runs one
    animation for its whole life, so pausing the animation pauses the banner. */
 .banners {
   position: absolute;
@@ -423,42 +367,6 @@
   }
 }
 
-/* Toasts sit at the top of the play area, under the HUD's progress bar they are about. */
-.toast {
-  position: absolute;
-  left: 50%;
-  top: 8px;
-  width: max-content;
-  max-width: calc(100% - 32px);
-  margin: 0;
-  padding: 10px 18px;
-  border: 2.5px solid var(--color-ink);
-  border-radius: var(--radius-pill);
-  background: var(--color-paper);
-  color: var(--color-ink);
-  font-weight: var(--weight-bold);
-  font-size: 0.95rem;
-  text-align: center;
-  text-wrap: balance;
-  animation: toast-life 3200ms ease-out both;
-}
-
-@keyframes toast-life {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, -12px);
-  }
-  8%,
-  88% {
-    opacity: 1;
-    transform: translate(-50%, 0);
-  }
-  100% {
-    opacity: 0;
-    transform: translate(-50%, 0);
-  }
-}
-
 @keyframes banner-fade {
   0%,
   100% {
@@ -469,19 +377,6 @@
   85% {
     opacity: 1;
     transform: translate(-50%, -50%);
-  }
-}
-
-@keyframes toast-fade {
-  0%,
-  100% {
-    opacity: 0;
-    transform: translateX(-50%);
-  }
-  8%,
-  88% {
-    opacity: 1;
-    transform: translateX(-50%);
   }
 }
 
@@ -626,20 +521,14 @@
   height: 100%;
 }
 
-/* Reduced motion: banners and toasts fade instead of popping; decorations stand still. */
+/* Reduced motion: banners fade instead of popping; decorations stand still. */
 .reduce-motion .banner {
   animation-name: banner-fade;
 }
 
-.reduce-motion .toast {
-  animation-name: toast-fade;
-}
-
 .reduce-motion .hint-pill,
 .reduce-motion .hud-stage-label.is-new,
-.reduce-motion .hud-lock.is-pulsing svg,
 .reduce-motion .combo.is-step,
-.reduce-motion .hud-coins.is-pulsing,
-.reduce-motion .cat-icon.is-golden::after {
+.reduce-motion .hud-coins.is-pulsing {
   animation: none;
 }

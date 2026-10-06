@@ -5,7 +5,7 @@
 import { describe, expect, it } from 'vitest';
 import { stepsFor } from '../../src/config/physics';
 import { DROP_COOLDOWN_MS } from '../../src/config/timings';
-import { stageInfo } from '../../src/config/stages';
+import { tierCoins } from '../../src/config/tiers';
 import { UPGRADES } from '../../src/config/upgrades';
 import type { UpgradeId } from '../../src/config/upgrades';
 import type { Drop } from '../../src/core/dropQueue';
@@ -48,20 +48,6 @@ function mergePair(run: RunController, tier: number, centre: number): void {
   run.tick();
 }
 
-/** Makes the stage's last cat from two cats one below it, stacked in the middle of the jar. */
-function clearStage(run: RunController): void {
-  const stage = run.stage;
-  const tier = stageInfo(stage).lastTier - 1;
-  const r = run.radiusOf(tier);
-  run.spawnBall(tier, 0, -r);
-  run.spawnBall(tier, 0, -3 * r + 8);
-  let cleared = false;
-  const off = run.events.on('stageCleared', () => (cleared = true));
-  for (let i = 0; i < 120 && !cleared; i++) run.tick();
-  off();
-  expect(cleared).toBe(true);
-}
-
 describe('upgrade effects in runs (GAME_DESIGN §10)', () => {
   it('Lucky Paw: more coins per merge', () => {
     const coins = [0, 4].map((level) => {
@@ -80,25 +66,15 @@ describe('upgrade effects in runs (GAME_DESIGN §10)', () => {
     expect(sum(lucky!)).toBeGreaterThan(sum(plain!));
   });
 
-  it('Shrine Expansion: stage 3 opens', () => {
-    const [plain, shrine] = [0, 1].map((level) => {
-      const run = runAfterBuying('shrineExpansion', level, true);
-      clearStage(run);
-      expect(run.stage).toBe(2);
-      clearStage(run);
-      return run;
+  it('Golden Merge: some merges pay ×3 coins', () => {
+    const golden = [0, 5].map((level) => {
+      const run = runAfterBuying('goldenMerge', level);
+      const merges: { golden: boolean; coins: number; tier: number }[] = [];
+      run.events.on('merged', (e) => merges.push(e));
+      for (let i = 0; i < 40; i++) mergePair(run, 1, ((i % 5) - 2) * 110);
+      for (const m of merges) expect(m.coins).toBe(tierCoins(m.tier) * (m.golden ? 3 : 1));
+      return merges.filter((m) => m.golden).length;
     });
-    expect(plain!.stage).toBe(2);
-    expect(plain!.progress.locked).toBe(true);
-    // Stage 4 is the next lock.
-    expect(shrine!.stage).toBe(3);
-    expect(shrine!.progress.locked).toBe(true);
-  });
-
-  it('Golden Touch: golden cats in the queue', () => {
-    const golden = [0, 5].map(
-      (level) => drops(runAfterBuying('goldenTouch', level), 40).filter((d) => d.golden).length,
-    );
     expect(golden[0]).toBe(0);
     expect(golden[1]).toBeGreaterThan(0);
   });
@@ -124,10 +100,5 @@ describe('upgrade effects in runs (GAME_DESIGN §10)', () => {
     expect(plain!.state).toBe('over');
     expect(saved!.state).toBe('playing');
     expect(saved!.luckySavesLeft).toBe(0);
-  });
-
-  it('Fortune Teller: two cats in the preview', () => {
-    const previews = [0, 1].map((level) => runAfterBuying('fortuneTeller', level).preview.length);
-    expect(previews).toEqual([1, 2]);
   });
 });

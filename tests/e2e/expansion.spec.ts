@@ -47,57 +47,50 @@ async function makeLastCat(page: Page): Promise<void> {
   });
 }
 
-test('making the last cat (two 11s) clears stage 1 and grows the jar', async ({ page }) => {
+test('making the last cat (two 10s) clears stage 1 and grows the jar', async ({ page }) => {
   const errors = watchConsole(page);
   await startRun(page, 3);
   await expect(page.getByTestId('hud-stage')).toHaveText('Stage 1');
-  await expect(page.getByTestId('hud-goal')).toHaveText('12');
+  await expect(page.getByTestId('hud-goal')).toHaveText('11');
 
   await makeLastCat(page);
   await expect(page.getByTestId('banner')).toHaveText('The shrine grows!', WAIT);
   // The other cats popped into coins; drops wait until the jar has grown.
   const clearing = await state(page);
   expect(clearing.expansion?.to).toBe(2);
-  expect(clearing.runCoins).toBeGreaterThan(202);
+  expect(clearing.runCoins).toBeGreaterThan(119);
   expect(await page.evaluate(() => window.__game?.dropAt(0))).toBe(false);
 
-  // The reveal: the 12 is stage 2's smallest cat, and 23 is the next goal.
+  // The reveal: the 11 is stage 2's smallest cat, and 21 is the next goal.
   const banner = page.getByTestId('banner');
   await expect(banner).toContainText('New cats unlocked!', WAIT);
-  await expect(banner.locator('.cat-icon')).toHaveText(['23']);
+  await expect(banner.locator('.cat-icon')).toHaveText(['21']);
   await expect(page.getByTestId('hud-stage')).toHaveText('Stage 2');
-  await expect(page.getByTestId('hud-goal')).toHaveText('23');
+  await expect(page.getByTestId('hud-goal')).toHaveText('21');
 
   await expect.poll(async () => (await state(page)).runState, WAIT).toBe('playing');
   const s = await state(page);
   expect(s.stage).toBe(2);
-  expect([s.firstTier, s.lastTier]).toEqual([12, 23]);
+  expect([s.firstTier, s.lastTier]).toEqual([11, 21]);
   expect(s.balls).toBe(1);
   await expect.poll(async () => (await state(page)).canDrop, WAIT).toBe(true);
   expect(await page.evaluate(() => window.__game?.dropAt(0))).toBe(true);
   expect(errors).toEqual([]);
 });
 
-test('clearing a stage whose next one is locked shows the lock and a toast', async ({ page }) => {
+test('with no upgrades, clearing stage 2 grows the jar into stage 3', async ({ page }) => {
+  test.setTimeout(300_000);
   const errors = watchConsole(page);
   await startRun(page, 4);
-  await expect(page.getByTestId('hud-lock')).toBeHidden();
-  await makeLastCat(page);
-  await expect.poll(async () => (await state(page)).stage, WAIT).toBe(2);
-  await expect.poll(async () => (await state(page)).runState, WAIT).toBe('playing');
-  // Stage 3 needs Shrine Expansion Lv 1: the HUD shows the lock already.
-  await expect(page.getByTestId('hud-lock')).toBeVisible();
-
-  await makeLastCat(page);
-  await expect(page.getByTestId('toast')).toHaveText(
-    'Expansion locked — upgrade the Shrine in the shop',
-    WAIT,
-  );
-  await expect(page.getByTestId('banner')).toHaveText('Stage clear!');
-  const s = await state(page);
-  expect(s.stage).toBe(2);
-  expect(s.locked).toBe(true);
-  expect(s.runState).toBe('playing');
+  // Two expansions in a row take long in software rendering (WebKit especially).
+  const long = { timeout: 120_000 };
+  for (const stage of [2, 3]) {
+    await makeLastCat(page);
+    await expect.poll(async () => (await state(page)).stage, long).toBe(stage);
+    await expect.poll(async () => (await state(page)).runState, long).toBe('playing');
+  }
+  await expect(page.getByTestId('hud-stage')).toHaveText('Stage 3');
+  await expect(page.getByTestId('hud-goal')).toHaveText('31');
   expect(errors).toEqual([]);
 });
 
@@ -130,13 +123,13 @@ test('a resize and a pause in the middle of an expansion are safe', async ({ pag
   expect(errors).toEqual([]);
 });
 
-test('the debug jump plays every expansion, past a locked stage', async ({ page }) => {
+test('the debug jump plays every expansion in turn', async ({ page }) => {
   const errors = watchConsole(page);
   await startRun(page, 6);
   await page.evaluate(() => window.__game?.setStage(3));
   await expect.poll(async () => (await state(page)).stage, { timeout: 80_000 }).toBe(3);
   await expect.poll(async () => (await state(page)).runState, WAIT).toBe('playing');
   await expect(page.getByTestId('hud-stage')).toHaveText('Stage 3');
-  await expect(page.getByTestId('hud-goal')).toHaveText('34');
+  await expect(page.getByTestId('hud-goal')).toHaveText('31');
   expect(errors).toEqual([]);
 });

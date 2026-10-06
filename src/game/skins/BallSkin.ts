@@ -1,6 +1,6 @@
 /**
  * How cats look (TECH_SPEC §6). Gameplay never sees textures: the renderer asks the skin for a
- * frame per (tier, golden) and for the upright number, so placeholder art can be swapped for the
+ * frame per tier and for the upright number, so placeholder art can be swapped for the
  * final art (ArtSkin, M13) without touching gameplay.
  *
  * Frames belong to the active stage: a tier's size, and so its radius and look, depends on the
@@ -36,7 +36,7 @@ export interface BallSkin {
   /** Changes whenever the frames change (`setStage`), so renderers know to swap textures. */
   readonly revision: number;
   /** The rotating body of a cat. */
-  body(tier: number, golden: boolean): SkinFrame;
+  body(tier: number): SkinFrame;
   /** The upright tier number drawn on top, or null when the art doesn't show one. */
   number(tier: number): NumberFrame | null;
   /** The cat's main colour as `#rrggbb` (merge particles, the pop ring). */

@@ -14,7 +14,7 @@ import type { DerivedStats } from './upgrades';
 
 /**
  * round(base × coinMultiplier × (1 + comboBonus) × (golden ? 3 : 1)), at least 1.
- * The one payout rule for every merge, Jackpot and pop.
+ * The one payout rule for every merge, Jackpot and pop; only merges and Jackpots can be golden.
  */
 export function coinPayout(
   base: number,
@@ -43,10 +43,10 @@ export function jackpotBaseCoins(capTier: number): number {
 
 /**
  * Coins for a single cat popping (stage clear, Lucky Save): its value, half of C(t), with
- * multipliers and no combo. Two cats that pop pay as much as their merge would.
+ * Lucky Paw and no combo. Two cats that pop pay as much as their (plain) merge would.
  */
-export function popCoins(tier: number, golden: boolean, coinMultiplier: number): number {
-  return coinPayout(tierCoins(tier) * POP_VALUE_SHARE, coinMultiplier, 0, golden);
+export function popCoins(tier: number, coinMultiplier: number): number {
+  return coinPayout(tierCoins(tier) * POP_VALUE_SHARE, coinMultiplier, 0, false);
 }
 
 /**
@@ -137,7 +137,7 @@ export class RunEconomy {
     return this.highest;
   }
 
-  /** Two tier-t cats merged into one tier t+1 cat. */
+  /** Two tier-t cats merged into one tier t+1 cat; a golden merge pays ×3 coins. */
   merge(tier: number, golden: boolean, timeMs: number): Payout {
     this.mergeCount++;
     this.highest = Math.max(this.highest, tier + 1);
@@ -157,8 +157,8 @@ export class RunEconomy {
   }
 
   /** A single cat popped into coins (stage clear or Lucky Save). */
-  pop(tier: number, golden: boolean): Payout {
-    const coins = popCoins(tier, golden, this.stats.coinMultiplier);
+  pop(tier: number): Payout {
+    const coins = popCoins(tier, this.stats.coinMultiplier);
     this.coinsTotal += coins;
     return { score: 0, coins, combo: 0 };
   }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { MAX_SPEED_BASE, MERGE_MAX_SPEED_BASE, PHYSICS_STEP_MS } from '../../src/config/physics';
 import { catRadius, stageInfo } from '../../src/config/stages';
-import { sizeRadius } from '../../src/config/tiers';
+import { SIZE_COUNT, sizeRadius } from '../../src/config/tiers';
 import { MERGE_GROW_MS } from '../../src/config/timings';
 import { Rng } from '../../src/core/rng';
 import type { MergeOutcome } from '../../src/physics/merges';
@@ -47,7 +47,6 @@ describe('MergeResolver (GAME_DESIGN §5)', () => {
     expect(cat.tier).toBe(3);
     expect(cat.x).toBe(merge.x);
     expect(cat.y).toBe(merge.y);
-    expect(cat.golden).toBe(false);
   });
 
   it('keeps the average velocity, capped', () => {
@@ -68,14 +67,14 @@ describe('MergeResolver (GAME_DESIGN §5)', () => {
   });
 
   it('caps the merge speed the same way at every stage', () => {
-    // Stage 4 starts at tier 34: tier 38 is size 5 there, as big as a stage-1 tier 5.
+    // Stage 4 starts at tier 31: tier 35 is size 5 there, as big as a stage-1 tier 5.
     const world = new PhysicsWorld({ stage: 4 });
-    world.addBall({ tier: 38, x: -61, y: -500, vx: 2000 });
-    world.addBall({ tier: 38, x: 61, y: -500, vx: 2000 });
+    world.addBall({ tier: 35, x: -61, y: -500, vx: 2000 });
+    world.addBall({ tier: 35, x: 61, y: -500, vx: 2000 });
     world.step();
     const [merge] = new MergeResolver().resolve(world, stageInfo(4).lastTier);
-    expect(merge!.tier).toBe(38);
-    expect(merge!.ball!.tier).toBe(39);
+    expect(merge!.tier).toBe(35);
+    expect(merge!.ball!.tier).toBe(36);
     expect(merge!.ball!.size).toBe(6);
     expect(merge!.ball!.speed).toBeCloseTo(MERGE_MAX_SPEED_BASE, 6);
   });
@@ -127,23 +126,12 @@ describe('MergeResolver (GAME_DESIGN §5)', () => {
 
     // Two of stage 1's last cat, one on the other.
     const big = new PhysicsWorld();
-    const r = sizeRadius(12);
+    const r = sizeRadius(SIZE_COUNT);
     big.addBall({ tier: CAP_1, x: 0, y: -r });
     big.addBall({ tier: CAP_1, x: 0, y: -3 * r + 2 });
     big.step();
     expect(new MergeResolver().resolve(big, CAP_1).map((o) => o.kind)).toEqual(['jackpot']);
     expect(big.balls).toHaveLength(0);
-  });
-
-  it('reports golden when either cat was golden', () => {
-    const world = new PhysicsWorld();
-    const r = sizeRadius(1);
-    world.addBall({ tier: 1, x: -r + 1, y: -r, golden: true });
-    world.addBall({ tier: 1, x: r - 1, y: -r });
-    world.step();
-    const [merge] = new MergeResolver().resolve(world, CAP_1);
-    expect(merge!.golden).toBe(true);
-    expect(merge!.ball!.golden).toBe(false);
   });
 
   it('inherits the earliest landing, so a pile over the line keeps counting', () => {
@@ -203,8 +191,8 @@ describe('growth without launches (TECH_SPEC §5)', () => {
    */
   it.each([
     [10, 1, 1],
-    [22, 2, 2],
-    [44, 4, 3],
+    [20, 2, 2],
+    [40, 4, 3],
   ])('a tier-%i merge at stage %i (seed %i) pushes but never launches', (big, stage, seed) => {
     const world = new PhysicsWorld({ stage });
     const { halfWidth, width } = world.geometry;

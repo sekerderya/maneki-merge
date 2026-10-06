@@ -149,9 +149,9 @@ describe('Profile: wallet, records and stats (GAME_DESIGN §5, §11)', () => {
   it('refuses a purchase it cannot afford or that is maxed, without writing', () => {
     const data = defaultSave();
     data.wallet.coins = 450;
-    data.upgrades.fortuneTeller = 1;
+    data.upgrades.comboCharm = 5;
     const { profile, store } = setup(data);
-    expect(profile.buy('fortuneTeller')).toEqual({ ok: false, reason: 'max' });
+    expect(profile.buy('comboCharm')).toEqual({ ok: false, reason: 'max' });
     expect(profile.buy('secondChance')).toEqual({ ok: false, reason: 'insufficient' });
     expect(profile.coins).toBe(450);
     expect(profile.upgrades.secondChance).toBe(0);
@@ -174,14 +174,14 @@ describe('Profile: wallet, records and stats (GAME_DESIGN §5, §11)', () => {
 
   it('clamps upgrade levels to their range', () => {
     const { profile } = setup();
-    profile.setUpgrade('fortuneTeller', 5);
+    profile.setUpgrade('secondChance', 5);
     profile.setUpgrade('luckyPaw', -2);
     profile.setUpgrade('bigCatch', 2.6);
-    profile.setUpgrade('goldenTouch', Number.NaN);
-    expect(profile.upgrades.fortuneTeller).toBe(1);
+    profile.setUpgrade('goldenMerge', Number.NaN);
+    expect(profile.upgrades.secondChance).toBe(2);
     expect(profile.upgrades.luckyPaw).toBe(0);
     expect(profile.upgrades.bigCatch).toBe(3);
-    expect(profile.upgrades.goldenTouch).toBe(0);
+    expect(profile.upgrades.goldenMerge).toBe(0);
   });
 
   it('keeps settings and hint flags', () => {

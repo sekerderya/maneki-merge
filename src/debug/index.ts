@@ -36,8 +36,6 @@ export interface GameStateSnapshot {
   readonly canDrop: boolean;
   /** The danger countdown is running (a cat is over the line). */
   readonly danger: boolean;
-  /** The next stage exists but isn't unlocked (the HUD shows a lock). */
-  readonly locked: boolean;
   /** The stage's smallest and last cat (making the last one clears the stage). */
   readonly firstTier: number;
   readonly lastTier: number;
@@ -65,15 +63,12 @@ export interface GameHooks {
   addCoins(coins: number): void;
   /** Applies from the next run. */
   setUpgrade(id: UpgradeId, level: number): void;
-  /**
-   * Clears stage after stage up to `stage`, playing each expansion in turn, even past a locked
-   * stage (it opens them for this run only).
-   */
+  /** Clears stage after stage up to `stage`, playing each expansion in turn. */
   setStage(stage: number): void;
   /** Sets the run score (records only). */
   setScore(score: number): void;
   /** Drops a cat of `tier` at world x from the dropper's height; ignored if the stage can't hold it. */
-  spawnTier(tier: number, x?: number, golden?: boolean): void;
+  spawnTier(tier: number, x?: number): void;
   /**
    * Places `pairs` touching pairs of `tier` cats in rows on the jar floor, so they all merge on
    * the next physics step (M9: many simultaneous merges). `tier` defaults to the stage's smallest
@@ -120,7 +115,6 @@ export function installDebugHooks(ctx: DebugContext): GameHooks {
         balls: run?.balls.length ?? 0,
         canDrop: run?.canDrop ?? false,
         danger: run?.dangerActive ?? false,
-        locked: run?.progress.locked ?? false,
         firstTier: stageInfo(run?.stage ?? 1).firstTier,
         lastTier: stageInfo(run?.stage ?? 1).lastTier,
         progress: run?.progress.fraction ?? 0,
@@ -148,10 +142,10 @@ export function installDebugHooks(ctx: DebugContext): GameHooks {
     setScore(score) {
       session.run?.setScore(Math.max(0, Math.round(score)));
     },
-    spawnTier(tier, x = 0, golden = false) {
+    spawnTier(tier, x = 0) {
       const run = session.run;
       if (!run || !stageHoldsTier(run.stage, tier)) return;
-      run.spawnBall(tier, x, undefined, golden);
+      run.spawnBall(tier, x);
     },
     mergeBurst(pairs = 10, tier) {
       const run = session.run;
@@ -226,7 +220,7 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
     return node;
   };
 
-  // Sizes 1–12: the buttons spawn the current stage's tier of that size.
+  // Sizes 1–11: the buttons spawn the current stage's tier of that size.
   const size = select(
     Array.from({ length: SIZE_COUNT }, (_, i) => i + 1),
     1,
@@ -234,10 +228,6 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
   size.title = "Size (1 = the stage's smallest cat)";
   const tierOfSize = (): number =>
     stageInfo(hooks.state().stage).firstTier + Number(size.value) - 1;
-  const golden = el('input');
-  golden.type = 'checkbox';
-  golden.title = 'Golden';
-  golden.setAttribute('aria-label', 'Golden');
   const stage = select(
     Array.from({ length: STAGE_COUNT - 1 }, (_, i) => i + 2),
     2,
@@ -264,8 +254,7 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
     stats,
     row(
       size,
-      golden,
-      action('Spawn size', () => hooks.spawnTier(tierOfSize(), 0, golden.checked)),
+      action('Spawn size', () => hooks.spawnTier(tierOfSize(), 0)),
       action('Merge ×10', () => hooks.mergeBurst(10, tierOfSize())),
     ),
     row(

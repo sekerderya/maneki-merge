@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { HINT_IDS, SAVE_BACKUP_PREFIX, SAVE_KEY, STORAGE_PREFIX } from '../../src/config/app';
 import {
+  BALL_FRICTION,
+  BALL_FRICTION_STATIC,
+  BALL_INERTIA_SCALE,
+  BALL_RESTITUTION,
   BASE_DENSITY,
   densityForSize,
   GROWTH_NEIGHBOUR_MAX_SPEED_BASE,
@@ -41,7 +45,7 @@ import * as timings from '../../src/config/timings';
 import { UPGRADE_IDS, UPGRADES } from '../../src/config/upgrades';
 
 describe('cat sizes (GAME_DESIGN §4)', () => {
-  // Size and radius: every stage holds these 12 sizes.
+  // Size and radius: every stage holds these 11 sizes.
   const SIZES: readonly [number, number][] = [
     [1, 28],
     [2, 34],
@@ -54,12 +58,11 @@ describe('cat sizes (GAME_DESIGN §4)', () => {
     [9, 137],
     [10, 168],
     [11, 205],
-    [12, 250],
   ];
 
-  it("has 12 sizes per stage, the last one becoming the next stage's first", () => {
-    expect(SIZE_COUNT).toBe(12);
-    expect(STAGE_TIER_STEP).toBe(11);
+  it("has 11 sizes per stage, the last one becoming the next stage's first", () => {
+    expect(SIZE_COUNT).toBe(11);
+    expect(STAGE_TIER_STEP).toBe(10);
   });
 
   it.each(SIZES)('size %i: radius %i', (size, radius) => {
@@ -67,7 +70,7 @@ describe('cat sizes (GAME_DESIGN §4)', () => {
   });
 
   it('zooms out so the last cat shrinks to exactly the first one', () => {
-    expect(STAGE_ZOOM).toBeCloseTo(250 / 28, 12);
+    expect(STAGE_ZOOM).toBeCloseTo(205 / 28, 12);
     expect(sizeRadius(SIZE_COUNT) / STAGE_ZOOM).toBeCloseTo(sizeRadius(1), 12);
   });
 
@@ -78,9 +81,9 @@ describe('cat sizes (GAME_DESIGN §4)', () => {
 
   it('rejects unknown sizes', () => {
     expect(isSize(0)).toBe(false);
-    expect(isSize(13)).toBe(false);
+    expect(isSize(12)).toBe(false);
     expect(isSize(1.5)).toBe(false);
-    expect(isSize(12)).toBe(true);
+    expect(isSize(11)).toBe(true);
   });
 });
 
@@ -98,16 +101,15 @@ describe('tiers (GAME_DESIGN §4)', () => {
     [9, 512, 70],
     [10, 1_024, 119],
     [11, 2_048, 202],
-    [12, 4_096, 343],
-    [23, 8_388_608, 117_456],
-    [34, 17_179_869_184, 40_254_497],
-    [45, 35_184_372_088_832, 13_795_979_509],
-    [56, 72_057_594_037_927_940, 4_728_143_791_952],
+    [21, 2_097_152, 40_642],
+    [31, 2_147_483_648, 8_193_466],
+    [41, 2_199_023_255_552, 1_651_797_693],
+    [51, 2_251_799_813_685_248, 333_001_407_321],
   ];
 
-  it('has 56 tiers: stage 5 ends at tier 56', () => {
-    expect(TIER_COUNT).toBe(56);
-    expect(TIERS).toHaveLength(56);
+  it('has 51 tiers: stage 5 ends at tier 51', () => {
+    expect(TIER_COUNT).toBe(51);
+    expect(TIERS).toHaveLength(51);
     expect(TIER_COUNT).toBe(stageInfo(STAGE_COUNT).lastTier);
   });
 
@@ -117,10 +119,10 @@ describe('tiers (GAME_DESIGN §4)', () => {
 
   it('rejects unknown tiers', () => {
     expect(isTier(0)).toBe(false);
-    expect(isTier(57)).toBe(false);
+    expect(isTier(52)).toBe(false);
     expect(isTier(2.5)).toBe(false);
     expect(() => tierInfo(0)).toThrow(RangeError);
-    expect(() => tierInfo(57)).toThrow(RangeError);
+    expect(() => tierInfo(52)).toThrow(RangeError);
   });
 
   it('repeats the colours with the sizes, so every stage looks the same', () => {
@@ -132,18 +134,18 @@ describe('tiers (GAME_DESIGN §4)', () => {
       }
     }
     // The last cat takes the first one's colour: it becomes the next stage's first cat.
-    expect(tierColor(12)).toBe(tierColor(1));
+    expect(tierColor(11)).toBe(tierColor(1));
   });
 });
 
 describe('stages (GAME_DESIGN §7)', () => {
   // Stage, first tier, last tier, drop pool.
   const TABLE: readonly [number, number, number, [number, number]][] = [
-    [1, 1, 12, [1, 4]],
-    [2, 12, 23, [12, 15]],
-    [3, 23, 34, [23, 26]],
-    [4, 34, 45, [34, 37]],
-    [5, 45, 56, [45, 48]],
+    [1, 1, 11, [1, 4]],
+    [2, 11, 21, [11, 14]],
+    [3, 21, 31, [21, 24]],
+    [4, 31, 41, [31, 34]],
+    [5, 41, 51, [41, 44]],
   ];
 
   it('has 5 stages', () => {
@@ -189,14 +191,12 @@ describe('upgrades (GAME_DESIGN §10)', () => {
   const TABLE: readonly [string, string, number, number[]][] = [
     ['luckyPaw', 'Lucky Paw', 10, [50, 80, 125, 200, 320, 500, 800, 1250, 2000, 3200]],
     ['bigCatch', 'Big Catch', 5, [100, 250, 600, 1500, 3500]],
-    ['shrineExpansion', 'Shrine Expansion', 3, [1500, 10000, 60000]],
-    ['goldenTouch', 'Golden Touch', 5, [120, 240, 480, 960, 1900]],
+    ['goldenMerge', 'Golden Merge', 5, [120, 240, 480, 960, 1900]],
     ['comboCharm', 'Combo Charm', 5, [80, 160, 320, 640, 1280]],
     ['secondChance', 'Second Chance', 2, [500, 4000]],
-    ['fortuneTeller', 'Fortune Teller', 1, [400]],
   ];
 
-  it('lists the 7 upgrades in shop order', () => {
+  it('lists the 5 upgrades in shop order', () => {
     expect([...UPGRADE_IDS]).toEqual(TABLE.map(([id]) => id));
   });
 
@@ -212,12 +212,10 @@ describe('upgrades (GAME_DESIGN §10)', () => {
 
   it('has per-level effects matching the table', () => {
     expect(UPGRADES.luckyPaw.perLevel).toBe(0.15);
-    expect(UPGRADES.bigCatch.perLevel).toBe(0.12);
-    expect(UPGRADES.shrineExpansion.perLevel).toBe(1);
-    expect(UPGRADES.goldenTouch.perLevel).toBe(0.03);
+    expect(UPGRADES.bigCatch.perLevel).toBe(0.03);
+    expect(UPGRADES.goldenMerge.perLevel).toBe(0.03);
     expect(UPGRADES.comboCharm.perLevel).toBe(0.08);
     expect(UPGRADES.secondChance.perLevel).toBe(1);
-    expect(UPGRADES.fortuneTeller.perLevel).toBe(1);
   });
 
   it('has prices that only go up', () => {
@@ -249,13 +247,13 @@ describe('physics tunables (TECH_SPEC §5)', () => {
     expect(WALL_THICKNESS).toBeGreaterThanOrEqual(300);
   });
 
-  it('makes mass grow like r^1.5', () => {
+  it('makes mass grow like r^1.4', () => {
     expect(densityForSize(1)).toBe(BASE_DENSITY);
     for (let s = 2; s <= SIZE_COUNT; s++) {
       const r = sizeRadius(s);
       const mass = densityForSize(s) * Math.PI * r * r;
       const mass1 = BASE_DENSITY * Math.PI * sizeRadius(1) ** 2;
-      expect(mass / mass1).toBeCloseTo((r / sizeRadius(1)) ** 1.5, 6);
+      expect(mass / mass1).toBeCloseTo((r / sizeRadius(1)) ** 1.4, 6);
     }
   });
 
@@ -277,8 +275,15 @@ describe('physics tunables (TECH_SPEC §5)', () => {
     expect(perStep).toBeLessThan(sizeRadius(1));
   });
 
-  it('keeps gravity at 1000 units/s² (the same at every stage)', () => {
-    expect(GRAVITY_BASE).toBe(1);
+  it('keeps gravity at 900 units/s² (the same at every stage)', () => {
+    expect(GRAVITY_BASE).toBe(0.9);
+  });
+
+  it('makes cats slippery and a little bouncy (v0.12)', () => {
+    expect(BALL_FRICTION).toBe(0.1);
+    expect(BALL_FRICTION_STATIC).toBe(0.3);
+    expect(BALL_RESTITUTION).toBe(0.25);
+    expect(BALL_INERTIA_SCALE).toBe(3);
   });
 });
 

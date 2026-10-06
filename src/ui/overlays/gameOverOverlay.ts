@@ -64,7 +64,7 @@ export function createGameOverOverlay(root: HTMLElement, actions: GameOverAction
   const stageChip = chip('go-new-stage');
   stageRow.replaceChildren(stageChip, stage);
   const tierRow = row('Biggest cat', 'go-tier');
-  const tierIcon = catIcon(1, false);
+  const tierIcon = catIcon(1);
   const tierNone = el('span', '', '–');
   const tierChip = chip('go-new-tier');
   tierRow.replaceChildren(tierChip, tierIcon, tierNone);
@@ -100,7 +100,7 @@ export function createGameOverOverlay(root: HTMLElement, actions: GameOverAction
       const tier = summary.highestTier;
       tierIcon.hidden = tier < 1;
       tierNone.hidden = tier >= 1;
-      if (tier >= 1) paintCatIcon(tierIcon, tier, false);
+      if (tier >= 1) paintCatIcon(tierIcon, tier);
       tierChip.hidden = !records.highestTier;
       coinValue.textContent = formatNumber(summary.coins);
       overlay.hidden = false;

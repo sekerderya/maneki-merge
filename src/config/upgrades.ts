@@ -3,11 +3,9 @@
 export const UPGRADE_IDS = [
   'luckyPaw',
   'bigCatch',
-  'shrineExpansion',
-  'goldenTouch',
+  'goldenMerge',
   'comboCharm',
   'secondChance',
-  'fortuneTeller',
 ] as const;
 
 export type UpgradeId = (typeof UPGRADE_IDS)[number];
@@ -43,23 +41,15 @@ export const UPGRADES: Readonly<Record<UpgradeId, UpgradeDef>> = {
     statLabel: 'Biggest drop',
     maxLevel: 5,
     prices: [100, 250, 600, 1500, 3500],
-    // weight_i = base_i × (1 + perLevel × level × i), i = 0 for the smallest tier.
-    perLevel: 0.12,
+    // The biggest drop's share grows by this much per level, and the smallest's shrinks by as
+    // much; the sizes in between move a third of it (core/dropQueue.ts).
+    perLevel: 0.03,
   },
-  shrineExpansion: {
-    id: 'shrineExpansion',
-    name: 'Shrine Expansion',
-    description: 'Unlocks stage 3 / 4 / 5',
-    statLabel: 'Max stage',
-    maxLevel: 3,
-    prices: [1500, 10_000, 60_000],
-    perLevel: 1,
-  },
-  goldenTouch: {
-    id: 'goldenTouch',
-    name: 'Golden Touch',
-    description: '+3% chance that a dropped cat is golden (×3 coins)',
-    statLabel: 'Golden',
+  goldenMerge: {
+    id: 'goldenMerge',
+    name: 'Golden Merge',
+    description: '+3% chance that a merge pays ×3 coins',
+    statLabel: 'Golden merges',
     maxLevel: 5,
     prices: [120, 240, 480, 960, 1900],
     perLevel: 0.03,
@@ -82,16 +72,4 @@ export const UPGRADES: Readonly<Record<UpgradeId, UpgradeDef>> = {
     prices: [500, 4000],
     perLevel: 1,
   },
-  fortuneTeller: {
-    id: 'fortuneTeller',
-    name: 'Fortune Teller',
-    description: 'See the next 2 cats instead of 1',
-    statLabel: 'Next cats shown',
-    maxLevel: 1,
-    prices: [400],
-    perLevel: 1,
-  },
 };
-
-/** Next-cat previews without Fortune Teller. */
-export const BASE_PREVIEW_COUNT = 1;

@@ -1,12 +1,12 @@
 /**
- * The lucky-cat art (GAME_DESIGN §13): eleven looks, one per cat size, drawn as vector shapes in a
+ * The lucky-cat art (GAME_DESIGN §13): ten looks, one per cat size, drawn as vector shapes in a
  * 100 × 100 box. The body is the circle of radius 47 around (50, 50) plus its outline, which the
  * game scales onto the physics circle (`bodyEdge`); the ears poke out above it, inside the box.
  *
  * Every shape is an SVG path, so the same data feeds the game's canvas textures (`Path2D`,
  * game/skins/CatSkin.ts) and the DOM icons (inline SVG, ui/catIcon.ts). Pure data, no DOM.
  *
- * Looks repeat with the sizes: size 12 (a stage's last cat) wears look 1, because it becomes the
+ * Looks repeat with the sizes: size 11 (a stage's last cat) wears look 1, because it becomes the
  * next stage's size 1. A tier's look is the same at every stage (`catLook`).
  */
 import { STAGE_TIER_STEP } from './tiers';
@@ -37,7 +37,7 @@ export interface CatLook {
   readonly number: NumberPlate;
 }
 
-/** The art's box: shapes stay inside [−ART_PAD, 100 + ART_PAD] (ears, outlines, golden ring). */
+/** The art's box: shapes stay inside [−ART_PAD, 100 + ART_PAD] (ears, outlines). */
 export const ART_BOX = 100;
 export const ART_PAD = 4;
 /** The body circle's radius in box units; with its outline it reaches the box edge. */
@@ -162,14 +162,6 @@ function pawRight(fill: string, edge: string, pad: string, width: number): ArtSh
   ];
 }
 
-function pawLeft(fill: string, edge: string, pad: string, width: number): ArtShape[] {
-  return [
-    { d: 'M21 62Q25 43 19 35Q11 29 7 39Q5 51 9 62', fill, stroke: edge, width },
-    { d: 'M16 35.5L15.2 39M11.4 33.8L11.1 37.4', stroke: edge, width: width * 0.65 },
-    { d: ellipsePath(13.5, 46, 3.6, 3), fill: pad },
-  ];
-}
-
 /** A gold koban (oval coin) with its inner rim. */
 function koban(y: number, rx: number, ry: number, width: number): ArtShape[] {
   return [
@@ -178,20 +170,7 @@ function koban(y: number, rx: number, ry: number, width: number): ArtShape[] {
   ];
 }
 
-/** A five-petal sakura flower. */
-function flower(x: number, y: number, r: number, petal: string): ArtShape[] {
-  const shapes: ArtShape[] = [];
-  for (let i = 0; i < 5; i++) {
-    const a = -Math.PI / 2 + (i * 2 * Math.PI) / 5;
-    const px = Math.round((x + Math.cos(a) * r * 1.3) * 100) / 100;
-    const py = Math.round((y + Math.sin(a) * r * 1.3) * 100) / 100;
-    shapes.push({ d: circlePath(px, py, r), fill: petal });
-  }
-  shapes.push({ d: circlePath(x, y, r * 0.55), fill: GOLD });
-  return shapes;
-}
-
-// ── The eleven looks (sizes 1–11) ─────────────────────────────────────────────
+// ── The ten looks (sizes 1–10) ─────────────────────────────────────────────────
 
 export const CAT_LOOKS: readonly CatLook[] = [
   {
@@ -447,57 +426,6 @@ export const CAT_LOOKS: readonly CatLook[] = [
       outline(1.9),
     ],
     number: { y: 84, size: 14, color: WHITE, halo: '#D9483B' },
-  },
-  {
-    name: 'Kimono',
-    color: '#C23F58',
-    shapes: [
-      ...ears('#7B4079', '#7B4079', '#F49FB0', 1.6),
-      body('#7B4079'),
-      { d: 'M3.7 58A47 47 0 0 0 96.3 58Z', fill: '#C23F58', stroke: INK, width: 1.6 },
-      ...flower(18, 68, 2.6, '#FFD3DD'),
-      ...flower(82, 68, 2.6, '#FFD3DD'),
-      ...flower(66, 15.8, 2.4, '#FFD3DD'),
-      { d: 'M27 58L50 80L73 58', stroke: CREAM, width: 7 },
-      { d: 'M32 58L50 75.5L68 58', stroke: '#4FA3A0', width: 2.2 },
-      {
-        d: 'M10.8 76Q50 90 89.2 76L80.2 86Q50 100 19.8 86Z',
-        fill: '#4FA3A0',
-        stroke: INK,
-        width: 1.6,
-      },
-      { d: 'M15 81Q50 95 85 81', stroke: GOLD, width: 2 },
-      ...koban(84, 10.5, 12, 1.8),
-      { d: ellipsePath(30, 52, 5, 3.2), fill: '#F49FB0', opacity: 0.6 },
-      { d: ellipsePath(70, 52, 5, 3.2), fill: '#F49FB0', opacity: 0.6 },
-      closedEyes(CREAM, 2.4, 43),
-      { d: 'M47.6 47.5L52.4 47.5L50 50.3Z', fill: '#F49FB0' },
-      mouth(CREAM, 2, 52.5),
-      ...pawLeft('#7B4079', '#D9A6D4', '#F49FB0', 1.8),
-      ...pawRight('#7B4079', '#D9A6D4', '#F49FB0', 1.8),
-      { d: 'M22 30Q26 20 36 15', stroke: WHITE, width: 2.4, opacity: 0.25 },
-      outline(1.6),
-    ],
-    number: { y: 84, size: 12.5, color: INK, halo: GOLD },
-  },
-];
-
-/** Drawn over a golden cat: a warm tint, a gold ring and sparkles (×3 coins, GAME_DESIGN §5). */
-export const GOLDEN_SHAPES: readonly ArtShape[] = [
-  { d: circlePath(50, 50, ART_BODY_RADIUS), fill: GOLD, opacity: 0.16 },
-  { d: circlePath(50, 50, 49), stroke: GOLD, width: 5 },
-  { d: circlePath(50, 50, 49), stroke: '#FFF1C2', width: 1.6 },
-  {
-    d: 'M90 2Q91 9 98 10Q91 11 90 18Q89 11 82 10Q89 9 90 2Z',
-    fill: WHITE,
-    stroke: GOLD_DARK,
-    width: 1.2,
-  },
-  {
-    d: 'M8 80Q8.8 85.2 14 86Q8.8 86.8 8 92Q7.2 86.8 2 86Q7.2 85.2 8 80Z',
-    fill: WHITE,
-    stroke: GOLD_DARK,
-    width: 1.2,
   },
 ];
 

@@ -1,15 +1,12 @@
 /**
- * Placeholder cats (GAME_DESIGN §13.2, `?skin=placeholder`): a flat circle per size with a darker outline, a gold ring
- * for golden cats, and the tier number as a separate upright sprite. Textures are drawn with the
+ * Placeholder cats (GAME_DESIGN §13.2, `?skin=placeholder`): a flat circle per size with a darker
+ * outline, and the tier number as a separate upright sprite. Textures are drawn with the
  * 2D canvas API at PLACEHOLDER_PX_PER_UNIT, so they are never upscaled. Bodies are shared by size
  * across stages (skinSets.ts); each stage adds its numbers, drawn ahead of time during the zoom
  * into it. Any frame still missing when asked for is drawn on the spot.
  */
 import type Phaser from 'phaser';
 import {
-  GOLD_RING,
-  GOLD_RING_DARK,
-  GOLD_SHIMMER,
   NUMBER_FILL,
   NUMBER_STROKE,
   NUMBER_STROKE_RATIO,
@@ -21,7 +18,6 @@ import { SIZE_COUNT, sizeRadius } from '../../config/tiers';
 import {
   NUMBER_HEIGHT_RATIO,
   NUMBER_HEIGHT_RATIO_TWO_DIGITS,
-  PLACEHOLDER_GOLD_RING_RATIO,
   PLACEHOLDER_OUTLINE_RATIO,
   PLACEHOLDER_PX_PER_UNIT,
 } from '../../config/view';
@@ -33,30 +29,29 @@ const PAD_PX = 2;
 const FONT_FAMILY = 'Fredoka, system-ui, sans-serif';
 const UNITS_PER_PIXEL = 1 / PLACEHOLDER_PX_PER_UNIT;
 
-/** A body ('b'), a golden body ('g') or an upright number ('n'). */
-type FrameKind = 'b' | 'g' | 'n';
+/** A body ('b') or an upright number ('n'). */
+type FrameKind = 'b' | 'n';
 type FrameItem = readonly [tier: number, kind: FrameKind];
 
 /** Every frame a stage needs, the dropper's tiers first (they show right after the expansion). */
 const STAGE_ITEMS: readonly (readonly FrameItem[])[] = STAGES.map(({ stage }) => {
   const set = stageSkinSet(stage);
   const items: FrameItem[] = [];
-  for (const tier of set.golden) items.push([tier, 'b'], [tier, 'n']);
-  for (const tier of set.golden) items.push([tier, 'g']);
+  for (const tier of set.drops) items.push([tier, 'b'], [tier, 'n']);
   for (const tier of set.tiers) {
-    if (!set.golden.includes(tier)) items.push([tier, 'b'], [tier, 'n']);
+    if (!set.drops.includes(tier)) items.push([tier, 'b'], [tier, 'n']);
   }
   return items;
 });
 
-/** The size a tier is drawn at on `stage` (kept in 1–12, so a stray tier still renders). */
+/** The size a tier is drawn at on `stage` (kept in 1–11, so a stray tier still renders). */
 function drawnSize(tier: number, stage: number): number {
   return Math.min(SIZE_COUNT, Math.max(1, tierSize(tier, stage)));
 }
 
 export class PlaceholderSkin implements BallSkin {
   readonly id = 'placeholder';
-  /** Bodies by kind + size ('b4', 'g4'), shared by every stage. */
+  /** Bodies by kind + size ('b4'), shared by every stage. */
   private readonly bodies = new Map<string, SkinFrame>();
   /** Numbers per stage, by tier. */
   private readonly numbers = new Map<number, Map<number, NumberFrame>>();
@@ -74,8 +69,8 @@ export class PlaceholderSkin implements BallSkin {
     return this.rev;
   }
 
-  body(tier: number, golden: boolean): SkinFrame {
-    return this.bodyFrame(drawnSize(tier, this.active), golden);
+  body(tier: number): SkinFrame {
+    return this.bodyFrame(drawnSize(tier, this.active));
   }
 
   number(tier: number): NumberFrame {
@@ -93,7 +88,7 @@ export class PlaceholderSkin implements BallSkin {
       if (this.has(stage, tier, kind)) continue;
       if (drew && performance.now() - start >= budgetMs) return false;
       if (kind === 'n') this.numberFrame(stage, tier);
-      else this.bodyFrame(drawnSize(tier, stage), kind === 'g');
+      else this.bodyFrame(drawnSize(tier, stage));
       drew = true;
     }
     return true;
@@ -128,12 +123,12 @@ export class PlaceholderSkin implements BallSkin {
     return this.bodies.has(kind + drawnSize(tier, stage));
   }
 
-  private bodyFrame(size: number, golden: boolean): SkinFrame {
-    const id = (golden ? 'g' : 'b') + size;
+  private bodyFrame(size: number): SkinFrame {
+    const id = 'b' + size;
     const existing = this.bodies.get(id);
     if (existing) return existing;
     const canvas = document.createElement('canvas');
-    drawBody(canvas, size, golden, PLACEHOLDER_PX_PER_UNIT);
+    drawBody(canvas, size, PLACEHOLDER_PX_PER_UNIT);
     const frame = { key: this.addTexture(`ph-${id}`, canvas), unitsPerPixel: UNITS_PER_PIXEL };
     this.bodies.set(id, frame);
     return frame;
@@ -174,12 +169,7 @@ function context(
   return ctx;
 }
 
-function drawBody(
-  canvas: HTMLCanvasElement,
-  size: number,
-  golden: boolean,
-  pxPerUnit: number,
-): void {
+function drawBody(canvas: HTMLCanvasElement, size: number, pxPerUnit: number): void {
   const r = sizeRadius(size) * pxPerUnit;
   const side = 2 * r + 2 * PAD_PX;
   const ctx = context(canvas, side, side);
@@ -204,38 +194,6 @@ function drawBody(
   ctx.lineCap = 'round';
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
   ctx.stroke();
-
-  if (!golden) return;
-  const ring = r * PLACEHOLDER_GOLD_RING_RATIO;
-  ctx.beginPath();
-  ctx.arc(c, c, r - ring / 2, 0, Math.PI * 2);
-  ctx.lineWidth = ring;
-  ctx.strokeStyle = GOLD_RING;
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(c, c, r - ring, 0, Math.PI * 2);
-  ctx.lineWidth = Math.max(1, ring * 0.22);
-  ctx.strokeStyle = GOLD_RING_DARK;
-  ctx.stroke();
-  // Shimmer: a bright streak on the ring and two sparkles.
-  ctx.beginPath();
-  ctx.arc(c, c, r - ring / 2, -2.2, -1.5);
-  ctx.lineWidth = ring * 0.5;
-  ctx.strokeStyle = GOLD_SHIMMER;
-  ctx.stroke();
-  sparkle(ctx, c + r * 0.42, c - r * 0.5, r * 0.14);
-  sparkle(ctx, c - r * 0.5, c + r * 0.38, r * 0.09);
-}
-
-function sparkle(ctx: CanvasRenderingContext2D, x: number, y: number, s: number): void {
-  ctx.beginPath();
-  ctx.moveTo(x, y - s);
-  ctx.quadraticCurveTo(x, y, x + s, y);
-  ctx.quadraticCurveTo(x, y, x, y + s);
-  ctx.quadraticCurveTo(x, y, x - s, y);
-  ctx.quadraticCurveTo(x, y, x, y - s);
-  ctx.fillStyle = GOLD_SHIMMER;
-  ctx.fill();
 }
 
 /** The tier's number for a cat whose radius is `r` texture pixels. */

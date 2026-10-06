@@ -45,22 +45,21 @@ describe('score and Jackpot (GAME_DESIGN §5, §9)', () => {
   });
 
   it('pays 2 × S(cap) score and 5 × C(cap) base coins for a Jackpot', () => {
-    // A Jackpot is two of a stage's last cat: tiers 12 and 23 (stages 1 and 2).
-    expect([12, 23].map(jackpotScore)).toEqual([8192, 16_777_216]);
-    expect([12, 23].map(jackpotBaseCoins)).toEqual([1715, 587_280]);
+    // A Jackpot is two of a stage's last cat: tiers 11 and 51 (stages 1 and 5).
+    expect([11, 51].map(jackpotScore)).toEqual([4096, 2 ** 52]);
+    expect([11, 51].map(jackpotBaseCoins)).toEqual([1010, 1_665_007_036_605]);
   });
 });
 
 describe('a cat’s value (GAME_DESIGN §5, §7)', () => {
-  it('pays half of C(t) per popping cat, with multipliers and golden, without combo', () => {
+  it('pays half of C(t) per popping cat, with Lucky Paw, without combo', () => {
     // Merging two tier-5 cats pays C(5) = 8, so each one is worth 4.
-    expect(popCoins(5, false, 1)).toBe(4);
-    expect(popCoins(5, false, 1) * 2).toBe(coinPayout(8, 1, 0, false));
-    expect(popCoins(1, false, 1)).toBe(1); // 0.5, but every payout pays at least 1
-    expect(popCoins(3, false, 1)).toBe(2); // 1.5, halves round up
-    expect(popCoins(3, true, 1)).toBe(5); // 4.5
-    expect(popCoins(4, false, 2.5)).toBe(6); // 2.5 × 2.5 = 6.25
-    expect(popCoins(23, false, 1)).toBe(58_728);
+    expect(popCoins(5, 1)).toBe(4);
+    expect(popCoins(5, 1) * 2).toBe(coinPayout(8, 1, 0, false));
+    expect(popCoins(1, 1)).toBe(1); // 0.5, but every payout pays at least 1
+    expect(popCoins(3, 1)).toBe(2); // 1.5, halves round up
+    expect(popCoins(4, 2.5)).toBe(6); // 2.5 × 2.5 = 6.25
+    expect(popCoins(21, 1)).toBe(20_321);
   });
 });
 
@@ -127,10 +126,10 @@ describe('RunEconomy', () => {
   it('pays pops in coins only, leaving score and combo alone', () => {
     const e = new RunEconomy({ coinMultiplier: 2, comboCharmLevel: 5 });
     e.merge(1, false, 0);
-    expect(e.pop(2, true)).toEqual({ score: 0, coins: 6, combo: 0 });
+    expect(e.pop(3)).toEqual({ score: 0, coins: 3, combo: 0 }); // 1.5 × 2
     expect(e.score).toBe(2);
     expect(e.combo).toBe(1);
-    expect(e.coins).toBe(2 + 6);
+    expect(e.coins).toBe(2 + 3);
   });
 
   it('reports the combo as it stands at a time', () => {

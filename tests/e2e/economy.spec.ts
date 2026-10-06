@@ -23,6 +23,31 @@ async function storedWallet(page: Page): Promise<number | null> {
   }, SAVE_KEY);
 }
 
+/**
+ * Records the text of every banner from now on. A banner lives 1.3 s, and a busy headless page
+ * (software rendering, tests in parallel) can delay timers and DOM queries by more than that,
+ * so polling for the element itself can miss it.
+ */
+async function recordBanners(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const seen: string[] = [];
+    (window as unknown as { __banners: string[] }).__banners = seen;
+    new MutationObserver((records) => {
+      for (const record of records) {
+        for (const node of record.addedNodes) {
+          if (node instanceof HTMLElement && node.dataset['testid'] === 'banner') {
+            seen.push(node.textContent ?? '');
+          }
+        }
+      }
+    }).observe(document.body, { childList: true, subtree: true });
+  });
+}
+
+async function banners(page: Page): Promise<string[]> {
+  return page.evaluate(() => (window as unknown as { __banners?: string[] }).__banners ?? []);
+}
+
 function watchConsole(page: Page): string[] {
   const errors: string[] = [];
   page.on('console', (message) => {
@@ -39,13 +64,13 @@ async function startRun(page: Page, query = '?debug=1&seed=42'): Promise<void> {
 }
 
 /** Two cats of a tier dropped onto the same spot: they merge on landing. */
-async function mergePair(page: Page, tier: number, x: number, golden = false): Promise<void> {
+async function mergePair(page: Page, tier: number, x: number): Promise<void> {
   await page.evaluate(
-    ([t, at, g]) => {
-      window.__game?.spawnTier(t, at, g);
+    ([t, at]) => {
+      window.__game?.spawnTier(t, at);
       window.__game?.spawnTier(t, at);
     },
-    [tier, x, golden] as const,
+    [tier, x] as const,
   );
 }
 
@@ -53,7 +78,7 @@ test('coins earned in a run survive a reload in the middle of it', async ({ page
   const errors = watchConsole(page);
   await startRun(page);
   await mergePair(page, 4, -150);
-  await mergePair(page, 3, 150, true);
+  await mergePair(page, 3, 150);
   await expect.poll(async () => (await state(page)).wallet, WAIT).toBeGreaterThan(5);
   const { wallet, runCoins } = await state(page);
   expect(wallet).toBe(runCoins);
@@ -155,13 +180,14 @@ test('a Lucky Save pops cats into coins instead of ending the run', async ({ pag
   for (const x of [-200, -70, 70, 200]) {
     await page.evaluate((at) => window.__game?.spawnTier(2, at), x);
   }
-  // The cats must have landed (a 1.3 s fall) and passed the 0.5 s landing grace to count.
+  // The cats must have landed (a 1.6 s fall) and passed the 0.5 s landing grace to count.
   // WebKit renders in software here, so the run can take a while to get there.
   await expect
     .poll(async () => (await state(page)).ticks, { timeout: 60_000 })
-    .toBeGreaterThan(start + 270);
+    .toBeGreaterThan(start + 300);
+  await recordBanners(page);
   await page.evaluate(() => window.__game?.forceDangerTimeout());
-  await expect(page.getByTestId('banner')).toContainText('Lucky Save!');
+  await expect.poll(() => banners(page), WAIT).toEqual(['Lucky Save!']);
   const s = await state(page);
   expect(s.runState).toBe('playing');
   expect(s.luckySaves).toBe(0);
@@ -182,8 +208,8 @@ test('combos and Jackpots show their banners', async ({ page }) => {
   await expect(page.getByTestId('combo')).toContainText('Combo ×');
   await expect(page.getByTestId('combo')).toBeHidden(WAIT);
 
-  // Two of the stage's last cat: a Jackpot of 5 × C(12) = 1,715 coins.
-  await mergePair(page, 12, 0);
-  await expect(page.getByTestId('banner')).toContainText('Jackpot!', WAIT);
-  await expect(page.getByTestId('banner-coins')).toHaveText('+1,715');
+  // Two of the stage's last cat: a Jackpot of 5 × C(11) = 1,010 coins.
+  await recordBanners(page);
+  await mergePair(page, 11, 0);
+  await expect.poll(() => banners(page), WAIT).toEqual(['Jackpot!+1,010']);
 });

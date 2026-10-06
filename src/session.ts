@@ -10,6 +10,7 @@ import {
   BANNER_NEW_CATS_MS,
   COMBO_JAR_OFFSET,
   HINT_MERGE_DELAY_MS,
+  GOLDEN_COIN_FLIGHTS,
   JACKPOT_COIN_FLIGHTS,
 } from './config/view';
 import type { UpgradeId } from './config/upgrades';
@@ -56,10 +57,13 @@ export class GameSession {
 
   constructor(private readonly parts: SessionParts) {
     this.recordsBefore = parts.profile.records;
-    // Coins fly from wherever the scene shows a payout to the HUD counter.
-    parts.game.onCoins((x, y, big) =>
-      parts.coins.fly(x, y, big ? JACKPOT_COIN_FLIGHTS : 1, () => parts.hud.pulseCoins()),
-    );
+    // Coins fly from wherever the scene shows a payout to the HUD counter: a shower for a
+    // Jackpot, three coins for a golden merge.
+    parts.game.onCoins((x, y, kind) => {
+      const flights =
+        kind === 'jackpot' ? JACKPOT_COIN_FLIGHTS : kind === 'golden' ? GOLDEN_COIN_FLIGHTS : 1;
+      parts.coins.fly(x, y, flights, () => parts.hud.pulseCoins());
+    });
   }
 
   get run(): RunController | null {
@@ -122,9 +126,9 @@ export class GameSession {
 
     const showProgress = (): void => {
       const p = run.progress;
-      hud.setStage(run.stage, p.fraction, p.goalTier, p.locked, p.final);
+      hud.setStage(run.stage, p.fraction, p.goalTier, p.final);
     };
-    const showPreview = (): void => hud.setPreview(run.preview);
+    const showPreview = (): void => hud.setNext(run.next.tier);
     hud.setScore(run.score);
     hud.setCoins(run.coins);
     showPreview();
@@ -174,7 +178,7 @@ export class GameSession {
       }),
     );
 
-    // Stage clears and expansions (GAME_DESIGN §7, §7.1, §7.2).
+    // Stage clears and expansions (GAME_DESIGN §7, §7.1, §7.2): "Stage clear!" at the last stage.
     events.on('stageCleared', (e) => {
       banners.combo(0, 0);
       showProgress();
@@ -195,11 +199,6 @@ export class GameSession {
     events.on('expansionFinished', () => {
       showPreview();
       showProgress();
-    });
-    events.on('expansionLocked', () => {
-      showProgress();
-      hud.pulseLock();
-      banners.toast('Expansion locked — upgrade the Shrine in the shop');
     });
     events.on('paused', () => banners.setPaused(true));
     events.on('resumed', () => banners.setPaused(false));

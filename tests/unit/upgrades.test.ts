@@ -27,10 +27,8 @@ describe('deriveStats (GAME_DESIGN §10)', () => {
       coinMultiplier: 1,
       bigCatchLevel: 0,
       comboCharmLevel: 0,
-      maxStage: 2,
       goldenChance: 0,
       luckySaves: 0,
-      previewCount: 1,
     });
   });
 
@@ -39,10 +37,8 @@ describe('deriveStats (GAME_DESIGN §10)', () => {
     expect(s.coinMultiplier).toBeCloseTo(2.5, 10); // 1 + 0.15 × 10
     expect(s.bigCatchLevel).toBe(5);
     expect(s.comboCharmLevel).toBe(5);
-    expect(s.maxStage).toBe(5); // 2 + 3
     expect(s.goldenChance).toBeCloseTo(0.15, 10); // 0.03 × 5
     expect(s.luckySaves).toBe(2);
-    expect(s.previewCount).toBe(2);
   });
 
   it.each([
@@ -55,16 +51,12 @@ describe('deriveStats (GAME_DESIGN §10)', () => {
   });
 
   it.each([
-    [0, 2],
-    [1, 3],
-    [2, 4],
-    [3, 5],
-  ])('Shrine Expansion %i opens up to stage %i', (level, maxStage) => {
-    expect(deriveStats(levels({ shrineExpansion: level })).maxStage).toBe(maxStage);
-  });
-
-  it('never opens more stages than exist', () => {
-    expect(deriveStats(levels({ shrineExpansion: 9 })).maxStage).toBe(5);
+    [0, 0],
+    [1, 0.03],
+    [3, 0.09],
+    [5, 0.15],
+  ])('Golden Merge %i makes a merge golden with chance %f', (level, chance) => {
+    expect(deriveStats(levels({ goldenMerge: level })).goldenChance).toBeCloseTo(chance, 10);
   });
 });
 
@@ -89,7 +81,7 @@ describe('prices and purchases', () => {
       expect(nextPrice(id, def.maxLevel + 3)).toBeNull();
     }
     expect(nextPrice('luckyPaw', 0)).toBe(50);
-    expect(nextPrice('shrineExpansion', 2)).toBe(60_000);
+    expect(nextPrice('goldenMerge', 4)).toBe(1900);
   });
 
   it('checks affordability and the max level', () => {
@@ -99,7 +91,7 @@ describe('prices and purchases', () => {
       reason: 'insufficient',
       price: 50,
     });
-    expect(canBuy('fortuneTeller', levels({ fortuneTeller: 1 }), 1e9)).toEqual({
+    expect(canBuy('secondChance', levels({ secondChance: 2 }), 1e9)).toEqual({
       ok: false,
       reason: 'max',
       price: null,

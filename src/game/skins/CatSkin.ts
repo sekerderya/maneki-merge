@@ -1,8 +1,7 @@
 /**
  * The lucky-cat skin (GAME_DESIGN §13): the vector looks of `config/catArt.ts` drawn into canvas
  * textures with `Path2D`, at CAT_PX_PER_UNIT texture pixels per world unit, so they are never
- * upscaled. Bodies are shared by size across stages (skinSets.ts), golden bodies add the ring and
- * sparkles, and each stage adds its numbers: upright sprites that sit on the cat's plate, in the
+ * upscaled. Bodies are shared by size across stages (skinSets.ts), and each stage adds its numbers: upright sprites that sit on the cat's plate, in the
  * look's colours. Like the placeholders, a stage's numbers are drawn during the zoom into it.
  */
 import type Phaser from 'phaser';
@@ -12,7 +11,6 @@ import {
   ART_TWO_DIGIT_SCALE,
   bodyEdge,
   catLook,
-  GOLDEN_SHAPES,
   numberOffset,
 } from '../../config/catArt';
 import type { ArtShape, CatLook } from '../../config/catArt';
@@ -26,17 +24,16 @@ const FONT_FAMILY = 'Fredoka, system-ui, sans-serif';
 const UNITS_PER_PIXEL = 1 / CAT_PX_PER_UNIT;
 const PAD_PX = 2;
 
-type FrameKind = 'b' | 'g' | 'n';
+type FrameKind = 'b' | 'n';
 type FrameItem = readonly [tier: number, kind: FrameKind];
 
 /** Every frame a stage needs, the dropper's tiers first (they show right after the expansion). */
 const STAGE_ITEMS: readonly (readonly FrameItem[])[] = STAGES.map(({ stage }) => {
   const set = stageSkinSet(stage);
   const items: FrameItem[] = [];
-  for (const tier of set.golden) items.push([tier, 'b'], [tier, 'n']);
-  for (const tier of set.golden) items.push([tier, 'g']);
+  for (const tier of set.drops) items.push([tier, 'b'], [tier, 'n']);
   for (const tier of set.tiers) {
-    if (!set.golden.includes(tier)) items.push([tier, 'b'], [tier, 'n']);
+    if (!set.drops.includes(tier)) items.push([tier, 'b'], [tier, 'n']);
   }
   return items;
 });
@@ -50,7 +47,7 @@ function drawnSize(tier: number, stage: number): number {
   return Math.min(SIZE_COUNT, Math.max(1, tierSize(tier, stage)));
 }
 
-/** A size's look: sizes repeat their looks, so size 12 wears size 1's. */
+/** A size's look: sizes repeat their looks, so size 11 wears size 1's. */
 function sizeLook(size: number): CatLook {
   return catLook(size);
 }
@@ -74,8 +71,8 @@ export class CatSkin implements BallSkin {
     return this.rev;
   }
 
-  body(tier: number, golden: boolean): SkinFrame {
-    return this.bodyFrame(drawnSize(tier, this.active), golden);
+  body(tier: number): SkinFrame {
+    return this.bodyFrame(drawnSize(tier, this.active));
   }
 
   number(tier: number): NumberFrame {
@@ -93,7 +90,7 @@ export class CatSkin implements BallSkin {
       if (this.has(stage, tier, kind)) continue;
       if (drew && performance.now() - start >= budgetMs) return false;
       if (kind === 'n') this.numberFrame(stage, tier);
-      else this.bodyFrame(drawnSize(tier, stage), kind === 'g');
+      else this.bodyFrame(drawnSize(tier, stage));
       drew = true;
     }
     return true;
@@ -127,8 +124,8 @@ export class CatSkin implements BallSkin {
     return this.bodies.has(kind + drawnSize(tier, stage));
   }
 
-  private bodyFrame(size: number, golden: boolean): SkinFrame {
-    const id = (golden ? 'g' : 'b') + size;
+  private bodyFrame(size: number): SkinFrame {
+    const id = 'b' + size;
     const existing = this.bodies.get(id);
     if (existing) return existing;
     const canvas = document.createElement('canvas');
@@ -140,7 +137,6 @@ export class CatSkin implements BallSkin {
     ctx.translate(side / 2 - (ART_BOX / 2) * scale, side / 2 - (ART_BOX / 2) * scale);
     ctx.scale(scale, scale);
     this.paint(ctx, look.shapes);
-    if (golden) this.paint(ctx, GOLDEN_SHAPES);
     const frame = { key: this.addTexture(`cat-${id}`, canvas), unitsPerPixel: UNITS_PER_PIXEL };
     this.bodies.set(id, frame);
     return frame;

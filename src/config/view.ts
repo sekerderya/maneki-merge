@@ -40,8 +40,6 @@ export const CAT_PX_PER_UNIT = 2.5;
 export const CAT_NUMBER_HALO_RATIO = 0.16;
 /** Outline width of a placeholder cat, as a fraction of its radius. */
 export const PLACEHOLDER_OUTLINE_RATIO = 0.07;
-/** Width of the golden ring, as a fraction of the radius. */
-export const PLACEHOLDER_GOLD_RING_RATIO = 0.13;
 /** Font size of the tier number, as a fraction of the radius (one and two digits). */
 export const NUMBER_HEIGHT_RATIO = 0.95;
 export const NUMBER_HEIGHT_RATIO_TWO_DIGITS = 0.78;
@@ -101,7 +99,7 @@ export const SKIN_PREPARE_BUDGET_MS = 4;
 /** First-run hints (GAME_DESIGN §2.3). */
 export const HINT_MERGE_DELAY_MS = 600;
 
-/** How long banners and toasts stay (GAME_DESIGN §2.3), including their pop-in and fade-out. */
+/** How long banners stay (GAME_DESIGN §2.3), including their pop-in and fade-out. */
 export const BANNER_MS = 1300;
 /**
  * Banners centre this far below the rim, as a fraction of the jar's height: right after an
@@ -109,7 +107,6 @@ export const BANNER_MS = 1300;
  */
 export const BANNER_JAR_OFFSET = 0.15;
 export const BANNER_NEW_CATS_MS = 2000;
-export const TOAST_MS = 3200;
 
 /** "Combo ×N" (GAME_DESIGN §5) centres this far below the rim, as a fraction of the jar's height. */
 export const COMBO_JAR_OFFSET = 0.3;
@@ -123,13 +120,16 @@ export const COIN_FLY_MS = 620;
 export const COIN_FLY_STAGGER_MS = 50;
 export const COIN_FLY_POOL = 24;
 export const JACKPOT_COIN_FLIGHTS = 8;
+/** A golden merge pays ×3 coins, so three coins fly. */
+export const GOLDEN_COIN_FLIGHTS = 3;
 /** A Jackpot's coins burst out to a ring this many CSS pixels wide before they fly. */
 export const COIN_SHOWER_SPREAD = 34;
 /** How high the flight arcs above the straight line, as a fraction of its length. */
 export const COIN_FLY_ARC = 0.22;
 
-/** A Jackpot's floating "+coins" is this much bigger than a merge's. */
+/** A Jackpot's floating "+coins" is this much bigger than a merge's, a golden merge's this much. */
 export const JACKPOT_TEXT_SCALE = 1.7;
+export const GOLDEN_TEXT_SCALE = 1.35;
 /** Spark bursts (world units): golden merges and Jackpots. */
 export const BURST_SPARKS = {
   golden: 12,
@@ -139,11 +139,6 @@ export const BURST_SPARKS = {
   gravity: 600,
   scale: 0.45,
 } as const;
-
-/** Golden cats twinkle: a star glint on the upper right, pulsing with this period. */
-export const GLINT_PERIOD_MS = 1400;
-/** The glint's size at its brightest, as a fraction of the cat's radius. */
-export const GLINT_SIZE_RATIO = 0.75;
 
 /** The shop balance counts down to the new wallet after a purchase (GAME_DESIGN §2.2). */
 export const SHOP_BALANCE_COUNT_MS = 450;

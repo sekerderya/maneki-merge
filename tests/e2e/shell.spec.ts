@@ -119,7 +119,7 @@ test.describe('layout', () => {
   test('touch targets are at least 48 px', async ({ page }) => {
     await page.goto('./');
     await expect(page.getByTestId('play')).toBeVisible();
-    for (const id of ['play', 'upgrades', 'settings', 'menu-goal']) {
+    for (const id of ['play', 'upgrades', 'settings']) {
       const box = await page.getByTestId(id).boundingBox();
       expect(box?.width).toBeGreaterThanOrEqual(48);
       expect(box?.height).toBeGreaterThanOrEqual(48);

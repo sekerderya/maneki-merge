@@ -1,17 +1,7 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import type { GameStateSnapshot } from '../../src/debug';
 
-// Headless browsers run the game slowly (see expansion.spec.ts), so waits are generous.
-test.describe.configure({ timeout: 120_000 });
-const WAIT = { timeout: 40_000 };
 const SAVE_KEY = 'maneki-merge:save';
-
-async function state(page: Page): Promise<GameStateSnapshot> {
-  const snapshot = await page.evaluate(() => window.__game?.state());
-  if (!snapshot) throw new Error('Debug hooks missing');
-  return snapshot;
-}
 
 function watchConsole(page: Page): string[] {
   const errors: string[] = [];
@@ -45,7 +35,7 @@ test('buying with debug coins: prices, states, feedback and persistence', async 
   await page.getByTestId('upgrades').click();
   const shop = page.getByTestId('shop');
   await expect(shop).toBeVisible();
-  await expect(shop.locator('.shop-card')).toHaveCount(7);
+  await expect(shop.locator('.shop-card')).toHaveCount(5);
   await expect(page.getByTestId('shop-balance')).toHaveText('600');
 
   // Lucky Paw 0 → 1 for 50.
@@ -58,35 +48,44 @@ test('buying with debug coins: prices, states, feedback and persistence', async 
   await expect(page.getByTestId('shop-balance')).toHaveText('550'); // after the count-down
   await expect(page.getByTestId('shop-card-luckyPaw').locator('.shop-pip.is-on')).toHaveCount(1);
 
-  // Fortune Teller has one level: MAX afterwards.
-  await buy(page, 'fortuneTeller');
-  const teller = page.getByTestId('shop-buy-fortuneTeller');
-  await expect(teller).toHaveText('MAX');
-  await expect(teller).toBeDisabled();
-  await expect(page.getByTestId('shop-balance')).toHaveText('150');
+  // Big Catch and Golden Merge show what a level adds.
+  await expect(page.getByTestId('shop-value-bigCatch')).toHaveText('Biggest drop10%→13%');
+  await expect(page.getByTestId('shop-value-goldenMerge')).toHaveText('Golden merges0%→3%');
 
-  // Not enough coins: Shrine Expansion (1,500) is disabled and clicking does nothing.
-  const shrine = page.getByTestId('shop-buy-shrineExpansion');
-  await expect(shrine).toBeDisabled();
-  await expect(shrine).toHaveAttribute('data-state', 'insufficient');
+  // Second Chance 0 → 1 for 500; level 2 costs 4,000.
+  await buy(page, 'secondChance');
+  await expect(page.getByTestId('shop-level-secondChance')).toHaveText('1/2');
+  await expect(page.getByTestId('shop-balance')).toHaveText('50');
+
+  // Not enough coins: Golden Merge (120) is disabled and clicking does nothing.
+  const golden = page.getByTestId('shop-buy-goldenMerge');
+  await expect(golden).toBeDisabled();
+  await expect(golden).toHaveAttribute('data-state', 'insufficient');
+  await expect(page.getByTestId('shop-need-goldenMerge')).toHaveText('Need 70 more');
 
   // Saved at once, outside any write throttle.
   const saved = await page.evaluate(
     (key) => JSON.parse(localStorage.getItem(key) ?? '{}'),
     SAVE_KEY,
   );
-  expect(saved.data.wallet.coins).toBe(150);
-  expect(saved.data.upgrades).toMatchObject({ luckyPaw: 1, fortuneTeller: 1 });
+  expect(saved.data.wallet.coins).toBe(50);
+  expect(saved.data.upgrades).toMatchObject({ luckyPaw: 1, secondChance: 1 });
 
   // Closing returns to the menu with the new balance; a reload keeps the purchases.
   await page.getByTestId('shop-close').click();
   await expect(shop).toBeHidden();
-  await expect(page.getByTestId('coin-balance')).toHaveText('150');
+  await expect(page.getByTestId('coin-balance')).toHaveText('50');
   await page.reload();
   await page.getByTestId('upgrades').click();
   await expect(page.getByTestId('shop-level-luckyPaw')).toHaveText('1/10');
-  await expect(page.getByTestId('shop-buy-fortuneTeller')).toHaveText('MAX');
-  await expect(page.getByTestId('shop-balance')).toHaveText('150');
+  await expect(page.getByTestId('shop-level-secondChance')).toHaveText('1/2');
+  await expect(page.getByTestId('shop-balance')).toHaveText('50');
+
+  // At the max level: MAX, disabled.
+  await page.evaluate(() => window.__game?.setUpgrade('secondChance', 2));
+  const chance = page.getByTestId('shop-buy-secondChance');
+  await expect(chance).toHaveText('MAX');
+  await expect(chance).toBeDisabled();
   expect(errors).toEqual([]);
 });
 
@@ -106,48 +105,36 @@ test('the back button closes the shop and stays on the menu', async ({ page }) =
   expect(await page.evaluate(() => history.length)).toBeLessThanOrEqual(length + 1);
 });
 
-test('Fortune Teller shows two cats in the preview', async ({ page }) => {
+test('an old save gets its Shrine Expansion and Fortune Teller coins back', async ({ page }) => {
   const errors = watchConsole(page);
-  await menuWithCoins(page, 400);
+  await page.goto('./?debug=1');
+  await expect(page.getByTestId('play')).toBeVisible();
+  // A v0.11 save (version 2): Shrine Expansion 1, Fortune Teller 1, Golden Touch 2.
+  await page.evaluate((key) => {
+    const data = {
+      wallet: { coins: 100 },
+      upgrades: { luckyPaw: 1, shrineExpansion: 1, fortuneTeller: 1, goldenTouch: 2 },
+    };
+    localStorage.setItem(key, JSON.stringify({ version: 2, data }));
+  }, SAVE_KEY);
+  await page.reload();
+  // 100 + 1,500 + 400
+  await expect(page.getByTestId('coin-balance')).toHaveText('2,000');
   await page.getByTestId('upgrades').click();
-  await buy(page, 'fortuneTeller');
-  await expect(page.getByTestId('shop-buy-fortuneTeller')).toHaveText('MAX');
-  await page.getByTestId('shop-close').click();
-
-  await page.getByTestId('play').click();
-  await expect.poll(async () => (await state(page)).runState, WAIT).toBe('playing');
-  await expect(page.getByTestId('hud-next').locator('.cat-icon')).toHaveCount(2);
-  expect(errors).toEqual([]);
-});
-
-test('Shrine Expansion Lv 1 lets the jar grow into stage 3', async ({ page }) => {
-  test.setTimeout(300_000);
-  const errors = watchConsole(page);
-  await menuWithCoins(page, 1500);
-  await page.getByTestId('upgrades').click();
-  await buy(page, 'shrineExpansion');
-  await expect(page.getByTestId('shop-level-shrineExpansion')).toHaveText('1/3');
-  await page.getByTestId('shop-close').click();
-
-  await page.getByTestId('play').click();
-  await expect.poll(async () => (await state(page)).canDrop, WAIT).toBe(true);
-  // Clear stage 1, then stage 2: both expansions play, one after the other.
-  // Two expansions in a row take long in software rendering (WebKit especially).
-  const long = { timeout: 120_000 };
-  for (const stage of [2, 3]) {
-    await page.evaluate(() => {
-      const game = window.__game;
-      if (!game) return;
-      const tier = game.state().lastTier - 1;
-      game.spawnTier(tier, 0);
-      game.spawnTier(tier, 0);
-    });
-    await expect.poll(async () => (await state(page)).stage, long).toBe(stage);
-    await expect.poll(async () => (await state(page)).runState, long).toBe('playing');
-  }
-  await expect.poll(async () => (await state(page)).runState, long).toBe('playing');
-  await expect(page.getByTestId('hud-stage')).toHaveText('Stage 3');
-  await expect(page.getByTestId('toast')).toBeHidden();
+  await expect(page.getByTestId('shop-level-goldenMerge')).toHaveText('2/5');
+  await expect(page.getByTestId('shop-level-luckyPaw')).toHaveText('1/10');
+  const saved = await page.evaluate(
+    (key) => JSON.parse(localStorage.getItem(key) ?? '{}'),
+    SAVE_KEY,
+  );
+  expect(saved.version).toBe(3);
+  expect(Object.keys(saved.data.upgrades)).toEqual([
+    'luckyPaw',
+    'bigCatch',
+    'goldenMerge',
+    'comboCharm',
+    'secondChance',
+  ]);
   expect(errors).toEqual([]);
 });
 
@@ -192,7 +179,7 @@ for (const [width, height] of [
     });
     expect(issues).toEqual([]);
     // The last card scrolls into view.
-    const last = page.getByTestId('shop-card-fortuneTeller');
+    const last = page.getByTestId('shop-card-secondChance');
     await last.scrollIntoViewIfNeeded();
     await expect(last).toBeInViewport({ ratio: 1 });
   });

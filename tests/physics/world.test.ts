@@ -67,9 +67,9 @@ describe('PhysicsWorld', () => {
     run(world, 3);
     expect(cat.y).toBeCloseTo(-sizeRadius(3), 0);
     expect(cat.speed).toBeLessThan(1);
-    // Free fall from y = −924 to the floor takes about 1.3 s.
-    expect(cat.landedMs).toBeGreaterThan(1100);
-    expect(cat.landedMs).toBeLessThan(1600);
+    // Free fall from y = −924 to the floor takes about 1.5 s.
+    expect(cat.landedMs).toBeGreaterThan(1300);
+    expect(cat.landedMs).toBeLessThan(1700);
   });
 
   it('keeps time in fixed steps and stands still while paused', () => {
@@ -100,22 +100,22 @@ describe('PhysicsWorld', () => {
 
   it('rescales the world into the next stage: the last cat becomes the first', () => {
     const world = new PhysicsWorld();
-    expect(world.gravity).toBe(1);
+    expect(world.gravity).toBe(0.9);
     expect(world.speedLimit).toBeCloseTo(MAX_SPEED_BASE, 9);
     const half = world.wallInnerX;
 
-    const last = world.addBall({ tier: 12, x: 20, y: -400, vx: 90, vy: 180 });
-    expect(last.size).toBe(12);
-    expect(last.radius).toBe(250);
+    const last = world.addBall({ tier: 11, x: 20, y: -400, vx: 90, vy: 180 });
+    expect(last.size).toBe(11);
+    expect(last.radius).toBe(205);
     const angle = last.angle;
     const [vx, vy] = [last.vx, last.vy];
     world.setStage(2);
     expect(world.stage).toBe(2);
     // Same jar, same gravity, same speed limit: only the cat changed.
     expect(world.wallInnerX).toBe(half);
-    expect(world.gravity).toBe(1);
+    expect(world.gravity).toBe(0.9);
     expect(world.speedLimit).toBeCloseTo(MAX_SPEED_BASE, 9);
-    expect(last.tier).toBe(12);
+    expect(last.tier).toBe(11);
     expect(last.size).toBe(1);
     expect(last.radius).toBeCloseTo(sizeRadius(1), 9);
     expect(last.targetRadius).toBe(sizeRadius(1));
@@ -125,11 +125,11 @@ describe('PhysicsWorld', () => {
     expect(last.vy).toBeCloseTo(vy / STAGE_ZOOM, 6);
     expect(last.angle).toBe(angle);
     expect(last.body.mass).toBeCloseTo(
-      new PhysicsWorld({ stage: 2 }).addBall({ tier: 12, x: 0, y: -50 }).body.mass,
+      new PhysicsWorld({ stage: 2 }).addBall({ tier: 11, x: 0, y: -50 }).body.mass,
       9,
     );
     // It lands like any size-1 cat, and stage 2's cats join it.
-    const next = world.addBall({ tier: 13, x: 150, y: -300 });
+    const next = world.addBall({ tier: 12, x: 150, y: -300 });
     expect(next.size).toBe(2);
     run(world, 2);
     expect(last.y).toBeCloseTo(-sizeRadius(1), 0);
@@ -139,7 +139,7 @@ describe('PhysicsWorld', () => {
     expect(() => world.setStage(4)).toThrow(RangeError);
     expect(() => world.setStage(3)).toThrow(RangeError);
     expect(world.stage).toBe(2);
-    expect(world.sizeOf(23)).toBe(12);
+    expect(world.sizeOf(21)).toBe(11);
     expect(world.sizeOf(5)).toBeLessThan(1);
   });
 
@@ -218,10 +218,9 @@ describe('PhysicsWorld', () => {
 
   it('adds and removes cats with increasing ids', () => {
     const world = new PhysicsWorld();
-    const a = world.addBall({ tier: 1, x: 0, y: -100, golden: true });
+    const a = world.addBall({ tier: 1, x: 0, y: -100 });
     const b = world.addBall({ tier: 2, x: 100, y: -100 });
     expect([a.id, b.id]).toEqual([1, 2]);
-    expect(a.golden).toBe(true);
     expect(world.balls).toEqual([a, b]);
     world.removeBall(a);
     world.removeBall(a);
@@ -234,9 +233,9 @@ describe('PhysicsWorld', () => {
   it('rejects invalid cats', () => {
     const world = new PhysicsWorld();
     expect(() => world.addBall({ tier: 0, x: 0, y: 0 })).toThrow(RangeError);
-    expect(() => world.addBall({ tier: 13, x: 0, y: 0 })).toThrow(RangeError);
-    expect(() => world.addBall({ tier: 57, x: 0, y: 0 })).toThrow(RangeError);
-    expect(() => new PhysicsWorld({ stage: 2 }).addBall({ tier: 11, x: 0, y: 0 })).toThrow(
+    expect(() => world.addBall({ tier: 12, x: 0, y: 0 })).toThrow(RangeError);
+    expect(() => world.addBall({ tier: 52, x: 0, y: 0 })).toThrow(RangeError);
+    expect(() => new PhysicsWorld({ stage: 2 }).addBall({ tier: 10, x: 0, y: 0 })).toThrow(
       RangeError,
     );
     expect(() => world.addBall({ tier: 1, x: Number.NaN, y: 0 })).toThrow(RangeError);

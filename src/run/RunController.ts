@@ -1,8 +1,8 @@
 /**
  * One run, headless (TECH_SPEC §3–§5): dropping cats, the cooldown and queue, merges and their
- * payouts, the combo timer, stage clears and the expansion timeline, the danger line, Lucky Saves
- * and game over. The game scene renders it and forwards input; the HUD, FX, audio and save listen
- * to its events.
+ * payouts (golden merges included), the combo timer, stage clears and the expansion timeline, the
+ * danger line, Lucky Saves and game over. The game scene renders it and forwards input; the HUD,
+ * FX, audio and save listen to its events.
  *
  * Time comes in fixed ticks of PHYSICS_STEP_MS. `update(frameMs)` only decides how many ticks a
  * frame runs, and every timer counts ticks, so a run is a pure function of its seed and of the
@@ -84,6 +84,11 @@ const COOLDOWN_STEPS = stepsFor(DROP_COOLDOWN_MS);
 const CLEAR_STEPS = stepsFor(EXPANSION_CLEAR_MS);
 const ZOOM_STEPS = stepsFor(EXPANSION_ZOOM_MS);
 const EXPANSION_STEPS = stepsFor(EXPANSION_DURATION_MS);
+/**
+ * Golden merges roll on their own generator, seeded from the run seed with this salt, so the drop
+ * queue's sequence doesn't depend on how often cats merge.
+ */
+const GOLDEN_MERGE_SEED_SALT = 0x9e3779b9;
 
 export class RunController {
   readonly events: EventBus<GameEvents>;
@@ -92,6 +97,8 @@ export class RunController {
 
   private readonly world: PhysicsWorld;
   private readonly rng: Rng;
+  /** Rolls every merge for Golden Merge (always one draw, whatever the chance). */
+  private readonly goldenRng: Rng;
   private readonly queue: DropQueue;
   private readonly economy: RunEconomy;
   private readonly merges = new MergeResolver();
@@ -114,8 +121,6 @@ export class RunController {
   private dangerSecond = 0;
   private savesLeft: number;
   private expansionState: Expansion | null = null;
-  /** Debug only (`jumpToStage`): stages up to this one open regardless of Shrine Expansion. */
-  private debugMaxStage = 0;
   /** Debug only (`jumpToStage`): the stage the jump keeps clearing towards. */
   private debugTargetStage = 0;
 
@@ -129,12 +134,11 @@ export class RunController {
     this.savesLeft = this.stats.luckySaves;
     this.world = new PhysicsWorld();
     this.rng = new Rng(options.seed);
+    this.goldenRng = new Rng((Math.trunc(options.seed) ^ GOLDEN_MERGE_SEED_SALT) >>> 0);
     this.queue = new DropQueue({
       rng: this.rng,
       stage: this.world.stage,
       bigCatchLevel: this.stats.bigCatchLevel,
-      goldenChance: this.stats.goldenChance,
-      previewCount: this.stats.previewCount,
     });
     this.economy = new RunEconomy(this.stats);
     this.events.emit('runStarted', { seed: this.seed, stage: this.world.stage });
@@ -194,9 +198,9 @@ export class RunController {
     return this.queue.current;
   }
 
-  /** The next one or two cats (Fortune Teller), next first. */
-  get preview(): readonly Drop[] {
-    return this.queue.preview;
+  /** The cat after the one in the dropper (the HUD's "Next"). */
+  get next(): Drop {
+    return this.queue.next;
   }
 
   get canDrop(): boolean {
@@ -224,7 +228,7 @@ export class RunController {
   get progress(): StageProgress {
     let biggest = 0;
     for (const cat of this.world.balls) biggest = Math.max(biggest, cat.tier);
-    return stageProgress(biggest, this.world.stage, this.maxStage);
+    return stageProgress(biggest, this.world.stage);
   }
 
   /** The radius of a `tier` cat at the current stage, in world units. */
@@ -256,10 +260,10 @@ export class RunController {
     const cat = this.queue.take();
     const geo = this.world.geometry;
     const at = clampDropX(x, this.radiusOf(cat.tier), geo);
-    this.world.addBall({ tier: cat.tier, golden: cat.golden, x: at, y: geo.dropY });
+    this.world.addBall({ tier: cat.tier, x: at, y: geo.dropY });
     this.dropAllowedAt = this.world.steps + COOLDOWN_STEPS;
     this.dropAnnounced = false;
-    this.events.emit('catDropped', { tier: cat.tier, golden: cat.golden, x: at });
+    this.events.emit('catDropped', { tier: cat.tier, x: at });
     return true;
   }
 
@@ -297,13 +301,13 @@ export class RunController {
    * Puts a cat into the jar, ignoring the queue and the cooldown. The current stage must hold its
    * tier (its first to its last tier).
    */
-  spawnBall(tier: number, x: number, y?: number, golden = false): BallView {
+  spawnBall(tier: number, x: number, y?: number): BallView {
     if (!stageHoldsTier(this.world.stage, tier)) {
       throw new RangeError(`Stage ${this.world.stage} can't hold tier ${tier}`);
     }
     const geo = this.world.geometry;
     const at = clampDropX(x, this.radiusOf(tier), geo);
-    return this.world.addBall({ tier, golden, x: at, y: y ?? geo.dropY });
+    return this.world.addBall({ tier, x: at, y: y ?? geo.dropY });
   }
 
   /** Sets the run score (it only counts for records). */
@@ -313,13 +317,11 @@ export class RunController {
   }
 
   /**
-   * Opens every stage up to `stage` for this run, whatever the Shrine Expansion level, and clears
-   * the current stage as if its last cat had just been made. Each expansion then plays in turn,
-   * one stage at a time, until the run reaches `stage`.
+   * Clears the current stage as if its last cat had just been made. Each expansion then plays in
+   * turn, one stage at a time, until the run reaches `stage`.
    */
   jumpToStage(stage: number): void {
     if (!Number.isInteger(stage) || stage <= this.world.stage || stage > STAGE_COUNT) return;
-    this.debugMaxStage = Math.max(this.debugMaxStage, stage);
     this.debugTargetStage = Math.max(this.debugTargetStage, stage);
     if (this.runState === 'playing') this.debugClear();
   }
@@ -343,10 +345,9 @@ export class RunController {
     h.number(this.economy.score).number(this.economy.coins).number(this.economy.combo);
     h.number(this.economy.merges).number(this.economy.jackpots).number(this.economy.highestTier);
     for (const value of this.rng.state()) h.number(value);
-    h.number(this.queue.current.tier).bool(this.queue.current.golden);
-    for (const next of this.queue.preview) h.number(next.tier).bool(next.golden);
-    h.number(this.dropAllowedAt).number(this.savesLeft);
-    h.number(this.debugMaxStage).number(this.debugTargetStage);
+    for (const value of this.goldenRng.state()) h.number(value);
+    h.number(this.queue.current.tier).number(this.queue.next.tier);
+    h.number(this.dropAllowedAt).number(this.savesLeft).number(this.debugTargetStage);
     h.number(this.danger.remainingMs).bool(this.danger.inGrace);
     const e = this.expansionState;
     if (e) h.number(e.from).number(e.to).number(e.elapsedSteps).string(e.phase);
@@ -367,8 +368,9 @@ export class RunController {
     let cleared: Ball | null = null;
     for (const o of outcomes) {
       const at = { x: o.x, y: o.y };
+      const golden = this.goldenRng.chance(this.stats.goldenChance);
       if (o.kind === 'merge') {
-        const p = this.economy.merge(o.tier, o.golden, now);
+        const p = this.economy.merge(o.tier, golden, now);
         this.bankCoins(p.coins);
         if (o.ball && o.ball.tier === last) cleared ??= o.ball;
         this.events.emit('merged', {
@@ -376,14 +378,14 @@ export class RunController {
           tier: o.tier,
           newTier: o.tier + 1,
           newSize: o.ball?.size ?? world.sizeOf(o.tier + 1),
-          golden: o.golden,
+          golden,
           at,
           ...p,
         });
       } else {
-        const p = this.economy.jackpot(last, o.golden, now);
+        const p = this.economy.jackpot(last, golden, now);
         this.bankCoins(p.coins);
-        this.events.emit('jackpot', { tier: o.tier, golden: o.golden, at, ...p });
+        this.events.emit('jackpot', { tier: o.tier, golden, at, ...p });
       }
     }
     if (outcomes.length > 0) {
@@ -406,19 +408,13 @@ export class RunController {
   private announceDropIfReady(): void {
     if (this.dropAnnounced || !this.canDrop) return;
     this.dropAnnounced = true;
-    const { tier, golden } = this.queue.current;
-    this.events.emit('dropReady', { tier, golden });
-  }
-
-  /** The highest stage open in this run: Shrine Expansion, or a debug jump. */
-  private get maxStage(): number {
-    return Math.max(this.stats.maxStage, this.debugMaxStage);
+    this.events.emit('dropReady', { tier: this.queue.current.tier });
   }
 
   /**
    * The stage's last cat exists (GAME_DESIGN §7): every other cat pops into its value, oldest
-   * first. Then the jar grows into the next stage if it is open; otherwise play goes on with the
-   * last cat in the jar.
+   * first. Then the jar grows into the next stage; at the last stage play goes on with the last
+   * cat in the jar.
    */
   private clearStage(last: Ball): void {
     const stage = this.world.stage;
@@ -426,10 +422,9 @@ export class RunController {
       this.world.balls.filter((cat) => cat !== last),
       'cashOut',
     );
-    const next = nextStage(stage, this.maxStage);
+    const next = nextStage(stage);
     this.events.emit('stageCleared', { stage, tier: last.tier, next: next.kind });
     if (next.kind === 'expand') this.startExpansion(next.stage);
-    else if (next.kind === 'locked') this.events.emit('expansionLocked', { stage: next.stage });
   }
 
   /** Debug: puts the stage's last cat on the floor and clears the stage with it. */
@@ -485,12 +480,11 @@ export class RunController {
     for (const cat of cats) {
       const at = { x: cat.x, y: cat.y };
       this.world.removeBall(cat);
-      const { coins } = this.economy.pop(cat.tier, cat.golden);
+      const { coins } = this.economy.pop(cat.tier);
       this.bankCoins(coins);
       this.events.emit('catPopped', {
         id: cat.id,
         tier: cat.tier,
-        golden: cat.golden,
         at,
         coins,
         reason,

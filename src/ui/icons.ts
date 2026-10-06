@@ -51,11 +51,6 @@ export const ICON_CHEVRON = stroke('<path d="m9 18 6-6-6-6"/>', 2.6);
 
 export const ICON_CHECK = stroke('<path d="M20 6 9 17l-5-5"/>', 3);
 
-export const ICON_TORII = stroke(
-  '<path d="M3 5.5c6 1.3 12 1.3 18 0"/><path d="M4.5 9.5h15"/><path d="M7 7v13"/><path d="M17 7v13"/>',
-  2.4,
-);
-
 export const ICON_BACK = svg(
   '<path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>',
 );
@@ -76,11 +71,6 @@ export const ICON_ROTATE = svg(
 export const ICON_PAUSE = svg(
   '<rect x="6" y="5" width="4.5" height="14" rx="1.5" fill="currentColor"/>' +
     '<rect x="13.5" y="5" width="4.5" height="14" rx="1.5" fill="currentColor"/>',
-);
-
-export const ICON_LOCK = svg(
-  '<rect x="5" y="11" width="14" height="10" rx="2" fill="currentColor"/>' +
-    '<path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2.4"/>',
 );
 
 export const ICON_VIBRATE = stroke(
@@ -104,20 +94,11 @@ export const UPGRADE_ICONS: Readonly<Record<UpgradeId, string>> = {
     '<circle cx="6.5" cy="16.5" r="3.5" fill="none" stroke="currentColor" stroke-width="2"/>' +
       '<circle cx="15" cy="11" r="7" fill="currentColor"/>',
   ),
-  shrineExpansion: svg(
-    '<path d="M2.5 5.5c6 1.4 13 1.4 19 0" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>' +
-      '<path d="M5 10h14M7 7v14M17 7v14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
-  ),
-  goldenTouch: svg(
+  goldenMerge: svg(
     '<path d="M12 2.5l2.2 7.3 7.3 2.2-7.3 2.2L12 21.5l-2.2-7.3L2.5 12l7.3-2.2z" fill="currentColor"/>',
   ),
   comboCharm: svg('<path d="M13.5 2L5 13.5h5.5L9.5 22 19 9.5h-5.8z" fill="currentColor"/>'),
   secondChance: svg(
     '<path d="M12 20.5S3.5 15.2 3.5 9.2A4.4 4.4 0 0 1 12 7a4.4 4.4 0 0 1 8.5 2.2c0 6-8.5 11.3-8.5 11.3z" fill="currentColor"/>',
-  ),
-  fortuneTeller: svg(
-    '<circle cx="12" cy="10.5" r="7" fill="none" stroke="currentColor" stroke-width="2.2"/>' +
-      '<path d="M9 8.2a3.4 3.4 0 0 1 3-1.9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>' +
-      '<path d="M6.5 21h11l-1.6-3.2H8.1z" fill="currentColor"/>',
   ),
 };

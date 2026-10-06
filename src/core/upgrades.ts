@@ -1,7 +1,6 @@
 /** Upgrade levels, derived stats, prices and purchases (GAME_DESIGN §10). Pure functions. */
 import { COMBO_BONUS_MAX_STEPS } from '../config/economy';
-import { BASE_MAX_STAGE, STAGE_COUNT } from '../config/stages';
-import { BASE_PREVIEW_COUNT, UPGRADE_IDS, UPGRADES } from '../config/upgrades';
+import { UPGRADE_IDS, UPGRADES } from '../config/upgrades';
 import type { UpgradeId } from '../config/upgrades';
 
 export type UpgradeLevels = Readonly<Record<UpgradeId, number>>;
@@ -14,14 +13,10 @@ export interface DerivedStats {
   readonly bigCatchLevel: number;
   /** Combo Charm level, used by comboBonus(). */
   readonly comboCharmLevel: number;
-  /** 2 + shrineExpansion: the highest stage the jar may expand to. */
-  readonly maxStage: number;
-  /** 0.03 × goldenTouch: the chance that a dropped cat is golden. */
+  /** 0.03 × goldenMerge: the chance that a merge pays ×3 coins. */
   readonly goldenChance: number;
   /** Lucky Saves per run. */
   readonly luckySaves: number;
-  /** How many upcoming cats the HUD shows. */
-  readonly previewCount: number;
 }
 
 export function defaultUpgradeLevels(): Record<UpgradeId, number> {
@@ -40,10 +35,8 @@ export function deriveStats(levels: UpgradeLevels): DerivedStats {
     coinMultiplier: 1 + perLevel('luckyPaw'),
     bigCatchLevel: levels.bigCatch,
     comboCharmLevel: levels.comboCharm,
-    maxStage: Math.min(STAGE_COUNT, BASE_MAX_STAGE + perLevel('shrineExpansion')),
-    goldenChance: perLevel('goldenTouch'),
+    goldenChance: perLevel('goldenMerge'),
     luckySaves: perLevel('secondChance'),
-    previewCount: BASE_PREVIEW_COUNT + perLevel('fortuneTeller'),
   };
 }
 

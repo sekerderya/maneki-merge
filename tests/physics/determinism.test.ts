@@ -10,7 +10,7 @@ interface DropInput {
   readonly x: number | 'clear';
 }
 
-const LEVELS = upgrades({ shrineExpansion: 1, goldenTouch: 3, secondChance: 1 });
+const LEVELS = upgrades({ bigCatch: 2, goldenMerge: 3, secondChance: 1 });
 const TICKS = 25 * STEPS_PER_SECOND;
 
 function newRun(seed: number): RunController {
@@ -103,7 +103,7 @@ describe('determinism (TECH_SPEC §5)', () => {
     const b = replay(2, [{ tick: 0, x: 0 }], [600]);
     expect(a.run.current).toBeDefined();
     // Both first drops are the smallest tier at x = 0, but the queues differ.
-    const queue = (r: RunController) => [r.current, ...r.preview].map((d) => d.tier).join();
+    const queue = (r: RunController) => [r.current, r.next].map((d) => d.tier).join();
     const differs = a.hashes[0] !== b.hashes[0] || queue(a.run) !== queue(b.run);
     expect(differs).toBe(true);
     expect(newRun(1).stateHash()).not.toBe(newRun(2).stateHash());

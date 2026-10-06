@@ -21,8 +21,6 @@ export interface MergeOutcome {
   readonly kind: 'merge' | 'jackpot';
   /** The tier of the two cats that met. */
   readonly tier: number;
-  /** True when either cat was golden (the merged cat itself is a normal one). */
-  readonly golden: boolean;
   /** Their midpoint, in world units. */
   readonly x: number;
   readonly y: number;
@@ -64,11 +62,10 @@ export class MergeResolver {
       used.add(b);
       const x = (a.x + b.x) / 2;
       const y = (a.y + b.y) / 2;
-      const golden = a.golden || b.golden;
       if (a.tier >= tierCap) {
         world.removeBall(a);
         world.removeBall(b);
-        outcomes.push({ kind: 'jackpot', tier: a.tier, golden, x, y, ball: null });
+        outcomes.push({ kind: 'jackpot', tier: a.tier, x, y, ball: null });
         continue;
       }
       const vx = (a.vx + b.vx) / 2;
@@ -81,7 +78,7 @@ export class MergeResolver {
       const landedMs = Math.min(a.landedMs, b.landedMs);
       const ball = world.addBall({ tier: a.tier + 1, x, y, vx, vy, startRadius, landedMs });
       world.capSpeed(ball, MERGE_MAX_SPEED_BASE);
-      outcomes.push({ kind: 'merge', tier: a.tier, golden, x, y, ball });
+      outcomes.push({ kind: 'merge', tier: a.tier, x, y, ball });
     }
     used.clear();
     return outcomes;

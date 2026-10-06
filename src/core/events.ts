@@ -69,25 +69,27 @@ export interface WorldPoint {
  */
 export interface GameEvents {
   runStarted: { readonly seed: number; readonly stage: number };
-  catDropped: { readonly tier: number; readonly golden: boolean; readonly x: number };
+  catDropped: { readonly tier: number; readonly x: number };
   /** The cooldown is over and the dropper holds the next cat (also after an expansion). */
-  dropReady: { readonly tier: number; readonly golden: boolean };
+  dropReady: { readonly tier: number };
   merged: {
     /** The new cat's id (BallView.id), so the scene can pop its sprite. */
     readonly id: number;
     readonly tier: number;
     readonly newTier: number;
-    /** The new cat's size at the current stage (1–12), for effects that grow with the cat. */
+    /** The new cat's size at the current stage (1–11), for effects that grow with the cat. */
     readonly newSize: number;
+    /** A golden merge (Golden Merge upgrade): it paid ×3 coins. */
     readonly golden: boolean;
     readonly at: WorldPoint;
     readonly score: number;
     readonly coins: number;
     readonly combo: number;
   };
-  /** Two of a stage's last cat met (only where the jar can't grow): both vanished. */
+  /** Two of a stage's last cat met (only at the last stage): both vanished. */
   jackpot: {
     readonly tier: number;
+    /** A golden Jackpot (Golden Merge upgrade): it paid ×3 coins. */
     readonly golden: boolean;
     readonly at: WorldPoint;
     readonly score: number;
@@ -99,7 +101,6 @@ export interface GameEvents {
     /** The cat's id (BallView.id), so the scene can pop the cat's own sprite. */
     readonly id: number;
     readonly tier: number;
-    readonly golden: boolean;
     readonly at: WorldPoint;
     readonly coins: number;
     readonly reason: 'cashOut' | 'luckySave';
@@ -112,13 +113,13 @@ export interface GameEvents {
   dangerTick: { readonly secondsLeft: number };
   /**
    * A stage's last cat was made (GAME_DESIGN §7): every other cat has just popped (`catPopped`,
-   * reason `cashOut`). `next` says what follows: the jar grows (the run is now `expanding`), the
-   * next stage is locked (`expansionLocked` follows), or this is the last stage.
+   * reason `cashOut`). `next` says what follows: the jar grows (the run is now `expanding`), or
+   * this is the last stage and play goes on.
    */
   stageCleared: {
     readonly stage: number;
     readonly tier: number;
-    readonly next: 'expand' | 'locked' | 'final';
+    readonly next: 'expand' | 'final';
   };
   /** The stage clear is over and the camera starts zooming out (whoosh, rim sparks). */
   expansionStarted: { readonly from: number; readonly to: number };
@@ -129,7 +130,6 @@ export interface GameEvents {
    */
   expansionRevealed: { readonly stage: number; readonly newTiers: readonly number[] };
   expansionFinished: { readonly stage: number; readonly newTiers: readonly number[] };
-  expansionLocked: { readonly stage: number };
   luckySave: { readonly savesLeft: number };
   paused: Record<string, never>;
   resumed: Record<string, never>;

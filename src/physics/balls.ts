@@ -1,7 +1,7 @@
 /**
  * Cats in the physics world: a matter-js body plus the game data the world tracks for it
- * (tier, size, golden, growth after a merge, first contact). The tier is the cat's number; the
- * size (its place in the current stage, 1–12) sets its radius and density. Contacts use the exact circle
+ * (tier, size, growth after a merge, first contact). The tier is the cat's number; the
+ * size (its place in the current stage, 1–11) sets its radius and density. Contacts use the exact circle
  * (circleCollision.ts); the body's polygon only feeds matter-js's broadphase bounds.
  */
 import Matter from 'matter-js';
@@ -25,9 +25,8 @@ export const MATTER_TICKS_PER_SECOND = 60;
 export interface BallView {
   readonly id: number;
   readonly tier: number;
-  /** The cat's size at the current stage (1–12). */
+  /** The cat's size at the current stage (1–11). */
   readonly size: number;
-  readonly golden: boolean;
   readonly x: number;
   readonly y: number;
   readonly angle: number;
@@ -47,9 +46,8 @@ export interface BallView {
 
 export interface BallSpec {
   readonly tier: number;
-  /** 1–12: the tier's place in the world's stage (the world works it out). */
+  /** 1–11: the tier's place in the world's stage (the world works it out). */
   readonly size: number;
-  readonly golden?: boolean;
   readonly x: number;
   readonly y: number;
   /** World units per second. */
@@ -77,7 +75,6 @@ export class Ball implements BallView, CircleShape {
     readonly id: number,
     readonly tier: number,
     public size: number,
-    readonly golden: boolean,
     readonly body: Matter.Body,
     startRadius: number,
     landedMs: number,
@@ -180,15 +177,7 @@ export function createBall(id: number, spec: BallSpec): Ball {
     },
     BALL_HULL_SIDES,
   );
-  const ball = new Ball(
-    id,
-    spec.tier,
-    spec.size,
-    spec.golden ?? false,
-    body,
-    radius,
-    spec.landedMs ?? -1,
-  );
+  const ball = new Ball(id, spec.tier, spec.size, body, radius, spec.landedMs ?? -1);
   (body.plugin as { circle?: Ball }).circle = ball;
   setCircleMass(body, spec.size, radius);
   if (spec.vx || spec.vy) {

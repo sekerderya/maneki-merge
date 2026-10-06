@@ -1,6 +1,6 @@
-import { ART_BOX, ART_PAD, ART_TWO_DIGIT_SCALE, catLook, GOLDEN_SHAPES } from '../config/catArt';
+import { ART_BOX, ART_PAD, ART_TWO_DIGIT_SCALE, catLook } from '../config/catArt';
 import type { ArtShape, CatLook } from '../config/catArt';
-import { GOLD_RING, OUTLINE_DARKEN, tierColor } from '../config/skin';
+import { OUTLINE_DARKEN, tierColor } from '../config/skin';
 import { darken } from '../core/color';
 import { el } from './dom';
 
@@ -33,15 +33,13 @@ const svgCache = new Map<string, string>();
  * A cat's art as inline SVG (TECH_SPEC §7), from the same shapes as the game's textures. The box
  * includes the art's padding, so the body circle spans 100 / 108 of the element.
  */
-export function catSvg(look: CatLook, golden: boolean): string {
-  const key = `${look.name}:${golden ? 1 : 0}`;
-  let markup = svgCache.get(key);
+export function catSvg(look: CatLook): string {
+  let markup = svgCache.get(look.name);
   if (!markup) {
-    const shapes = golden ? [...look.shapes, ...GOLDEN_SHAPES] : look.shapes;
     markup =
       `<svg viewBox="${VIEW_BOX}" aria-hidden="true" focusable="false" ` +
-      `stroke-linecap="round" stroke-linejoin="round">${shapes.map(shapeMarkup).join('')}</svg>`;
-    svgCache.set(key, markup);
+      `stroke-linecap="round" stroke-linejoin="round">${look.shapes.map(shapeMarkup).join('')}</svg>`;
+    svgCache.set(look.name, markup);
   }
   return markup;
 }
@@ -50,21 +48,20 @@ export function catSvg(look: CatLook, golden: boolean): string {
  * A cat as a DOM icon (HUD preview and goal, banners, Game Over): its art with the tier number on
  * its plate. Size comes from CSS (`--size`); the text content is the tier.
  */
-export function catIcon(tier: number, golden: boolean): HTMLElement {
+export function catIcon(tier: number): HTMLElement {
   const icon = el('span', 'cat-icon');
-  paintCatIcon(icon, tier, golden);
+  paintCatIcon(icon, tier);
   return icon;
 }
 
-export function paintCatIcon(icon: HTMLElement, tier: number, golden: boolean): void {
-  const painted = `${iconSkin}:${tier}:${golden ? 1 : 0}`;
+export function paintCatIcon(icon: HTMLElement, tier: number): void {
+  const painted = `${iconSkin}:${tier}`;
   if (icon.dataset['painted'] === painted) return;
   icon.dataset['painted'] = painted;
   icon.dataset['tier'] = String(tier);
-  icon.classList.toggle('is-golden', golden);
   icon.classList.toggle('is-two-digits', tier >= 10);
   if (iconSkin === 'placeholder') {
-    paintPlaceholder(icon, tier, golden);
+    paintPlaceholder(icon, tier);
     return;
   }
   icon.classList.remove('is-placeholder');
@@ -76,15 +73,15 @@ export function paintCatIcon(icon: HTMLElement, tier: number, golden: boolean): 
   number.style.setProperty('--num-size', String((plate.size * digits * ICON_NUMBER_BOOST) / SIDE));
   number.style.setProperty('--num-color', plate.color);
   number.style.setProperty('--num-halo', plate.halo);
-  icon.innerHTML = catSvg(look, golden);
+  icon.innerHTML = catSvg(look);
   icon.append(number);
 }
 
 /** The flat placeholder look: a CSS circle with the number in the middle. */
-function paintPlaceholder(icon: HTMLElement, tier: number, golden: boolean): void {
+function paintPlaceholder(icon: HTMLElement, tier: number): void {
   const color = tierColor(tier);
   icon.classList.add('is-placeholder');
   icon.textContent = String(tier);
   icon.style.setProperty('--cat-color', color);
-  icon.style.setProperty('--cat-outline', golden ? GOLD_RING : darken(color, OUTLINE_DARKEN));
+  icon.style.setProperty('--cat-outline', darken(color, OUTLINE_DARKEN));
 }

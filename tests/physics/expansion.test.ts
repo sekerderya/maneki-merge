@@ -27,7 +27,6 @@ function setup(levels: Partial<UpgradeLevels> = {}, options: Partial<RunOptions>
     'expansionStarted',
     'expansionRevealed',
     'expansionFinished',
-    'expansionLocked',
     'jackpot',
     'merged',
     'catDropped',
@@ -75,15 +74,15 @@ function makeLastCat(run: RunController): void {
 }
 
 /** A cat of the stage's `size` on the floor against the left (-1) or right (+1) wall. */
-function spawnAtWall(run: RunController, size: number, side: -1 | 1, golden = false): BallView {
+function spawnAtWall(run: RunController, size: number, side: -1 | 1): BallView {
   const tier = stageInfo(run.stage).firstTier + size - 1;
   const r = run.radiusOf(tier);
-  return run.spawnBall(tier, side * (run.geometry.halfWidth - r), -r, golden);
+  return run.spawnBall(tier, side * (run.geometry.halfWidth - r), -r);
 }
 
 describe('clearing stages under a pile (GAME_DESIGN §7.1)', () => {
   it('nothing escapes, jumps or launches through every stage clear up to stage 5', () => {
-    const { run } = setup({ shrineExpansion: 3 });
+    const { run } = setup();
     const rng = new Rng(17);
 
     /** Pours `count` of the stage's dropped cats in from above the rim, in rows. */
@@ -188,14 +187,14 @@ describe('clearing stages under a pile (GAME_DESIGN §7.1)', () => {
 describe('stage clear payouts (GAME_DESIGN §7)', () => {
   it("pays every other cat's value, oldest first, with multipliers, at every stage", () => {
     const luckyPaw = 4;
-    const { run, log, banked } = setup({ shrineExpansion: 3, luckyPaw });
+    const { run, log, banked } = setup({ luckyPaw });
     const multiplier = run.stats.coinMultiplier;
     expect(multiplier).toBeCloseTo(1.6, 12);
 
     for (let stage = 1; stage < STAGE_COUNT; stage++) {
       expect(run.stage).toBe(stage);
-      // A golden and a plain cat apart from each other, so they can't merge.
-      spawnAtWall(run, 3, -1, true);
+      // Two cats apart from each other, so they can't merge.
+      spawnAtWall(run, 3, -1);
       spawnAtWall(run, 2, 1);
       ticks(run, STEPS_PER_SECOND);
       const doomed = [...run.balls];
@@ -208,10 +207,10 @@ describe('stage clear payouts (GAME_DESIGN §7)', () => {
         .slice(logStart)
         .filter((e) => e[0] === 'catPopped')
         .map((e) => e[1] as GameEvents['catPopped']);
-      expect(these.map((p) => [p.id, p.tier, p.golden, p.reason])).toEqual(
-        doomed.map((c) => [c.id, c.tier, c.golden, 'cashOut']),
+      expect(these.map((p) => [p.id, p.tier, p.reason])).toEqual(
+        doomed.map((c) => [c.id, c.tier, 'cashOut']),
       );
-      const pops = doomed.reduce((sum, c) => sum + popCoins(c.tier, c.golden, multiplier), 0);
+      const pops = doomed.reduce((sum, c) => sum + popCoins(c.tier, multiplier), 0);
       const merge = coinPayout(tierCoins(stageInfo(stage).lastTier - 1), multiplier, 0, false);
       expect(these.reduce((sum, p) => sum + p.coins, 0)).toBe(pops);
       expect(run.coins - coinsBefore).toBe(merge + pops);
@@ -234,18 +233,18 @@ describe('stage clear payouts (GAME_DESIGN §7)', () => {
         'expansionFinished',
       ]);
     }
-    // Spot checks of the rounding: golden tier 3 at ×1.6 → 1.5 × 1.6 × 3 = 7.2 → 7.
-    expect(popCoins(3, true, multiplier)).toBe(7);
-    expect(popCoins(23, false, multiplier)).toBe(93_965);
+    // Spot checks of the rounding: tier 3 at ×1.6 → 1.5 × 1.6 = 2.4 → 2.
+    expect(popCoins(3, multiplier)).toBe(2);
+    expect(popCoins(21, multiplier)).toBe(32_514);
   });
 
   it('announces the tiers each stage adds when the zoom ends and when play resumes', () => {
-    const { run, of } = setup({ shrineExpansion: 3 });
+    const { run, of } = setup();
     run.jumpToStage(STAGE_COUNT);
     playUntilStage(run, STAGE_COUNT);
     const range = (from: number, to: number) =>
       Array.from({ length: to - from + 1 }, (_, i) => from + i);
-    const expected = [range(13, 23), range(24, 34), range(35, 45), range(46, 56)];
+    const expected = [range(12, 21), range(22, 31), range(32, 41), range(42, 51)];
     expect(of('expansionRevealed').map((e) => e.newTiers)).toEqual(expected);
     expect(of('expansionFinished').map((e) => e.newTiers)).toEqual(expected);
     expect(of('expansionRevealed').map((e) => e.stage)).toEqual([2, 3, 4, 5]);
@@ -269,26 +268,9 @@ describe('time stop (GAME_DESIGN §7.1)', () => {
   });
 });
 
-describe('locks and the Shrine Expansion (GAME_DESIGN §7.2, §10)', () => {
-  it('stops at the highest stage the Shrine Expansion level opens, and says so', () => {
-    for (let level = 0; level <= 3; level++) {
-      const { run, of } = setup({ shrineExpansion: level }, { instantExpansion: true });
-      for (let i = 0; i < 2 + level; i++) makeLastCat(run);
-      expect(run.stage).toBe(2 + level);
-      if (level < 3) {
-        expect(of('expansionLocked')).toEqual([{ stage: 3 + level }]);
-        expect(run.progress).toMatchObject({ locked: true, fraction: 1 });
-      } else {
-        expect(of('expansionLocked')).toEqual([]);
-        expect(run.progress).toEqual({ fraction: 1, goalTier: 56, locked: false, final: true });
-      }
-    }
-  });
-});
-
 describe('every stage: Jackpots and drop pools (GAME_DESIGN §5, §7, §8)', () => {
   it.each([1, 2, 3, 4, 5])('stage %i', (stage) => {
-    const { run, of } = setup({ shrineExpansion: 3, luckyPaw: 2 }, { instantExpansion: true });
+    const { run, of } = setup({ luckyPaw: 2 }, { instantExpansion: true });
     if (stage > 1) run.jumpToStage(stage);
     run.tick();
     expect(run.stage).toBe(stage);
@@ -355,7 +337,7 @@ describe('determinism through every expansion', () => {
   }
 
   function record(seed: number): { inputs: Input[]; hashes: string[] } {
-    const run = new RunController({ seed, upgrades: upgrades({ goldenTouch: 3 }) });
+    const run = new RunController({ seed, upgrades: upgrades({ goldenMerge: 3 }) });
     const frames = new Rng(seed * 7 + 1);
     const aim = new Rng(seed + 5);
     const inputs: Input[] = [];
@@ -385,7 +367,7 @@ describe('determinism through every expansion', () => {
   it('replays a jump to stage 5 tick by tick with matching hashes', () => {
     const recorded = record(8);
     const checks = recorded.hashes.map((h) => Number(h.split(':')[0]));
-    const run = new RunController({ seed: 8, upgrades: upgrades({ goldenTouch: 3 }) });
+    const run = new RunController({ seed: 8, upgrades: upgrades({ goldenMerge: 3 }) });
     const hashes: string[] = [];
     let i = 0;
     while (run.ticks < Math.max(...checks)) {

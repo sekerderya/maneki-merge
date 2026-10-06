@@ -8,23 +8,23 @@ import { stageSkinSet } from '../../src/game/skins/skinSets';
 import { jarGeometry } from '../../src/physics/geometry';
 
 describe('cat textures per stage (TECH_SPEC §6)', () => {
-  it('covers every tier a stage can hold, and golden cats only where they are dropped', () => {
+  it('covers every tier a stage can hold, the dropped ones first', () => {
     expect(stageSkinSet(1)).toEqual({
       stage: 1,
-      tiers: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-      golden: [1, 2, 3, 4],
+      tiers: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+      drops: [1, 2, 3, 4],
     });
     expect(stageSkinSet(2)).toEqual({
       stage: 2,
-      tiers: [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
-      golden: [12, 13, 14, 15],
+      tiers: [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21],
+      drops: [11, 12, 13, 14],
     });
     for (let stage = 1; stage <= STAGE_COUNT; stage++) {
       const set = stageSkinSet(stage);
       expect(set.tiers).toHaveLength(SIZE_COUNT);
       expect(set.tiers[0]).toBe(stageInfo(stage).firstTier);
       expect(set.tiers[set.tiers.length - 1]).toBe(stageInfo(stage).lastTier);
-      expect(set.golden).toEqual(stageInfo(stage).dropPool);
+      expect(set.drops).toEqual(stageInfo(stage).dropPool);
     }
   });
 });

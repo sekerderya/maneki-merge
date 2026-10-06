@@ -10,6 +10,7 @@ import { MAX_RENDER_RESOLUTION } from '../config/view';
 import type { RunController } from '../run/RunController';
 import { GAME_SCENE_KEY, GameScene } from './GameScene';
 import type { SceneSkin } from './GameScene';
+import type { PayoutKind } from './fx/MergeFx';
 
 export interface GameView {
   /** Shows a run (replacing the previous one) and wakes the loop. */
@@ -22,9 +23,9 @@ export interface GameView {
   jarBox(): { top: number; bottom: number } | null;
   /**
    * Called whenever a payout shows up on screen (merge, Jackpot, popping cat), with its point in
-   * CSS pixels from the play area's top-left corner; `big` for a Jackpot.
+   * CSS pixels from the play area's top-left corner, and what paid.
    */
-  onCoins(listener: (x: number, y: number, big: boolean) => void): void;
+  onCoins(listener: (x: number, y: number, kind: PayoutKind) => void): void;
   /** Frames per second actually rendered, for the debug panel. */
   readonly fps: number;
 }
@@ -37,9 +38,9 @@ export function createGame(parent: HTMLElement, skin: SceneSkin = 'cat'): GameVi
   let awake = false;
   /** Set after the first frame: before it, Phaser hasn't started its loop yet. */
   let looping = false;
-  let coinsListener: ((x: number, y: number, big: boolean) => void) | null = null;
-  const forwardCoins = (x: number, y: number, big: boolean): void =>
-    coinsListener?.(x / resolution, y / resolution, big);
+  let coinsListener: ((x: number, y: number, kind: PayoutKind) => void) | null = null;
+  const forwardCoins = (x: number, y: number, kind: PayoutKind): void =>
+    coinsListener?.(x / resolution, y / resolution, kind);
 
   const game = new Phaser.Game({
     type: Phaser.AUTO,

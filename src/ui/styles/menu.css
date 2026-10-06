@@ -1,5 +1,5 @@
 /* Main menu (GAME_DESIGN §2.1): a shrine garden with the lucky cat on its cushion, the records,
-   the next goal, a big round PLAY and UPGRADES. The hero takes whatever height is left. */
+   a big round PLAY and UPGRADES. The hero takes whatever height is left. */
 .menu-screen {
   overflow: hidden;
   padding-bottom: 0;
@@ -197,91 +197,6 @@
   font-weight: var(--weight-bold);
   line-height: 1.15;
   font-variant-numeric: tabular-nums;
-}
-
-/* The next goal: how far the wallet is from the next Shrine Expansion. Opens the shop. */
-.menu-goal {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: min(100%, 310px);
-  min-height: 52px;
-  padding: 6px 14px 6px 7px;
-  border: 2.5px solid var(--color-ink);
-  border-radius: 16px;
-  background: var(--color-paper);
-  text-align: left;
-  transition: transform 70ms ease-out;
-}
-
-.menu-goal:active {
-  transform: scale(0.98);
-}
-
-.menu-goal-icon {
-  display: flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: var(--color-peach);
-  color: var(--color-ink);
-}
-
-.menu-goal-icon svg {
-  width: 22px;
-  height: 22px;
-}
-
-.menu-goal-body {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 0;
-}
-
-.menu-goal-head {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
-
-.menu-goal-title {
-  font-size: 0.95rem;
-  font-weight: var(--weight-bold);
-}
-
-.menu-goal-left {
-  margin-left: auto;
-  color: var(--color-muted);
-  font-size: 0.8rem;
-  font-weight: var(--weight-semibold);
-  white-space: nowrap;
-}
-
-.menu-goal.is-ready .menu-goal-left {
-  color: var(--color-ink);
-}
-
-.menu-goal-bar {
-  display: block;
-  height: 9px;
-  border: 1.5px solid var(--color-ink);
-  border-radius: 5px;
-  background: var(--color-greige);
-  overflow: hidden;
-}
-
-.menu-goal-fill {
-  display: block;
-  height: 100%;
-  background: var(--color-gold);
-  transform: scaleX(0);
-  transform-origin: left center;
-  transition: transform 300ms ease-out;
 }
 
 .menu-actions {
@@ -505,11 +420,6 @@
 
   .record-value {
     font-size: 1.15rem;
-  }
-
-  .menu-goal {
-    min-height: 48px;
-    padding-block: 4px;
   }
 
   .menu-actions {

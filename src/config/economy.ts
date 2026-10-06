@@ -10,7 +10,7 @@ export const JACKPOT_COIN_MULTIPLIER = 5;
  */
 export const POP_VALUE_SHARE = 0.5;
 
-/** A merge involving a golden cat, or a golden cat popping, pays this many times the coins. */
+/** A golden merge (Golden Merge upgrade, GAME_DESIGN §5) pays this many times the coins. */
 export const GOLDEN_COIN_MULTIPLIER = 3;
 
 /** Every payout pays at least this much. */

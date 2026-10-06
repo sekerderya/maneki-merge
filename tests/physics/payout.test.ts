@@ -20,7 +20,7 @@ import { upgrades } from './fixtures';
 /** Time never moves: after the first write, everything waits for a flush. */
 const frozen: Scheduler = { now: () => 0, setTimeout: () => 1, clearTimeout: () => {} };
 
-function setup(levels: Partial<UpgradeLevels> = {}, instantExpansion = false) {
+function setup(levels: Partial<UpgradeLevels> = {}, instantExpansion = false, seed = 3) {
   const storage = new MemoryStorage();
   const store = new SaveStore(storage);
   const data: SaveData = defaultSave();
@@ -31,74 +31,95 @@ function setup(levels: Partial<UpgradeLevels> = {}, instantExpansion = false) {
   events.on('merged', (e) => coins.push(e.coins));
   events.on('jackpot', (e) => coins.push(e.coins));
   events.on('catPopped', (e) => coins.push(e.coins));
-  const run = startProfileRun(profile, { seed: 3, events, instantExpansion });
+  const run = startProfileRun(profile, { seed, events, instantExpansion });
   const stored = (): SaveData => new SaveStore(storage).load().data;
   return { run, profile, coins, storage, stored };
 }
 
 /** Two same-tier cats resting side by side on the floor, overlapping by 2 units. */
-function spawnPair(run: RunController, tier: number, centre: number, golden = false): void {
+function spawnPair(run: RunController, tier: number, centre: number): void {
   const r = run.radiusOf(tier);
-  run.spawnBall(tier, centre - r + 1, -r, golden);
+  run.spawnBall(tier, centre - r + 1, -r);
   run.spawnBall(tier, centre + r - 1, -r);
 }
 
 describe('payout pipeline (GAME_DESIGN §5, §9)', () => {
-  it('banks merges with Lucky Paw, combo and golden into the wallet', () => {
+  it('banks merges with Lucky Paw and combo into the wallet', () => {
     const { run, profile, coins } = setup({ luckyPaw: 4, comboCharm: 3 });
     expect(profile.stats.runsPlayed).toBe(1);
     spawnPair(run, 3, -200);
     run.tick();
     spawnPair(run, 3, 200);
     run.tick();
-    spawnPair(run, 4, 0, true);
+    spawnPair(run, 4, 0);
     run.tick();
     expect(run.combo).toBe(3);
     // coinMultiplier 1.6; comboBonus 0.08 × 3 × (combo − 1).
-    // 3 × 1.6 = 4.8 → 5 · 3 × 1.6 × 1.24 = 5.95 → 6 · 5 × 1.6 × 1.48 × 3 = 35.5 → 36
-    expect(coins).toEqual([5, 6, 36]);
-    expect(run.coins).toBe(47);
-    expect(profile.coins).toBe(47);
-    expect(profile.stats).toMatchObject({ totalMerges: 3, totalCoinsEarned: 47, jackpots: 0 });
+    // 3 × 1.6 = 4.8 → 5 · 3 × 1.6 × 1.24 = 5.95 → 6 · 5 × 1.6 × 1.48 = 11.84 → 12
+    expect(coins).toEqual([5, 6, 12]);
+    expect(run.coins).toBe(23);
+    expect(profile.coins).toBe(23);
+    expect(profile.stats).toMatchObject({ totalMerges: 3, totalCoinsEarned: 23, jackpots: 0 });
     expect(profile.records).toEqual({ bestScore: 32, bestStage: 1, highestTier: 5 });
+  });
+
+  it('banks a golden merge at ×3 coins', () => {
+    // Golden Merge 5: 15% of merges are golden. Find the first seed whose first merge is.
+    for (let seed = 0; seed < 100; seed++) {
+      const { run, profile, coins } = setup({ luckyPaw: 4, goldenMerge: 5 }, false, seed);
+      const golden: boolean[] = [];
+      run.events.on('merged', (e) => golden.push(e.golden));
+      spawnPair(run, 3, 0);
+      run.tick();
+      if (!golden[0]) {
+        expect(coins).toEqual([5]); // 3 × 1.6 = 4.8 → 5
+        continue;
+      }
+      // 3 × 1.6 × 3 = 14.4 → 14
+      expect(coins).toEqual([14]);
+      expect(profile.coins).toBe(14);
+      expect(profile.stats.totalCoinsEarned).toBe(14);
+      return;
+    }
+    throw new Error('No golden merge in 100 seeds');
   });
 
   it('pays a Jackpot of two last cats: 5 × C(last) with multipliers', () => {
     const { run, profile, coins } = setup({ luckyPaw: 1 });
     const last = stageInfo(1).lastTier;
-    const r = sizeRadius(12);
-    run.spawnBall(last, 0, -r, true);
+    const r = sizeRadius(11);
+    run.spawnBall(last, 0, -r);
     run.spawnBall(last, 0, -3 * r + 2);
     run.tick();
-    // 5 × 343 × 1.15 × 3 = 5916.75 → 5917
-    expect(coins).toEqual([5917]);
-    expect(profile.coins).toBe(5917);
+    // 5 × 202 × 1.15 = 1161.5 → 1162
+    expect(coins).toEqual([1162]);
+    expect(profile.coins).toBe(1162);
     expect(profile.stats).toMatchObject({ jackpots: 1, totalMerges: 0 });
-    expect(profile.records.bestScore).toBe(8192);
+    expect(profile.records.bestScore).toBe(4096);
   });
 
   it('pays every stage clear and records the stage reached', () => {
-    const { run, profile, coins } = setup({ shrineExpansion: 1, luckyPaw: 2 }, true);
-    run.spawnBall(1, -270, -28, true);
+    const { run, profile, coins } = setup({ luckyPaw: 2 }, true);
+    run.spawnBall(1, -270, -28);
     run.spawnBall(1, 270, -28);
-    run.spawnBall(2, -265, -100, true);
+    run.spawnBall(2, -265, -100);
     for (let i = 0; i < 60; i++) run.tick();
-    // Two 11s, one on the other: they merge into the stage's last cat and clear the stage.
-    run.spawnBall(11, 0, -205);
-    run.spawnBall(11, 0, -614);
+    // Two 10s, one on the other: they merge into the stage's last cat and clear the stage.
+    run.spawnBall(10, 0, -168);
+    run.spawnBall(10, 0, -503);
     run.tick();
     expect(run.stage).toBe(2);
-    // The merge: 202 × 1.3 = 262.6 → 263. Then each cat pays its value, half of C(t), oldest
-    // first: golden 1 → 0.5 × 1.3 × 3 = 1.95 → 2; 1 → 0.65 → 1; golden 2 → 1 × 1.3 × 3 = 3.9 → 4.
-    expect(coins).toEqual([263, 2, 1, 4]);
-    expect(profile.coins).toBe(270);
-    expect(profile.records).toEqual({ bestScore: 2048, bestStage: 2, highestTier: 12 });
+    // The merge: 119 × 1.3 = 154.7 → 155. Then each cat pays its value, half of C(t), oldest
+    // first: 1 → 0.5 × 1.3 = 0.65 → 1; 1 → 1; 2 → 1 × 1.3 = 1.3 → 1.
+    expect(coins).toEqual([155, 1, 1, 1]);
+    expect(profile.coins).toBe(158);
+    expect(profile.records).toEqual({ bestScore: 1024, bestStage: 2, highestTier: 11 });
     expect(profile.stats.totalMerges).toBe(1);
 
-    // The next clear pops the 12, now stage 2's smallest cat: 343 / 2 × 1.3 = 222.95 → 223.
+    // The next clear pops the 11, now stage 2's smallest cat: 202 / 2 × 1.3 = 131.3 → 131.
     run.jumpToStage(3);
     expect(run.stage).toBe(3);
-    expect(coins.slice(4)).toEqual([223]);
+    expect(coins.slice(4)).toEqual([131]);
     expect(profile.records.bestStage).toBe(3);
   });
 

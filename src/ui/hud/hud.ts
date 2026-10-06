@@ -1,36 +1,22 @@
 import { formatNumber } from '../../core/format';
 import { catIcon, paintCatIcon } from '../catIcon';
 import { button, el } from '../dom';
-import { ICON_COIN, ICON_LOCK, ICON_PAUSE } from '../icons';
+import { ICON_COIN, ICON_PAUSE } from '../icons';
 
 export interface HudActions {
   onPause(): void;
 }
 
-export interface HudCat {
-  readonly tier: number;
-  readonly golden: boolean;
-}
-
 export interface HudView {
   setScore(score: number): void;
   setCoins(coins: number): void;
-  /** The next one or two cats (Fortune Teller), next first. */
-  setPreview(cats: readonly HudCat[]): void;
+  /** The cat after the one in the dropper. */
+  setNext(tier: number): void;
   /**
-   * Stage label, the bar towards the stage's last cat and that cat (the goal), with a lock when
-   * the next stage isn't unlocked. A new stage resets the bar without animating it backwards and
-   * makes the label glow.
+   * Stage label, the bar towards the stage's last cat and that cat (the goal), gold at the last
+   * stage. A new stage resets the bar without animating it backwards and makes the label glow.
    */
-  setStage(
-    stage: number,
-    fraction: number,
-    goalTier: number,
-    locked: boolean,
-    final: boolean,
-  ): void;
-  /** Draws attention to the lock (the stage was cleared but the next one isn't unlocked). */
-  pulseLock(): void;
+  setStage(stage: number, fraction: number, goalTier: number, final: boolean): void;
   /** A coin landed on the counter. */
   pulseCoins(): void;
   /** Where flying coins land. */
@@ -70,22 +56,19 @@ export function createHud(root: HTMLElement, actions: HudActions): HudView {
   bar.setAttribute('aria-valuemax', '100');
   const fill = el('div', 'hud-bar-fill');
   bar.append(fill);
-  const lock = el('span', 'hud-lock');
-  lock.insertAdjacentHTML('beforeend', ICON_LOCK);
-  lock.setAttribute('aria-label', 'Next stage locked');
-  lock.dataset['testid'] = 'hud-lock';
-  lock.hidden = true;
   // The stage's last cat: making it grows the jar.
-  const goal = catIcon(1, false);
+  const goal = catIcon(1);
   goal.classList.add('hud-goal');
   goal.dataset['testid'] = 'hud-goal';
-  stage.append(stageLabel, bar, goal, lock);
+  stage.append(stageLabel, bar, goal);
   main.append(top, stage);
 
-  // The next cat in a bubble, with a "Next" tag under it; Fortune Teller's second cat sits beside.
+  // The next cat in a bubble, with a "Next" tag under it.
   const next = el('div', 'hud-next');
   next.dataset['testid'] = 'hud-next';
   const nextCats = el('div', 'hud-next-cats');
+  const nextCat = catIcon(1);
+  nextCats.append(nextCat);
   next.append(nextCats, el('span', 'hud-next-label', 'Next'));
 
   root.append(pause, main, next);
@@ -97,7 +80,6 @@ export function createHud(root: HTMLElement, actions: HudActions): HudView {
     node.classList.add(className);
   };
   stageLabel.addEventListener('animationend', () => stageLabel.classList.remove('is-new'));
-  lock.addEventListener('animationend', () => lock.classList.remove('is-pulsing'));
   coins.addEventListener('animationend', () => coins.classList.remove('is-pulsing'));
 
   return {
@@ -107,16 +89,10 @@ export function createHud(root: HTMLElement, actions: HudActions): HudView {
     setCoins(value) {
       coinValue.textContent = formatNumber(value);
     },
-    setPreview(cats) {
-      while (nextCats.children.length > cats.length) nextCats.lastElementChild?.remove();
-      cats.forEach((cat, i) => {
-        const existing = nextCats.children[i] as HTMLElement | undefined;
-        if (existing) paintCatIcon(existing, cat.tier, cat.golden);
-        else nextCats.append(catIcon(cat.tier, cat.golden));
-      });
-      next.classList.toggle('has-two', cats.length > 1);
+    setNext(tier) {
+      paintCatIcon(nextCat, tier);
     },
-    setStage(value, fraction, goalTier, locked, final) {
+    setStage(value, fraction, goalTier, final) {
       const percent = Math.round(fraction * 100);
       if (value !== shownStage) {
         // A run start or an expansion: jump to the new fill instead of sliding back.
@@ -130,15 +106,10 @@ export function createHud(root: HTMLElement, actions: HudActions): HudView {
       } else {
         fill.style.transform = `scaleX(${fraction})`;
       }
-      if (goal.dataset['tier'] !== String(goalTier)) paintCatIcon(goal, goalTier, false);
+      if (goal.dataset['tier'] !== String(goalTier)) paintCatIcon(goal, goalTier);
       goal.setAttribute('aria-label', `Goal: cat ${goalTier}`);
       bar.setAttribute('aria-valuenow', String(percent));
-      bar.classList.toggle('is-locked', locked);
       bar.classList.toggle('is-final', final);
-      lock.hidden = !locked;
-    },
-    pulseLock() {
-      restartAnimation(lock, 'is-pulsing');
     },
     pulseCoins() {
       restartAnimation(coins, 'is-pulsing');

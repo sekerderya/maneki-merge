@@ -13,8 +13,8 @@ export interface StageSkinSet {
   readonly stage: number;
   /** Tiers the jar can hold at this stage: its first to its last cat, smallest first. */
   readonly tiers: readonly number[];
-  /** Tiers that can be golden here: only dropped cats are golden, so the stage's drop pool. */
-  readonly golden: readonly number[];
+  /** Tiers the dropper hands out here: they show right after the expansion, so they come first. */
+  readonly drops: readonly number[];
 }
 
 export function stageSkinSet(stage: number): StageSkinSet {
@@ -22,6 +22,6 @@ export function stageSkinSet(stage: number): StageSkinSet {
   return {
     stage,
     tiers: Array.from({ length: SIZE_COUNT }, (_, i) => info.firstTier + i),
-    golden: info.dropPool,
+    drops: info.dropPool,
   };
 }
