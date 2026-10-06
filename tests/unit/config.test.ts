@@ -8,9 +8,13 @@ import {
   BASE_DENSITY,
   densityForSize,
   GROWTH_NEIGHBOUR_MAX_SPEED_BASE,
+  FLOOR_RESTITUTION,
   GRAVITY_BASE,
+  JAR_FRICTION,
+  JAR_FRICTION_STATIC,
+  MAX_ANGULAR_SPEED,
   MAX_SPEED_BASE,
-  MERGE_MAX_SPEED_BASE,
+  MERGE_SPIN_RIM_SPEED,
   PHYSICS_STEP_MS,
   WALL_HEIGHT_FACTOR,
   WALL_THICKNESS,
@@ -247,13 +251,13 @@ describe('physics tunables (TECH_SPEC §5)', () => {
     expect(WALL_THICKNESS).toBeGreaterThanOrEqual(300);
   });
 
-  it('makes mass grow like r^1.4', () => {
+  it('makes mass grow like r', () => {
     expect(densityForSize(1)).toBe(BASE_DENSITY);
     for (let s = 2; s <= SIZE_COUNT; s++) {
       const r = sizeRadius(s);
       const mass = densityForSize(s) * Math.PI * r * r;
       const mass1 = BASE_DENSITY * Math.PI * sizeRadius(1) ** 2;
-      expect(mass / mass1).toBeCloseTo((r / sizeRadius(1)) ** 1.4, 6);
+      expect(mass / mass1).toBeCloseTo(r / sizeRadius(1), 6);
     }
   });
 
@@ -262,12 +266,11 @@ describe('physics tunables (TECH_SPEC §5)', () => {
     expect(WALL_HEIGHT_FACTOR).toBeGreaterThan(1);
   });
 
-  it('caps speeds above a natural fall but keeps merges gentle', () => {
+  it('caps speeds above a natural fall', () => {
     // Free fall (no air friction) from the dropper to the floor, in units per second.
     const g = GRAVITY_BASE * 1000;
     const fall = Math.sqrt(2 * g * 924);
     expect(MAX_SPEED_BASE).toBeGreaterThan(fall);
-    expect(MERGE_MAX_SPEED_BASE).toBeLessThan(MAX_SPEED_BASE);
     expect(GROWTH_NEIGHBOUR_MAX_SPEED_BASE).toBeLessThan(MAX_SPEED_BASE);
     // At the speed cap, the smallest cat (size 1, at every stage) moves less than its radius per
     // step: no tunnelling.
@@ -275,15 +278,24 @@ describe('physics tunables (TECH_SPEC §5)', () => {
     expect(perStep).toBeLessThan(sizeRadius(1));
   });
 
-  it('keeps gravity at 900 units/s² (the same at every stage)', () => {
-    expect(GRAVITY_BASE).toBe(0.9);
+  it('keeps gravity at 2150 units/s² (the same at every stage)', () => {
+    expect(GRAVITY_BASE).toBe(2.15);
   });
 
-  it('makes cats slippery and a little bouncy (v0.12)', () => {
-    expect(BALL_FRICTION).toBe(0.1);
-    expect(BALL_FRICTION_STATIC).toBe(0.3);
+  it('makes cats slippery, bouncy against each other and dead on the floor (v0.13)', () => {
+    expect(BALL_FRICTION).toBe(0.05);
+    expect(BALL_FRICTION_STATIC).toBe(0.2);
     expect(BALL_RESTITUTION).toBe(0.25);
-    expect(BALL_INERTIA_SCALE).toBe(3);
+    expect(BALL_INERTIA_SCALE).toBe(2);
+    expect(JAR_FRICTION).toBe(BALL_FRICTION);
+    expect(JAR_FRICTION_STATIC).toBe(BALL_FRICTION_STATIC);
+    expect(FLOOR_RESTITUTION).toBe(0);
+  });
+
+  it('turns a merged cat gently: slower the bigger it is, far below the spin cap', () => {
+    const fastest = MERGE_SPIN_RIM_SPEED / sizeRadius(1);
+    expect(fastest).toBeLessThan(MAX_ANGULAR_SPEED / 5);
+    expect(MERGE_SPIN_RIM_SPEED / sizeRadius(SIZE_COUNT)).toBeLessThan(fastest);
   });
 });
 

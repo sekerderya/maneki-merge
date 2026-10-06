@@ -1,11 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_SPEED_BASE, MERGE_MAX_SPEED_BASE, PHYSICS_STEP_MS } from '../../src/config/physics';
+import {
+  MAX_SPEED_BASE,
+  MERGE_SPIN_MIN_SLIDE,
+  MERGE_SPIN_RIM_SPEED,
+  PHYSICS_STEP_MS,
+} from '../../src/config/physics';
 import { catRadius, stageInfo } from '../../src/config/stages';
 import { SIZE_COUNT, sizeRadius } from '../../src/config/tiers';
 import { MERGE_GROW_MS } from '../../src/config/timings';
 import { Rng } from '../../src/core/rng';
 import type { MergeOutcome } from '../../src/physics/merges';
-import { MergeResolver } from '../../src/physics/merges';
+import { MergeResolver, mergeSpinDirection } from '../../src/physics/merges';
 import { PhysicsWorld } from '../../src/physics/PhysicsWorld';
 
 const CAP_1 = stageInfo(1).lastTier;
@@ -19,6 +24,17 @@ function play(world: PhysicsWorld, steps: number, cap = CAP_1): MergeOutcome[] {
     all.push(...resolver.resolve(world, cap));
   }
   return all;
+}
+
+/** Steps the world until the first merge or Jackpot, and returns it as it happened. */
+function firstMerge(world: PhysicsWorld, steps: number, cap = CAP_1): MergeOutcome | undefined {
+  const resolver = new MergeResolver();
+  for (let i = 0; i < steps; i++) {
+    world.step();
+    const [outcome] = resolver.resolve(world, cap);
+    if (outcome) return outcome;
+  }
+  return undefined;
 }
 
 /** Two same-tier cats resting side by side on the floor, overlapping by 2 units. */
@@ -49,34 +65,60 @@ describe('MergeResolver (GAME_DESIGN §5)', () => {
     expect(cat.y).toBe(merge.y);
   });
 
-  it('keeps the average velocity, capped', () => {
+  it('is born at rest exactly between its parents, however fast they met', () => {
     const world = new PhysicsWorld();
-    world.addBall({ tier: 2, x: -32, y: -300, vx: 300, vy: -100 });
-    world.addBall({ tier: 2, x: 32, y: -300, vx: 100, vy: -100 });
+    const a = world.addBall({ tier: 2, x: -32, y: -300, vx: 1000, vy: 300 });
+    const b = world.addBall({ tier: 2, x: 32, y: -300, vx: -200, vy: 900 });
     world.step();
+    const middle = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
     const [merge] = new MergeResolver().resolve(world, CAP_1);
-    // Equal masses: the contact only trades momentum, so the average stays 200.
-    expect(merge!.ball!.vx).toBeCloseTo(200, -1); // minus a step of air friction
-
-    const fast = new PhysicsWorld();
-    fast.addBall({ tier: 2, x: -32, y: -300, vx: 1000 });
-    fast.addBall({ tier: 2, x: 32, y: -300, vx: 1000 });
-    fast.step();
-    const [capped] = new MergeResolver().resolve(fast, CAP_1);
-    expect(capped!.ball!.speed).toBeCloseTo(MERGE_MAX_SPEED_BASE, 6);
+    const cat = merge!.ball!;
+    expect(cat.x).toBe(middle.x);
+    expect(cat.y).toBe(middle.y);
+    expect(cat.speed).toBe(0);
   });
 
-  it('caps the merge speed the same way at every stage', () => {
-    // Stage 4 starts at tier 31: tier 35 is size 5 there, as big as a stage-1 tier 5.
-    const world = new PhysicsWorld({ stage: 4 });
-    world.addBall({ tier: 35, x: -61, y: -500, vx: 2000 });
-    world.addBall({ tier: 35, x: 61, y: -500, vx: 2000 });
-    world.step();
-    const [merge] = new MergeResolver().resolve(world, stageInfo(4).lastTier);
-    expect(merge!.tier).toBe(35);
-    expect(merge!.ball!.tier).toBe(36);
-    expect(merge!.ball!.size).toBe(6);
-    expect(merge!.ball!.speed).toBeCloseTo(MERGE_MAX_SPEED_BASE, 6);
+  it('turns the new cat as if another cat had clipped it, the same at every stage', () => {
+    // A cat falls onto the right shoulder of a resting one: their rims drag clockwise.
+    const world = new PhysicsWorld();
+    const r = sizeRadius(2);
+    world.addBall({ tier: 2, x: 0, y: -r });
+    world.addBall({ tier: 2, x: r, y: -3 * r, vy: 1200 });
+    const cat = firstMerge(world, 60)!.ball!;
+    expect(cat.spin).toBeGreaterThan(0);
+    expect(cat.spin * cat.targetRadius).toBeCloseTo(MERGE_SPIN_RIM_SPEED, 6);
+
+    // Stage 4 starts at tier 31: tier 36 is size 6 there, as big as a stage-1 tier 6.
+    const big = new PhysicsWorld({ stage: 4 });
+    big.addBall({ tier: 35, x: 0, y: -sizeRadius(5) });
+    big.addBall({ tier: 35, x: -sizeRadius(5), y: -3 * sizeRadius(5), vy: 1200 });
+    const left = firstMerge(big, 60, stageInfo(4).lastTier)!.ball!;
+    expect(left.size).toBe(6);
+    expect(left.spin * sizeRadius(6)).toBeCloseTo(-MERGE_SPIN_RIM_SPEED, 6);
+  });
+
+  it('takes the turn from the slide, else from the parents turning, else from their ids', () => {
+    const world = new PhysicsWorld();
+    const r = sizeRadius(2);
+    const below = world.addBall({ tier: 2, x: 0, y: -r });
+    const right = world.addBall({ tier: 2, x: r, y: -3 * r, vy: 900 });
+    const left = world.addBall({ tier: 2, x: -r, y: -3 * r, vy: 900 });
+    expect(mergeSpinDirection(below, right)).toBe(1);
+    expect(mergeSpinDirection(below, left)).toBe(-1);
+
+    // Head-on: no slide, so the parents' own turn wins, then their ids (odd sum: −1).
+    const still = new PhysicsWorld();
+    const a = still.addBall({ tier: 2, x: -40, y: -r, vx: 300 });
+    const b = still.addBall({ tier: 2, x: 40, y: -r, vx: -300 });
+    const c = still.addBall({ tier: 2, x: 120, y: -r });
+    const rolling = still.addBall({ tier: 2, x: 200, y: -r, spin: -4 });
+    expect(mergeSpinDirection(a, b)).toBe(-1); // ids 1 + 2
+    expect(mergeSpinDirection(a, c)).toBe(1); // ids 1 + 3
+    expect(mergeSpinDirection(c, rolling)).toBe(-1);
+    expect(mergeSpinDirection(rolling, a)).toBe(-1);
+    // A slide too slow to tell: the ids decide.
+    const slow = still.addBall({ tier: 2, x: 120, y: -3 * r, vx: MERGE_SPIN_MIN_SLIDE / 2 });
+    expect(mergeSpinDirection(c, slow)).toBe(1); // ids 3 + 5
   });
 
   it('does not merge different tiers', () => {

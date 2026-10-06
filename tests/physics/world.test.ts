@@ -1,6 +1,7 @@
 import Matter from 'matter-js';
 import { describe, expect, it, vi } from 'vitest';
 import {
+  GRAVITY_BASE,
   GROWTH_NEIGHBOUR_MAX_SPEED_BASE,
   MAX_ANGULAR_SPEED,
   MAX_SPEED_BASE,
@@ -67,9 +68,33 @@ describe('PhysicsWorld', () => {
     run(world, 3);
     expect(cat.y).toBeCloseTo(-sizeRadius(3), 0);
     expect(cat.speed).toBeLessThan(1);
-    // Free fall from y = −924 to the floor takes about 1.5 s.
-    expect(cat.landedMs).toBeGreaterThan(1300);
-    expect(cat.landedMs).toBeLessThan(1700);
+  });
+
+  it.each([1, 2, 3, 4])(
+    'drops a size-%i cat from the dropper to the empty floor in 1 s, without a bounce',
+    (tier) => {
+      const world = new PhysicsWorld();
+      const cat = world.addBall({ tier, x: 0, y: world.geometry.dropY });
+      let highest = Infinity;
+      for (let i = 0; i < 2 * STEPS_PER_SECOND; i++) {
+        world.step();
+        if (cat.landedMs >= 0) highest = Math.min(highest, cat.y);
+      }
+      // First contact on the step that reaches the floor: 1 s, give or take a step.
+      expect(Math.abs(cat.landedMs - 1000)).toBeLessThanOrEqual(PHYSICS_STEP_MS + 1e-9);
+      // The floor never bounces: after landing the cat only sinks into place.
+      expect(highest).toBeGreaterThan(-sizeRadius(tier) - 0.5);
+    },
+  );
+
+  it('still lets cats bounce off each other', () => {
+    const world = new PhysicsWorld();
+    // Head-on, in the air: restitution 0.25 sends them apart at a quarter of the closing speed.
+    const left = world.addBall({ tier: 2, x: -100, y: -600, vx: 500 });
+    const right = world.addBall({ tier: 2, x: 100, y: -600, vx: -500 });
+    run(world, 0.25);
+    expect(right.vx - left.vx).toBeGreaterThan(0.2 * 1000);
+    expect(right.vx - left.vx).toBeLessThan(0.3 * 1000);
   });
 
   it('keeps time in fixed steps and stands still while paused', () => {
@@ -100,7 +125,7 @@ describe('PhysicsWorld', () => {
 
   it('rescales the world into the next stage: the last cat becomes the first', () => {
     const world = new PhysicsWorld();
-    expect(world.gravity).toBe(0.9);
+    expect(world.gravity).toBe(GRAVITY_BASE);
     expect(world.speedLimit).toBeCloseTo(MAX_SPEED_BASE, 9);
     const half = world.wallInnerX;
 
@@ -113,7 +138,7 @@ describe('PhysicsWorld', () => {
     expect(world.stage).toBe(2);
     // Same jar, same gravity, same speed limit: only the cat changed.
     expect(world.wallInnerX).toBe(half);
-    expect(world.gravity).toBe(0.9);
+    expect(world.gravity).toBe(GRAVITY_BASE);
     expect(world.speedLimit).toBeCloseTo(MAX_SPEED_BASE, 9);
     expect(last.tier).toBe(11);
     expect(last.size).toBe(1);
@@ -162,9 +187,6 @@ describe('PhysicsWorld', () => {
     expect(cat.speed).toBeCloseTo(MAX_SPEED_BASE, 6);
     world.step();
     expect(cat.speed).toBeLessThanOrEqual(MAX_SPEED_BASE + 1e-6);
-
-    world.capSpeed(cat, 100);
-    expect(cat.speed).toBeCloseTo(100, 6);
 
     Matter.Body.setAngularVelocity(cat.body, 5); // per 1000/60 ms: 300 rad/s
     world.step();

@@ -8,8 +8,11 @@
 import Matter from 'matter-js';
 import {
   ENABLE_SLEEPING,
+  FLOOR_RESTITUTION,
   GRAVITY_BASE,
   GROWTH_NEIGHBOUR_MAX_SPEED_BASE,
+  JAR_FRICTION,
+  JAR_FRICTION_STATIC,
   MAX_ANGULAR_SPEED,
   MAX_SPEED_BASE,
   PHYSICS_MAX_SUBSTEPS,
@@ -30,6 +33,7 @@ export type NewBall = Omit<BallSpec, 'size'>;
 import { installCircleCollisions } from './circleCollision';
 import { jarGeometry } from './geometry';
 import type { JarGeometry } from './geometry';
+import { installRestitutionOverride } from './restitution';
 
 /** matter-js's gravity unit: gravity.y = 1 accelerates by 0.001 units/ms² (1000 units/s²). */
 const MATTER_GRAVITY_SCALE = 0.001;
@@ -112,6 +116,7 @@ export class PhysicsWorld {
 
   constructor(options: PhysicsWorldOptions = {}) {
     installCircleCollisions();
+    installRestitutionOverride();
     this.geo = jarGeometry(options.stage ?? FIRST_STAGE);
     this.engine = Matter.Engine.create({
       positionIterations: POSITION_ITERATIONS,
@@ -129,6 +134,8 @@ export class PhysicsWorld {
       Matter.Bodies.rectangle(0, wallY, WALL_THICKNESS, wallHeight, {
         isStatic: true,
         label: 'wall',
+        friction: JAR_FRICTION,
+        frictionStatic: JAR_FRICTION_STATIC,
       });
     this.leftWall = wall();
     this.rightWall = wall();
@@ -137,7 +144,14 @@ export class PhysicsWorld {
       WALL_THICKNESS / 2,
       jar.width + 2 * WALL_THICKNESS,
       WALL_THICKNESS,
-      { isStatic: true, label: 'floor' },
+      {
+        isStatic: true,
+        label: 'floor',
+        friction: JAR_FRICTION,
+        frictionStatic: JAR_FRICTION_STATIC,
+        // A landing cat stops dead (restitution.ts).
+        plugin: { restitution: FLOOR_RESTITUTION },
+      },
     );
     const offset = jar.halfWidth + WALL_THICKNESS / 2;
     Matter.Body.setPosition(this.leftWall, { x: -offset, y: wallY });
@@ -255,11 +269,6 @@ export class PhysicsWorld {
       }
     }
     return true;
-  }
-
-  /** Caps a cat's speed (world units per second) right now. */
-  capSpeed(ball: Ball, unitsPerSecond: number): void {
-    this.limitSpeed(ball.body, unitsPerSecond / MATTER_TICKS_PER_SECOND);
   }
 
   /** Feeds everything that decides the future of the world into `hasher`. */

@@ -53,6 +53,8 @@ export interface BallSpec {
   /** World units per second. */
   readonly vx?: number;
   readonly vy?: number;
+  /** Radians per second; positive turns clockwise on screen (y grows downward). */
+  readonly spin?: number;
   /** Start smaller and grow into the tier's radius over MERGE_GROW_MS (merged cats). */
   readonly startRadius?: number;
   /** Play time of the first contact, if the cat counts as landed already. */
@@ -103,6 +105,11 @@ export class Ball implements BallView, CircleShape {
 
   get vy(): number {
     return this.body.velocity.y * MATTER_TICKS_PER_SECOND;
+  }
+
+  /** Radians per second; positive turns clockwise on screen. */
+  get spin(): number {
+    return this.body.angularVelocity * MATTER_TICKS_PER_SECOND;
   }
 
   /** World units per second. */
@@ -186,6 +193,7 @@ export function createBall(id: number, spec: BallSpec): Ball {
       y: (spec.vy ?? 0) / MATTER_TICKS_PER_SECOND,
     });
   }
+  if (spec.spin) Matter.Body.setAngularVelocity(body, spec.spin / MATTER_TICKS_PER_SECOND);
   return ball;
 }
 
