@@ -2,6 +2,30 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.13.0] - 2026-10-06
+
+Physics feel: the owner's fourth feedback batch (M12).
+
+### Changed
+
+- Merging: the new cat is born at rest exactly between the two cats that met. Until now it kept their average velocity (up to 400 u/s), so a cat landing on another drifted down towards the lower one while it grew.
+- A merged cat starts to turn gently, as if another cat had clipped it: the way its parents slid past each other (a cat landing on the right shoulder of another turns clockwise), its rim moving at 80 u/s, so small cats turn faster than big ones. On the floor it rolls a short way.
+- Drops are faster: a dropped cat reaches the empty floor in 1 s (1.6 s before). Gravity 900 → 2150 u/s², the speed limit 1500 → 2400 u/s. Everything else falls faster too.
+- The floor never bounces: a landing cat stops dead. Cats still bounce a little off each other and off the walls (restitution 0.25).
+- Cats shove each other harder: friction 0.1 / 0.3 → 0.05 / 0.2, and the floor and walls now use the same values (they had matter-js's 0.1 / 0.5, which gripped harder than the cats' own values); inertia × 3 → × 2, so pushed cats roll aside; mass ∝ r^1.4 → r, so big cats are lighter next to small ones. Measured headless against v0.12: a small cat rolling into a big one moves it 47 units instead of 21, a cat dropped into a narrow gap pushes its neighbours 397 units apart instead of 109, a cat landing on a bigger one's shoulder shoves it 170 units instead of 47.
+
+### Decisions (where the request was open)
+
+- "Reach the floor in exactly 1 second": measured from the dropper to the empty floor. The dropped sizes differ in radius, so size 1 takes 1.00 s and size 4 0.99 s.
+- Faster drops come from stronger gravity rather than a downward throw: the cat still starts from rest and speeds up, and merged or rolling cats fall as quickly as dropped ones.
+- "No bounce on the floor" covers the floor only. A cat landing on a cat that rests on the floor hardly bounces either (the floor absorbs the push); cats meeting in the air or on a pile still bounce a little. Say if they should land dead everywhere.
+- The direction of the turn follows the parents' motion instead of a random pick, so it looks like the hit that started it. Cats that meet head-on keep the way they were turning; cats that weren't turning take a side from their ids.
+
+### Known issues
+
+- The 150-cat stress pile (cats overfilling the jar all at once) settles more slowly than before (under 75 u/s after 7–9.5 s instead of 3–4.5 s) and its deepest overlap grew from 4–5% to 8–13% of a radius. Normal play isn't affected in the headless bot runs: resting cats are as still as before.
+- A physics step with 150 cats takes 0.93 ms instead of 0.78 ms on the dev machine (budget 2 ms).
+
 ## [0.12.0] - 2026-10-06
 
 Physics and balance: the owner's third feedback batch (M12).

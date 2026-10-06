@@ -72,6 +72,7 @@ A shrine garden in the art of §13, top to bottom:
 
 - Touch and drag anywhere in the play area. The dropper follows the finger horizontally, clamped so the cat stays inside the jar. Release to drop.
 - A tap without dragging drops the cat at the tapped x.
+- A dropped cat falls from the dropper to the empty jar floor in 1 second, and lands without bouncing off the floor (cats still bounce a little off each other and the walls).
 - After a drop, the next cat appears after a 0.45 s cooldown. Releases during the cooldown are ignored.
 - Mouse: move to aim, click to drop.
 - Android back button: game → pause, pause → menu, menu → system default.
@@ -121,7 +122,8 @@ Values are rounded only when paid (§5). Implement the formulas. Unit tests asse
 
 ## 5. Merging
 
-- Two touching cats of the same tier merge into one cat of the next tier at their midpoint, with a pop. The new cat grows from the old size to its new size over about 120 ms, so neighbours get pushed but never launched.
+- Two touching cats of the same tier merge into one cat of the next tier, with a pop. The new cat is born at rest exactly at their midpoint and grows from the old size to its new size over about 120 ms, so neighbours get pushed but never launched.
+- The new cat starts to turn gently, as if another cat had clipped it: the way its parents slid past each other (when a cat lands on the right shoulder of another, the new cat turns clockwise), small cats faster than big ones. On the floor it rolls a short way.
 - A cat takes part in at most one merge per physics step. Merges are queued during collision handling and resolved after the step. When pairs compete for a cat, the oldest cats merge first.
 - **The last cat.** Two size-10 cats merge into the stage's last cat (size 11). That clears the stage (§7): every other cat in the jar pops into its value, and the jar grows into the next stage (at stage 5, the last, it stays).
 - **Jackpot.** Two of a stage's last cat don't merge upward: both vanish with a big celebration, paying score `2 × S(last)` and coins `5 × C(last)` before multipliers. In play this needs two last cats in the jar at once, which a clear prevents (it pops the older one), so in practice only the debug tools make one.

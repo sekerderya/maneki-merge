@@ -264,6 +264,11 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
   - [x] Golden Touch became Golden Merge: +3% per level that a merge pays ×3 coins (no more golden cats)
   - [x] a stage is cleared by merging two 10s: 11 cats per stage (tiers 1–51), the jar grows by 205 / 28 ≈ 7.32
   - [x] save format v3 with the refunds and the Golden Merge level
+- [x] Batch 4 (v0.13.0), physics feel (GAME_DESIGN §3 and §5, TECH_SPEC §5):
+  - [x] a merged cat is born at rest exactly between its parents and turns gently, the way they slid past each other
+  - [x] a dropped cat reaches the empty floor in 1 s (gravity 2150 u/s², speed limit 2400 u/s)
+  - [x] the floor never bounces (a per-body restitution override); cats still bounce a little off each other
+  - [x] cats shove each other harder: friction 0.05 / 0.2 for cats and jar alike, inertia × 2, mass ∝ r
 
 ## M13: Final art integration
 
