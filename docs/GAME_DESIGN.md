@@ -113,8 +113,8 @@ When two tier-`t` cats merge, they pay score `S(t) = 2^t` and base coins `C(t) =
 |   10 |      1,024 |        119 |         59.5 |
 |   11 |      2,048 |        202 |          101 |
 |   21 |  2,097,152 |     40,642 |       20,321 |
-|   31 | 2.1 × 10⁹  |  8,193,466 |    4,096,733 |
-|   41 | 2.2 × 10¹² | 1.7 × 10⁹  |    8.3 × 10⁸ |
+|   31 |  2.1 × 10⁹ |  8,193,466 |    4,096,733 |
+|   41 | 2.2 × 10¹² |  1.7 × 10⁹ |    8.3 × 10⁸ |
 |   51 | 2.3 × 10¹⁵ | 3.3 × 10¹¹ |   1.7 × 10¹¹ |
 
 Values are rounded only when paid (§5). Implement the formulas. Unit tests assert these tables.
@@ -169,16 +169,17 @@ At stage 5 there is no next stage: the clear still happens (every other cat pops
 - Every stage drops its sizes 1–4 (stage 1: tiers 1–4; stage 2: 12–15; …), with base weights `[40, 30, 20, 10]` (smallest first).
 - Big Catch tilts the chances towards the bigger cats: each level moves 3 points from the smallest to the biggest and 1 point from size 2 to size 3, so `share_i = base_i + 3 × L × (2i − 3) / 3` % (i = 0 for the smallest):
 
-  | Big Catch |    1 |    2 |    3 |    4 |
-  | --------: | ---: | ---: | ---: | ---: |
-  |         0 |  40% |  30% |  20% |  10% |
-  |         1 |  37% |  29% |  21% |  13% |
-  |         2 |  34% |  28% |  22% |  16% |
-  |         3 |  31% |  27% |  23% |  19% |
-  |         4 |  28% |  26% |  24% |  22% |
-  |         5 |  25% |  25% |  25% |  25% |
+  | Big Catch |   1 |   2 |   3 |   4 |
+  | --------: | --: | --: | --: | --: |
+  |         0 | 40% | 30% | 20% | 10% |
+  |         1 | 37% | 29% | 21% | 13% |
+  |         2 | 34% | 28% | 22% | 16% |
+  |         3 | 31% | 27% | 23% | 19% |
+  |         4 | 28% | 26% | 24% | 22% |
+  |         5 | 25% | 25% | 25% | 25% |
 
   Until v0.12 it was `base_i × (1 + 0.12 × L × i)`, normalized (10% → 17.5% at L = 5): every level now adds about twice as much.
+
 - The first two drops of a run are always the pool's smallest tier.
 - The queue comes from the seeded RNG. The next cat is visible. Every queued cat rolls its tier (the roll happens even for the two fixed opening drops). Golden merges roll on a second generator seeded from the same seed, once per merge whatever the Golden Merge level, so a seed gives the same drops at every level.
 - After an expansion, queued cats keep their size: each takes the tier at the same place in the new pool (a queued 3 becomes a 13), so the preview the player saw still holds. No new rolls.
@@ -191,13 +192,13 @@ At stage 5 there is no next stage: the clear still happens (every other cat pops
 
 ## 10. Upgrades (permanent, bought in the shop)
 
-| ID             | Name          | Effect per level                                     | Max | Price for each next level                         |
-| -------------- | ------------- | ---------------------------------------------------- | --: | ------------------------------------------------- |
-| `luckyPaw`     | Lucky Paw     | +15% coins from everything                           |  10 | 50, 80, 125, 200, 320, 500, 800, 1250, 2000, 3200 |
-| `bigCatch`     | Big Catch     | Bigger cats come more often: +3% biggest drop (§8)   |   5 | 100, 250, 600, 1500, 3500                         |
-| `goldenMerge`  | Golden Merge  | +3% chance that a merge pays ×3 coins (§5)           |   5 | 120, 240, 480, 960, 1900                          |
-| `comboCharm`   | Combo Charm   | +8% coins per combo step (up to 5 steps)             |   5 | 80, 160, 320, 640, 1280                           |
-| `secondChance` | Second Chance | +1 Lucky Save per run                                |   2 | 500, 4000                                         |
+| ID             | Name          | Effect per level                                   | Max | Price for each next level                         |
+| -------------- | ------------- | -------------------------------------------------- | --: | ------------------------------------------------- |
+| `luckyPaw`     | Lucky Paw     | +15% coins from everything                         |  10 | 50, 80, 125, 200, 320, 500, 800, 1250, 2000, 3200 |
+| `bigCatch`     | Big Catch     | Bigger cats come more often: +3% biggest drop (§8) |   5 | 100, 250, 600, 1500, 3500                         |
+| `goldenMerge`  | Golden Merge  | +3% chance that a merge pays ×3 coins (§5)         |   5 | 120, 240, 480, 960, 1900                          |
+| `comboCharm`   | Combo Charm   | +8% coins per combo step (up to 5 steps)           |   5 | 80, 160, 320, 640, 1280                           |
+| `secondChance` | Second Chance | +1 Lucky Save per run                              |   2 | 500, 4000                                         |
 
 Derived values, where each name means that upgrade's current level:
 
