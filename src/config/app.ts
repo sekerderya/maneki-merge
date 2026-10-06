@@ -18,9 +18,9 @@ export const SAVE_BACKUP_LIMIT = 3;
 export const HINT_IDS = ['aim', 'merge'] as const;
 export type HintId = (typeof HINT_IDS)[number];
 
-/** Browser chrome and splash colors (manifest, theme-color meta). Match --color-bg-top in CSS. */
-export const THEME_COLOR = '#7a1c1c';
-export const BACKGROUND_COLOR = '#7a1c1c';
+/** Browser chrome and splash colors (manifest, theme-color meta). Match --color-bg in CSS. */
+export const THEME_COLOR = '#fcefdf';
+export const BACKGROUND_COLOR = '#fcefdf';
 
 /** Coin and record changes are written to storage at most once per this interval (TECH_SPEC §8). */
 export const SAVE_THROTTLE_MS = 1000;

@@ -11,6 +11,7 @@ import {
   COIN_FLY_STAGGER_MS,
   COIN_SHOWER_SPREAD,
 } from '../../config/view';
+import { reducedMotion } from '../../platform/motion';
 import { el } from '../dom';
 import { ICON_COIN } from '../icons';
 
@@ -38,7 +39,6 @@ export function createCoinFly(
   const layer = el('div', 'coin-fly');
   layer.setAttribute('aria-hidden', 'true');
   root.append(layer);
-  const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
 
   const pool: Coin[] = [];
   for (let i = 0; i < COIN_FLY_POOL; i++) {
@@ -65,7 +65,7 @@ export function createCoinFly(
       const x1 = goal.left + goal.width / 2 - box.left;
       const y1 = goal.top + goal.height / 2 - box.top;
       const lift = Math.hypot(x1 - x0, y1 - y0) * COIN_FLY_ARC;
-      const n = reduceMotion?.matches ? Math.min(1, count) : count;
+      const n = reducedMotion() ? Math.min(1, count) : count;
 
       for (let i = 0; i < n; i++) {
         const coin = pool.find((c) => c.animation === null);

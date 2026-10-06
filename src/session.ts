@@ -91,6 +91,11 @@ export class GameSession {
     this.parts.onProfileChange();
   }
 
+  /** "How to play" (Settings): the first-run hints show again in the next run. */
+  replayHints(): void {
+    this.parts.profile.resetHints();
+  }
+
   /** Writes everything pending (backgrounding, page hide, leaving a run). */
   save(): boolean {
     return this.parts.profile.flush();

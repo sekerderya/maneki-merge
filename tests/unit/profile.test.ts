@@ -186,14 +186,26 @@ describe('Profile: wallet, records and stats (GAME_DESIGN §5, §11)', () => {
 
   it('keeps settings and hint flags', () => {
     const { profile } = setup();
-    expect(profile.settings).toEqual({ sound: true, haptics: true });
+    expect(profile.settings).toEqual({ sound: true, haptics: true, reduceMotion: false });
     profile.setSetting('sound', false);
     profile.setSetting('haptics', false);
-    expect(profile.settings).toEqual({ sound: false, haptics: false });
+    expect(profile.settings).toEqual({ sound: false, haptics: false, reduceMotion: false });
     expect(profile.hintSeen('aim')).toBe(false);
     profile.markHintSeen('aim');
     expect(profile.hintSeen('aim')).toBe(true);
     expect(profile.hintSeen('merge')).toBe(false);
+  });
+
+  it('switches Reduce motion and brings the first-run hints back (Settings)', () => {
+    const { profile } = setup();
+    profile.setSetting('reduceMotion', true);
+    expect(profile.settings.reduceMotion).toBe(true);
+    profile.markHintSeen('aim');
+    profile.markHintSeen('merge');
+    profile.resetHints();
+    expect(profile.hintSeen('aim')).toBe(false);
+    expect(profile.hintSeen('merge')).toBe(false);
+    expect(profile.pending).toBe(true);
   });
 
   it('resets to defaults and writes at once', () => {

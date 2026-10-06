@@ -1,6 +1,7 @@
 import './ui/styles/index.css';
 import { AudioEngine } from './audio';
 import { Profile } from './core/profile';
+import { shrineGoal } from './core/shop';
 import { anyAffordable } from './core/upgrades';
 import type { Scheduler } from './core/profile';
 import { SaveStore } from './core/save';
@@ -17,14 +18,17 @@ import {
   readInstallEnvironment,
   registerServiceWorker,
   requestPersistentStorage,
+  setReduceMotion,
   setupViewport,
   UpdateGate,
   watchLifecycle,
   watchPhoneLandscape,
 } from './platform';
 import { GameSession } from './session';
+import { setIconSkin } from './ui/catIcon';
 import { byId } from './ui/dom';
 import { createGameOverOverlay } from './ui/overlays/gameOverOverlay';
+import { createSettingsPanel } from './ui/panels/settingsPanel';
 import { createShopPanel } from './ui/panels/shopPanel';
 import { createPauseOverlay } from './ui/overlays/pauseOverlay';
 import { createRotateOverlay } from './ui/overlays/rotateOverlay';
@@ -38,6 +42,8 @@ import type { InstallContext } from './platform';
 async function boot(): Promise<void> {
   setupViewport();
   const flags = parseUrlFlags(window.location.search);
+  const skin = flags.skin === 'placeholder' ? 'placeholder' : 'cat';
+  setIconSkin(skin);
 
   await loadFonts();
 
@@ -57,6 +63,7 @@ async function boot(): Promise<void> {
   audio.listen();
   const haptics = Haptics.forNavigator();
   haptics.setEnabled(profile.settings.haptics);
+  setReduceMotion(profile.settings.reduceMotion);
   // Every button clicks, except the ones that play their own sound (data-sfx="none").
   document.addEventListener('click', (event) => {
     const target = event.target instanceof Element ? event.target.closest('button') : null;
@@ -84,7 +91,7 @@ async function boot(): Promise<void> {
       session.startRun();
     },
     onUpgrades: () => openShop(),
-    onToggleSound: () => toggleSound(),
+    onSettings: () => openSettings(),
     onApplyUpdate: () => void gate.apply(),
     onInstall: () => void installPrompt.prompt(),
   });
@@ -117,6 +124,32 @@ async function boot(): Promise<void> {
     shop.hide();
   };
 
+  // Settings panel (GAME_DESIGN §2.4) over the menu, with its own back layer.
+  let settingsLayer: number | null = null;
+  const settingsPanel = createSettingsPanel(byId('overlays'), {
+    onToggle: (key) => {
+      session.setSetting(key, !session.settings[key]);
+      if (key === 'haptics') haptics.play('tick');
+    },
+    onReplayTips: () => session.replayHints(),
+    onClose: () => closeSettings(),
+  });
+  settingsPanel.setHapticsSupported(haptics.supported);
+  const openSettings = (): void => {
+    if (settingsPanel.visible) return;
+    showProfile();
+    settingsPanel.show();
+    settingsLayer = back.push(() => {
+      settingsLayer = null;
+      settingsPanel.hide();
+    });
+  };
+  const closeSettings = (): void => {
+    if (settingsLayer !== null) back.release(settingsLayer);
+    settingsLayer = null;
+    settingsPanel.hide();
+  };
+
   const gameScreen = createGameScreen(byId('game-screen'), {
     onPause: () => session.pauseRun(),
   });
@@ -136,7 +169,7 @@ async function boot(): Promise<void> {
   });
 
   // Phaser renders into the play area; its loop sleeps while the menu is up.
-  const game = createGame(gameScreen.playArea);
+  const game = createGame(gameScreen.playArea, skin);
   // The menu and the pause overlay show what the profile holds.
   const showProfile = (): void => {
     const { bestScore, bestStage } = profile.records;
@@ -144,10 +177,12 @@ async function boot(): Promise<void> {
     menu.setCoins(profile.coins);
     menu.setRecords(bestScore, bestStage);
     menu.setUpgradesAffordable(anyAffordable(profile.upgrades, profile.coins));
+    menu.setGoal(shrineGoal(profile.upgrades, profile.coins));
     shop.update(profile.upgrades, profile.coins);
     audio.setEnabled(settings.sound);
     haptics.setEnabled(settings.haptics);
-    menu.setSoundOn(settings.sound);
+    setReduceMotion(settings.reduceMotion);
+    settingsPanel.setValues(settings);
     pause.setSoundOn(settings.sound);
     pause.setHapticsOn(settings.haptics);
   };

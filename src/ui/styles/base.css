@@ -17,7 +17,7 @@ body {
 body {
   position: fixed;
   inset: 0;
-  background: linear-gradient(180deg, var(--color-bg-top), var(--color-bg-bottom));
+  background: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-family);
   font-weight: var(--weight-regular);
@@ -83,7 +83,7 @@ button:disabled {
 }
 
 button:focus-visible {
-  outline: 3px solid var(--color-gold-100);
+  outline: 3px solid var(--color-coral);
   outline-offset: 3px;
 }
 
@@ -95,36 +95,42 @@ button:focus-visible {
   gap: 8px;
   min-height: var(--touch-min);
   padding: 0 28px;
+  border: var(--border);
   border-radius: var(--radius-pill);
   font-weight: var(--weight-bold);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   box-shadow: var(--shadow-raised);
   transition:
-    transform 80ms ease-out,
-    box-shadow 80ms ease-out,
-    filter 80ms ease-out;
+    transform 70ms ease-out,
+    box-shadow 70ms ease-out,
+    filter 70ms ease-out;
 }
 
 .btn:active:not(:disabled) {
-  transform: translateY(4px) scale(0.97);
-  filter: brightness(0.95);
+  transform: translateY(3px) scale(0.97);
+  filter: brightness(0.96);
   box-shadow: var(--shadow-pressed);
 }
 
 .btn:disabled {
-  filter: saturate(0.4) brightness(0.85);
+  cursor: default;
 }
 
+/* The one primary action on a screen. */
 .btn-primary {
-  background: linear-gradient(180deg, var(--color-gold-300), var(--color-gold-500));
-  color: var(--color-ink);
-  border: 3px solid var(--color-gold-700);
+  background: var(--color-coral);
+  color: #fff;
+  text-shadow: 0 2px 0 var(--color-coral-dark);
 }
 
 .btn-secondary {
-  background: linear-gradient(180deg, var(--color-red-500), var(--color-red-600));
-  color: var(--color-cream);
-  border: 3px solid var(--color-red-900);
+  background: var(--color-mint);
+  color: var(--color-ink);
+}
+
+.btn-ghost {
+  background: var(--color-paper);
+  color: var(--color-ink);
 }
 
 .btn-small {
@@ -139,26 +145,52 @@ button:focus-visible {
   justify-content: center;
   width: var(--touch-min);
   height: var(--touch-min);
+  border: var(--border);
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.22);
-  transition: transform 80ms ease-out;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  box-shadow: var(--shadow-raised);
+  transition:
+    transform 70ms ease-out,
+    box-shadow 70ms ease-out;
 }
 
 .icon-btn:active {
-  transform: scale(0.92);
-  background: rgba(0, 0, 0, 0.32);
+  transform: translateY(3px) scale(0.94);
+  box-shadow: var(--shadow-pressed);
 }
 
 .icon-btn svg {
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    transition-duration: 0ms !important;
-    animation-duration: 0ms !important;
-  }
+/* A plate that shows a value (not a button): no ink edge below. */
+.coin-balance {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px 0 5px;
+  border: var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-weight: var(--weight-bold);
+  font-size: 1.35rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.coin-balance svg {
+  width: 32px;
+  height: 32px;
+}
+
+/* Reduced motion (GAME_DESIGN §12): the OS setting or the in-game one sets this class on <html>.
+   Transitions snap; each stylesheet stops its own decorative animations, while banners and
+   toasts keep their lifetime animation as a plain fade. */
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  transition-duration: 0ms !important;
 }

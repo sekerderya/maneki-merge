@@ -1,39 +1,52 @@
-/* Theme tokens: warm lucky-cat red and gold. Keep --color-bg-top in sync with THEME_COLOR. */
+/* Theme tokens (GAME_DESIGN §13): a cream shrine garden with ink outlines. Coral is for the one
+   primary action on a screen, gold for coins and rewards, red for danger and badges, mint for
+   secondary actions and "on". Keep --color-bg in sync with THEME_COLOR (config/app.ts). */
 :root {
-  --color-bg-top: #7a1c1c;
-  --color-bg-bottom: #c8811f;
-  --color-red-900: #4a0f0f;
-  --color-red-700: #7a1c1c;
-  --color-red-600: #9e2a22;
-  --color-red-500: #c0392b;
-  --color-gold-700: #a8691a;
-  --color-gold-500: #e2a52b;
-  --color-gold-300: #f6c343;
-  --color-gold-100: #ffe8a8;
-  --color-cream: #fff8ec;
-  --color-ink: #3b1a10;
-  --color-text: var(--color-cream);
-  --color-muted: rgba(255, 248, 236, 0.72);
-  --color-scrim: rgba(40, 8, 8, 0.92);
+  --color-bg: #fcefdf;
+  --color-ground: #f4d8be;
+  --color-paper: #fff8ee;
+  --color-card: #ffffff;
+  --color-ink: #4a2e25;
+  --color-cocoa: #7a5546;
+  --color-line: #e3cbb0;
+  --color-peach: #fce3cc;
+  --color-greige: #eadccb;
+  --color-coral: #e8604c;
+  --color-coral-dark: #a63c2c;
+  --color-mint: #9fdcc6;
+  --color-gold: #f2b83b;
+  --color-gold-dark: #c98a1b;
+  --color-gold-light: #fff1c2;
+  --color-red: #d9483b;
+  --color-red-text: #b23a2e;
+  --color-sakura: #f7c9d2;
+  --color-sakura-deep: #f2a7b8;
+  --color-text: var(--color-ink);
+  --color-muted: var(--color-cocoa);
+  --color-scrim: rgba(74, 46, 37, 0.55);
 
   --font-family: 'Fredoka', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --weight-regular: 500;
+  --weight-semibold: 600;
   --weight-bold: 700;
 
   --radius-sm: 12px;
   --radius-md: 18px;
+  --radius-lg: 28px;
   --radius-pill: 999px;
 
   --touch-min: 48px;
   --gutter: 16px;
+  --border: 3px solid var(--color-ink);
 
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
 
-  --shadow-raised: 0 5px 0 rgba(0, 0, 0, 0.28);
-  --shadow-pressed: 0 1px 0 rgba(0, 0, 0, 0.28);
+  /* Buttons stand on a solid ink edge and sink into it when pressed. */
+  --shadow-raised: 0 4px 0 var(--color-ink);
+  --shadow-pressed: 0 1px 0 var(--color-ink);
 
-  color-scheme: dark;
+  color-scheme: light;
 }

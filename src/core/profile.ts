@@ -197,6 +197,14 @@ export class Profile {
     this.touch();
   }
 
+  /** "How to play" in the settings: every first-run hint shows again in the next run. */
+  resetHints(): void {
+    const hints = this.state.flags.hintsSeen;
+    if (!Object.values(hints).some(Boolean)) return;
+    for (const id of Object.keys(hints) as HintId[]) hints[id] = false;
+    this.touch();
+  }
+
   /** Back to a fresh save (debug "Reset save"), written at once. */
   reset(): void {
     this.state = defaultSave();

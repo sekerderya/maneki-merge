@@ -24,7 +24,7 @@ const sampleSave = (): SaveData => {
   s.upgrades.shrineExpansion = 1;
   s.records = { bestScore: 5678, bestStage: 3, highestTier: 9 };
   s.stats = { runsPlayed: 4, totalMerges: 321, totalCoinsEarned: 2000, jackpots: 1 };
-  s.settings = { sound: false, haptics: true };
+  s.settings = { sound: false, haptics: true, reduceMotion: true };
   s.flags.hintsSeen.aim = true;
   return s;
 };
@@ -58,7 +58,7 @@ describe('defaultSave (GAME_DESIGN §11)', () => {
     expect(Object.values(s.upgrades).every((l) => l === 0)).toBe(true);
     expect(s.records).toEqual({ bestScore: 0, bestStage: 1, highestTier: 0 });
     expect(s.stats).toEqual({ runsPlayed: 0, totalMerges: 0, totalCoinsEarned: 0, jackpots: 0 });
-    expect(s.settings).toEqual({ sound: true, haptics: true });
+    expect(s.settings).toEqual({ sound: true, haptics: true, reduceMotion: false });
     expect(s.flags.hintsSeen).toEqual({ aim: false, merge: false });
   });
 
@@ -190,8 +190,17 @@ describe('sanitize', () => {
     expect(d.upgrades.secondChance).toBe(0);
     expect(d.records).toEqual({ bestScore: 0, bestStage: 1, highestTier: 56 });
     expect(d.stats).toEqual(defaultSave().stats);
-    expect(d.settings).toEqual({ sound: true, haptics: false });
+    expect(d.settings).toEqual({ sound: true, haptics: false, reduceMotion: false });
     expect(d.flags.hintsSeen).toEqual({ aim: false, merge: true });
+  });
+
+  it('gives a save from before v0.11 the Reduce motion setting, off, without an issue', () => {
+    const result = sanitize({ settings: { sound: false, haptics: true } });
+    expect(result.issues).toEqual([]);
+    expect(result.data.settings).toEqual({ sound: false, haptics: true, reduceMotion: false });
+    const bad = sanitize({ settings: { reduceMotion: 'on' } });
+    expect(bad.issues).toEqual(['settings.reduceMotion']);
+    expect(bad.data.settings.reduceMotion).toBe(false);
   });
 
   it('keeps scores beyond 2^53 (later stages score in the quadrillions)', () => {

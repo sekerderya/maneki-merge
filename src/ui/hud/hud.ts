@@ -49,14 +49,16 @@ export function createHud(root: HTMLElement, actions: HudActions): HudView {
 
   const main = el('div', 'hud-main');
   const top = el('div', 'hud-row');
+  const scoreBlock = el('div', 'hud-score-block');
   const score = el('span', 'hud-score', '0');
   score.dataset['testid'] = 'hud-score';
+  scoreBlock.append(el('span', 'hud-score-label', 'Score'), score);
   const coins = el('span', 'hud-coins');
   coins.dataset['testid'] = 'hud-coins';
   coins.insertAdjacentHTML('beforeend', ICON_COIN);
   const coinValue = el('span', '', '0');
   coins.append(coinValue);
-  top.append(score, coins);
+  top.append(scoreBlock, coins);
 
   const stage = el('div', 'hud-stage');
   const stageLabel = el('span', 'hud-stage-label', 'Stage 1');
@@ -80,11 +82,11 @@ export function createHud(root: HTMLElement, actions: HudActions): HudView {
   stage.append(stageLabel, bar, goal, lock);
   main.append(top, stage);
 
+  // The next cat in a bubble, with a "Next" tag under it; Fortune Teller's second cat sits beside.
   const next = el('div', 'hud-next');
   next.dataset['testid'] = 'hud-next';
-  next.append(el('span', 'hud-next-label', 'Next'));
   const nextCats = el('div', 'hud-next-cats');
-  next.append(nextCats);
+  next.append(nextCats, el('span', 'hud-next-label', 'Next'));
 
   root.append(pause, main, next);
 

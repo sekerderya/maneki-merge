@@ -19,6 +19,8 @@ export interface ShopCard {
   /** The next level's price, or null at MAX. */
   readonly price: number | null;
   readonly state: PriceState;
+  /** Coins still missing for the next level, or null when it is affordable or at MAX. */
+  readonly shortfall: number | null;
   /** The stat at the current level, e.g. "+45%". */
   readonly current: string;
   /** The stat after buying the next level, or null at MAX. */
@@ -39,8 +41,37 @@ export function shopCard(id: UpgradeId, levels: UpgradeLevels, coins: number): S
     maxLevel: def.maxLevel,
     price: check.price,
     state,
+    shortfall: state === 'insufficient' && check.price !== null ? check.price - coins : null,
     current: upgradeValue(id, level),
     next: level < def.maxLevel ? upgradeValue(id, level + 1) : null,
+  };
+}
+
+/**
+ * The menu's next goal (GAME_DESIGN §2.1): the next Shrine Expansion level, which opens one more
+ * stage. Null once every stage is open.
+ */
+export interface ShrineGoal {
+  /** The stage the next level opens. */
+  readonly stage: number;
+  readonly price: number;
+  /** Coins still missing; 0 when it is affordable. */
+  readonly remaining: number;
+  /** How far the wallet is towards the price, 0–1. */
+  readonly fraction: number;
+}
+
+export function shrineGoal(levels: UpgradeLevels, coins: number): ShrineGoal | null {
+  const def = UPGRADES.shrineExpansion;
+  const level = levels.shrineExpansion;
+  const price = def.prices[level];
+  if (level >= def.maxLevel || price === undefined) return null;
+  const have = Math.max(0, Math.min(coins, price));
+  return {
+    stage: deriveStats(levels).maxStage + 1,
+    price,
+    remaining: price - have,
+    fraction: price > 0 ? have / price : 1,
   };
 }
 

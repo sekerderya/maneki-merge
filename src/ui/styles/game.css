@@ -1,14 +1,24 @@
 /* Game screen (GAME_DESIGN §2.3): DOM HUD band on top, the canvas fills the play band below. */
 .game-screen {
-  padding: calc(var(--safe-top) + 6px) 0 var(--safe-bottom) 0;
+  padding: calc(var(--safe-top) + 8px) 0 var(--safe-bottom) 0;
 }
 
 .game-hud {
+  position: relative;
+  z-index: 3;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
-  min-height: 64px;
-  padding: 0 calc(var(--safe-right) + 12px) 0 calc(var(--safe-left) + 12px);
+  padding: 0 calc(var(--safe-right) + 12px) 6px calc(var(--safe-left) + 12px);
+}
+
+.pause-btn {
+  flex: none;
+}
+
+.pause-btn svg {
+  width: 22px;
+  height: 22px;
 }
 
 .hud-main {
@@ -16,7 +26,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .hud-row {
@@ -26,30 +36,45 @@
   gap: 8px;
 }
 
+.hud-score-block {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.hud-score-label {
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
 .hud-score {
   font-weight: var(--weight-bold);
   font-size: 1.75rem;
-  line-height: 1;
+  line-height: 1.05;
   font-variant-numeric: tabular-nums;
-  color: var(--color-cream);
-  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.3);
 }
 
 .hud-coins {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 2px 10px 2px 3px;
+  gap: 5px;
+  height: 34px;
+  padding: 0 11px 0 3px;
+  border: 2.5px solid var(--color-ink);
   border-radius: var(--radius-pill);
-  background: rgba(0, 0, 0, 0.25);
+  background: var(--color-paper);
   font-weight: var(--weight-bold);
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-variant-numeric: tabular-nums;
 }
 
 .hud-coins svg {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
 }
 
 .hud-stage {
@@ -59,18 +84,19 @@
 }
 
 .hud-stage-label {
-  font-size: 0.8rem;
+  display: inline-block;
+  font-size: 0.95rem;
   font-weight: var(--weight-bold);
   white-space: nowrap;
-  color: var(--color-gold-100);
+  transform-origin: left center;
 }
 
 .hud-bar {
   flex: 1;
-  height: 10px;
+  height: 14px;
+  border: 2px solid var(--color-ink);
   border-radius: var(--radius-pill);
-  background: rgba(0, 0, 0, 0.3);
-  border: 1.5px solid rgba(255, 232, 168, 0.35);
+  background: var(--color-greige);
   overflow: hidden;
 }
 
@@ -79,92 +105,162 @@
   height: 100%;
   transform: scaleX(0);
   transform-origin: left center;
-  background: linear-gradient(90deg, var(--color-gold-500), var(--color-gold-300));
+  background: var(--color-gold);
   transition: transform 220ms ease-out;
 }
 
 .hud-bar.is-locked .hud-bar-fill {
-  background: linear-gradient(90deg, #9a8a7a, #c9b8a4);
+  background: #c9b8a4;
+}
+
+.hud-lock {
+  display: inline-flex;
 }
 
 .hud-lock svg {
-  width: 16px;
-  height: 16px;
-  color: var(--color-gold-100);
+  width: 18px;
+  height: 18px;
+  color: var(--color-ink);
 }
 
 /* The stage's goal: its last cat, small, at the end of the bar. */
 .hud-goal.cat-icon {
-  --size: 22px;
-  margin-left: -4px;
+  --size: 30px;
 }
 
 .hud-bar.is-final + .hud-goal {
-  box-shadow: 0 0 8px rgba(246, 195, 67, 0.8);
+  filter: drop-shadow(0 0 5px rgba(242, 184, 59, 0.9));
 }
 
+/* The next cat in a bubble with a "Next" tag; Fortune Teller's second cat sits beside it. */
 .hud-next {
+  position: relative;
+  flex: none;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  min-width: 48px;
-}
-
-.hud-next-label {
-  font-size: 0.68rem;
-  font-weight: var(--weight-bold);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--color-muted);
+  padding-bottom: 9px;
 }
 
 .hud-next-cats {
   display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  gap: 2px;
+  min-width: 62px;
+  height: 62px;
+  padding: 0 6px;
+  border: 3px solid var(--color-ink);
+  border-radius: 31px;
+  background: var(--color-paper);
+}
+
+.hud-next-cats .cat-icon {
+  --size: 42px;
 }
 
 .hud-next.has-two .cat-icon:nth-child(2) {
   --size: 28px;
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
-/* A cat as a DOM icon: the same colours as the placeholder sprites. */
+.hud-next-label {
+  position: absolute;
+  bottom: 0;
+  padding: 2px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--color-ink);
+  color: var(--color-paper);
+  font-size: 0.7rem;
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+/* A cat as a DOM icon: its art (inline SVG) with the number on its plate. */
 .cat-icon {
   --size: 38px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  position: relative;
+  display: inline-block;
   flex: none;
   width: var(--size);
   height: var(--size);
+  line-height: 1;
+}
+
+.cat-icon > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.cat-icon-num {
+  position: absolute;
+  left: 50%;
+  top: var(--num-y);
+  transform: translate(-50%, -50%);
+  color: var(--num-color);
+  font-size: max(9px, calc(var(--size) * var(--num-size)));
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+  text-shadow:
+    1px 0 0 var(--num-halo),
+    -1px 0 0 var(--num-halo),
+    0 1px 0 var(--num-halo),
+    0 -1px 0 var(--num-halo);
+}
+
+/* Golden cats shimmer, like their sprites twinkle. */
+.cat-icon.is-golden::after {
+  content: '';
+  position: absolute;
+  inset: 4%;
+  border-radius: 50%;
+  background: linear-gradient(
+      115deg,
+      transparent 40%,
+      rgba(255, 244, 194, 0.8) 50%,
+      transparent 60%
+    )
+    no-repeat;
+  background-size: 300% 100%;
+  background-position: 100% 0;
+  pointer-events: none;
+  animation: golden-shimmer 1.8s ease-in-out infinite;
+}
+
+@keyframes golden-shimmer {
+  60%,
+  100% {
+    background-position: 0 0;
+  }
+}
+
+/* The flat placeholder look (`?skin=placeholder`). */
+.cat-icon.is-placeholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 50%;
   background: var(--cat-color);
   border: calc(var(--size) * 0.08) solid var(--cat-outline);
   color: #fff;
   font-weight: var(--weight-bold);
   font-size: calc(var(--size) * 0.5);
-  line-height: 1;
   font-variant-numeric: tabular-nums;
   text-shadow:
     1.5px 0 0 var(--color-ink),
     -1.5px 0 0 var(--color-ink),
     0 1.5px 0 var(--color-ink),
-    0 -1.5px 0 var(--color-ink),
-    1px 1px 0 var(--color-ink),
-    -1px -1px 0 var(--color-ink),
-    1px -1px 0 var(--color-ink),
-    -1px 1px 0 var(--color-ink);
+    0 -1.5px 0 var(--color-ink);
 }
 
-.cat-icon.is-two-digits {
+.cat-icon.is-placeholder.is-two-digits {
   font-size: calc(var(--size) * 0.4);
-}
-
-.cat-icon.is-golden {
-  border-width: calc(var(--size) * 0.13);
-  box-shadow: 0 0 8px rgba(246, 195, 67, 0.8);
 }
 
 .play-area {
@@ -174,6 +270,15 @@
   overflow: hidden;
   /* All gestures belong to the game: no scroll, no zoom. */
   touch-action: none;
+}
+
+/* The shrine garden behind the glass jar; the canvas is transparent around the cats. */
+.play-scenery {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
 .play-area canvas {
@@ -194,8 +299,8 @@
   margin: 0;
   padding: 10px 18px;
   border-radius: var(--radius-pill);
-  background: rgba(40, 8, 8, 0.78);
-  color: var(--color-cream);
+  background: var(--color-ink);
+  color: var(--color-paper);
   font-weight: var(--weight-bold);
   font-size: 1rem;
   text-align: center;
@@ -217,8 +322,7 @@
 
 @keyframes stage-label-glow {
   0% {
-    color: #fff;
-    text-shadow: 0 0 10px var(--color-gold-300);
+    color: var(--color-coral);
     transform: scale(1.25);
   }
   100% {
@@ -226,21 +330,12 @@
   }
 }
 
-.hud-stage-label {
-  display: inline-block;
-  transform-origin: left center;
-}
-
 .hud-bar-fill.is-instant {
   transition: none;
 }
 
 .hud-bar.is-final .hud-bar-fill {
-  background: linear-gradient(90deg, var(--color-gold-300), #fff4c2, var(--color-gold-300));
-}
-
-.hud-lock {
-  display: inline-flex;
+  background: linear-gradient(90deg, var(--color-gold), var(--color-gold-light), var(--color-gold));
 }
 
 .hud-lock.is-pulsing svg {
@@ -249,7 +344,7 @@
 
 @keyframes lock-pulse {
   50% {
-    color: #fff;
+    color: var(--color-red);
     transform: scale(1.35);
   }
 }
@@ -282,12 +377,10 @@
   gap: 10px;
   max-width: calc(100% - 32px);
   padding: 14px 24px;
+  border: var(--border);
   border-radius: var(--radius-md);
-  background: linear-gradient(180deg, rgba(122, 28, 28, 0.92), rgba(74, 15, 15, 0.92));
-  border: 2px solid var(--color-gold-300);
-  box-shadow:
-    0 0 24px rgba(246, 195, 67, 0.45),
-    var(--shadow-raised);
+  background: var(--color-paper);
+  box-shadow: 0 5px 0 var(--color-ink);
   text-align: center;
   white-space: nowrap;
   animation: banner-life 1300ms ease-out both;
@@ -298,8 +391,7 @@
   font-size: 1.7rem;
   font-weight: var(--weight-bold);
   line-height: 1.1;
-  color: var(--color-gold-100);
-  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
+  color: var(--color-ink);
 }
 
 .banner-cats {
@@ -308,7 +400,7 @@
 }
 
 .banner-cats .cat-icon {
-  --size: 44px;
+  --size: 52px;
 }
 
 @keyframes banner-life {
@@ -340,10 +432,10 @@
   max-width: calc(100% - 32px);
   margin: 0;
   padding: 10px 18px;
+  border: 2.5px solid var(--color-ink);
   border-radius: var(--radius-pill);
-  background: rgba(40, 8, 8, 0.86);
-  border: 1.5px solid rgba(255, 232, 168, 0.5);
-  color: var(--color-cream);
+  background: var(--color-paper);
+  color: var(--color-ink);
   font-weight: var(--weight-bold);
   font-size: 0.95rem;
   text-align: center;
@@ -364,19 +456,6 @@
   100% {
     opacity: 0;
     transform: translate(-50%, 0);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .banner {
-    animation-name: banner-fade;
-  }
-  .toast {
-    animation-name: toast-fade;
-  }
-  .hud-stage-label.is-new,
-  .hud-lock.is-pulsing svg {
-    animation: none;
   }
 }
 
@@ -415,37 +494,33 @@
   font-size: 1.35rem;
   font-weight: var(--weight-bold);
   font-variant-numeric: tabular-nums;
-  color: var(--color-gold-300);
-  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
+  color: var(--color-ink);
 }
 
 .banner-coins svg {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
 }
 
 .banner-detail {
   margin: 0;
   font-size: 1rem;
   font-weight: var(--weight-bold);
-  color: var(--color-cream);
-  opacity: 0.85;
+  color: var(--color-muted);
 }
 
 .banner.is-jackpot {
-  background: linear-gradient(180deg, rgba(168, 105, 26, 0.95), rgba(110, 40, 12, 0.95));
-  border-color: #fff4c2;
+  background: var(--color-gold);
   box-shadow:
-    0 0 36px rgba(255, 211, 107, 0.8),
-    var(--shadow-raised);
+    0 5px 0 var(--color-ink),
+    0 0 36px rgba(242, 184, 59, 0.75);
 }
 
 .banner.is-jackpot .banner-text {
   font-size: 2.3rem;
-  color: #fff4c2;
 }
 
-/* "Combo ×N": text only, so cats stay visible under it. Pops at each step, fades at the end. */
+/* "Combo ×N": outlined text only, so cats stay visible under it. Pops at each step, fades at the end. */
 .combo {
   position: absolute;
   left: 50%;
@@ -459,35 +534,32 @@
 }
 
 .combo-text {
-  font-size: 1.6rem;
+  font-size: 1.7rem;
   font-weight: var(--weight-bold);
-  color: var(--color-gold-100);
-  -webkit-text-stroke: 1.5px var(--color-ink);
+  color: var(--color-ink);
+  -webkit-text-stroke: 6px var(--color-paper);
   paint-order: stroke fill;
-  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
 }
 
 .combo-bonus {
   padding: 1px 8px;
+  border: 2px solid var(--color-ink);
   border-radius: var(--radius-pill);
-  background: var(--color-gold-300);
+  background: var(--color-gold);
   color: var(--color-ink);
   font-size: 0.9rem;
   font-weight: var(--weight-bold);
 }
 
-/* The chain heats up: bigger and hotter at COMBO_HEAT_LEVELS (config/view.ts). */
+/* The chain heats up: bigger and warmer at COMBO_HEAT_LEVELS (config/view.ts). */
 .combo[data-heat='1'] .combo-text {
-  font-size: 1.9rem;
-  color: #ffe08a;
+  font-size: 2rem;
+  color: var(--color-coral-dark);
 }
 
 .combo[data-heat='2'] .combo-text {
-  font-size: 2.2rem;
-  color: #fff4c2;
-  text-shadow:
-    0 2px 0 rgba(0, 0, 0, 0.35),
-    0 0 14px rgba(255, 170, 60, 0.85);
+  font-size: 2.3rem;
+  color: var(--color-coral);
 }
 
 .combo.is-step {
@@ -525,7 +597,7 @@
 @keyframes coins-pulse {
   50% {
     transform: scale(1.12);
-    background: rgba(246, 195, 67, 0.35);
+    background: var(--color-gold-light);
   }
 }
 
@@ -542,11 +614,10 @@
   position: absolute;
   left: 0;
   top: 0;
-  width: 22px;
-  height: 22px;
-  margin: -11px 0 0 -11px;
+  width: 24px;
+  height: 24px;
+  margin: -12px 0 0 -12px;
   will-change: transform;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
 }
 
 .coin-fly-coin svg {
@@ -555,37 +626,20 @@
   height: 100%;
 }
 
-/* Golden cats in the HUD and banners shimmer, like their sprites twinkle. */
-.cat-icon.is-golden {
-  position: relative;
-  overflow: hidden;
+/* Reduced motion: banners and toasts fade instead of popping; decorations stand still. */
+.reduce-motion .banner {
+  animation-name: banner-fade;
 }
 
-.cat-icon.is-golden::after {
-  content: '';
-  position: absolute;
-  inset: -20%;
-  background: linear-gradient(
-    115deg,
-    transparent 35%,
-    rgba(255, 244, 194, 0.85) 50%,
-    transparent 65%
-  );
-  transform: translateX(-100%);
-  animation: golden-shimmer 1.8s ease-in-out infinite;
+.reduce-motion .toast {
+  animation-name: toast-fade;
 }
 
-@keyframes golden-shimmer {
-  60%,
-  100% {
-    transform: translateX(100%);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .combo.is-step,
-  .hud-coins.is-pulsing,
-  .cat-icon.is-golden::after {
-    animation: none;
-  }
+.reduce-motion .hint-pill,
+.reduce-motion .hud-stage-label.is-new,
+.reduce-motion .hud-lock.is-pulsing svg,
+.reduce-motion .combo.is-step,
+.reduce-motion .hud-coins.is-pulsing,
+.reduce-motion .cat-icon.is-golden::after {
+  animation: none;
 }

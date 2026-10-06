@@ -40,7 +40,7 @@ export function createPauseOverlay(root: HTMLElement, actions: PauseActions): Pa
   haptics.addEventListener('click', actions.onToggleHaptics);
   toggles.append(sound, haptics);
 
-  const quit = button('btn btn-secondary', 'Quit to Menu');
+  const quit = button('btn btn-ghost', 'Quit to Menu');
   quit.dataset['testid'] = 'quit';
   quit.addEventListener('click', actions.onQuit);
 

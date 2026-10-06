@@ -29,7 +29,7 @@ export interface SaveData {
     totalCoinsEarned: number;
     jackpots: number;
   };
-  settings: { sound: boolean; haptics: boolean };
+  settings: { sound: boolean; haptics: boolean; reduceMotion: boolean };
   flags: { hintsSeen: Record<HintId, boolean> };
 }
 
@@ -48,7 +48,7 @@ export function defaultSave(): SaveData {
     upgrades,
     records: { bestScore: 0, bestStage: FIRST_STAGE, highestTier: 0 },
     stats: { runsPlayed: 0, totalMerges: 0, totalCoinsEarned: 0, jackpots: 0 },
-    settings: { sound: true, haptics: true },
+    settings: { sound: true, haptics: true, reduceMotion: false },
     flags: { hintsSeen },
   };
 }
@@ -211,6 +211,7 @@ export function sanitize(data: Record<string, unknown>): { data: SaveData; issue
   const settings = r.section(data, 'settings');
   out.settings.sound = r.bool(settings, 'settings.sound', out.settings.sound);
   out.settings.haptics = r.bool(settings, 'settings.haptics', out.settings.haptics);
+  out.settings.reduceMotion = r.bool(settings, 'settings.reduceMotion', out.settings.reduceMotion);
 
   const flags = r.section(data, 'flags');
   const hints = r.section(flags, 'flags.hintsSeen');

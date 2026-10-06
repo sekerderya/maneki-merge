@@ -5,7 +5,7 @@ import { formatNumber } from '../../core/format';
 import { shopCard } from '../../core/shop';
 import type { UpgradeLevels } from '../../core/upgrades';
 import { button, el } from '../dom';
-import { ICON_CLOSE, ICON_COIN, UPGRADE_ICONS } from '../icons';
+import { ICON_CHECK, ICON_CLOSE, ICON_COIN, UPGRADE_ICONS } from '../icons';
 
 export interface ShopActions {
   onBuy(id: UpgradeId): void;
@@ -31,6 +31,7 @@ interface CardParts {
   readonly next: HTMLElement;
   readonly buy: HTMLButtonElement;
   readonly price: HTMLElement;
+  readonly need: HTMLElement;
 }
 
 /** Shop panel over the main menu (GAME_DESIGN §2.2): one card per upgrade, scrolling. */
@@ -156,11 +157,17 @@ function createCard(id: UpgradeId, onBuy: () => void): CardParts {
   buy.addEventListener('click', onBuy);
   const price = el('span', 'shop-price');
   buy.append(price);
-  foot.append(value, buy);
+  // Not enough coins: how many are missing, under the price (GAME_DESIGN §2.2).
+  const need = el('span', 'shop-need');
+  need.dataset['testid'] = `shop-need-${id}`;
+  need.hidden = true;
+  const buyBox = el('div', 'shop-buy-box');
+  buyBox.append(buy, need);
+  foot.append(value, buyBox);
 
   info.append(head, pipRow, desc, foot);
   root.append(icon, info);
-  return { root, level, pips, current, arrow, next, buy, price };
+  return { root, level, pips, current, arrow, next, buy, price, need };
 }
 
 function paintCard(card: CardParts, levels: UpgradeLevels, coins: number, id: UpgradeId): void {
@@ -176,7 +183,11 @@ function paintCard(card: CardParts, levels: UpgradeLevels, coins: number, id: Up
   card.buy.disabled = data.state !== 'affordable';
   card.buy.dataset['state'] = data.state;
   card.buy.querySelector('svg')?.remove();
+  card.need.hidden = data.shortfall === null;
+  card.need.textContent =
+    data.shortfall === null ? '' : `Need ${formatNumber(data.shortfall)} more`;
   if (data.price === null) {
+    card.buy.insertAdjacentHTML('afterbegin', ICON_CHECK);
     card.price.textContent = 'MAX';
     card.buy.setAttribute('aria-label', `${data.name} is at the max level`);
   } else {
