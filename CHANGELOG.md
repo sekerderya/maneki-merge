@@ -2,6 +2,39 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.11.0] - 2026-10-06
+
+The new look: the owner's second feedback batch (M12), built from the design canvas the owner approved and the mobile game UX research.
+
+### Added
+
+- Lucky cats instead of numbered circles: eleven looks drawn in code from vector shapes (`src/config/catArt.ts`), one per size, from a plain pink mochi to a kimono cat with both paws raised. Size 12 wears size 1's look, so the stage loop still swaps them seamlessly. The outer edge of each outline is the physics radius, so touching cats touch on screen.
+- Each cat's number sits on its plate (belly, tag, plate or koban) and stays upright as the cat rolls. Golden cats get a gold ring, a warm tint and sparkles.
+- Settings panel, opened from the gear on the menu: Sound effects, Haptics (only where the phone can vibrate), Reduce motion, How to play (the first-run hints come back) and the version. Each switch is a full-width row that says ON or OFF in words.
+- Reduce motion setting: no camera shake, fewer particles, one flying coin, no decorative animations; banners fade instead of popping. The phone's own reduced-motion setting still does the same. Saved in the settings (no migration: older saves get it off).
+- Next goal card on the menu: "Unlock Stage N" with a bar towards the next Shrine Expansion price and "N to go"; tapping it opens the shop.
+- Shop cards say "Need N more" under a price you can't afford yet.
+
+### Changed
+
+- A cream shrine-garden theme with ink outlines: buttons stand on a solid ink edge and sink into it when tapped; coral only for the one primary button of a screen, gold for coins and progress, red for danger and badges, mint for secondary buttons.
+- Main menu: settings on the left, coins on the right, the title, the calico lucky cat swaying on its cushion among floating coins in front of sakura trees, a shrine and a torii, the records, the goal card, a big round PLAY and UPGRADES. The sound toggle moved into Settings, and so did the version.
+- The jar is glass in a bamboo frame on a wooden floor; gold knobs and a dashed line mark the rim and flash red in danger. Sakura branches, a torii and a shrine sit behind the glass.
+- HUD: a "Score" label, the next cat in a bubble with a "Next" tag, and cat icons drawn from the same art. Pause, Game Over, banners, toasts, the combo label and the rotate screen use the new style.
+- New icon set (mon coins with a square hole, gear, paw).
+- Theme colour cream (`#fcefdf`); the iOS home-screen app uses the default status bar so its text stays readable on the light theme.
+
+### Fixed
+
+- With the phone's reduced motion on, banners and toasts vanished at once (every animation was cut to 0 ms); now they fade.
+
+### Decisions (where the request was open)
+
+- Cats keep rolling like Suika fruit; only their numbers stay upright.
+- `?skin=placeholder` still shows the flat circles, in the game and in the DOM icons.
+- The Haptics row hides on iPhones, which have no vibration for web apps.
+- No music row until the game has music.
+
 ## [0.10.0] - 2026-10-06
 
 The stage loop: the owner's first feedback batch (M12). M10 (balance simulator) is set aside.

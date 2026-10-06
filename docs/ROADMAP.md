@@ -250,12 +250,20 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
   - [x] every stage the same: the jar grows until the 12th cat is as small as the 1st, and it becomes the next stage's 1st; scores and coins keep growing with the numbers
   - [x] cat sizes like Suika Game's: sizes 11, 9, 8, 7, 6 and 5 cover 55% of the jar
   - [x] Quick Growth removed (no more score thresholds), its coins refunded by a save migration
+- [x] Batch 2 (v0.11.0), the new look from the owner's design canvas (GAME_DESIGN §13.1), following the mobile game UX research:
+  - [x] eleven lucky cats drawn in code (`CatSkin`), one look per size, numbers riding upright on their plates
+  - [x] a bamboo and glass jar on a wooden floor, a shrine garden behind it, a cream theme with ink outlines
+  - [x] main menu: settings on the left, coins on the right, the lucky cat on its cushion, a next-goal card, a round PLAY
+  - [x] settings panel: sound effects, haptics, reduce motion, how to play, version (no music row: there is no music)
+  - [x] HUD, shop (with "Need N more"), pause, Game Over, banners and toasts in the new style
 
 ## M13: Final art integration
 
 **Effort:** high. **Plan mode:** yes. **Goal:** the owner's lucky-cat designs replace the placeholders.
 
-- [ ] Source files in `art-source/` (GAME_DESIGN §13.2), checked and reported on before processing
+**Note (v0.11):** the cats, jar and menu art from the owner's design canvas are already in (`CatSkin`, GAME_DESIGN §13.1). This milestone now only applies if the owner delivers drawn art files; the app icon and splash screens still use the placeholder icon.
+
+- [ ] Source files in `art-source/` (GAME_DESIGN §13.3), checked and reported on before processing
 - [ ] `tools/build-art.ts` pipeline (TECH_SPEC §14)
 - [ ] `ArtSkin` as the default; numbers hidden (or kept small, per the owner); golden overlay
 - [ ] Art-based extras:

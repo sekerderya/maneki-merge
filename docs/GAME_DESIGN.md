@@ -17,13 +17,18 @@ There are exactly two screens. Everything else is a panel or overlay on top of t
 
 ### 2.1 Main menu
 
-- Title (text placeholder until the final art), with the best score and best stage under it as two labelled chips.
-- Coin balance at the top.
-- **PLAY**: large and centered.
-- **UPGRADES**: below PLAY. Shows a dot when any upgrade is affordable and opens the shop panel.
-- Sound toggle in the top-right corner. Version and build hash, small, in a bottom corner.
+A shrine garden in the art of §13, top to bottom:
+
+- Top bar: the **settings** button (a gear) on the left opens the settings panel (§2.4); the coin balance on the right.
+- The title "Maneki Merge".
+- The hero: the calico lucky cat (look 6, no number) sitting on a pink cushion in front of a sakura garden with a little shrine and a torii, with a few coins floating around it. It takes whatever height is left, so short screens get a smaller cat.
+- Best score and best stage as two labelled chips.
+- **Next goal** card: "Unlock Stage N" with a bar from the wallet to the next Shrine Expansion price and "N to go" (or "Ready!"). Tapping it opens the shop. It hides once every stage is open.
+- **PLAY**: a big round coral button, the only coral thing on the screen.
+- **UPGRADES**: below PLAY. Shows a red dot when any upgrade is affordable and opens the shop panel.
 - Install hint, shown only when the game runs in a browser tab. On iOS: "Tap Share, then Add to Home Screen". On Android Chrome: an "Install" button.
 - An "Update ready — tap to restart" badge when a new version is waiting.
+- The version and build hash live in the settings panel.
 
 ### 2.2 Shop panel (over the main menu)
 
@@ -41,15 +46,25 @@ There are exactly two screens. Everything else is a panel or overlay on top of t
   | Second Chance    | Lucky Saves                                                    | 0 → 1       | 2      |
   | Fortune Teller   | Next cats shown                                                | 1 → 2       | 2      |
 
-- The price button has three states: affordable, not enough coins (disabled), and MAX.
+- The price button has three states: affordable (gold), not enough coins (disabled, the price in red with "Need N more" under it), and MAX (dashed, with a check).
 - Buying gives feedback: a sound (from M9), a card pulse, and the balance counting down. The purchase is saved at once. The panel scrolls vertically if needed.
 - Closing: the close button, a tap on the dimmed menu above the panel, or the back button.
+
+### 2.4 Settings panel (over the main menu)
+
+- A card over the dimmed menu with a close button. Every switch is a whole row (icon, label, one line of help, and an ON/OFF switch that says its state in words too):
+  - **Sound effects**: all sounds on or off.
+  - **Haptics**: vibration; the row only shows where the browser can vibrate (Android).
+  - **Reduce motion**: no camera shake, about a third of the particles, one flying coin per payout, and no decorative animations; banners fade instead of popping. The phone's own reduced-motion setting does the same whatever this switch says.
+- **How to play**: the first-run hints show again in the next run.
+- The version and build hash, small, at the bottom.
+- Closing: the close button, a tap on the dimmed menu, or the back button. There is no music yet, so there is no music switch.
 
 ### 2.3 Game
 
 - The jar, with the danger line on its rim.
 - The dropper above the rim holds the current cat. A vertical aim guide shows where it will fall.
-- HUD at the top: pause button, score, coins earned this run, a preview of the next cat (or two with Fortune Teller), and a stage label with a progress bar towards the stage's last cat, that cat as a small goal icon, and a lock icon if the next stage isn't unlocked. The bar shows the biggest cat in the jar: its size − 1 out of 11 (§4).
+- HUD at the top: pause button, score (with a small "Score" label), coins earned this run, a preview of the next cat in a bubble with a "Next" tag (or two with Fortune Teller), and a stage label with a progress bar towards the stage's last cat, that cat as a small goal icon, and a lock icon if the next stage isn't unlocked. The bar shows the biggest cat in the jar: its size − 1 out of 11 (§4).
 - Overlays:
   - **Pause**: Resume, Sound, Haptics, Quit to Menu.
   - **Game Over**: score, best score, stage reached, the biggest cat made this run, coins earned this run, new-record badges (best score, best stage, biggest cat ever), Play Again, Menu.
@@ -201,7 +216,7 @@ Everything is stored locally, with a version number:
 - wallet coins and upgrade levels
 - records: best score, best stage, highest tier ever made
 - stats: runs played, total merges, total coins earned, jackpots
-- settings: sound, haptics
+- settings: sound, haptics, reduce motion
 - flags: which first-run hints have been seen
 
 A run in progress isn't saved. Closing the app ends it, but its coins are already banked.
@@ -222,28 +237,54 @@ If a save can't be read, or some of its fields are invalid, a copy is kept (TECH
   - drop plop; merge pop (lower pitch for bigger sizes, the same at every stage); coin ching
   - rising combo notes; Jackpot and stage-clear fanfare; expansion whoosh + chime
   - danger tick; game over; UI click; purchase
-- Haptics (Android only, toggled in Pause): a light tick per merge (at most one every 70 ms) and a stronger pattern for Jackpots, stage clears, expansions and Lucky Saves.
-- A small camera shake for merges into size 10 and above (stronger for bigger cats), for Jackpots, and a light one that grows with the combo from ×5. Respect `prefers-reduced-motion`: no shake and about a third of the particles.
-- Menu: the title floats, PLAY sends out a soft ring every few seconds, the UPGRADES dot nudges, and buttons press down when tapped.
-- Every button clicks; a purchase plays its own sound. Sound off (menu or Pause) silences everything.
+- Haptics (Android only, toggled in Pause and in Settings): a light tick per merge (at most one every 70 ms) and a stronger pattern for Jackpots, stage clears, expansions and Lucky Saves.
+- A small camera shake for merges into size 10 and above (stronger for bigger cats), for Jackpots, and a light one that grows with the combo from ×5. Reduce motion (the setting or `prefers-reduced-motion`): no shake and about a third of the particles.
+- Menu: the title floats, the lucky cat sways on its cushion, the coins bob, PLAY sends out a soft ring every few seconds, the UPGRADES dot nudges, and buttons sink into their ink edge when tapped.
+- Every button clicks; a purchase plays its own sound. Sound off (Settings or Pause) silences everything.
 
 ## 13. Art
 
-### 13.1 Placeholder (used until M13)
+### 13.1 The lucky cats (the default since v0.11)
 
-- Each size is a flat circle in its own colour with a darker outline, and the tier number in bold Fredoka, centered. The number stays upright while the circle rotates, so a 6 is never mistaken for a 9.
-- There are 11 colours, repeating every 11 tiers: a stage's last cat (size 12) has the colour of size 1, because it becomes the next stage's first cat. Every stage looks the same; only the numbers differ.
-- Golden cats get a gold ring and a shimmer.
-- The jar is a simple rounded wooden box. The background is a warm red-to-gold gradient.
+The owner chose the look in a design canvas: a cream shrine garden, ink outlines, soft pastels. Everything is drawn in code from vector data, so it stays sharp at every zoom and works offline.
 
-### 13.2 Final art (the owner delivers it at the end; integrated in M13)
+- **Cats** (`src/config/catArt.ts`): round daruma-like bodies with ears on top, one look per size, getting richer as they grow. Size 12 wears look 1, because it becomes the next stage's size 1.
 
-- `art-source/size-01.png` … `size-11.png`, one cat per size; they repeat every stage like the placeholder colours (size 12 shows size 1's cat, unless M13 gives the last cat its own look):
+  | Size | Look      | What makes it different                        |
+  | ---: | --------- | ---------------------------------------------- |
+  |    1 | Sakura    | Plain pink mochi, sleepy eyes                  |
+  |    2 | Mint      | Red polka-dot bib                              |
+  |    3 | Tangerine | Tabby stripes, blue collar, gold tag           |
+  |    4 | Lavender  | Silver bell, the first raised paw              |
+  |    5 | Sky       | Wave-pattern (seigaiha) belly band, gold bell  |
+  |    6 | Calico    | The classic maneki-neko: red collar, gold bell |
+  |    7 | Matcha    | Holds a gold koban                             |
+  |    8 | Daruma    | Daruma face, gold swirls                       |
+  |    9 | Indigo    | Gold chain and koban, gold eyes                |
+  |   10 | Kuro      | Black cat, red bib, gold eyes                  |
+  |   11 | Kimono    | Kimono and obi, both paws raised               |
+
+  Neighbouring sizes differ in shape and accessories as well as colour, so they can be told apart without colour. The outer edge of each body's outline is exactly the cat's radius, so touching cats touch on screen.
+
+- **Numbers**: each cat has a plate (belly, tag, plate, koban) where its tier number sits. The cat rolls; the number stays upright and rides on its plate.
+- **Golden cats**: a gold ring, a warm tint and two sparkles, plus the twinkling glint.
+- **Jar**: glass in a bamboo frame, standing on a wooden floor. Gold knobs on the posts and a dashed ink line across the opening mark the rim (the danger line); they flash red in danger.
+- **Background**: a cream sky with sakura branches, a torii and a shrine seen through the glass.
+- **Palette**: cream ground, paper plates, ink outlines and text, cocoa for labels; coral only for the primary button of a screen (PLAY, Resume, Play Again), gold for coins, rewards and progress, red for danger and badges, mint for secondary buttons and "on". One font: Fredoka (700 for titles, numbers and buttons; 500–600 for labels).
+
+### 13.2 Placeholder (`?skin=placeholder`)
+
+- Each size is a flat circle in its own colour with a darker outline, and the tier number in bold Fredoka, centered. The number stays upright while the circle rotates.
+- There are 11 colours, repeating every 11 tiers. Golden cats get a gold ring and a shimmer.
+
+### 13.3 Owner art (optional, M13)
+
+- If the owner delivers drawn art later: `art-source/size-01.png` … `size-11.png`, one cat per size; they repeat every stage like the looks above:
   - square, with a transparent background
   - the round body touching the edges of the square
   - at least 512×512 (1024×1024 preferred for sizes 8–11)
-- Optional extras: `app-icon.png` (1024×1024), `logo.png`, `background.png`, `jar.png`, a golden overlay, and a music loop (OGG/MP3, licensed for use).
-- Whether cats rotate like Suika fruit or stay upright is decided in M13.
+- Optional extras: `app-icon.png` (1024×1024), `logo.png`, `background.png`, `jar.png`, a golden overlay, and a music loop (OGG/MP3, licensed for use, with a music switch in Settings).
+- Cats rotate like Suika fruit (v0.11); the numbers stay upright.
 
 ## 14. Balance targets (M10, set aside in v0.10)
 
