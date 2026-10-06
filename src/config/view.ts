@@ -15,12 +15,16 @@ export const CAMERA_FLOOR_MARGIN_RATIO = 0.04;
  */
 export const CAMERA_SPARE_BELOW_RATIO = 0.45;
 
-/** Drawn thickness of the jar walls and floor, outside the physics walls. */
+/** Drawn thickness of the jar's bamboo posts and floor beam, outside the physics walls. */
 export const JAR_WALL_RATIO = 0.03;
-/** Corner radius of the jar's bottom corners (drawn only). */
-export const JAR_CORNER_RATIO = 0.04;
-/** Thickness of the rim lip (the danger line) drawn on top of each wall. */
-export const JAR_RIM_RATIO = 0.012;
+/** Width of the ink outline around the bamboo. */
+export const JAR_OUTLINE_RATIO = 0.0045;
+/** Bamboo nodes (the darker rings) on the posts: spacing as a fraction of the jar's height. */
+export const JAR_NODE_SPACING = 0.23;
+/** Radius of the gold knobs on top of the posts, which mark the danger line. */
+export const JAR_KNOB_RATIO = 0.016;
+/** Width of the dashed danger line across the opening. */
+export const JAR_RIM_RATIO = 0.006;
 
 /** The canvas renders at most this many device pixels per CSS pixel (TECH_SPEC §6). */
 export const MAX_RENDER_RESOLUTION = 2.5;
@@ -30,6 +34,10 @@ export const MAX_RENDER_RESOLUTION = 2.5;
  * at the resolution cap), so they are never upscaled on a phone or tablet.
  */
 export const PLACEHOLDER_PX_PER_UNIT = 2.5;
+/** The lucky-cat skin's textures (GAME_DESIGN §13), like the placeholders: never upscaled. */
+export const CAT_PX_PER_UNIT = 2.5;
+/** The outline around a cat's number, in its plate's colour, as a fraction of the font size. */
+export const CAT_NUMBER_HALO_RATIO = 0.16;
 /** Outline width of a placeholder cat, as a fraction of its radius. */
 export const PLACEHOLDER_OUTLINE_RATIO = 0.07;
 /** Width of the golden ring, as a fraction of the radius. */

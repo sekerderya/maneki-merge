@@ -1,39 +1,31 @@
 /**
- * Placeholder cats (GAME_DESIGN §13.2, `?skin=placeholder`): a flat circle per size with a darker outline, a gold ring
- * for golden cats, and the tier number as a separate upright sprite. Textures are drawn with the
- * 2D canvas API at PLACEHOLDER_PX_PER_UNIT, so they are never upscaled. Bodies are shared by size
- * across stages (skinSets.ts); each stage adds its numbers, drawn ahead of time during the zoom
- * into it. Any frame still missing when asked for is drawn on the spot.
+ * The lucky-cat skin (GAME_DESIGN §13): the vector looks of `config/catArt.ts` drawn into canvas
+ * textures with `Path2D`, at CAT_PX_PER_UNIT texture pixels per world unit, so they are never
+ * upscaled. Bodies are shared by size across stages (skinSets.ts), golden bodies add the ring and
+ * sparkles, and each stage adds its numbers: upright sprites that sit on the cat's plate, in the
+ * look's colours. Like the placeholders, a stage's numbers are drawn during the zoom into it.
  */
 import type Phaser from 'phaser';
 import {
-  GOLD_RING,
-  GOLD_RING_DARK,
-  GOLD_SHIMMER,
-  NUMBER_FILL,
-  NUMBER_STROKE,
-  NUMBER_STROKE_RATIO,
-  OUTLINE_DARKEN,
-  tierColor,
-} from '../../config/skin';
+  ART_BOX,
+  ART_PAD,
+  ART_TWO_DIGIT_SCALE,
+  bodyEdge,
+  catLook,
+  GOLDEN_SHAPES,
+  numberOffset,
+} from '../../config/catArt';
+import type { ArtShape, CatLook } from '../../config/catArt';
 import { FIRST_STAGE, STAGES, tierSize } from '../../config/stages';
 import { SIZE_COUNT, sizeRadius } from '../../config/tiers';
-import {
-  NUMBER_HEIGHT_RATIO,
-  NUMBER_HEIGHT_RATIO_TWO_DIGITS,
-  PLACEHOLDER_GOLD_RING_RATIO,
-  PLACEHOLDER_OUTLINE_RATIO,
-  PLACEHOLDER_PX_PER_UNIT,
-} from '../../config/view';
-import { darken } from '../../core/color';
+import { CAT_NUMBER_HALO_RATIO, CAT_PX_PER_UNIT } from '../../config/view';
 import type { BallSkin, NumberFrame, SkinFrame } from './BallSkin';
 import { stageSkinSet } from './skinSets';
 
-const PAD_PX = 2;
 const FONT_FAMILY = 'Fredoka, system-ui, sans-serif';
-const UNITS_PER_PIXEL = 1 / PLACEHOLDER_PX_PER_UNIT;
+const UNITS_PER_PIXEL = 1 / CAT_PX_PER_UNIT;
+const PAD_PX = 2;
 
-/** A body ('b'), a golden body ('g') or an upright number ('n'). */
 type FrameKind = 'b' | 'g' | 'n';
 type FrameItem = readonly [tier: number, kind: FrameKind];
 
@@ -49,17 +41,25 @@ const STAGE_ITEMS: readonly (readonly FrameItem[])[] = STAGES.map(({ stage }) =>
   return items;
 });
 
-/** The size a tier is drawn at on `stage` (kept in 1–12, so a stray tier still renders). */
+/** Texture pixels per box unit: the body's outer edge lands on the cat's radius. */
+function artScale(size: number, look: CatLook): number {
+  return (sizeRadius(size) * CAT_PX_PER_UNIT) / bodyEdge(look);
+}
+
 function drawnSize(tier: number, stage: number): number {
   return Math.min(SIZE_COUNT, Math.max(1, tierSize(tier, stage)));
 }
 
-export class PlaceholderSkin implements BallSkin {
-  readonly id = 'placeholder';
-  /** Bodies by kind + size ('b4', 'g4'), shared by every stage. */
+/** A size's look: sizes repeat their looks, so size 12 wears size 1's. */
+function sizeLook(size: number): CatLook {
+  return catLook(size);
+}
+
+export class CatSkin implements BallSkin {
+  readonly id = 'cat';
   private readonly bodies = new Map<string, SkinFrame>();
-  /** Numbers per stage, by tier. */
   private readonly numbers = new Map<number, Map<number, NumberFrame>>();
+  private readonly paths = new Map<string, Path2D>();
   private active = FIRST_STAGE;
   private previous = FIRST_STAGE;
   private rev = 0;
@@ -83,7 +83,7 @@ export class PlaceholderSkin implements BallSkin {
   }
 
   color(tier: number): string {
-    return tierColor(tier);
+    return catLook(tier).color;
   }
 
   prepare(stage: number, budgetMs: number): boolean {
@@ -105,8 +105,7 @@ export class PlaceholderSkin implements BallSkin {
     this.previous = this.active;
     this.active = stage;
     this.rev++;
-    // Keep stage 1's numbers (every run starts there) and the previous stage's: a cat popped just
-    // before the switch may still show them while it fades.
+    // Keep stage 1's numbers (every run starts there) and the previous stage's.
     for (const kept of [...this.numbers.keys()]) {
       if (kept !== FIRST_STAGE && kept !== this.active && kept !== this.previous) {
         for (const { key } of this.numbers.get(kept)?.values() ?? []) this.textures.remove(key);
@@ -116,7 +115,7 @@ export class PlaceholderSkin implements BallSkin {
   }
 
   restore(): void {
-    const all = [...this.bodies.values()];
+    const all: SkinFrame[] = [...this.bodies.values()];
     for (const frames of this.numbers.values()) all.push(...frames.values());
     for (const { key } of all) {
       (this.textures.get(key) as Phaser.Textures.CanvasTexture).refresh();
@@ -133,10 +132,46 @@ export class PlaceholderSkin implements BallSkin {
     const existing = this.bodies.get(id);
     if (existing) return existing;
     const canvas = document.createElement('canvas');
-    drawBody(canvas, size, golden, PLACEHOLDER_PX_PER_UNIT);
-    const frame = { key: this.addTexture(`ph-${id}`, canvas), unitsPerPixel: UNITS_PER_PIXEL };
+    const look = sizeLook(size);
+    const scale = artScale(size, look);
+    // The texture is square around the body's centre, so the sprite's origin is the cat's centre.
+    const side = Math.ceil((ART_BOX + 2 * ART_PAD) * scale);
+    const ctx = context(canvas, side, side);
+    ctx.translate(side / 2 - (ART_BOX / 2) * scale, side / 2 - (ART_BOX / 2) * scale);
+    ctx.scale(scale, scale);
+    this.paint(ctx, look.shapes);
+    if (golden) this.paint(ctx, GOLDEN_SHAPES);
+    const frame = { key: this.addTexture(`cat-${id}`, canvas), unitsPerPixel: UNITS_PER_PIXEL };
     this.bodies.set(id, frame);
     return frame;
+  }
+
+  private paint(ctx: CanvasRenderingContext2D, shapes: readonly ArtShape[]): void {
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    for (const shape of shapes) {
+      const path = this.path(shape.d);
+      ctx.globalAlpha = shape.opacity ?? 1;
+      if (shape.fill) {
+        ctx.fillStyle = shape.fill;
+        ctx.fill(path);
+      }
+      if (shape.stroke) {
+        ctx.strokeStyle = shape.stroke;
+        ctx.lineWidth = shape.width ?? 1;
+        ctx.stroke(path);
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  private path(d: string): Path2D {
+    let path = this.paths.get(d);
+    if (!path) {
+      path = new Path2D(d);
+      this.paths.set(d, path);
+    }
+    return path;
   }
 
   private numberFrame(stage: number, tier: number): NumberFrame {
@@ -147,10 +182,12 @@ export class PlaceholderSkin implements BallSkin {
     }
     const existing = frames.get(tier);
     if (existing) return existing;
+    const size = drawnSize(tier, stage);
+    const look = sizeLook(size);
     const canvas = document.createElement('canvas');
-    drawNumber(canvas, tier, sizeRadius(drawnSize(tier, stage)) * PLACEHOLDER_PX_PER_UNIT);
-    const key = this.addTexture(`ph-s${stage}-n${tier}`, canvas);
-    const frame = { key, unitsPerPixel: UNITS_PER_PIXEL, offset: 0 };
+    drawNumber(canvas, tier, look, artScale(size, look));
+    const key = this.addTexture(`cat-s${stage}-n${tier}`, canvas);
+    const frame = { key, unitsPerPixel: UNITS_PER_PIXEL, offset: numberOffset(look) };
     frames.set(tier, frame);
     return frame;
   }
@@ -174,76 +211,12 @@ function context(
   return ctx;
 }
 
-function drawBody(
-  canvas: HTMLCanvasElement,
-  size: number,
-  golden: boolean,
-  pxPerUnit: number,
-): void {
-  const r = sizeRadius(size) * pxPerUnit;
-  const side = 2 * r + 2 * PAD_PX;
-  const ctx = context(canvas, side, side);
-  const c = canvas.width / 2;
-  // Sizes and tiers share their colour cycle, so a size's colour is its stage-1 tier's.
-  const color = tierColor(size);
-
-  // Body with a darker outline (inside the radius, so the circle is exactly r).
-  const outline = r * PLACEHOLDER_OUTLINE_RATIO;
-  ctx.beginPath();
-  ctx.arc(c, c, r - outline / 2, 0, Math.PI * 2);
-  ctx.fillStyle = color;
-  ctx.fill();
-  ctx.lineWidth = outline;
-  ctx.strokeStyle = darken(color, OUTLINE_DARKEN);
-  ctx.stroke();
-
-  // A soft highlight arc: it turns with the body, so rolling is visible.
-  ctx.beginPath();
-  ctx.arc(c, c, r * 0.68, -2.5, -1.35);
-  ctx.lineWidth = r * 0.12;
-  ctx.lineCap = 'round';
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
-  ctx.stroke();
-
-  if (!golden) return;
-  const ring = r * PLACEHOLDER_GOLD_RING_RATIO;
-  ctx.beginPath();
-  ctx.arc(c, c, r - ring / 2, 0, Math.PI * 2);
-  ctx.lineWidth = ring;
-  ctx.strokeStyle = GOLD_RING;
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(c, c, r - ring, 0, Math.PI * 2);
-  ctx.lineWidth = Math.max(1, ring * 0.22);
-  ctx.strokeStyle = GOLD_RING_DARK;
-  ctx.stroke();
-  // Shimmer: a bright streak on the ring and two sparkles.
-  ctx.beginPath();
-  ctx.arc(c, c, r - ring / 2, -2.2, -1.5);
-  ctx.lineWidth = ring * 0.5;
-  ctx.strokeStyle = GOLD_SHIMMER;
-  ctx.stroke();
-  sparkle(ctx, c + r * 0.42, c - r * 0.5, r * 0.14);
-  sparkle(ctx, c - r * 0.5, c + r * 0.38, r * 0.09);
-}
-
-function sparkle(ctx: CanvasRenderingContext2D, x: number, y: number, s: number): void {
-  ctx.beginPath();
-  ctx.moveTo(x, y - s);
-  ctx.quadraticCurveTo(x, y, x + s, y);
-  ctx.quadraticCurveTo(x, y, x, y + s);
-  ctx.quadraticCurveTo(x, y, x - s, y);
-  ctx.quadraticCurveTo(x, y, x, y - s);
-  ctx.fillStyle = GOLD_SHIMMER;
-  ctx.fill();
-}
-
-/** The tier's number for a cat whose radius is `r` texture pixels. */
-function drawNumber(canvas: HTMLCanvasElement, tier: number, r: number): void {
+/** The tier's number in the look's colours, `scale` texture pixels per box unit. */
+function drawNumber(canvas: HTMLCanvasElement, tier: number, look: CatLook, scale: number): void {
   const text = String(tier);
-  const fontPx = r * (text.length > 1 ? NUMBER_HEIGHT_RATIO_TWO_DIGITS : NUMBER_HEIGHT_RATIO);
+  const fontPx = look.number.size * scale * (text.length > 1 ? ART_TWO_DIGIT_SCALE : 1);
   const font = `700 ${fontPx}px ${FONT_FAMILY}`;
-  const stroke = fontPx * NUMBER_STROKE_RATIO;
+  const halo = fontPx * CAT_NUMBER_HALO_RATIO;
 
   const probe = context(canvas, 1, 1);
   probe.font = font;
@@ -252,17 +225,17 @@ function drawNumber(canvas: HTMLCanvasElement, tier: number, r: number): void {
   const inkHeight = ascent + m.actualBoundingBoxDescent;
   const inkWidth = m.actualBoundingBoxLeft + m.actualBoundingBoxRight;
 
-  const ctx = context(canvas, inkWidth + 2 * (stroke + PAD_PX), inkHeight + 2 * (stroke + PAD_PX));
+  const ctx = context(canvas, inkWidth + 2 * (halo + PAD_PX), inkHeight + 2 * (halo + PAD_PX));
   ctx.font = font;
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
-  // Centre the ink box, not the advance box, so the number sits in the middle of the cat.
+  // Centre the ink box, so the number sits in the middle of its plate.
   const x = (canvas.width - inkWidth) / 2 + m.actualBoundingBoxLeft;
   const y = (canvas.height - inkHeight) / 2 + ascent;
   ctx.lineJoin = 'round';
-  ctx.lineWidth = stroke;
-  ctx.strokeStyle = NUMBER_STROKE;
+  ctx.lineWidth = halo;
+  ctx.strokeStyle = look.number.halo;
   ctx.strokeText(text, x, y);
-  ctx.fillStyle = NUMBER_FILL;
+  ctx.fillStyle = look.number.color;
   ctx.fillText(text, x, y);
 }

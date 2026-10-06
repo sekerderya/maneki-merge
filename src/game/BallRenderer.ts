@@ -1,5 +1,6 @@
 /**
- * Draws the cats of a run: one pooled body image (rotating), one number image (upright) and, for
+ * Draws the cats of a run: one pooled body image (rotating), one number image (upright, on the
+ * cat's plate wherever the roll has carried it) and, for
  * golden cats, a twinkling glint per cat, matched by cat id each frame. No allocations per frame
  * once the pool has warmed up.
  *
@@ -62,7 +63,13 @@ export class BallRenderer {
         .setRotation(ball.angle)
         .setScale(body.unitsPerPixel * grow);
       const number = this.skin.number(ball.tier);
-      if (number) sprite.number.setPosition(ball.x, ball.y).setScale(number.unitsPerPixel * grow);
+      if (number) {
+        // The number rides on its plate as the cat rolls, but stays upright.
+        const d = number.offset * ball.targetRadius * grow;
+        sprite.number
+          .setPosition(ball.x - d * Math.sin(ball.angle), ball.y + d * Math.cos(ball.angle))
+          .setScale(number.unitsPerPixel * grow);
+      }
       if (ball.golden) {
         placeGlint(sprite.glint, ball.x, ball.y, ball.radius, nowMs, glintPhase(ball.id));
       }

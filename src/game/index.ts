@@ -9,6 +9,7 @@ import Phaser from 'phaser';
 import { MAX_RENDER_RESOLUTION } from '../config/view';
 import type { RunController } from '../run/RunController';
 import { GAME_SCENE_KEY, GameScene } from './GameScene';
+import type { SceneSkin } from './GameScene';
 
 export interface GameView {
   /** Shows a run (replacing the previous one) and wakes the loop. */
@@ -28,7 +29,7 @@ export interface GameView {
   readonly fps: number;
 }
 
-export function createGame(parent: HTMLElement): GameView {
+export function createGame(parent: HTMLElement, skin: SceneSkin = 'cat'): GameView {
   let resolution = 1;
   let pending: RunController | null = null;
   let scene: GameScene | null = null;
@@ -50,7 +51,7 @@ export function createGame(parent: HTMLElement): GameView {
     scale: { mode: Phaser.Scale.NONE, width: 1, height: 1 },
     input: { activePointers: 1, keyboard: false, gamepad: false },
     render: { antialias: true, powerPreference: 'high-performance' },
-    scene: GameScene,
+    scene: new GameScene(skin),
     callbacks: {
       postBoot: (booted) => {
         scene = booted.scene.getScene(GAME_SCENE_KEY) as GameScene;

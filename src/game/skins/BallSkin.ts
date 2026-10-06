@@ -20,6 +20,15 @@ export interface SkinFrame {
   readonly unitsPerPixel: number;
 }
 
+/** An upright number frame and where it sits on its cat. */
+export interface NumberFrame extends SkinFrame {
+  /**
+   * How far below the cat's centre the number sits, as a fraction of the radius, along the cat's
+   * own down axis: the number rides on its plate as the cat rolls, but stays upright.
+   */
+  readonly offset: number;
+}
+
 export interface BallSkin {
   readonly id: string;
   /** The stage whose frames `body` and `number` return. */
@@ -29,7 +38,9 @@ export interface BallSkin {
   /** The rotating body of a cat. */
   body(tier: number, golden: boolean): SkinFrame;
   /** The upright tier number drawn on top, or null when the art doesn't show one. */
-  number(tier: number): SkinFrame | null;
+  number(tier: number): NumberFrame | null;
+  /** The cat's main colour as `#rrggbb` (merge particles, the pop ring). */
+  color(tier: number): string;
   /**
    * Creates the textures `stage` needs ahead of time, spending about `budgetMs` (at least one
    * texture per call). Returns true once they all exist.

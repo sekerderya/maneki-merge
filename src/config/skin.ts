@@ -1,6 +1,7 @@
 /**
- * Placeholder art data (GAME_DESIGN §13.1). The game's PlaceholderSkin and the DOM icons (HUD
- * preview, banners, Game Over) both read it, so a cat looks the same everywhere.
+ * Placeholder art data (GAME_DESIGN §13.2, `?skin=placeholder`), read by PlaceholderSkin and the
+ * placeholder DOM icons, and the colours of the jar and the texts over it. The lucky-cat art lives
+ * in `catArt.ts`.
  */
 import { STAGE_TIER_STEP } from './tiers';
 
@@ -40,12 +41,28 @@ export const GOLD_RING = '#f6c343';
 export const GOLD_RING_DARK = '#a8691a';
 export const GOLD_SHIMMER = '#fff4c2';
 
-/** Jar (a simple rounded wooden box) and danger colours. */
-export const JAR_WOOD = 0x9a6a3a;
-export const JAR_WOOD_DARK = 0x5c3a1a;
-export const JAR_INTERIOR = 0x2b0f0a;
-export const JAR_INTERIOR_ALPHA = 0.32;
-export const JAR_RIM = 0xf6c343;
-export const DANGER_RED = 0xff3b30;
-export const AIM_LINE_COLOR = 0xfff8ec;
-export const AIM_LINE_ALPHA = 0.55;
+/**
+ * The jar (GAME_DESIGN §13): a glass jar in a bamboo frame on a wooden floor, gold knobs on the
+ * posts marking the rim, and the dashed danger line across the opening.
+ */
+export const JAR_INK = 0x4a2e25;
+export const JAR_BAMBOO = 0xd8b66e;
+export const JAR_BAMBOO_NODE = 0xb8924a;
+export const JAR_GLASS = 0xfffdf8;
+export const JAR_GLASS_ALPHA = 0.55;
+export const JAR_SHEEN_ALPHA = 0.4;
+export const JAR_FLOOR = 0xe7c79e;
+export const JAR_FLOOR_LINE = 0xd6b184;
+export const JAR_SHADOW_ALPHA = 0.12;
+export const JAR_RIM = 0xf2b83b;
+/** The danger line's opacity while safe (the flash shows it fully). */
+export const JAR_RIM_LINE_ALPHA = 0.3;
+export const DANGER_RED = 0xd9483b;
+export const AIM_LINE_COLOR = 0x4a2e25;
+export const AIM_LINE_ALPHA = 0.35;
+/** The danger countdown over the jar. */
+export const COUNTDOWN_FILL = '#d9483b';
+export const COUNTDOWN_STROKE = '#fff8ee';
+/** Floating "+coins" over the jar. */
+export const COINS_TEXT_FILL = '#f2b83b';
+export const COINS_TEXT_STROKE = '#4a2e25';

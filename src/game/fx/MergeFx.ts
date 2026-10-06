@@ -5,7 +5,7 @@
  * (world position), where the coin flight to the HUD starts. Shakes arrive with M9.
  */
 import type Phaser from 'phaser';
-import { tierColor } from '../../config/skin';
+import { COINS_TEXT_FILL, COINS_TEXT_STROKE } from '../../config/skin';
 import {
   FLOAT_TEXT_MS,
   FLOAT_TEXT_RISE,
@@ -21,7 +21,6 @@ import { formatNumber } from '../../core/format';
 const RING_KEY = 'fx-ring';
 /** Big enough that the ring of the biggest cat's Jackpot is not upscaled on a phone. */
 const RING_PX = 512;
-const COINS_COLOR = '#ffc83d';
 
 /** A payout appeared at a world point; `big` for a Jackpot. */
 export type CoinsListener = (x: number, y: number, big: boolean) => void;
@@ -50,6 +49,8 @@ export class MergeFx {
     scene: Phaser.Scene,
     layer: Phaser.GameObjects.Layer,
     private readonly onCoins: CoinsListener,
+    /** The cat's colour as `#rrggbb`, for the pop ring. */
+    private readonly colorOf: (tier: number) => string,
   ) {
     createRingTexture(scene.textures);
     for (let i = 0; i < FX_POOL_SIZE; i++) {
@@ -61,8 +62,8 @@ export class MergeFx {
           fontFamily: 'Fredoka, system-ui, sans-serif',
           fontStyle: '700',
           fontSize: `${FLOAT_TEXT_SIZE}px`,
-          color: COINS_COLOR,
-          stroke: '#3b1a10',
+          color: COINS_TEXT_FILL,
+          stroke: COINS_TEXT_STROKE,
           strokeThickness: FLOAT_TEXT_SIZE * 0.18,
         })
         .setOrigin(0.5)
@@ -97,7 +98,7 @@ export class MergeFx {
     pop.radius = radius;
     pop.ring
       .setPosition(x, y)
-      .setTint(hexToNumber(tierColor(tier)))
+      .setTint(hexToNumber(this.colorOf(tier)))
       .setVisible(true);
 
     const item = this.texts[this.nextText] as FloatText;

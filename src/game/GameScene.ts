@@ -8,7 +8,7 @@
  * textures prepared during the zoom and switched in at the reveal.
  */
 import Phaser from 'phaser';
-import { AIM_LINE_ALPHA, AIM_LINE_COLOR, tierColor } from '../config/skin';
+import { AIM_LINE_ALPHA, AIM_LINE_COLOR, COUNTDOWN_FILL, COUNTDOWN_STROKE } from '../config/skin';
 import { FIRST_STAGE, JAR_WIDTH } from '../config/stages';
 import {
   AIM_DASH,
@@ -41,7 +41,11 @@ import { SparkFx } from './fx/SparkFx';
 import { JarView } from './JarView';
 import { comboShake, mergeParticleCount, mergeShake, Shake } from './shake';
 import type { BallSkin } from './skins/BallSkin';
+import { CatSkin } from './skins/CatSkin';
 import { PlaceholderSkin } from './skins/PlaceholderSkin';
+
+/** Which cat art the scene draws: the lucky cats, or flat placeholders (`?skin=placeholder`). */
+export type SceneSkin = 'cat' | 'placeholder';
 
 export const GAME_SCENE_KEY = 'game';
 
@@ -80,12 +84,15 @@ export class GameScene extends Phaser.Scene {
   /** The stage whose textures are being drawn ahead of an expansion's reveal (0: none). */
   private preparing = 0;
 
-  constructor() {
+  constructor(private readonly skinId: SceneSkin = 'cat') {
     super(GAME_SCENE_KEY);
   }
 
   create(): void {
-    this.skin = new PlaceholderSkin(this.textures);
+    this.skin =
+      this.skinId === 'placeholder'
+        ? new PlaceholderSkin(this.textures)
+        : new CatSkin(this.textures);
     this.skin.prepare(FIRST_STAGE, Infinity);
 
     const layer = (): Phaser.GameObjects.Layer => this.add.layer();
@@ -115,7 +122,12 @@ export class GameScene extends Phaser.Scene {
     this.dropperGlint = this.add.image(0, 0, GLINT_KEY).setVisible(false);
     dropper.add([this.dropperBody, this.dropperNumber, this.dropperGlint]);
 
-    this.fx = new MergeFx(this, fx, (x, y, big) => this.reportCoins(x, y, big));
+    this.fx = new MergeFx(
+      this,
+      fx,
+      (x, y, big) => this.reportCoins(x, y, big),
+      (tier) => this.skin.color(tier),
+    );
     this.pops = new PopFx(this.balls, this.fx);
     this.sparks = new SparkFx(this, fx);
     this.countdown = this.add
@@ -123,9 +135,9 @@ export class GameScene extends Phaser.Scene {
         fontFamily: 'Fredoka, system-ui, sans-serif',
         fontStyle: '700',
         fontSize: '96px',
-        color: '#ffffff',
-        stroke: '#7a1c1c',
-        strokeThickness: 14,
+        color: COUNTDOWN_FILL,
+        stroke: COUNTDOWN_STROKE,
+        strokeThickness: 16,
       })
       .setOrigin(0.5)
       .setVisible(false);
@@ -161,7 +173,7 @@ export class GameScene extends Phaser.Scene {
       const { x, y } = e.at;
       this.fx.payout(this.nowMs, x, y, e.newTier, run.radiusOf(e.newTier), e.coins);
       this.balls.bump(e.id, this.nowMs);
-      const color = hexToNumber(tierColor(e.newTier));
+      const color = hexToNumber(this.skin.color(e.newTier));
       this.sparks.mergeBurst(x, y, mergeParticleCount(e.newSize, reduced), color);
       if (e.golden) this.sparks.burst(x, y, this.particles(BURST_SPARKS.golden));
       this.addShake(mergeShake(e.newSize), SHAKE.mergeMs);
@@ -320,7 +332,7 @@ export class GameScene extends Phaser.Scene {
     if (number) {
       this.dropperNumber
         .setTexture(number.key)
-        .setPosition(x, geo.dropY)
+        .setPosition(x, geo.dropY + number.offset * radius * pop)
         .setScale(number.unitsPerPixel * pop);
     }
     if (cat.golden) placeGlint(this.dropperGlint, x, geo.dropY, radius * pop, this.nowMs, 0);
