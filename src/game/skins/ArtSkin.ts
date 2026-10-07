@@ -4,15 +4,10 @@
  * body circle lands exactly on the physics radius. The art shows no numbers: a cat's look tells its
  * size. Every stage holds the same ten sizes, so the bodies are drawn once and shared by all stages.
  *
- * The images are loaded at boot (`loadCatArt`, with the fonts), before the game is created.
+ * The images are loaded at boot (game/artImages.ts), before the game is created.
  */
 import type Phaser from 'phaser';
-import {
-  CAT_ART_LOAD_TIMEOUT_MS,
-  CAT_SPRITE_DIR,
-  CAT_SPRITES,
-  catSprite,
-} from '../../config/catSprites';
+import { CAT_SPRITES, catSprite } from '../../config/catSprites';
 import type { CatSprite } from '../../config/catSprites';
 import { FIRST_STAGE, tierSize } from '../../config/stages';
 import { SIZE_COUNT, sizeRadius } from '../../config/tiers';
@@ -21,25 +16,6 @@ import type { BallSkin, SkinFrame } from './BallSkin';
 import { context } from './canvas';
 
 const UNITS_PER_PIXEL = 1 / CAT_PX_PER_UNIT;
-
-/**
- * Loads and decodes the nine cat images, in look order. Rejects if one fails or they take longer
- * than CAT_ART_LOAD_TIMEOUT_MS (the caller then falls back to the vector cats).
- */
-export function loadCatArt(baseUrl: string): Promise<readonly HTMLImageElement[]> {
-  const loads = Promise.all(
-    CAT_SPRITES.map(async ({ file }) => {
-      const image = new Image();
-      image.src = `${baseUrl}${CAT_SPRITE_DIR}${file}`;
-      await image.decode();
-      return image;
-    }),
-  );
-  const timeout = new Promise<never>((_, reject) =>
-    window.setTimeout(() => reject(new Error('Cat art timed out')), CAT_ART_LOAD_TIMEOUT_MS),
-  );
-  return Promise.race([loads, timeout]);
-}
 
 function drawnSize(tier: number, stage: number): number {
   return Math.min(SIZE_COUNT, Math.max(1, tierSize(tier, stage)));
@@ -56,7 +32,7 @@ export class ArtSkin implements BallSkin {
   private active = FIRST_STAGE;
   private rev = 0;
 
-  /** `images`: the looks' images from `loadCatArt`, in look order. */
+  /** `images`: the looks' images (ArtImages.cats), in look order. */
   constructor(
     private readonly textures: Phaser.Textures.TextureManager,
     private readonly images: readonly HTMLImageElement[],

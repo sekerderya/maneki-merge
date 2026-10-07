@@ -6,9 +6,10 @@
 
 /**
  * Space shown left and right of the jar's inner walls, each side: the bamboo frame and the garden
- * either side of it (v0.14, the owner's chosen screen: a 300 px jar on a 390 px phone).
+ * either side of it. The jar art's top rail reaches 108 units past the walls (v0.17: a 283 px jar
+ * on a 390 px phone; 0.15 and 300 px with the thinner vector frame of v0.14).
  */
-export const CAMERA_SIDE_MARGIN_RATIO = 0.15;
+export const CAMERA_SIDE_MARGIN_RATIO = 0.19;
 /** Space shown below the jar floor: the feet and the rug. */
 export const CAMERA_FLOOR_MARGIN_RATIO = 0.2;
 /**

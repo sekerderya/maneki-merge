@@ -4,6 +4,10 @@
  * cut into pieces that only cover drawn parts (JAR_BACK_PIECES, JAR_FRONT_PIECES). They scale
  * with the jar while it grows: every stage has the same jar shape.
  * The rim layer redraws the dashed danger line and the post caps, which flash red in danger.
+ *
+ * With the raster art (config/sceneSprites.ts) the pieces come from the owner's jar instead: its
+ * inner layer (the glass's edge and the rail) behind the cats, its bamboo frame in front. The art's
+ * opening is stretched onto the physics jar; its caps don't flash.
  */
 import type Phaser from 'phaser';
 import {
@@ -26,16 +30,25 @@ import {
 import type { JarPiece } from '../config/jarArt';
 import type { PaintShape } from '../config/paintShape';
 import { DANGER_RED } from '../config/skin';
+import { JAR_ART, JAR_ART_SCALE_X, JAR_ART_SCALE_Y, jarArtToWorld } from '../config/sceneSprites';
+import type { PxRect } from '../config/sceneSprites';
 import { JAR_CORNER_RADIUS, JAR_HEIGHT, JAR_WIDTH } from '../config/stages';
 import { JAR_PX_PER_UNIT, JAR_RIM_DASH, JAR_RIM_INSET, JAR_RIM_WIDTH } from '../config/view';
 import { hexToNumber } from '../core/color';
+import { imageCanvas } from './artImages';
+import type { ArtImages } from './artImages';
 import { addArtAtlas } from './paint';
 
 const INK = hexToNumber(JAR_INK);
 const KEY = 'jar';
 
 interface Piece {
-  readonly box: JarPiece;
+  /** Its top-left corner in world units of the stage jar. */
+  readonly left: number;
+  readonly top: number;
+  /** World units per texture pixel, across and down. */
+  readonly scaleX: number;
+  readonly scaleY: number;
   readonly image: Phaser.GameObjects.Image;
 }
 
@@ -44,6 +57,9 @@ export class JarView {
   private flash: boolean | null = null;
   private readonly pieces: Piece[] = [];
   private readonly textures: Phaser.Textures.TextureManager;
+  private readonly keys: string[] = [];
+  /** The raster art draws its own caps, which don't flash. */
+  private readonly caps: boolean;
   /** The glass behind the cats and its shine in front of them: plain vector shapes. */
   private readonly glass: Phaser.GameObjects.Graphics;
   private readonly shine: Phaser.GameObjects.Graphics;
@@ -53,18 +69,36 @@ export class JarView {
     backLayer: Phaser.GameObjects.Layer,
     frontLayer: Phaser.GameObjects.Layer,
     private readonly rim: Phaser.GameObjects.Graphics,
+    art: ArtImages | null = null,
   ) {
     this.textures = scene.textures;
     this.glass = scene.add.graphics();
     this.shine = scene.add.graphics();
     backLayer.add(this.glass);
     frontLayer.add(this.shine);
-    // Every piece is a frame of one texture, so the jar costs one draw call per layer.
+    this.caps = !art;
+    if (art) {
+      this.addArtPieces(scene, backLayer, 'jar-art-back', art.jarBack, JAR_ART.backPieces);
+      this.addArtPieces(scene, frontLayer, 'jar-art-front', art.jarFront, JAR_ART.frontPieces);
+    } else {
+      this.addVectorPieces(scene, backLayer, frontLayer);
+    }
+    frontLayer.add(rim);
+  }
+
+  /** The vector jar: every piece is a frame of one texture, one draw call per layer. */
+  private addVectorPieces(
+    scene: Phaser.Scene,
+    backLayer: Phaser.GameObjects.Layer,
+    frontLayer: Phaser.GameObjects.Layer,
+  ): void {
     const parts = (name: string, shapes: PaintShape[], boxes: readonly JarPiece[]) =>
       boxes.map((box, i) => ({ name: `${name}${i}`, shapes, box }));
     const back = parts('back', jarBackShapes(), JAR_BACK_PIECES);
     const front = parts('front', jarFrontShapes(), JAR_FRONT_PIECES);
     addArtAtlas(scene.textures, KEY, [...back, ...front], JAR_PX_PER_UNIT);
+    this.keys.push(KEY);
+    const scale = 1 / JAR_PX_PER_UNIT;
     for (const [layer, list] of [
       [backLayer, back],
       [frontLayer, front],
@@ -72,10 +106,36 @@ export class JarView {
       for (const { name, box } of list) {
         const image = scene.add.image(0, 0, KEY, name).setOrigin(0, 0);
         layer.add(image);
-        this.pieces.push({ box, image });
+        this.pieces.push({ left: box.left, top: box.top, scaleX: scale, scaleY: scale, image });
       }
     }
-    frontLayer.add(rim);
+  }
+
+  /** One layer of the raster jar: a texture of the image, a frame per piece. */
+  private addArtPieces(
+    scene: Phaser.Scene,
+    layer: Phaser.GameObjects.Layer,
+    key: string,
+    source: HTMLImageElement,
+    rects: readonly PxRect[],
+  ): void {
+    if (this.textures.exists(key)) this.textures.remove(key);
+    const texture = this.textures.addCanvas(key, imageCanvas(source));
+    if (!texture) return;
+    this.keys.push(key);
+    rects.forEach(({ x, y, w, h }, i) => {
+      texture.add(String(i), 0, x, y, w, h);
+      const image = scene.add.image(0, 0, key, String(i)).setOrigin(0, 0);
+      layer.add(image);
+      const at = jarArtToWorld(x, y);
+      this.pieces.push({
+        left: at.x,
+        top: at.y,
+        scaleX: JAR_ART_SCALE_X,
+        scaleY: JAR_ART_SCALE_Y,
+        image,
+      });
+    });
   }
 
   /**
@@ -88,8 +148,8 @@ export class JarView {
     if (width !== this.width) {
       this.width = width;
       const s = width / JAR_WIDTH;
-      for (const { box, image } of this.pieces) {
-        image.setPosition(box.left * s, box.top * s).setScale(s / JAR_PX_PER_UNIT);
+      for (const { left, top, scaleX, scaleY, image } of this.pieces) {
+        image.setPosition(left * s, top * s).setScale(scaleX * s, scaleY * s);
       }
       this.drawGlass(s);
       this.drawRim(danger);
@@ -100,7 +160,8 @@ export class JarView {
 
   /** Re-uploads the textures after the WebGL context comes back. */
   restore(): void {
-    (this.textures.get(KEY) as Phaser.Textures.CanvasTexture).refresh();
+    for (const key of this.keys)
+      (this.textures.get(key) as Phaser.Textures.CanvasTexture).refresh();
   }
 
   /** The glass (a translucent wash with a thin line inside its edge) and its shine, at scale s. */
@@ -140,7 +201,7 @@ export class JarView {
     const g = this.rim.clear();
 
     // The post caps glow red while the danger flash is on.
-    if (danger) {
+    if (danger && this.caps) {
       for (const x of [-JAR_POST_X, JAR_POST_X]) {
         g.fillStyle(DANGER_RED, 1);
         g.fillEllipse(x * s, JAR_CAP_Y * s, 2 * JAR_CAP_RX * s, 2 * JAR_CAP_RY * s);

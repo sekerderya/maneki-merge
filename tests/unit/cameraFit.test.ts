@@ -66,14 +66,15 @@ describe('camera fit (TECH_SPEC §4)', () => {
     },
   );
 
-  it("puts the jar where the owner's v0.14 screen has it, below the HUD", () => {
-    // A 390 × 844 iPhone: 47 px status bar, HUD down to 173 px. The design has a 300 px jar
-    // with its rim at 287 px and its floor at 722 px.
+  it('puts the jar below the HUD with room for the jar art’s frame (v0.17)', () => {
+    // A 390 × 844 iPhone: 47 px status bar, HUD down to 173 px. The jar's inside is 283 px wide
+    // (300 px in the owner's v0.14 screen, before the thicker bamboo of the jar art), its rim at
+    // 301 px and its floor at 711 px.
     const [w, h, hud] = [390, 844, 173];
     const fit = fitCamera(geo, w, h, undefined, hud);
-    expect(geo.width * fit.zoom).toBeCloseTo(300, 6);
-    expect(Math.abs(worldToView(fit, w, h, 0, geo.rimY).y - 287)).toBeLessThan(3);
-    expect(Math.abs(worldToView(fit, w, h, 0, 0).y - 722)).toBeLessThan(3);
+    expect(geo.width * fit.zoom).toBeCloseTo(390 / 1.38, 6);
+    expect(Math.abs(worldToView(fit, w, h, 0, geo.rimY).y - 301)).toBeLessThan(3);
+    expect(Math.abs(worldToView(fit, w, h, 0, 0).y - 711)).toBeLessThan(3);
   });
 
   it.each(viewports)('keeps the dropper band below the HUD (%ix%i)', (w, h) => {

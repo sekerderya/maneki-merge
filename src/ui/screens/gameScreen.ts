@@ -9,6 +9,7 @@ import { createHud } from '../hud/hud';
 import type { HudActions, HudView } from '../hud/hud';
 import { JAR_GLASS } from '../../config/jarArt';
 import { JAR_CORNER_RADIUS, JAR_WIDTH } from '../../config/stages';
+import { BACKGROUND_ART, BACKGROUND_JAR, SCENE_SPRITE_DIR } from '../../config/sceneSprites';
 import { SCENERY_JAR, SCENERY_VIEW, sceneryMarkup } from '../scenery';
 
 /** The jar's inside on screen, in CSS pixels of the play area. */
@@ -39,17 +40,35 @@ export interface GameScreenView {
 }
 
 /**
- * Game screen (GAME_DESIGN §2.3): the play area fills the screen, with the shrine garden
- * (ui/scenery.ts) behind the transparent canvas, and the DOM HUD floats over its top.
+ * Game screen (GAME_DESIGN §2.3): the play area fills the screen, with the shrine garden behind
+ * the transparent canvas, and the DOM HUD floats over its top. The garden is the owner's painted
+ * background with `sceneArt` (config/sceneSprites.ts), else the vector one (ui/scenery.ts).
  */
-export function createGameScreen(root: HTMLElement, actions: HudActions): GameScreenView {
+export function createGameScreen(
+  root: HTMLElement,
+  actions: HudActions,
+  sceneArt = false,
+): GameScreenView {
   root.replaceChildren();
   root.classList.add('game-screen');
 
   const playArea = el('div', 'play-area');
   playArea.dataset['testid'] = 'play-area';
-  playArea.insertAdjacentHTML('beforeend', sceneryMarkup());
-  const scenery = playArea.lastElementChild as SVGSVGElement;
+  let scenery: HTMLElement | SVGSVGElement;
+  if (sceneArt) {
+    const image = el('img', 'play-scenery is-art');
+    image.src = `${import.meta.env.BASE_URL}${SCENE_SPRITE_DIR}${BACKGROUND_ART.file}`;
+    image.alt = '';
+    image.draggable = false;
+    playArea.append(image);
+    playArea.classList.add('has-scene-art');
+    playArea.style.setProperty('--scene-sky', BACKGROUND_ART.sky);
+    playArea.style.setProperty('--scene-ground', BACKGROUND_ART.ground);
+    scenery = image;
+  } else {
+    playArea.insertAdjacentHTML('beforeend', sceneryMarkup());
+    scenery = playArea.lastElementChild as SVGSVGElement;
+  }
   // The jar's glass: it never moves on screen while playing, so the DOM draws it once.
   const glass = el('div', 'jar-glass');
   playArea.append(glass);
@@ -80,13 +99,17 @@ export function createGameScreen(root: HTMLElement, actions: HudActions): GameSc
       hudListeners.push(listener);
     },
     setJarBox(box, growing) {
-      // Scale and move the drawing so its jar lands on the real one.
-      const scale = (box.right - box.left) / SCENERY_JAR.width;
+      // Scale and move the drawing so its jar lands on the real one. The painted background also
+      // always spans the play area's width (on wide screens its rug is then wider than the jar).
+      const jar = sceneArt ? BACKGROUND_JAR : SCENERY_JAR;
+      const view = sceneArt ? BACKGROUND_ART : SCENERY_VIEW;
+      let scale = (box.right - box.left) / jar.width;
+      if (sceneArt) scale = Math.max(scale, playArea.clientWidth / view.width);
       const style = scenery.style;
-      style.left = `${(box.left + box.right) / 2 - SCENERY_JAR.cx * scale}px`;
-      style.top = `${box.bottom - SCENERY_JAR.floor * scale}px`;
-      style.width = `${SCENERY_VIEW.width * scale}px`;
-      style.height = `${SCENERY_VIEW.height * scale}px`;
+      style.left = `${(box.left + box.right) / 2 - jar.cx * scale}px`;
+      style.top = `${box.bottom - jar.floor * scale}px`;
+      style.width = `${view.width * scale}px`;
+      style.height = `${view.height * scale}px`;
       // World units → CSS pixels for the glass.
       const unit = (box.right - box.left) / JAR_WIDTH;
       const g = glass.style;

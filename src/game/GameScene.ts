@@ -44,6 +44,7 @@ import { JarView } from './JarView';
 import { PawView, pawLift } from './PawView';
 import { comboShake, mergeParticleCount, mergeShake, Shake } from './shake';
 import type { BallSkin } from './skins/BallSkin';
+import type { ArtImages } from './artImages';
 import { ArtSkin } from './skins/ArtSkin';
 import { CatSkin } from './skins/CatSkin';
 import { PlaceholderSkin } from './skins/PlaceholderSkin';
@@ -107,10 +108,10 @@ export class GameScene extends Phaser.Scene {
   /** The stage whose textures are being drawn ahead of an expansion's reveal (0: none). */
   private preparing = 0;
 
-  /** `catArt`: the cat art's images (`loadCatArt`), needed by the `art` skin. */
+  /** `art`: the raster art (game/artImages.ts), needed by the `art` skin. */
   constructor(
     private readonly skinId: SceneSkin = 'art',
-    private readonly catArt: readonly HTMLImageElement[] = [],
+    private readonly art: ArtImages | null = null,
   ) {
     super(GAME_SCENE_KEY);
   }
@@ -119,8 +120,8 @@ export class GameScene extends Phaser.Scene {
     this.skin =
       this.skinId === 'placeholder'
         ? new PlaceholderSkin(this.textures)
-        : this.skinId === 'art'
-          ? new ArtSkin(this.textures, this.catArt)
+        : this.skinId === 'art' && this.art
+          ? new ArtSkin(this.textures, this.art.cats)
           : new CatSkin(this.textures);
     this.skin.prepare(FIRST_STAGE, Infinity);
 
@@ -133,7 +134,8 @@ export class GameScene extends Phaser.Scene {
     const dropper = layer();
     const fx = layer();
 
-    this.jar = new JarView(this, jarBack, jarFront, this.add.graphics());
+    const art = this.skinId === 'art' ? this.art : null;
+    this.jar = new JarView(this, jarBack, jarFront, this.add.graphics(), art);
 
     this.aimLine = this.add.graphics();
     aim.add(this.aimLine);
@@ -144,7 +146,7 @@ export class GameScene extends Phaser.Scene {
     this.dropperNumber = this.add.image(0, 0, first).setVisible(false);
     dropper.add([this.dropperBody, this.dropperNumber]);
     // The paw holds the cat by the head, so it is drawn over it.
-    this.paw = new PawView(this, dropper);
+    this.paw = new PawView(this, dropper, art);
 
     this.fx = new MergeFx(
       this,

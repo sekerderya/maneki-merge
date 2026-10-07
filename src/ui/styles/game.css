@@ -388,6 +388,20 @@
 /* The jar's glass (config/jarArt.ts JAR_GLASS): a white wash with rounded bottom corners and a thin
    line inside its edge, placed on the jar by gameScreen.setJarBox. Hidden while the jar grows: the
    canvas draws it then. */
+/*
+ * The owner's painted garden (GAME_DESIGN §13.1): the sky colour above it, the floor's below, and
+ * its top edge fades into the sky.
+ */
+.play-area.has-scene-art {
+  background: linear-gradient(180deg, var(--scene-sky) 50%, var(--scene-ground) 50%);
+}
+
+.play-scenery.is-art {
+  object-fit: fill;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 6%);
+  mask-image: linear-gradient(180deg, transparent 0, #000 6%);
+}
+
 .jar-glass {
   position: absolute;
   left: 0;
