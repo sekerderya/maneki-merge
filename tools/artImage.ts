@@ -19,6 +19,12 @@ export interface Rgba {
   readonly height: number;
 }
 
+export interface Circle {
+  readonly cx: number;
+  readonly cy: number;
+  readonly r: number;
+}
+
 export interface Rect {
   readonly x: number;
   readonly y: number;
@@ -213,4 +219,48 @@ export function clamp01(v: number): number {
 
 export function round(v: number): number {
   return Math.round(v * 100) / 100;
+}
+
+/** The least-squares circle through `points` (Kåsa's method). */
+export function kasa(points: readonly (readonly [number, number])[]): Circle {
+  // Solve for x² + y² = 2ax + 2by + c in the least-squares sense (normal equations).
+  let sxx = 0;
+  let sxy = 0;
+  let syy = 0;
+  let sx = 0;
+  let sy = 0;
+  let szx = 0;
+  let szy = 0;
+  let sz = 0;
+  for (const [x, y] of points) {
+    const z = x * x + y * y;
+    sxx += x * x;
+    sxy += x * y;
+    syy += y * y;
+    sx += x;
+    sy += y;
+    szx += z * x;
+    szy += z * y;
+    sz += z;
+  }
+  const m = [
+    [2 * sxx, 2 * sxy, sx, szx],
+    [2 * sxy, 2 * syy, sy, szy],
+    [2 * sx, 2 * sy, points.length, sz],
+  ];
+  for (let i = 0; i < 3; i++) {
+    const row = m[i] as number[];
+    const pivot = row[i] ?? 1;
+    for (let k = 0; k < 4; k++) row[k] = (row[k] ?? 0) / pivot;
+    for (let j = 0; j < 3; j++) {
+      if (j === i) continue;
+      const other = m[j] as number[];
+      const f = other[i] ?? 0;
+      for (let k = 0; k < 4; k++) other[k] = (other[k] ?? 0) - f * (row[k] ?? 0);
+    }
+  }
+  const cx = m[0]?.[3] ?? 0;
+  const cy = m[1]?.[3] ?? 0;
+  const c = m[2]?.[3] ?? 0;
+  return { cx, cy, r: Math.sqrt(c + cx * cx + cy * cy) };
 }

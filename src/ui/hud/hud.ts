@@ -1,6 +1,6 @@
 import {
   HUD_BADGE_ART,
-  HUD_COINS_ART,
+  HUD_COIN_ART,
   HUD_NEXT_ART,
   HUD_PAUSE_ART,
   HUD_SPRITE_DIR,
@@ -30,6 +30,15 @@ function artPath(sprite: HudSprite): string {
   return `${import.meta.env.BASE_URL}${HUD_SPRITE_DIR}${sprite.file}`;
 }
 
+/** An `<img>` of a HUD sprite. */
+function artImage(sprite: HudSprite, className: string): HTMLImageElement {
+  const image = el('img', className);
+  image.src = artPath(sprite);
+  image.alt = '';
+  image.draggable = false;
+  return image;
+}
+
 /** The CSS `url()` of a HUD sprite. */
 function artUrl(sprite: HudSprite): string {
   return `url("${artPath(sprite)}")`;
@@ -39,14 +48,8 @@ function artUrl(sprite: HudSprite): string {
 function setArtProperties(root: HTMLElement): void {
   const set = (name: string, value: string | number): void =>
     root.style.setProperty(name, String(value));
-  set('--hud-coins-art', artUrl(HUD_COINS_ART));
   set('--hud-next-art', artUrl(HUD_NEXT_ART));
   set('--hud-pause-art', artUrl(HUD_PAUSE_ART));
-  set('--hud-card-ratio', `${HUD_COINS_ART.width} / ${HUD_COINS_ART.height}`);
-  // Fractions of the card's width (padding percentages would be of the container's).
-  set('--hud-text-left', HUD_COINS_ART.textLeft);
-  set('--hud-coin-x', `${HUD_COINS_ART.iconX * 100}%`);
-  set('--hud-coin-y', `${HUD_COINS_ART.iconY * 100}%`);
   set('--hud-next-ratio', `${HUD_NEXT_ART.width} / ${HUD_NEXT_ART.height}`);
   set('--hud-next-cy', `${HUD_NEXT_ART.cy * 100}%`);
   set('--hud-next-tag', `${HUD_NEXT_ART.tagY * 100}%`);
@@ -56,8 +59,9 @@ function setArtProperties(root: HTMLElement): void {
  * In-game HUD (GAME_DESIGN §2.3), floating over the top of the play area: on the left the score
  * card (the stage card left in v0.18, until it has art); on the right the pink pause button, the
  * coins card and the next cat in a round glass bubble under it. Only the pause button takes
- * touches; the rest lets them through to the game. With `art` the cards, the bubble and the button
- * are the owner's images (config/hudSprites.ts), with the text on top.
+ * touches; the rest lets them through to the game. With `art` the bubble, the button, the coin and
+ * the paw badge are the owner's images (config/hudSprites.ts); the cards are CSS drawn after the
+ * owner's reference image.
  */
 export function createHud(root: HTMLElement, actions: HudActions, art = false): HudView {
   root.replaceChildren();
@@ -68,19 +72,9 @@ export function createHud(root: HTMLElement, actions: HudActions, art = false): 
   const scoreCard = el('div', 'hud-card hud-score-card');
   const score = el('span', 'hud-score', '0');
   score.dataset['testid'] = 'hud-score';
-  const scoreLabel = el('span', 'hud-label', 'Score');
-  if (art) {
-    // The paw badge on the card's top-left corner, "SCORE:" beside it, the score in a well.
-    const head = el('div', 'hud-score-head');
-    const badge = el('img', 'hud-badge');
-    badge.src = artPath(HUD_BADGE_ART);
-    badge.alt = '';
-    badge.draggable = false;
-    head.append(badge, scoreLabel);
-    scoreCard.append(head, score);
-  } else {
-    scoreCard.append(scoreLabel, score);
-  }
+  scoreCard.append(el('span', 'hud-label', 'Score'), score);
+  // "SCORE:" centred on top, the score in a well, the paw badge over the card's left edge.
+  if (art) scoreCard.append(artImage(HUD_BADGE_ART, 'hud-badge'));
 
   const left = el('div', 'hud-left');
   left.append(scoreCard);
@@ -106,13 +100,13 @@ export function createHud(root: HTMLElement, actions: HudActions, art = false): 
   const coinsCard = el('div', 'hud-card hud-coins-card');
   const coins = el('span', 'hud-coins');
   coins.dataset['testid'] = 'hud-coins';
-  if (!art) coins.insertAdjacentHTML('beforeend', ICON_COIN);
+  // Flying coins land on the coin before the number.
+  const coin = art ? artImage(HUD_COIN_ART, 'hud-coin') : null;
+  if (coin) coins.append(coin);
+  else coins.insertAdjacentHTML('beforeend', ICON_COIN);
   const coinValue = el('span', '', '0');
   coins.append(coinValue);
   coinsCard.append(el('span', 'hud-label', 'Coins'), coins);
-  // With the art the coin is part of the card: flying coins land on it.
-  const coinSpot = el('span', 'hud-coin-spot');
-  if (art) coinsCard.append(coinSpot);
 
   // The pause button on top, the coins card under it, the bubble under that.
   const right = el('div', 'hud-right');
@@ -140,6 +134,6 @@ export function createHud(root: HTMLElement, actions: HudActions, art = false): 
     pulseCoins() {
       restartAnimation(coinsCard, 'is-pulsing');
     },
-    coinTarget: art ? coinSpot : coins,
+    coinTarget: coin ?? coins,
   };
 }

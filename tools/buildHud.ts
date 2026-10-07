@@ -1,14 +1,14 @@
 /**
- * The HUD part of the art pipeline (TECH_SPEC §14): the coins card, the score card's paw badge,
- * the next-cat bubble and the pause button from `art-source/hud/`, written to `public/assets/hud/` with their
- * measurements in `src/config/hudSpriteData.ts`.
+ * The HUD part of the art pipeline (TECH_SPEC §14): pieces of the owner's HUD images from
+ * `art-source/hud/`, written to `public/assets/hud/` with their measurements in
+ * `src/config/hudSpriteData.ts`. The score and coins cards themselves are CSS (v0.19.2), drawn
+ * after the owner's reference image; the generator couldn't draw them in its proportions.
  *
- * - Coins card: the white is cut; the gold coin on its left end is found, and the text goes to
- *   its right.
- * - Paw badge: the pink paw disc (and its outline) cut out of `score`; the score card itself is
- *   drawn in CSS in the coins card's colours (the generator couldn't draw its shape).
+ * - Coin: the gold coin (with its outline) cut out of the `coins` card.
+ * - Paw badge: the pink paw disc (with its outline) cut out of `score`.
  * - Next bubble: the circle and the tag on its rim are measured (the cat and "NEXT" go there).
- * - Pause button: cut and cropped.
+ * - Pause button: cut and cropped, its dark-brown outline recoloured to the reference's rose
+ *   brown.
  */
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -17,31 +17,25 @@ import {
   crop,
   cutBackground,
   findSource,
+  kasa,
   loadRgba,
   pixel,
   round,
   saveWebp,
 } from './artImage.ts';
-import type { Rect, Rgba } from './artImage.ts';
+import type { Circle, Rect, Rgba } from './artImage.ts';
 
 const SOURCE_DIR = 'art-source/hud';
 const OUT_DIR = 'public/assets/hud';
 const DATA_FILE = 'src/config/hudSpriteData.ts';
 const MARGIN = 2;
+/** The art's dark outlines: red channel below this. */
+const INK_MAX_RED = 140;
 
 interface Sprite {
   file: string;
   width: number;
   height: number;
-}
-
-interface CardData extends Sprite {
-  /** The text area, as fractions of the width: from the coin's (or badge's) right to the end. */
-  textLeft: number;
-  textRight: number;
-  /** The coin's (or badge's) centre, as fractions of the width and height. */
-  iconX: number;
-  iconY: number;
 }
 
 interface BubbleData extends Sprite {
@@ -55,11 +49,9 @@ interface BubbleData extends Sprite {
 export async function buildHud(): Promise<void> {
   await mkdir(OUT_DIR, { recursive: true });
   const coins = await cutAndCrop(await findSource(SOURCE_DIR, 'coins'));
-  // The coin sits in the middle of the card's height; its gold's width is its size (the card's
-  // bottom edge is goldish too, so the gold's height isn't).
-  const gold = colourBox(coins, isGold);
-  const coin = { x: gold.x, y: Math.round(coins.height / 2 - gold.w / 2), w: gold.w, h: gold.w };
-  const coinsData = await saveCard(coins, coin, 'coins.webp');
+  const coin = disc(coins, ...coinOnRow(coins));
+  await saveWebp(coin, join(OUT_DIR, 'coin.webp'));
+  const coinData: Sprite = { file: 'coin.webp', width: coin.width, height: coin.height };
 
   const badge = await pawBadge(await findSource(SOURCE_DIR, 'score'));
   await saveWebp(badge, join(OUT_DIR, 'paw-badge.webp'));
@@ -94,12 +86,13 @@ export async function buildHud(): Promise<void> {
   };
 
   const pause = await cutAndCrop(await findSource(SOURCE_DIR, 'pause'));
+  recolour(pause, PAUSE_OUTLINE, PAUSE_OUTLINE_TARGET);
   await saveWebp(pause, join(OUT_DIR, 'pause.webp'));
   const pauseData: Sprite = { file: 'pause.webp', width: pause.width, height: pause.height };
 
-  await writeFile(DATA_FILE, dataModule(coinsData, badgeData, bubbleData, pauseData));
+  await writeFile(DATA_FILE, dataModule(coinData, badgeData, bubbleData, pauseData));
   console.log(
-    `HUD: cards ${coins.width}×${coins.height} (text from ${coinsData.textLeft}), ` +
+    `HUD: coin ${coin.width}px, badge ${badge.width}px, ` +
       `bubble ${bubble.width}×${bubble.height}, pause ${pause.width}×${pause.height}; wrote ${DATA_FILE}`,
   );
 }
@@ -135,7 +128,6 @@ function opaqueRows(image: Rgba): { left: number; top: number; right: number; bo
   return { left, top, right, bottom };
 }
 
-const isGold = ([r = 0, g = 0, b = 0]: number[]): boolean => r > 200 && g > 140 && b < 120;
 const isPink = ([r = 0, g = 0, b = 0]: number[]): boolean =>
   r > 200 && r - g > 50 && b > 110 && b < 200;
 
@@ -163,14 +155,63 @@ async function pawBadge(path: string): Promise<Rgba> {
   const source = await loadRgba(path);
   cutBackground(source);
   const pink = colourBox(source, isPink);
-  // The badge is the pink disc plus its outline. Its height is its diameter: on the right the
-  // pink can run on where the disc overlaps the panel.
-  const outline = Math.round(pink.h * 0.04);
-  const radius = pink.h / 2 + outline;
-  const cx = pink.x + pink.h / 2;
-  const cy = pink.y + pink.h / 2;
+  // The pink's height is the disc's (on the right the pink can run on into the panel).
+  const ring = fitRing(source, pink.x + pink.h / 2, pink.y + pink.h / 2, pink.h / 2);
+  const badge = disc(source, ring.cx, ring.cy, ring.r);
+  return badge;
+}
+
+/**
+ * The coin on the coins card: along the card's middle row, the first dark run is the card's
+ * outline, the second and third are the coin's outline on either side. Returns its centre and
+ * outer radius.
+ */
+function coinOnRow(card: Rgba): [number, number, number] {
+  const y = Math.round(card.height / 2);
+  const runs: [number, number][] = [];
+  for (let x = 0; x < card.width / 2; x++) {
+    const dark = alphaAt(card, x, y) > 128 && (pixel(card, x, y)[0] ?? 255) < INK_MAX_RED;
+    const last = runs[runs.length - 1];
+    if (dark && last && last[1] === x - 1) last[1] = x;
+    else if (dark) runs.push([x, x]);
+  }
+  const left = runs[1]?.[0] ?? 0;
+  const right = (runs[2]?.[1] ?? 0) + 1;
+  return [(left + right) / 2, y, (right - left) / 2];
+}
+
+/**
+ * The outer edge of a disc's dark outline near a rough centre and radius: a circle fitted to the
+ * dark pixels around it, plus half the ring's width.
+ */
+function fitRing(image: Rgba, cx: number, cy: number, r0: number): Circle {
+  const points: [number, number][] = [];
+  for (let y = Math.round(cy - 1.3 * r0); y < cy + 1.3 * r0; y++) {
+    for (let x = Math.round(cx - 1.3 * r0); x < cx + 1.3 * r0; x++) {
+      if (x < 0 || y < 0 || x >= image.width || y >= image.height) continue;
+      // The left half only: on the right the disc overlaps the card's panel and its outline.
+      const d = Math.hypot(x - cx, y - cy);
+      if (x > cx || d < 0.9 * r0 || d > 1.15 * r0) continue;
+      if (alphaAt(image, x, y) > 128 && (pixel(image, x, y)[0] ?? 255) < INK_MAX_RED) {
+        points.push([x + 0.5, y + 0.5]);
+      }
+    }
+  }
+  const ring = kasa(points);
+  const spread = points.map(([x, y]) => Math.hypot(x - ring.cx, y - ring.cy) - ring.r);
+  const half = Math.max(
+    ...spread
+      .map(Math.abs)
+      .sort((a, b) => a - b)
+      .slice(0, Math.floor(spread.length * 0.9)),
+  );
+  return { cx: ring.cx, cy: ring.cy, r: ring.r + half };
+}
+
+/** A circle of `image` (centre and radius in px) on a transparent square. */
+function disc(image: Rgba, cx: number, cy: number, radius: number): Rgba {
   const side = Math.ceil(2 * radius);
-  const badge = crop(source, {
+  const out = crop(image, {
     x: Math.round(cx - radius),
     y: Math.round(cy - radius),
     w: side,
@@ -178,27 +219,32 @@ async function pawBadge(path: string): Promise<Rgba> {
   });
   for (let y = 0; y < side; y++) {
     for (let x = 0; x < side; x++) {
-      if (Math.hypot(x + 0.5 - side / 2, y + 0.5 - side / 2) > radius)
-        badge.data[4 * (y * side + x) + 3] = 0;
+      if (Math.hypot(x + 0.5 - side / 2, y + 0.5 - side / 2) > radius) {
+        out.data[4 * (y * side + x) + 3] = 0;
+      }
     }
   }
-  return badge;
+  return out;
 }
 
-async function saveCard(image: Rgba, icon: Rect, file: string): Promise<CardData> {
-  await saveWebp(image, join(OUT_DIR, file));
-  return {
-    file,
-    width: image.width,
-    height: image.height,
-    textLeft: round((icon.x + icon.w * 1.12) / image.width + 0.02),
-    textRight: 0.93,
-    iconX: round((icon.x + icon.w / 2) / image.width),
-    iconY: round((icon.y + icon.h / 2) / image.height),
-  };
+/** The pause button's outline in the art, and the reference image's rose brown. */
+const PAUSE_OUTLINE = [99, 49, 18];
+const PAUSE_OUTLINE_TARGET = [146, 80, 86];
+
+/** Shifts the colours near `from` towards `to` (anti-aliased edges by how close they are). */
+function recolour(image: Rgba, from: readonly number[], to: readonly number[]): void {
+  for (let i = 0; i < image.width * image.height; i++) {
+    const c = [0, 1, 2].map((k) => image.data[4 * i + k] ?? 0);
+    const distance = Math.hypot(...c.map((v, k) => v - (from[k] ?? 0)));
+    const w = Math.max(0, 1 - distance / 140);
+    if (w === 0) continue;
+    for (let k = 0; k < 3; k++) {
+      image.data[4 * i + k] = (c[k] ?? 0) + w * ((to[k] ?? 0) - (from[k] ?? 0));
+    }
+  }
 }
 
-function dataModule(coins: CardData, badge: Sprite, bubble: BubbleData, pause: Sprite): string {
+function dataModule(coin: Sprite, badge: Sprite, bubble: BubbleData, pause: Sprite): string {
   const obj = (o: object): string =>
     '{ ' +
     Object.entries(o)
@@ -209,9 +255,9 @@ function dataModule(coins: CardData, badge: Sprite, bubble: BubbleData, pause: S
  * Generated by tools/build-art.ts (\`npm run art\`) from art-source/hud/: do not edit by hand.
  * The HUD sprites in public/assets/hud/ (see hudSprites.ts for each field).
  */
-import type { HudBubbleSprite, HudCardSprite, HudSprite } from './hudSprites';
+import type { HudBubbleSprite, HudSprite } from './hudSprites';
 
-export const HUD_COINS_SPRITE: HudCardSprite = ${obj(coins)};
+export const HUD_COIN_SPRITE: HudSprite = ${obj(coin)};
 export const HUD_BADGE_SPRITE: HudSprite = ${obj(badge)};
 export const HUD_NEXT_SPRITE: HudBubbleSprite = ${obj(bubble)};
 export const HUD_PAUSE_SPRITE: HudSprite = ${obj(pause)};
