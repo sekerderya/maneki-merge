@@ -173,6 +173,8 @@ test('game over shows coins earned and new-record badges', async ({ page }) => {
 
 test('a Lucky Save pops cats into coins instead of ending the run', async ({ page }) => {
   await page.goto('./?debug=1&seed=42');
+  // Boot (fonts and cat art) has run once the menu shows: the debug hooks exist then.
+  await expect(page.getByTestId('play')).toBeVisible(WAIT);
   await page.evaluate(() => window.__game?.setUpgrade('secondChance', 1));
   await page.getByTestId('play').click();
   await expect.poll(async () => (await state(page)).luckySaves, WAIT).toBe(1);

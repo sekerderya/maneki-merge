@@ -24,7 +24,9 @@ const balls = (page: Page) => page.evaluate(() => window.__game!.state().balls);
 test('audio unlocks on the first tap and follows the sound setting', async ({ page }) => {
   const errors = watchConsole(page);
   await page.goto('./?debug=1&seed=5');
-  await expect.poll(() => page.evaluate(() => Boolean(window.__game)), WAIT).toBe(true);
+  // Wait for boot without page.evaluate: Chromium counts an evaluate as a user gesture, and boot
+  // (fonts and cat art) would then unlock audio when it reads the sound setting.
+  await expect(page.getByTestId('play')).toBeVisible(WAIT);
   // No AudioContext before a gesture (it would start blocked and warn).
   expect((await audio(page)).state).toBe('none');
 

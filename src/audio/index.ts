@@ -40,11 +40,15 @@ export class AudioEngine implements Sfx {
     for (const type of GESTURES) target.addEventListener(type, unlock, { capture: true });
   }
 
-  /** The sound setting. Turning it on from a tap also unlocks audio. */
+  /**
+   * The sound setting. Turning it on from a tap also unlocks audio. Re-applying the same setting
+   * (boot, any profile change) doesn't, even when the browser still counts a recent gesture.
+   */
   setEnabled(on: boolean): void {
+    const turningOn = on && !this.enabled;
     this.enabled = on;
     // Only inside a tap (the sound toggle): a context made without one starts blocked and warns.
-    if (on && (this.ctx || userActive())) this.unlock();
+    if (on && (this.ctx || (turningOn && userActive()))) this.unlock();
     else void this.ctx?.suspend().catch(() => undefined);
   }
 

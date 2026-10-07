@@ -18,6 +18,7 @@ The owner's cat art (M13, phase 1 of docs/ART_ASSETS.md).
 - The cats show no numbers (the owner's call): a cat's look tells its size. The vector and placeholder skins still show them.
 - The menu's hero is the golden Kin (the calico with `?skin=vector`).
 - The service worker also precaches `.webp` files.
+- Audio unlocks only when the sound setting is switched on (or on a tap), not when boot or a profile change re-applies it while the browser still counts a recent gesture.
 
 ## [0.15.0] - 2026-10-07
 
