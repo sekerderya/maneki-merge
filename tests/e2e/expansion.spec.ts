@@ -62,9 +62,10 @@ test('making the last cat (two 10s) clears stage 1 and grows the jar', async ({ 
   expect(await page.evaluate(() => window.__game?.dropAt(0))).toBe(false);
 
   // The reveal: the 11 is stage 2's smallest cat, and 21 is the next goal.
-  const banner = page.getByTestId('banner');
-  await expect(banner).toContainText('New cats unlocked!', WAIT);
-  await expect(banner.locator('.cat-icon')).toHaveText(['21']);
+  // One wait for the banner and its cat: it only shows for 2 s, and a slow software renderer
+  // can take most of that between two separate checks.
+  const banner = page.getByTestId('banner').filter({ hasText: 'New cats unlocked!' });
+  await expect(banner.locator('.cat-icon')).toHaveText(['21'], WAIT);
   await expect(page.getByTestId('hud-stage')).toHaveText('Stage 2');
   await expect(page.getByTestId('hud-goal')).toHaveText('21');
 

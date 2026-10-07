@@ -1,162 +1,301 @@
-/* Game screen (GAME_DESIGN §2.3): DOM HUD band on top, the canvas fills the play band below. */
+/* Game screen (GAME_DESIGN §2.3): the play area fills the screen, the HUD floats over its top. */
 .game-screen {
-  padding: calc(var(--safe-top) + 8px) 0 var(--safe-bottom) 0;
+  padding: 0;
+  /* HUD cards (the owner's v0.14 screen): cream with a tan edge, cocoa labels, brown numbers. */
+  --hud-card: #fff6e7;
+  --hud-edge: #eccda2;
+  --hud-edge-shadow: #d8b184;
+  --hud-label: #8a5a3b;
+  --hud-value: #5b3925;
+  --hud-well: #efd9bc;
 }
 
 .game-hud {
-  position: relative;
+  position: absolute;
   z-index: 3;
+  top: 0;
+  left: 0;
+  right: 0;
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding: 0 calc(var(--safe-right) + 12px) 6px calc(var(--safe-left) + 12px);
-}
-
-.pause-btn {
-  flex: none;
-}
-
-.pause-btn svg {
-  width: 22px;
-  height: 22px;
-}
-
-.hud-main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.hud-row {
-  display: flex;
-  align-items: center;
   justify-content: space-between;
   gap: 8px;
+  /* The "Next" label sits above the cards: keep it off the top edge without a notch too. */
+  padding: max(calc(var(--safe-top) + 4px), 14px) calc(var(--safe-right) + 12px) 0
+    calc(var(--safe-left) + 12px);
+  /* Touches go through to the game, except on the pause button. */
+  pointer-events: none;
 }
 
-.hud-score-block {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
+.hud-card {
+  box-sizing: border-box;
+  border: 3px solid var(--hud-edge);
+  border-radius: 20px;
+  background: var(--hud-card);
+  box-shadow:
+    0 3px 0 var(--hud-edge-shadow),
+    0 8px 16px rgba(122, 78, 46, 0.16);
 }
 
-.hud-score-label {
-  color: var(--color-muted);
-  font-size: 0.72rem;
-  font-weight: var(--weight-semibold);
-  letter-spacing: 0.08em;
+.hud-label {
+  color: var(--hud-label);
+  font-size: 13px;
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.06em;
   line-height: 1;
   text-transform: uppercase;
 }
 
+.hud-label::after {
+  content: ':';
+}
+
+.hud-left {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 166px;
+}
+
+/* The score card: a paw badge, "SCORE:" and the score in a sunken well. */
+.hud-score-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  height: 66px;
+  padding: 4px 7px 0 50px;
+}
+
+.hud-paw {
+  position: absolute;
+  left: 4px;
+  top: 8px;
+  width: 44px;
+  height: 44px;
+}
+
+.hud-paw svg,
+.hud-next-bubble > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .hud-score {
-  font-weight: var(--weight-bold);
-  font-size: 1.75rem;
-  line-height: 1.05;
-  font-variant-numeric: tabular-nums;
-}
-
-.hud-coins {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 5px;
-  height: 34px;
-  padding: 0 11px 0 3px;
-  border: 2.5px solid var(--color-ink);
-  border-radius: var(--radius-pill);
-  background: var(--color-paper);
+  justify-content: center;
+  height: 33px;
+  margin-left: -2px;
+  border-radius: 12px;
+  background: var(--hud-well);
+  box-shadow: inset 0 2px 3px rgba(122, 78, 46, 0.22);
+  color: var(--hud-value);
+  font-size: 24px;
   font-weight: var(--weight-bold);
-  font-size: 1.05rem;
   font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
 }
 
-.hud-coins svg {
-  width: 24px;
-  height: 24px;
-}
-
+/* The stage card: label, the bar towards the stage's last cat, and that cat. */
 .hud-stage {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
+  height: 30px;
+  padding: 0 4px 0 10px;
+  border-width: 2.5px;
+  border-radius: 15px;
+  box-shadow: 0 2px 0 var(--hud-edge-shadow);
 }
 
 .hud-stage-label {
   display: inline-block;
-  font-size: 0.95rem;
+  color: var(--hud-label);
+  font-size: 12px;
   font-weight: var(--weight-bold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   white-space: nowrap;
   transform-origin: left center;
 }
 
 .hud-bar {
   flex: 1;
-  height: 14px;
-  border: 2px solid var(--color-ink);
+  height: 9px;
   border-radius: var(--radius-pill);
-  background: var(--color-greige);
+  background: #ead5b8;
+  box-shadow: inset 0 1px 2px rgba(122, 78, 46, 0.25);
   overflow: hidden;
 }
 
 .hud-bar-fill {
   width: 100%;
   height: 100%;
+  border-radius: var(--radius-pill);
   transform: scaleX(0);
   transform-origin: left center;
-  background: var(--color-gold);
+  background: linear-gradient(180deg, #fad36a 0%, #eda92f 100%);
   transition: transform 220ms ease-out;
 }
 
 /* The stage's goal: its last cat, small, at the end of the bar. */
 .hud-goal.cat-icon {
   --size: 30px;
+  margin-top: -6px;
 }
 
 .hud-bar.is-final + .hud-goal {
   filter: drop-shadow(0 0 5px rgba(242, 184, 59, 0.9));
 }
 
-/* The next cat in a bubble with a "Next" tag. */
-.hud-next {
+/* The right cluster: the next bubble over the coins card, the pause button on top. */
+.hud-right {
   position: relative;
   flex: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-bottom: 9px;
+  width: 157px;
+  height: 118px;
 }
 
-.hud-next-cats {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  min-width: 62px;
-  height: 62px;
-  padding: 0 6px;
-  border: 3px solid var(--color-ink);
-  border-radius: 31px;
-  background: var(--color-paper);
-}
-
-.hud-next-cats .cat-icon {
-  --size: 42px;
+.hud-next {
+  position: absolute;
+  left: 0;
+  top: -10px;
+  width: 92px;
+  height: 110px;
 }
 
 .hud-next-label {
   position: absolute;
-  bottom: 0;
-  padding: 2px 9px;
-  border-radius: var(--radius-pill);
-  background: var(--color-ink);
-  color: var(--color-paper);
-  font-size: 0.7rem;
+  top: 0;
+  left: 0;
+  right: 0;
+  color: #6b4532;
+  font-size: 16px;
   font-weight: var(--weight-bold);
-  letter-spacing: 0.08em;
-  line-height: 1.2;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  text-align: center;
   text-transform: uppercase;
+  text-shadow:
+    0 2px 0 var(--hud-card),
+    2px 0 0 var(--hud-card),
+    -2px 0 0 var(--hud-card),
+    0 -2px 0 var(--hud-card);
+}
+
+.hud-next-bubble {
+  position: absolute;
+  left: 0;
+  top: 18px;
+  width: 92px;
+  height: 92px;
+}
+
+.hud-next-bubble > svg {
+  position: absolute;
+  inset: 0;
+}
+
+/* The cat sits in the bubble's circle (centre 54%, 46% of the box), its ears inside too. */
+.hud-next-cats {
+  position: absolute;
+  left: 54%;
+  top: 49%;
+  display: flex;
+  transform: translate(-50%, -50%);
+}
+
+.hud-next-cats .cat-icon {
+  --size: 48px;
+}
+
+.pause-btn {
+  position: absolute;
+  right: 0;
+  top: -2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 2.5px solid #e5718d;
+  border-radius: 15px;
+  background: linear-gradient(180deg, #fdbfcd 0%, #f38aa1 100%);
+  color: #fff;
+  box-shadow:
+    0 4px 0 #d9617e,
+    0 8px 14px rgba(217, 97, 126, 0.25);
+  pointer-events: auto;
+  transition:
+    transform 70ms ease-out,
+    box-shadow 70ms ease-out;
+}
+
+/* A glossy highlight on the button's top-left. */
+.pause-btn::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 4px;
+  width: 15px;
+  height: 6px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.pause-btn:active {
+  transform: translateY(3px) scale(0.95);
+  box-shadow: 0 1px 0 #d9617e;
+}
+
+.pause-btn svg {
+  width: 30px;
+  height: 30px;
+}
+
+/* The coins card runs off the right edge of the screen, under the bubble. */
+.hud-coins-card {
+  position: absolute;
+  right: -18px;
+  top: 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 118px;
+  height: 58px;
+  padding: 3px 0 0 39px;
+  border-radius: 18px;
+}
+
+.hud-coins {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: -3px;
+  color: var(--hud-value);
+  font-size: 20px;
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.hud-coins svg {
+  flex: none;
+  width: 20px;
+  height: 20px;
+}
+
+/* Very narrow phones: the HUD shrinks a little so both sides keep their room. */
+@media (max-width: 359px) {
+  .game-hud {
+    zoom: 0.88;
+  }
 }
 
 /* A cat as a DOM icon: its art (inline SVG) with the number on its plate. */
@@ -219,21 +358,52 @@
 }
 
 .play-area {
-  position: relative;
-  flex: 1;
-  min-height: 0;
+  position: absolute;
+  inset: 0;
   overflow: hidden;
   /* All gestures belong to the game: no scroll, no zoom. */
   touch-action: none;
+  /* The sky over the shrine garden. */
+  background: linear-gradient(180deg, #fbe9d6 0%, #fcf0e0 55%, #f8e4cf 100%);
 }
 
-/* The shrine garden behind the glass jar; the canvas is transparent around the cats. */
+/* The shrine garden behind the glass jar, lined up with the jar (gameScreen.setJarBox); the
+   canvas is transparent around the jar and the cats. */
 .play-scenery {
   position: absolute;
-  inset: 0;
+  left: 0;
+  top: 0;
   width: 100%;
   height: 100%;
   pointer-events: none;
+}
+
+/* The jar's glass (config/jarArt.ts JAR_GLASS): a white wash with rounded bottom corners and a thin
+   line inside its edge, placed on the jar by gameScreen.setJarBox. Hidden while the jar grows: the
+   canvas draws it then. */
+.jar-glass {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  border-radius: 0 0 var(--glass-radius, 0) var(--glass-radius, 0);
+  background: rgba(255, 255, 255, 0.3);
+  pointer-events: none;
+}
+
+.jar-glass::after {
+  content: '';
+  position: absolute;
+  inset: 0 var(--glass-inset, 0) var(--glass-inset, 0) var(--glass-inset, 0);
+  border: var(--glass-line, 0) solid rgba(255, 255, 255, 0.55);
+  border-top: none;
+  border-radius: 0 0 calc(var(--glass-radius, 0) - var(--glass-inset, 0))
+    calc(var(--glass-radius, 0) - var(--glass-inset, 0));
+}
+
+.jar-glass.is-hidden {
+  visibility: hidden;
 }
 
 .play-area canvas {
@@ -484,14 +654,14 @@
   }
 }
 
-/* The HUD coin counter bumps when a flying coin lands. */
-.hud-coins.is-pulsing {
+/* The HUD coin card bumps when a flying coin lands. */
+.hud-coins-card.is-pulsing {
   animation: coins-pulse 180ms ease-out;
 }
 
 @keyframes coins-pulse {
   50% {
-    transform: scale(1.12);
+    transform: scale(1.08);
     background: var(--color-gold-light);
   }
 }
@@ -529,6 +699,6 @@
 .reduce-motion .hint-pill,
 .reduce-motion .hud-stage-label.is-new,
 .reduce-motion .combo.is-step,
-.reduce-motion .hud-coins.is-pulsing {
+.reduce-motion .hud-coins-card.is-pulsing {
   animation: none;
 }

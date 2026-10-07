@@ -10,9 +10,11 @@
 import Phaser from 'phaser';
 import { AIM_LINE_ALPHA, AIM_LINE_COLOR, COUNTDOWN_FILL, COUNTDOWN_STROKE } from '../config/skin';
 import { FIRST_STAGE, JAR_WIDTH } from '../config/stages';
+import { PAW_GRIP } from '../config/pawArt';
 import {
-  AIM_DASH,
-  AIM_GAP,
+  AIM_DOT_RADIUS,
+  AIM_DOT_SPACING,
+  AIM_GHOST_ALPHA,
   AIM_LINE_WIDTH,
   BURST_SPARKS,
   COUNTDOWN_PULSE_MS,
@@ -25,7 +27,7 @@ import {
 } from '../config/view';
 import { hexToNumber } from '../core/color';
 import type { GameEvents } from '../core/events';
-import { clampDropX, jarGeometry } from '../physics/geometry';
+import { clampDropX, floorRestY, jarGeometry } from '../physics/geometry';
 import { reducedMotion } from '../platform/motion';
 import type { RunController } from '../run/RunController';
 import { landingY } from './aim';
@@ -39,6 +41,7 @@ import { PopFx } from './fx/PopFx';
 import type { PopRequest } from './fx/PopFx';
 import { SparkFx } from './fx/SparkFx';
 import { JarView } from './JarView';
+import { PawView, pawLift } from './PawView';
 import { comboShake, mergeParticleCount, mergeShake, Shake } from './shake';
 import type { BallSkin } from './skins/BallSkin';
 import { CatSkin } from './skins/CatSkin';
@@ -52,6 +55,14 @@ export const GAME_SCENE_KEY = 'game';
 /** A payout showed up on screen at (x, y) in canvas pixels. */
 export type ScreenCoinsListener = (x: number, y: number, kind: PayoutKind) => void;
 
+/** The current stage's jar on screen, in canvas pixels: its inner walls, rim and floor. */
+export interface JarBox {
+  readonly left: number;
+  readonly right: number;
+  readonly top: number;
+  readonly bottom: number;
+}
+
 export class GameScene extends Phaser.Scene {
   private run: RunController | null = null;
   private unsubscribe: (() => void)[] = [];
@@ -64,8 +75,17 @@ export class GameScene extends Phaser.Scene {
   private aimLine!: Phaser.GameObjects.Graphics;
   private dropperBody!: Phaser.GameObjects.Image;
   private dropperNumber!: Phaser.GameObjects.Image;
+  private paw!: PawView;
   private countdown!: Phaser.GameObjects.Text;
   private coinsListener: ScreenCoinsListener | null = null;
+  private jarBoxListener: ((box: JarBox, growing: boolean) => void) | null = null;
+  private shownBox: JarBox | null = null;
+  private shownGrowing = false;
+  /** Canvas pixels at the top covered by the HUD; the jar and the dropper fit below them. */
+  private insetTop = 0;
+  /** Where the paw hangs (world x) and when it last let go of a cat. */
+  private pawX = 0;
+  private liftFromMs = -Infinity;
 
   /** Where the player aims, in world x (clamped per cat when shown or dropped). */
   private aimX = 0;
@@ -103,12 +123,7 @@ export class GameScene extends Phaser.Scene {
     const dropper = layer();
     const fx = layer();
 
-    const back = this.add.graphics();
-    const front = this.add.graphics();
-    const rim = this.add.graphics();
-    jarBack.add(back);
-    jarFront.add([front, rim]);
-    this.jar = new JarView(back, front, rim);
+    this.jar = new JarView(this, jarBack, jarFront, this.add.graphics());
 
     this.aimLine = this.add.graphics();
     aim.add(this.aimLine);
@@ -118,6 +133,8 @@ export class GameScene extends Phaser.Scene {
     this.dropperBody = this.add.image(0, 0, first).setVisible(false);
     this.dropperNumber = this.add.image(0, 0, first).setVisible(false);
     dropper.add([this.dropperBody, this.dropperNumber]);
+    // The paw holds the cat by the head, so it is drawn over it.
+    this.paw = new PawView(this, dropper);
 
     this.fx = new MergeFx(
       this,
@@ -144,7 +161,11 @@ export class GameScene extends Phaser.Scene {
     this.input.on(Phaser.Input.Events.POINTER_MOVE, this.onPointerMove, this);
     this.input.on(Phaser.Input.Events.POINTER_UP, this.onPointerUp, this);
     this.input.on(Phaser.Input.Events.POINTER_UP_OUTSIDE, this.onPointerUp, this);
-    this.renderer.on(Phaser.Renderer.Events.RESTORE_WEBGL, () => this.skin.restore());
+    this.renderer.on(Phaser.Renderer.Events.RESTORE_WEBGL, () => {
+      this.skin.restore();
+      this.jar.restore();
+      this.paw.restore();
+    });
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.detach());
   }
@@ -154,14 +175,20 @@ export class GameScene extends Phaser.Scene {
     this.detach();
     this.run = run;
     this.aimX = 0;
+    this.pawX = 0;
     this.aiming = false;
     this.popInFromMs = this.nowMs;
+    this.liftFromMs = -Infinity;
     this.skin.setStage(run.stage);
     const on = <K extends keyof GameEvents>(type: K, fn: (p: GameEvents[K]) => void): void => {
       this.unsubscribe.push(run.events.on(type, fn));
     };
     on('dropReady', () => {
       this.popInFromMs = this.nowMs;
+    });
+    // The paw lets go: it lifts a little and settles back.
+    on('catDropped', () => {
+      this.liftFromMs = this.nowMs;
     });
     // Merge juice (GAME_DESIGN §12): pop ring, "+coins", the new cat's bump, particles in its
     // colour, gold sparks for golden merges, and a shake for big cats.
@@ -238,19 +265,33 @@ export class GameScene extends Phaser.Scene {
     this.coinsListener(at.x, at.y, kind);
   }
 
+  /** The HUD covers this many canvas pixels at the top; the jar fits below them. */
+  setInsetTop(pixels: number): void {
+    this.insetTop = Math.max(0, pixels);
+  }
+
   /**
-   * The current stage's jar on screen: rim and floor y in canvas pixels, or null without a run.
-   * At both ends of an expansion the jar fills the same box, so banners can anchor to it.
+   * Called whenever the jar's box on screen changes (resize, HUD size), in canvas pixels, and
+   * when the jar starts or stops growing (the DOM hides its glass meanwhile).
    */
-  jarBox(): { top: number; bottom: number } | null {
+  setJarBoxListener(listener: ((box: JarBox, growing: boolean) => void) | null): void {
+    this.jarBoxListener = listener;
+    this.shownBox = null;
+  }
+
+  /**
+   * The current stage's jar on screen in canvas pixels, or null without a run. At both ends of
+   * an expansion the jar fills the same box, so banners and the garden behind it anchor to it.
+   */
+  jarBox(): JarBox | null {
     const run = this.run;
     if (!run) return null;
     const cam = this.cameras.main;
-    const fit = fitCamera(run.geometry, cam.width, cam.height);
-    return {
-      top: worldToView(fit, cam.width, cam.height, 0, run.geometry.rimY).y,
-      bottom: worldToView(fit, cam.width, cam.height, 0, 0).y,
-    };
+    const geo = run.geometry;
+    const fit = fitCamera(geo, cam.width, cam.height, undefined, this.insetTop);
+    const rim = worldToView(fit, cam.width, cam.height, -geo.halfWidth, geo.rimY);
+    const floor = worldToView(fit, cam.width, cam.height, geo.halfWidth, 0);
+    return { left: rim.x, right: floor.x, top: rim.y, bottom: floor.y };
   }
 
   detach(): void {
@@ -261,6 +302,7 @@ export class GameScene extends Phaser.Scene {
     this.preparing = 0;
     this.shake.clear();
     this.countdownPulseMs = -Infinity;
+    this.paw?.hide();
     this.pops?.clear();
     this.balls?.clear();
     this.fx?.clear();
@@ -290,14 +332,15 @@ export class GameScene extends Phaser.Scene {
     // pause in the middle of an expansion simply shows the right frame next time.
     const frames = expansionFrames(run.geometry, run.expansion, run.renderAlpha);
     const cam = this.cameras.main;
-    this.fit = fitCamera(frames.camera, cam.width, cam.height);
+    this.fit = fitCamera(frames.camera, cam.width, cam.height, undefined, this.insetTop);
+    this.reportJarBox(run.expansion !== null);
     const shake = this.shake.offset(this.nowMs, this.shakeOffset);
     cam.setZoom(this.fit.zoom).centerOn(this.fit.centerX + shake.x, this.fit.centerY + shake.y);
     this.fx.setResolution(this.fit.zoom);
 
     const danger = run.dangerActive;
     const flash = danger ? Math.floor(this.nowMs / (DANGER_FLASH_PERIOD_MS / 2)) % 2 === 0 : null;
-    this.jar.draw(frames.jar.width, frames.jar.height, flash);
+    this.jar.draw(frames.jar.width, flash, run.expansion !== null);
     this.balls.sync(run.balls, this.nowMs);
     this.renderDropper(run);
     this.renderCountdown(run, frames.jar);
@@ -306,19 +349,30 @@ export class GameScene extends Phaser.Scene {
   }
 
   private renderDropper(run: RunController): void {
-    const show = run.state === 'playing' && run.canDrop;
-    this.dropperBody.setVisible(show);
-    this.dropperNumber.setVisible(show);
-    this.aimLine.clear();
-    if (!show) return;
-
     const geo = run.geometry;
     const cat = run.current;
     const radius = run.radiusOf(cat.tier);
-    const x = clampDropX(this.aimX, radius, geo);
+    if (run.state === 'playing') this.pawX = clampDropX(this.aimX, radius, geo);
+    const x = this.pawX;
+    this.aimLine.clear();
+
+    // The paw hangs over the jar whenever the jar is not growing; it keeps its place while the
+    // next cat comes, and lifts a little when it lets go of one.
+    if (run.expansion) {
+      this.paw.hide();
+    } else {
+      const top = this.fit.centerY - this.cameras.main.height / this.fit.zoom / 2;
+      const y = geo.dropY - PAW_GRIP * radius - pawLift(this.nowMs - this.liftFromMs);
+      this.paw.show(x, y, top - AIM_DOT_SPACING);
+    }
+
+    const show = run.state === 'playing' && run.canDrop;
+    this.dropperBody.setVisible(show);
+    this.dropperNumber.setVisible(show);
+    if (!show) return;
+
     const t = Math.min(1, (this.nowMs - this.popInFromMs) / DROPPER_POP_IN_MS);
     const pop = backOut(t);
-
     const body = this.skin.body(cat.tier);
     this.dropperBody
       .setTexture(body.key)
@@ -334,18 +388,35 @@ export class GameScene extends Phaser.Scene {
         .setScale(number.unitsPerPixel * pop);
     }
 
-    // Aim guide: a dashed line from the cat down to where it first touches something.
-    const land = landingY(x, radius, geo.dropY, run.balls);
+    // Aim guide: a dotted line from the cat down to where it first touches something, and a
+    // faint ghost of the cat there.
+    const land = landingY(x, radius, geo.dropY, run.balls, floorRestY(x, radius, geo));
     const g = this.aimLine;
-    g.lineStyle(AIM_LINE_WIDTH, AIM_LINE_COLOR, AIM_LINE_ALPHA);
-    const top = geo.dropY + radius;
-    const bottom = land + radius;
-    for (let y = top + AIM_GAP; y < bottom; y += AIM_DASH + AIM_GAP) {
-      g.lineBetween(x, y, x, Math.min(y + AIM_DASH, bottom));
+    g.fillStyle(AIM_LINE_COLOR, AIM_LINE_ALPHA);
+    for (let y = geo.dropY + radius + AIM_DOT_SPACING; y < land + radius; y += AIM_DOT_SPACING) {
+      g.fillCircle(x, y, AIM_DOT_RADIUS);
     }
-    // A faint ghost of the cat where it lands.
-    g.lineStyle(AIM_LINE_WIDTH, AIM_LINE_COLOR, AIM_LINE_ALPHA * 0.6);
+    g.lineStyle(AIM_LINE_WIDTH, AIM_LINE_COLOR, AIM_LINE_ALPHA * AIM_GHOST_ALPHA);
     g.strokeCircle(x, land, radius);
+  }
+
+  /** Tells the listener when the stage jar's box on screen moved, or the jar starts or stops growing. */
+  private reportJarBox(growing: boolean): void {
+    if (!this.jarBoxListener) return;
+    const box = this.jarBox();
+    const old = this.shownBox;
+    const same =
+      old !== null &&
+      box !== null &&
+      old.left === box.left &&
+      old.right === box.right &&
+      old.top === box.top &&
+      old.bottom === box.bottom &&
+      growing === this.shownGrowing;
+    if (!box || same) return;
+    this.shownBox = box;
+    this.shownGrowing = growing;
+    this.jarBoxListener(box, growing);
   }
 
   private renderCountdown(run: RunController, frame: JarFrame): void {

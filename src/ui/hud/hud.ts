@@ -1,7 +1,13 @@
 import { formatNumber } from '../../core/format';
 import { catIcon, paintCatIcon } from '../catIcon';
 import { button, el } from '../dom';
-import { ICON_COIN, ICON_PAUSE } from '../icons';
+import {
+  ICON_COIN,
+  ICON_PAUSE,
+  ICON_PAW_PRINT,
+  NEXT_BUBBLE_BACK,
+  NEXT_BUBBLE_SHINE,
+} from '../icons';
 
 export interface HudActions {
   onPause(): void;
@@ -23,30 +29,24 @@ export interface HudView {
   readonly coinTarget: HTMLElement;
 }
 
-/** In-game HUD (GAME_DESIGN §2.3): pause, score, run coins, next cat, stage and progress. */
+/**
+ * In-game HUD (GAME_DESIGN §2.3), floating over the top of the play area: on the left the score
+ * card with its paw badge and the stage card under it; on the right the next cat in a glass
+ * bubble, the pink pause button and the coins card. Only the pause button takes touches; the
+ * rest lets them through to the game.
+ */
 export function createHud(root: HTMLElement, actions: HudActions): HudView {
   root.replaceChildren();
   root.classList.add('game-hud');
 
-  const pause = button('icon-btn pause-btn', '', ICON_PAUSE);
-  pause.setAttribute('aria-label', 'Pause');
-  pause.dataset['testid'] = 'pause';
-  pause.addEventListener('click', actions.onPause);
-
-  const main = el('div', 'hud-main');
-  const top = el('div', 'hud-row');
-  const scoreBlock = el('div', 'hud-score-block');
+  const scoreCard = el('div', 'hud-card hud-score-card');
+  const paw = el('span', 'hud-paw');
+  paw.insertAdjacentHTML('beforeend', ICON_PAW_PRINT);
   const score = el('span', 'hud-score', '0');
   score.dataset['testid'] = 'hud-score';
-  scoreBlock.append(el('span', 'hud-score-label', 'Score'), score);
-  const coins = el('span', 'hud-coins');
-  coins.dataset['testid'] = 'hud-coins';
-  coins.insertAdjacentHTML('beforeend', ICON_COIN);
-  const coinValue = el('span', '', '0');
-  coins.append(coinValue);
-  top.append(scoreBlock, coins);
+  scoreCard.append(paw, el('span', 'hud-label', 'Score'), score);
 
-  const stage = el('div', 'hud-stage');
+  const stage = el('div', 'hud-card hud-stage');
   const stageLabel = el('span', 'hud-stage-label', 'Stage 1');
   stageLabel.dataset['testid'] = 'hud-stage';
   const bar = el('div', 'hud-bar');
@@ -61,17 +61,40 @@ export function createHud(root: HTMLElement, actions: HudActions): HudView {
   goal.classList.add('hud-goal');
   goal.dataset['testid'] = 'hud-goal';
   stage.append(stageLabel, bar, goal);
-  main.append(top, stage);
 
-  // The next cat in a bubble, with a "Next" tag under it.
+  const left = el('div', 'hud-left');
+  left.append(scoreCard, stage);
+
+  // The next cat in a glass speech bubble, its tail towards the paw.
   const next = el('div', 'hud-next');
   next.dataset['testid'] = 'hud-next';
+  const bubble = el('div', 'hud-next-bubble');
+  bubble.insertAdjacentHTML('beforeend', NEXT_BUBBLE_BACK);
   const nextCats = el('div', 'hud-next-cats');
   const nextCat = catIcon(1);
   nextCats.append(nextCat);
-  next.append(nextCats, el('span', 'hud-next-label', 'Next'));
+  bubble.append(nextCats);
+  bubble.insertAdjacentHTML('beforeend', NEXT_BUBBLE_SHINE);
+  next.append(el('span', 'hud-next-label', 'Next'), bubble);
 
-  root.append(pause, main, next);
+  const pause = button('pause-btn', '', ICON_PAUSE);
+  pause.setAttribute('aria-label', 'Pause');
+  pause.dataset['testid'] = 'pause';
+  pause.addEventListener('click', actions.onPause);
+
+  const coinsCard = el('div', 'hud-card hud-coins-card');
+  const coins = el('span', 'hud-coins');
+  coins.dataset['testid'] = 'hud-coins';
+  coins.insertAdjacentHTML('beforeend', ICON_COIN);
+  const coinValue = el('span', '', '0');
+  coins.append(coinValue);
+  coinsCard.append(el('span', 'hud-label', 'Coins'), coins);
+
+  // The bubble overlaps the coins card, and the pause button sits above both.
+  const right = el('div', 'hud-right');
+  right.append(coinsCard, next, pause);
+
+  root.append(left, right);
 
   let shownStage = 0;
   const restartAnimation = (node: HTMLElement, className: string): void => {
@@ -80,7 +103,7 @@ export function createHud(root: HTMLElement, actions: HudActions): HudView {
     node.classList.add(className);
   };
   stageLabel.addEventListener('animationend', () => stageLabel.classList.remove('is-new'));
-  coins.addEventListener('animationend', () => coins.classList.remove('is-pulsing'));
+  coinsCard.addEventListener('animationend', () => coinsCard.classList.remove('is-pulsing'));
 
   return {
     setScore(value) {
@@ -112,7 +135,7 @@ export function createHud(root: HTMLElement, actions: HudActions): HudView {
       bar.classList.toggle('is-final', final);
     },
     pulseCoins() {
-      restartAnimation(coins, 'is-pulsing');
+      restartAnimation(coinsCard, 'is-pulsing');
     },
     coinTarget: coins,
   };

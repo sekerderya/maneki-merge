@@ -4,27 +4,33 @@
  * the world has the same scale at every stage.
  */
 
-/** Space shown left and right of the jar's inner walls, each side (includes the wall art). */
-export const CAMERA_SIDE_MARGIN_RATIO = 0.05;
-/** Space shown below the jar floor (includes the floor art). */
-export const CAMERA_FLOOR_MARGIN_RATIO = 0.04;
+/**
+ * Space shown left and right of the jar's inner walls, each side: the bamboo frame and the garden
+ * either side of it (v0.14, the owner's chosen screen: a 300 px jar on a 390 px phone).
+ */
+export const CAMERA_SIDE_MARGIN_RATIO = 0.15;
+/** Space shown below the jar floor: the feet and the rug. */
+export const CAMERA_FLOOR_MARGIN_RATIO = 0.2;
 /**
  * Where the play band's spare height goes when the screen is taller than the framed jar: this
  * share below the floor, the rest above the dropper. 0 keeps the floor at the bottom edge and 0.5
- * centres the jar; 0.45 lifts it as far as the owner's sketch on a phone (v0.10).
+ * centres the jar between the HUD and the bottom edge, where the owner's v0.14 screen has it.
  */
-export const CAMERA_SPARE_BELOW_RATIO = 0.45;
+export const CAMERA_SPARE_BELOW_RATIO = 0.5;
 
-/** Drawn thickness of the jar's bamboo posts and floor beam, outside the physics walls. */
-export const JAR_WALL_RATIO = 0.03;
-/** Width of the ink outline around the bamboo. */
-export const JAR_OUTLINE_RATIO = 0.0045;
-/** Bamboo nodes (the darker rings) on the posts: spacing as a fraction of the jar's height. */
-export const JAR_NODE_SPACING = 0.23;
-/** Radius of the gold knobs on top of the posts, which mark the danger line. */
-export const JAR_KNOB_RATIO = 0.016;
-/** Width of the dashed danger line across the opening. */
-export const JAR_RIM_RATIO = 0.006;
+/** The jar's art is drawn at this many texture pixels per world unit (a CSS zoom of 0.65 at 2.5×). */
+export const JAR_PX_PER_UNIT = 1.6;
+/** The dashed danger line across the opening: dash (and gap) length, width, inset from the walls. */
+export const JAR_RIM_DASH = 14;
+export const JAR_RIM_WIDTH = 4.4;
+export const JAR_RIM_INSET = 6;
+
+/** The paw's art (config/pawArt.ts), like the cats': never upscaled. */
+export const PAW_PX_PER_UNIT = 2.5;
+/** When a cat drops, the paw lifts by PAW_LIFT world units and settles back. */
+export const PAW_LIFT = 26;
+export const PAW_LIFT_UP_MS = 110;
+export const PAW_LIFT_DOWN_MS = 280;
 
 /** The canvas renders at most this many device pixels per CSS pixel (TECH_SPEC §6). */
 export const MAX_RENDER_RESOLUTION = 2.5;
@@ -44,10 +50,12 @@ export const PLACEHOLDER_OUTLINE_RATIO = 0.07;
 export const NUMBER_HEIGHT_RATIO = 0.95;
 export const NUMBER_HEIGHT_RATIO_TWO_DIGITS = 0.78;
 
-/** Aim guide: line width and dash pattern in world units. */
+/** Aim guide: a dotted line (dot radius and spacing) and the landing ghost's line, world units. */
+export const AIM_DOT_RADIUS = 2.8;
+export const AIM_DOT_SPACING = 18;
 export const AIM_LINE_WIDTH = 3;
-export const AIM_DASH = 14;
-export const AIM_GAP = 10;
+/** The ghost of the landing cat is this faint, relative to the dots. */
+export const AIM_GHOST_ALPHA = 0.45;
 /** Pop-in of the next cat in the dropper. */
 export const DROPPER_POP_IN_MS = 160;
 

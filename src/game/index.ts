@@ -1,15 +1,15 @@
 /**
  * Game layer (TECH_SPEC §3, §6): the Phaser game that renders a run and forwards input.
  *
- * The canvas fills the play area. It renders at devicePixelRatio (capped at
- * MAX_RENDER_RESOLUTION) and is shown at CSS size, so cats and numbers stay sharp. The game loop
- * sleeps while the menu is visible.
+ * The canvas fills the play area, the whole screen; the DOM HUD floats over its top, and the jar
+ * fits below the HUD. It renders at devicePixelRatio (capped at MAX_RENDER_RESOLUTION) and is
+ * shown at CSS size, so cats and numbers stay sharp. The game loop sleeps while the menu is up.
  */
 import Phaser from 'phaser';
 import { MAX_RENDER_RESOLUTION } from '../config/view';
 import type { RunController } from '../run/RunController';
 import { GAME_SCENE_KEY, GameScene } from './GameScene';
-import type { SceneSkin } from './GameScene';
+import type { JarBox, SceneSkin } from './GameScene';
 import type { PayoutKind } from './fx/MergeFx';
 
 export interface GameView {
@@ -19,8 +19,13 @@ export interface GameView {
   sleep(): void;
   /** Re-reads the play area's size (also done automatically on resize). */
   refit(): void;
-  /** The jar's rim and floor in CSS pixels from the top of the play area, or null. */
-  jarBox(): { top: number; bottom: number } | null;
+  /** The jar's inner walls, rim and floor in CSS pixels of the play area, or null. */
+  jarBox(): JarBox | null;
+  /**
+   * Called with the jar's box (CSS pixels of the play area) whenever it moves on screen, and
+   * whether the jar is growing (the canvas draws the glass then).
+   */
+  onJarBox(listener: (box: JarBox, growing: boolean) => void): void;
   /**
    * Called whenever a payout shows up on screen (merge, Jackpot, popping cat), with its point in
    * CSS pixels from the play area's top-left corner, and what paid.
@@ -30,7 +35,15 @@ export interface GameView {
   readonly fps: number;
 }
 
-export function createGame(parent: HTMLElement, skin: SceneSkin = 'cat'): GameView {
+/**
+ * `insetTop` tells how many CSS pixels at the top of the play area the HUD covers; the jar and
+ * the dropper fit below them.
+ */
+export function createGame(
+  parent: HTMLElement,
+  skin: SceneSkin = 'cat',
+  insetTop: () => number = () => 0,
+): GameView {
   let resolution = 1;
   let pending: RunController | null = null;
   let scene: GameScene | null = null;
@@ -39,8 +52,15 @@ export function createGame(parent: HTMLElement, skin: SceneSkin = 'cat'): GameVi
   /** Set after the first frame: before it, Phaser hasn't started its loop yet. */
   let looping = false;
   let coinsListener: ((x: number, y: number, kind: PayoutKind) => void) | null = null;
+  let jarBoxListener: ((box: JarBox, growing: boolean) => void) | null = null;
   const forwardCoins = (x: number, y: number, kind: PayoutKind): void =>
     coinsListener?.(x / resolution, y / resolution, kind);
+  const toCss = (box: JarBox): JarBox => ({
+    left: box.left / resolution,
+    right: box.right / resolution,
+    top: box.top / resolution,
+    bottom: box.bottom / resolution,
+  });
 
   const game = new Phaser.Game({
     type: Phaser.AUTO,
@@ -57,6 +77,7 @@ export function createGame(parent: HTMLElement, skin: SceneSkin = 'cat'): GameVi
       postBoot: (booted) => {
         scene = booted.scene.getScene(GAME_SCENE_KEY) as GameScene;
         scene.setCoinsListener(forwardCoins);
+        scene.setJarBoxListener((box, growing) => jarBoxListener?.(toCss(box), growing));
         // The loop starts right after postBoot; put it to sleep until a run is shown.
         booted.events.once(Phaser.Core.Events.POST_RENDER, () => {
           looping = true;
@@ -86,6 +107,7 @@ export function createGame(parent: HTMLElement, skin: SceneSkin = 'cat'): GameVi
     game.canvas.style.height = `${height}px`;
     game.scale.updateBounds();
     scene?.cameras.main.setSize(w, h);
+    scene?.setInsetTop(insetTop() * resolution);
   }
 
   function show(run: RunController): void {
@@ -115,7 +137,10 @@ export function createGame(parent: HTMLElement, skin: SceneSkin = 'cat'): GameVi
     },
     jarBox() {
       const box = scene?.jarBox();
-      return box ? { top: box.top / resolution, bottom: box.bottom / resolution } : null;
+      return box ? toCss(box) : null;
+    },
+    onJarBox(listener) {
+      jarBoxListener = listener;
     },
     get fps() {
       return game.loop?.actualFps ?? 0;

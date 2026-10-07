@@ -1,8 +1,9 @@
 /**
  * Camera fit (TECH_SPEC §4): show the jar plus its side margins, the dropper band above the rim
- * and a floor margin inside the play band, letterboxed. Spare height is shared between the space
- * above the dropper and below the floor (CAMERA_SPARE_BELOW_RATIO), which lifts the jar off the
- * bottom edge on tall phones. Pure math, no Phaser, so it is unit-tested in Node.
+ * and a floor margin inside the play band, letterboxed. The play band is the canvas below the
+ * HUD, which floats over the top of the canvas (`insetTop`). Spare height is shared between the
+ * space above the dropper and below the floor (CAMERA_SPARE_BELOW_RATIO). Pure math, no Phaser,
+ * so it is unit-tested in Node.
  */
 import {
   CAMERA_FLOOR_MARGIN_RATIO,
@@ -40,22 +41,26 @@ export function framedRegion(jar: JarFrame): {
 }
 
 /**
- * Fits the jar into a viewport of `viewWidth` × `viewHeight` canvas pixels. When the viewport is
- * taller than the framed region, `spareBelow` of the spare height goes below the floor and the
- * rest above the dropper. Frames of the same shape (every stage, every moment of an expansion)
- * get the same spare in pixels, so the floor never moves on screen.
+ * Fits the jar into a viewport of `viewWidth` × `viewHeight` canvas pixels, below the top
+ * `insetTop` pixels (the HUD). When the band is taller than the framed region, `spareBelow` of
+ * the spare height goes below the floor and the rest above the dropper. Frames of the same shape
+ * (every stage, every moment of an expansion) get the same spare in pixels, so the floor never
+ * moves on screen.
  */
 export function fitCamera(
   jar: JarFrame,
   viewWidth: number,
   viewHeight: number,
   spareBelow = CAMERA_SPARE_BELOW_RATIO,
+  insetTop = 0,
 ): CameraFit {
   const region = framedRegion(jar);
   const w = Math.max(1, viewWidth);
   const h = Math.max(1, viewHeight);
-  const zoom = Math.min(w / region.width, h / region.height);
-  const spare = Math.max(0, h / zoom - region.height);
+  const band = Math.max(1, h - Math.max(0, insetTop));
+  const zoom = Math.min(w / region.width, band / region.height);
+  const spare = Math.max(0, band / zoom - region.height);
+  // The band ends at the bottom edge, so the floor's place only depends on the spare below.
   return { zoom, centerX: 0, centerY: region.bottom + spare * spareBelow - h / zoom / 2 };
 }
 

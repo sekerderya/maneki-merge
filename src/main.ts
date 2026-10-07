@@ -167,8 +167,11 @@ async function boot(): Promise<void> {
     onMenu: () => screens?.showMenu(),
   });
 
-  // Phaser renders into the play area; its loop sleeps while the menu is up.
-  const game = createGame(gameScreen.playArea, skin);
+  // Phaser renders into the play area under the HUD; its loop sleeps while the menu is up. The
+  // jar fits below the HUD, and the garden behind the canvas follows the jar.
+  const game = createGame(gameScreen.playArea, skin, () => gameScreen.hudBottom());
+  gameScreen.onHudResize(() => game.refit());
+  game.onJarBox((box, growing) => gameScreen.setJarBox(box, growing));
   // The menu and the pause overlay show what the profile holds.
   const showProfile = (): void => {
     const { bestScore, bestStage } = profile.records;

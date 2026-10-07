@@ -4,6 +4,44 @@ import type { UpgradeId } from '../config/upgrades';
 const svg = (body: string, viewBox = '0 0 24 24'): string =>
   `<svg viewBox="${viewBox}" aria-hidden="true" focusable="false">${body}</svg>`;
 
+/** The score card's badge: a white paw print with pink pads, outlined in ink. */
+export const ICON_PAW_PRINT = svg(
+  '<path d="M24 22Q33 22 37 30Q41 39 33 41Q28 42 24 40Q20 42 15 41Q7 39 11 30Q15 22 24 22Z" fill="#fff" stroke="#5b3a2b" stroke-width="2.6" stroke-linejoin="round"/>' +
+    '<g stroke="#5b3a2b" stroke-width="2.4" fill="#fff">' +
+    '<ellipse cx="9.5" cy="20" rx="5.4" ry="6.6" transform="rotate(-20 9.5 20)"/>' +
+    '<ellipse cx="17.5" cy="11" rx="5.4" ry="6.6" transform="rotate(-8 17.5 11)"/>' +
+    '<ellipse cx="30.5" cy="11" rx="5.4" ry="6.6" transform="rotate(8 30.5 11)"/>' +
+    '<ellipse cx="38.5" cy="20" rx="5.4" ry="6.6" transform="rotate(20 38.5 20)"/></g>' +
+    '<g fill="#f6a2b3"><ellipse cx="9.5" cy="20.8" rx="2.7" ry="3.4" transform="rotate(-20 9.5 20)"/>' +
+    '<ellipse cx="17.5" cy="11.8" rx="2.7" ry="3.4" transform="rotate(-8 17.5 11)"/>' +
+    '<ellipse cx="30.5" cy="11.8" rx="2.7" ry="3.4" transform="rotate(8 30.5 11)"/>' +
+    '<ellipse cx="38.5" cy="20.8" rx="2.7" ry="3.4" transform="rotate(20 38.5 20)"/>' +
+    '<path d="M24 27Q30 27 32 32Q34 36 29.5 36.6Q26.5 37 24 35.6Q21.5 37 18.5 36.6Q14 36 16 32Q18 27 24 27Z"/></g>',
+  '0 0 48 48',
+);
+
+/**
+ * The next cat's glass bubble (GAME_DESIGN §2.3): the back with its tail towards the paw, and
+ * the shine drawn over the cat. Box 100 × 100; the bubble is the circle of radius 40 at (54, 46).
+ */
+export const NEXT_BUBBLE_BACK = svg(
+  '<defs><radialGradient id="next-glass" cx="0.4" cy="0.35" r="0.7">' +
+    '<stop offset="0" stop-color="#fff" stop-opacity="0.95"/>' +
+    '<stop offset="0.7" stop-color="#eef8fb" stop-opacity="0.92"/>' +
+    '<stop offset="1" stop-color="#d3ecf4" stop-opacity="0.95"/></radialGradient></defs>' +
+    '<g fill="url(#next-glass)" stroke="#9cc8d6" stroke-width="2.6" stroke-linejoin="round">' +
+    '<path d="M22 66Q14 82 6 90Q22 88 34 78Z"/><circle cx="54" cy="46" r="40"/></g>' +
+    '<path d="M23.5 68Q17 79 9 87.5Q22 85.5 32.5 76.5" fill="none" stroke="#eef8fb" stroke-width="3"/>',
+  '0 0 100 100',
+);
+export const NEXT_BUBBLE_SHINE = svg(
+  '<g fill="none" stroke-linecap="round">' +
+    '<path d="M24 36A31 31 0 0 1 42 16" stroke="#fff" stroke-width="4.5" opacity="0.9"/>' +
+    '<path d="M78 72A35 35 0 0 0 89 54" stroke="#bfe2ec" stroke-width="3" opacity="0.8"/></g>' +
+    '<circle cx="23" cy="48" r="2.4" fill="#fff" opacity="0.9"/>',
+  '0 0 100 100',
+);
+
 /** A mon coin: gold with a square hole, outlined in ink. */
 export const ICON_COIN = svg(
   '<circle cx="16" cy="16" r="13.5" fill="#f2b83b" stroke="#4a2e25" stroke-width="2.6"/>' +

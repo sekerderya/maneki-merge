@@ -50,7 +50,7 @@ describe('camera fit (TECH_SPEC §4)', () => {
   });
 
   it.each(viewports)(
-    'shares spare height: 45%% below the floor, the rest above (%ix%i)',
+    'shares spare height between below the floor and above the dropper (%ix%i)',
     (w, h) => {
       const fit = fitCamera(geo, w, h);
       const view = visible(fit, w, h);
@@ -66,15 +66,23 @@ describe('camera fit (TECH_SPEC §4)', () => {
     },
   );
 
-  it("lifts the jar like the owner's sketch on a 435 × 967 phone", () => {
-    // The play band under a 110 px HUD. The rim and floor land where the sketch put the jar's
-    // top (277 px) and bottom (884 px) edges, within about 20 px.
-    const [w, h, hud] = [435, 857, 110];
-    const fit = fitCamera(geo, w, h);
-    const rim = hud + worldToView(fit, w, h, 0, geo.rimY).y;
-    const floor = hud + worldToView(fit, w, h, 0, geo.width * 0.03).y;
-    expect(Math.abs(rim - 277)).toBeLessThan(20);
-    expect(Math.abs(floor - 884)).toBeLessThan(20);
+  it("puts the jar where the owner's v0.14 screen has it, below the HUD", () => {
+    // A 390 × 844 iPhone: 47 px status bar, HUD down to 173 px. The design has a 300 px jar
+    // with its rim at 287 px and its floor at 722 px.
+    const [w, h, hud] = [390, 844, 173];
+    const fit = fitCamera(geo, w, h, undefined, hud);
+    expect(geo.width * fit.zoom).toBeCloseTo(300, 6);
+    expect(Math.abs(worldToView(fit, w, h, 0, geo.rimY).y - 287)).toBeLessThan(3);
+    expect(Math.abs(worldToView(fit, w, h, 0, 0).y - 722)).toBeLessThan(3);
+  });
+
+  it.each(viewports)('keeps the dropper band below the HUD (%ix%i)', (w, h) => {
+    const hud = h * 0.2;
+    const fit = fitCamera(geo, w, h, undefined, hud);
+    const bandTop = worldToView(fit, w, h, 0, geo.rimY - geo.headroom).y;
+    expect(bandTop).toBeGreaterThanOrEqual(hud - 1e-6);
+    // The floor margin still ends on screen.
+    expect(worldToView(fit, w, h, 0, framedRegion(geo).bottom).y).toBeLessThanOrEqual(h + 1e-6);
   });
 
   it('keeps the floor and the jar width still on screen while the jar grows', () => {
