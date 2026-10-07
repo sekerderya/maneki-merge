@@ -275,6 +275,10 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
   - [x] a bamboo jar with a curved bottom (rounded floor in the physics too), glass back, on a rug
   - [x] the sakura shrine garden behind it, lined up with the jar on every screen; the jar sits a little higher than in the design, as the owner marked
   - [ ] new cat art: five maneki-neko style sets for the owner to choose from (design canvas), then the chosen set in the game
+- [x] Batch 6 (v0.15.0), shorter stages (GAME_DESIGN §4, §7):
+  - [x] 10 cats per stage (tiers 1–46): two 9s make the 10th cat, which clears the stage and becomes the next stage's 1st; the jar grows by 168 / 28 = 6
+  - [x] sizes 1–10 keep their radius; the Kuro look and the white placeholder colour left with size 11
+  - [x] save format v4 caps a record tier above 46
 
 ## M13: Final art integration
 

@@ -2,6 +2,27 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.15.0] - 2026-10-07
+
+Shorter stages: the stage loop runs on 10 cats.
+
+### Changed
+
+- Every stage holds 10 cats instead of 11. Merging two 9s makes the stage's 10th cat, which clears the stage; the jar grows and that cat becomes the new stage's 1st cat, as before. Stage 1 holds tiers 1–10, stage 2 10–19, stage 3 19–28, stage 4 28–37 and stage 5 37–46.
+- The jar grows (and the camera zooms out) by 168 / 28 = 6 per stage instead of 7.32.
+- The HUD goal, the "New cats unlocked!" banner, the debug spawn list and the Jackpot (5 × C(10) = 595 coins at stage 1) follow the new last cat.
+- The camera shake starts at merges into size 9, so the two biggest merges still shake.
+- Save format v4: a record tier above 46 (the old stage 5 went up to 51) is capped at 46.
+
+### Removed
+
+- Size 11 (radius 205), and with it the tenth cat look (Kuro, the black cat) and the tenth placeholder colour (white): the stage's last cat wears look 1, because it becomes the next stage's first cat. Kuro is in the git history.
+
+### Decisions (where the request was open)
+
+- Sizes 1–10 kept their radius (the v0.12 precedent), so the last cat is smaller than before (0.28 of the jar's width instead of 0.34) and a stage needs less room to clear. The Suika-like jar coverage was tuned with size 11; the owner's playtests decide whether the radii need a new tune.
+- The look that left is the last one (Kuro), as Kimono did in v0.12.
+
 ## [0.14.1] - 2026-10-07
 
 HUD layout from the owner's marked-up screenshot.
