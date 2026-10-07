@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.18.0] - 2026-10-07
+
+Clearer cats and a smaller HUD, from the owner's comparison with the reference image.
+
+### Added
+
+- A thick dark outline round every cat (5% of its radius, at least 4.5 world units), drawn by the game so all nine looks and all sizes get the same line; the body shrinks by as much, so touching cats still touch. The HUD's cat icons get a 1 px outline.
+
+### Removed
+
+- The stage card (stage label, progress bar and goal cat) under the score card, until the owner has art for it. The banners still announce stage clears and the next goal.
+
 ## [0.17.0] - 2026-10-07
 
 The owner's scene art (M13, phase 2 of docs/ART_ASSETS.md).

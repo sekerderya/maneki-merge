@@ -62,7 +62,7 @@ A shrine garden in the art of §13, top to bottom:
 - The screen the owner chose in v0.14 (the "Sakura garden" design): the whole screen is the scene, and the HUD floats over its top.
 - The jar (§6, §13.1), with the danger line on its rim.
 - The dropper: a calico cat's paw hangs from the top of the screen and holds the current cat by the head, just above the rim. It follows the aim, stays where it is while the next cat comes, lifts a little when it lets go, and is hidden while the jar grows. A dotted aim guide shows where the cat will fall, with a faint ghost of the cat where it lands.
-- HUD over the top of the scene. On the left, a narrow cream score card with "SCORE:" and the score in a sunken well, and a stage card of the same size under it: "STAGE N" centred on top, a thin progress bar towards the stage's last cat, and "STAGE N+1 =" with that cat as a small icon ("GOAL =" at the last stage). The bar shows the biggest cat in the jar: its size − 1 out of 9 (§4); it turns gold at the last stage. On the right, a pink pause button, a "COINS:" card with the coins earned this run, which runs off the right edge, and under it the next cat in a round glass bubble with a small "NEXT" tag on its rim (v0.14.1). Only the pause button takes touches; everywhere else a touch aims.
+- HUD over the top of the scene. On the left, a narrow cream score card with "SCORE:" and the score in a sunken well. (The stage card under it, with the stage, a progress bar and the stage's last cat, was removed in v0.18 until the owner has art for it; the banners still announce stage clears and the new goal.) On the right, a pink pause button, a "COINS:" card with the coins earned this run, which runs off the right edge, and under it the next cat in a round glass bubble with a small "NEXT" tag on its rim (v0.14.1). Only the pause button takes touches; everywhere else a touch aims.
 - Overlays:
   - **Pause**: Resume, Sound, Haptics, Quit to Menu.
   - **Game Over**: score, best score, stage reached, the biggest cat made this run, coins earned this run, new-record badges (best score, best stage, biggest cat ever), Play Again, Menu.
@@ -274,6 +274,8 @@ The owner chose the scene in a design canvas (v0.14): a cream shrine garden, ink
   |    7 | Fuji   | purple      | Gold collar, sakura flower on one ear           |
   |    8 | Aka    | red         | Tabby stripes, gold collar and a gold coin      |
   |    9 | Kin    | gold        | Red bib with gold trim, sakura flower on an ear |
+
+  The game draws a thick dark outline (#3b2620) round every cat (v0.18, like the owner's reference image), so neighbouring cats never blend into each other: 5% of the cat's radius, at least 4.5 world units, and the body is drawn that much smaller so the outline's outer edge is the physics radius. DOM icons get a 1 px outline.
 
   The tool (`npm run art`, TECH_SPEC §14) removes the images' white background and fits each body circle, and the game scales that circle onto the physics radius, so touching cats touch on screen.
 
