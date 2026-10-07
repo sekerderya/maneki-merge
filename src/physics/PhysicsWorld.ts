@@ -35,6 +35,7 @@ import type { Ball, BallSpec } from './balls';
 /** A cat to add: the world works out its size at the current stage. */
 export type NewBall = Omit<BallSpec, 'size'>;
 import { inRoundedCorner, installCircleCollisions, roundedFloorOf } from './circleCollision';
+import type { RoundedFloor } from './circleCollision';
 import { jarGeometry } from './geometry';
 import type { JarGeometry } from './geometry';
 import { installRestitutionOverride } from './restitution';
@@ -127,6 +128,8 @@ export class PhysicsWorld {
   private readonly leftWall: Matter.Body;
   private readonly rightWall: Matter.Body;
   private readonly scratch = { x: 0, y: 0 };
+  /** The floor's shape: its flat top and rounded corners (the same jar at every stage). */
+  private readonly floorShape: RoundedFloor;
   private geo: JarGeometry;
   private stepCount = 0;
   private nextId = 1;
@@ -167,6 +170,7 @@ export class PhysicsWorld {
     // The floor's rectangle reaches up to the rounded corners' centres (circleCollision.ts); its
     // flat top is still y = 0.
     const corner = jar.cornerRadius;
+    this.floorShape = { top: 0, cx: jar.halfWidth - corner, cy: -corner, radius: corner };
     const floor = Matter.Bodies.rectangle(
       0,
       (WALL_THICKNESS - corner) / 2,
@@ -180,7 +184,7 @@ export class PhysicsWorld {
         // A landing cat stops dead (restitution.ts). Its bottom corners are rounded.
         plugin: {
           restitution: FLOOR_RESTITUTION,
-          roundedFloor: { top: 0, cx: jar.halfWidth - corner, cy: -corner, radius: corner },
+          roundedFloor: this.floorShape,
         },
       },
     );
@@ -298,12 +302,7 @@ export class PhysicsWorld {
           ball.cushionStep + 1 < CUSHION_FACTORS.length ? ball.cushionStep + 1 : -1;
         if (!ball.touchesCat) this.scaleSpeed(ball.body, factor);
       }
-      if (ball.touchesFloor && !ball.touchesCat) {
-        // Rolling resistance: a lone cat on the floor slows down like a ball on a rug.
-        const { x, y } = ball.body.velocity;
-        const speed = Math.sqrt(x * x + y * y);
-        this.scaleSpeed(ball.body, speed > this.rollingLoss ? 1 - this.rollingLoss / speed : 0);
-      }
+      if (ball.touchesFloor && !ball.touchesCat) this.rollOnRug(ball);
       if (ball.touchesGrowth) {
         ball.touchesGrowth = false;
         this.limitSpeed(ball.body, this.neighbourMaxSpeed);
@@ -377,6 +376,42 @@ export class PhysicsWorld {
     if (ball.landedMs === now && inRoundedCorner(ball.x, ball.y, ball.radius, floor)) {
       ball.landsOnCorner = true;
     }
+  }
+
+  /**
+   * A lone cat on the floor (FLOOR_ROLLING_RESISTANCE): it slows down like a ball on a rug, its
+   * speed and its rim's speed alike, and it rolls instead of sliding: it turns at least as fast
+   * as it moves along the floor or the curve under it (ω = v / r). A cat that turns faster, like a
+   * merged one, keeps its own spin.
+   */
+  private rollOnRug(ball: Ball): void {
+    const { body } = ball;
+    const loss = this.rollingLoss;
+    const { x, y } = body.velocity;
+    const speed = Math.sqrt(x * x + y * y);
+    const k = speed > loss ? 1 - loss / speed : 0;
+    this.scratch.x = x * k;
+    this.scratch.y = y * k;
+    Matter.Body.setVelocity(body, this.scratch);
+    const spinLoss = loss / ball.radius;
+    const spin = body.angularVelocity;
+    let turn = Math.abs(spin) > spinLoss ? spin - Math.sign(spin) * spinLoss : 0;
+    // (nx, ny): from the cat's centre to where it touches the floor.
+    const floor = this.floorShape;
+    let nx = 0;
+    let ny = 1;
+    if (inRoundedCorner(ball.x, ball.y, ball.radius, floor)) {
+      const dx = ball.x - (ball.x < 0 ? -floor.cx : floor.cx);
+      const dy = ball.y - floor.cy;
+      const d = Math.sqrt(dx * dx + dy * dy);
+      if (d > 0) {
+        nx = dx / d;
+        ny = dy / d;
+      }
+    }
+    const rolling = (this.scratch.x * ny - this.scratch.y * nx) / ball.radius;
+    if (Math.abs(turn) < Math.abs(rolling)) turn = rolling;
+    Matter.Body.setAngularVelocity(body, turn);
   }
 
   /** Multiplies a body's velocity and spin by `factor`. */

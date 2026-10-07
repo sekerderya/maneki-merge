@@ -153,26 +153,69 @@ describe('PhysicsWorld', () => {
     expect(lower.speed).toBeGreaterThan(0);
   });
 
-  it('slows a lone cat rolling on the floor evenly, like a ball on a rug', () => {
+  it('rolls a lone cat on the floor and slows it evenly, like a ball on a rug', () => {
     const world = new PhysicsWorld();
     const r = sizeRadius(2);
     const cat = world.addBall({ tier: 2, x: -100, y: -r, vx: 300, landedMs: 0 });
-    // A pushed cat first starts to roll: about half its speed goes into its spin.
-    for (let i = 0; i < 12; i++) world.step();
-    expect(cat.speed).toBeLessThan(150);
-    // Then it loses FLOOR_ROLLING_RESISTANCE (600 u/s²: 5 u/s per step, plus a little air
-    // friction) on every step until it stops.
+    // A pushed cat rolls at once: its rim turns as fast as it moves (clockwise to the right).
+    world.step();
+    expect(cat.spin * r).toBeCloseTo(cat.vx, 6);
+    expect(cat.speed).toBeGreaterThan(280);
+    // It loses FLOOR_ROLLING_RESISTANCE (800 u/s²: 6.7 u/s a step, plus a little air friction)
+    // on every step until it stops.
     let speed = cat.speed;
-    let steps = 0;
+    let steps = 1;
     while (cat.speed > 0 && steps < STEPS_PER_SECOND) {
       world.step();
       steps++;
-      if (cat.speed > 0) expect(speed - cat.speed).toBeGreaterThan(4.9);
-      expect(speed - cat.speed).toBeLessThan(6.5);
+      expect(cat.spin * r).toBeCloseTo(cat.vx, 6);
+      if (cat.speed > 0) expect(speed - cat.speed).toBeGreaterThan(6.6);
+      expect(speed - cat.speed).toBeLessThan(8.5);
       speed = cat.speed;
     }
-    expect(steps).toBeLessThan(STEPS_PER_SECOND / 4);
-    expect(cat.x + 100).toBeLessThan(40);
+    expect(cat.spin).toBe(0);
+    // 300 u/s at about 800 u/s² stops in about 0.37 s, about 55 units on.
+    expect(steps / STEPS_PER_SECOND).toBeLessThan(0.4);
+    expect(cat.x + 100).toBeGreaterThan(45);
+    expect(cat.x + 100).toBeLessThan(60);
+  });
+
+  it('rolls a cat dropped by a wall down the curve and along the floor (v0.19.5)', () => {
+    const world = new PhysicsWorld();
+    const g = world.geometry;
+    const r = sizeRadius(2);
+    const cat = world.addBall({ tier: 2, x: g.halfWidth - r, y: g.dropY });
+    const start = cat.angle;
+    let path = 0;
+    let [x, y] = [cat.x, cat.y];
+    while (cat.landedMs < 0) {
+      world.step();
+      [x, y] = [cat.x, cat.y];
+    }
+    for (let i = 0; i < 2 * STEPS_PER_SECOND; i++) {
+      world.step();
+      path += Math.hypot(cat.x - x, cat.y - y);
+      [x, y] = [cat.x, cat.y];
+      // Rolling to the left turns it anticlockwise, as fast as it goes (up to the spin limit).
+      if (cat.speed > 1 && cat.speed < 0.9 * MAX_ANGULAR_SPEED * r) {
+        expect(-cat.spin * r).toBeGreaterThan(0.95 * cat.speed);
+      }
+    }
+    // Over 250+ units it turns about once (v0.19.4: an eighth of a turn, it slid).
+    expect(path).toBeGreaterThan(250);
+    const turns = (start - cat.angle) / (2 * Math.PI);
+    expect(turns).toBeGreaterThan((0.85 * path) / (2 * Math.PI * r));
+    expect(cat.speed).toBe(0);
+  });
+
+  it('keeps the spin of a cat that turns faster than it rolls, slowing it by the rug', () => {
+    const world = new PhysicsWorld();
+    const r = sizeRadius(3);
+    // A merged cat is born at rest and turning (MERGE_SPIN_RIM_SPEED).
+    const cat = world.addBall({ tier: 3, x: 0, y: -r, spin: 4, landedMs: 0 });
+    world.step();
+    expect(cat.spin).toBeGreaterThan(3.5);
+    expect(cat.spin).toBeLessThan(4);
   });
 
   it('keeps cats spawned across the floor (as in the Lucky Save e2e test) from merging', () => {

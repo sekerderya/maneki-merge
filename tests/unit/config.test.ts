@@ -259,14 +259,14 @@ describe('physics tunables (TECH_SPEC §5)', () => {
     expect(WALL_THICKNESS).toBeGreaterThanOrEqual(300);
   });
 
-  it('cushions a first landing on a curve and slows lone cats on the floor (v0.19.4)', () => {
+  it('cushions a first landing on a curve and slows lone cats on the floor (v0.19.4–5)', () => {
     expect(CORNER_CUSHION_MS).toBe(500);
     expect(CORNER_CUSHION_KEEP).toBe(0.25);
-    expect(FLOOR_ROLLING_RESISTANCE).toBe(600);
-    // A cat stops on slopes gentler than about 16°, the last bit of a curve.
+    expect(FLOOR_ROLLING_RESISTANCE).toBe(800);
+    // A cat stops on slopes gentler than about 22°, the last bit of a curve.
     const slope = (Math.asin(FLOOR_ROLLING_RESISTANCE / (GRAVITY_BASE * 1000)) * 180) / Math.PI;
-    expect(slope).toBeGreaterThan(15);
-    expect(slope).toBeLessThan(17);
+    expect(slope).toBeGreaterThan(21);
+    expect(slope).toBeLessThan(23);
   });
 
   it('makes mass grow like r', () => {

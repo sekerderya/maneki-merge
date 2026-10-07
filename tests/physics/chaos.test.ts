@@ -32,7 +32,8 @@ const SCENARIOS: readonly Scenario[] = [
     name: 'Lucky Saves and a game over',
     seed: 21,
     levels: upgrades({ bigCatch: 5, secondChance: 2 }),
-    maxSeconds: 180,
+    // Since v0.19.5 this bot clears stage 1 after its saves and the run ends at 196 s.
+    maxSeconds: 300,
   },
 ];
 

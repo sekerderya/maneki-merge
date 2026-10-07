@@ -48,10 +48,11 @@ export const CORNER_CUSHION_KEEP = 0.25;
 
 /**
  * Rolling resistance in u/s²: a cat touching the jar floor (flat or curved) and no other cat
- * slows down by this much, like a ball on a rug, and stops on gentle slopes (under 16°). Piles
- * are left to the physics.
+ * slows down by this much, like a ball on a rug, and stops on gentle slopes (under 22°). It also
+ * rolls there instead of sliding (v0.19.5, owner: the cats barely turned). Piles are left to the
+ * physics. 600 in v0.19.4, when the cats slid and friction slowed them too.
  */
-export const FLOOR_ROLLING_RESISTANCE = 600;
+export const FLOOR_ROLLING_RESISTANCE = 800;
 
 export const ENABLE_SLEEPING = false;
 
