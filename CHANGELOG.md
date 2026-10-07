@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.19.4] - 2026-10-08
+
+A soft landing on the jar's curved corners, the owner's choice among measured options.
+
+### Changed
+
+- A dropped cat whose first touch is a curved corner lands softly: over half a second its speed fades, gently at first and at the end (never more than 3% of its fall in one step), down to about a quarter. v0.19.3 stopped it dead at the touch, which jolted. It then slides down and rolls on towards the middle, and never swings across the jar.
+- The floor slows a cat rolling alone on it like a rug (600 u/s²): it stops within about half a second instead of rolling for 5–8 s. Cats in a pile push each other as before.
+- The physics stress test drops 110 cats instead of 150: as much cat as 150 were before v0.19.3's bigger sizes. With 150 the pile stood nearly twice the jar's height and passed or failed by luck of the seed.
+
 ## [0.19.3] - 2026-10-08
 
 Cat sizes evened out and the jar's corners fixed, from the owner's playtest.
