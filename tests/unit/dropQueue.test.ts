@@ -118,7 +118,7 @@ describe('DropQueue', () => {
   });
 
   it('keeps each queued cat size when the stage changes', () => {
-    // Stage 2 drops tiers 11–14, stage 3 tiers 21–24: a queued 12 becomes a 22.
+    // Stage 2 drops tiers 10–13, stage 3 tiers 19–22: a queued 11 becomes a 20.
     for (let seed = 0; seed < 50; seed++) {
       const rng = new Rng(seed);
       const q = makeQueue({ rng, stage: 2 });
@@ -129,7 +129,7 @@ describe('DropQueue', () => {
       const after = [q.current, q.next];
       const pool = stageInfo(3).dropPool;
       after.forEach((drop, i) => {
-        expect(drop).toEqual({ tier: before[i]!.tier + 10 });
+        expect(drop).toEqual({ tier: before[i]!.tier + 9 });
       });
       // No rolls: the seed's sequence goes on unchanged.
       expect(rng.state()).toEqual(state);

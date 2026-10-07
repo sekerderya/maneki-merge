@@ -7,7 +7,7 @@ import { STAGE_TIER_STEP } from './tiers';
 
 /**
  * Body colour per size, index 0 is size 1. Neighbouring sizes differ in hue and lightness. The
- * colours repeat every STAGE_TIER_STEP tiers: a stage's last cat (size 11) has the colour of size
+ * colours repeat every STAGE_TIER_STEP tiers: a stage's last cat (size 10) has the colour of size
  * 1, because it becomes the next stage's first cat, and every stage looks the same.
  */
 export const TIER_COLORS: readonly string[] = [
@@ -20,7 +20,6 @@ export const TIER_COLORS: readonly string[] = [
   '#38d9a9', // 7 mint
   '#f06595', // 8 magenta
   '#4dabf7', // 9 blue
-  '#f8f9fa', // 10 white
 ];
 
 /** The body colour of a cat of `tier` (sprites and DOM icons alike). */

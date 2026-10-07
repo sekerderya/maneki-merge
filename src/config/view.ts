@@ -176,7 +176,7 @@ export const REDUCED_MOTION_PARTICLES = 0.35;
  * one, and each fades out over its duration.
  */
 export const SHAKE = {
-  minSize: 10,
+  minSize: 9,
   mergeBase: 5,
   mergePerSize: 2,
   mergeMs: 260,

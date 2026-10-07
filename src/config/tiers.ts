@@ -3,24 +3,24 @@
  *
  * A cat's tier is its number: it only ever goes up, and it sets the score and coins a merge pays.
  * A cat's size is its place in the current stage, 1–SIZE_COUNT: it sets the radius. Every stage
- * holds the same 11 sizes, and the last one becomes the next stage's first (STAGE_TIER_STEP), so
- * stage 1 has tiers 1–11, stage 2 tiers 11–21, and so on (config/stages.ts).
+ * holds the same 10 sizes, and the last one becomes the next stage's first (STAGE_TIER_STEP), so
+ * stage 1 has tiers 1–10, stage 2 tiers 10–19, and so on (config/stages.ts).
  */
 
-/** Every stage holds this many cat sizes (tiers): two 10s make the last one and clear the stage. */
-export const SIZE_COUNT = 11;
+/** Every stage holds this many cat sizes (tiers): two 9s make the last one and clear the stage. */
+export const SIZE_COUNT = 10;
 /** A stage's tiers start this many tiers after the previous stage's: its last cat is the next first. */
 export const STAGE_TIER_STEP = SIZE_COUNT - 1;
 
-/** Tiers 1–51: stage 5's last cat is tier 1 + 5 × 10 (a config test checks it against STAGE_COUNT). */
-export const TIER_COUNT = 51;
+/** Tiers 1–46: stage 5's last cat is tier 1 + 5 × 9 (a config test checks it against STAGE_COUNT). */
+export const TIER_COUNT = 46;
 export const MIN_TIER = 1;
 export const MAX_TIER = TIER_COUNT;
 
 /**
- * r(size) = round(BASE × GROWTH^(size−1)) in world units; the jar is 600 wide. Chosen so that
- * sizes 11, 9, 8, 7, 6 and 5 cover about as much of the jar (55%) as the same six fruits do in
- * Suika Game's box.
+ * r(size) = round(BASE × GROWTH^(size−1)) in world units; the jar is 600 wide. Chosen when a stage
+ * held 11 sizes, so that sizes 11, 9, 8, 7, 6 and 5 covered about as much of the jar (55%) as the
+ * same six fruits do in Suika Game's box. Size 11 left in v0.15; the others kept their radius.
  */
 export const SIZE_BASE_RADIUS = 28;
 export const SIZE_RADIUS_GROWTH = 1.22;
@@ -47,7 +47,7 @@ export function isSize(value: number): boolean {
   return Number.isInteger(value) && value >= 1 && value <= SIZE_COUNT;
 }
 
-/** The radius of a cat of `size` (1–11) in world units. */
+/** The radius of a cat of `size` (1–10) in world units. */
 export function sizeRadius(size: number): number {
   return Math.round(SIZE_BASE_RADIUS * SIZE_RADIUS_GROWTH ** (size - 1));
 }

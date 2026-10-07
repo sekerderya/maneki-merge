@@ -89,7 +89,7 @@ export function scaleFrame(jar: JarFrame, factor: number): JarFrame {
 
 /**
  * `jar` grown by `zoom^t` (t = 0 → jar, t = 1 → zoom × jar). Growing by a constant ratio per
- * moment looks like an even zoom on screen, even when the jar grows more than sevenfold.
+ * moment looks like an even zoom on screen, even when the jar grows sixfold.
  */
 export function growFrame(jar: JarFrame, zoom: number, t: number): JarFrame {
   return scaleFrame(jar, zoom ** t);

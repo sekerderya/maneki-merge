@@ -11,7 +11,7 @@ import { UPGRADE_IDS, UPGRADES } from '../config/upgrades';
 import type { UpgradeId } from '../config/upgrades';
 
 /** Bump when the shape changes, and add MIGRATIONS[old] that converts old data to the new one. */
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 
 export interface SaveData {
   wallet: { coins: number };
@@ -84,12 +84,14 @@ export const FORTUNE_TELLER_PRICES: readonly number[] = [400];
 
 /** The highest tier before v0.12, when stages held 12 cats (stage 5 ended at tier 56). */
 const V2_TIER_COUNT = 56;
+/** The highest tier from v0.12 to v0.14, when stages held 11 cats (stage 5 ended at tier 51). */
+const V3_TIER_COUNT = 51;
 
 /**
  * v2 → v3 (v0.12): Shrine Expansion and Fortune Teller are gone, and the coins spent on their
  * levels go back into the wallet. Golden Touch became Golden Merge: its level carries over. Stages
- * hold 11 cats now (tiers up to 51), so a higher record tier is capped. Anything malformed is left
- * for `sanitize` to repair.
+ * held 11 cats from then on (tiers up to 51), so a higher record tier is capped. Anything malformed
+ * is left for `sanitize` to repair.
  */
 export function retireUpgrades(data: unknown): unknown {
   if (!isRecord(data) || !isRecord(data['upgrades'])) return data;
@@ -99,15 +101,29 @@ export function retireUpgrades(data: unknown): unknown {
   }
   const refund =
     spent(SHRINE_EXPANSION_PRICES, shrineExpansion) + spent(FORTUNE_TELLER_PRICES, fortuneTeller);
-  let out: Record<string, unknown> = { ...data, upgrades };
-  const records = data['records'];
-  if (isRecord(records)) {
-    const tier = records['highestTier'];
-    if (typeof tier === 'number' && tier > TIER_COUNT && tier <= V2_TIER_COUNT) {
-      out = { ...out, records: { ...records, highestTier: TIER_COUNT } };
-    }
-  }
+  const out = capRecordTier({ ...data, upgrades }, V2_TIER_COUNT, V3_TIER_COUNT);
   return withRefund(out, refund);
+}
+
+/**
+ * v3 → v4 (v0.15): stages hold 10 cats now (tiers up to 46), so a higher record tier is capped.
+ * Anything malformed is left for `sanitize` to repair.
+ */
+export function shrinkStages(data: unknown): unknown {
+  return isRecord(data) ? capRecordTier(data, V3_TIER_COUNT, TIER_COUNT) : data;
+}
+
+/** Lowers a record tier in (`max`, `oldMax`] to `max`: the stages shrank from `oldMax` to `max`. */
+function capRecordTier(
+  data: Record<string, unknown>,
+  oldMax: number,
+  max: number,
+): Record<string, unknown> {
+  const records = data['records'];
+  if (!isRecord(records)) return data;
+  const tier = records['highestTier'];
+  if (typeof tier !== 'number' || tier <= max || tier > oldMax) return data;
+  return { ...data, records: { ...records, highestTier: max } };
 }
 
 /** The coins spent on `level` levels of an upgrade with these prices (0 for a bad level). */
@@ -133,6 +149,7 @@ function withRefund(data: Record<string, unknown>, refund: number): Record<strin
 export const MIGRATIONS: Readonly<Record<number, Migration>> = {
   1: refundQuickGrowth,
   2: retireUpgrades,
+  3: shrinkStages,
 };
 
 export type LoadStatus =

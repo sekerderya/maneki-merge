@@ -230,7 +230,7 @@ export class PhysicsWorld {
     this.list.forEach((ball, i) => ball.rescale(1 / STAGE_ZOOM, sizes[i] as number));
   }
 
-  /** The size a tier has at the current stage (outside 1–11 when the stage can't hold it). */
+  /** The size a tier has at the current stage (outside 1–10 when the stage can't hold it). */
   sizeOf(tier: number): number {
     return tierSize(tier, this.geo.stage);
   }

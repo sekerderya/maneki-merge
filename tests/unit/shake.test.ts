@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { SIZE_COUNT } from '../../src/config/tiers';
 import { MERGE_PARTICLES, SHAKE } from '../../src/config/view';
 import { comboShake, mergeParticleCount, mergeShake, Shake } from '../../src/game/shake';
 
@@ -6,8 +7,8 @@ describe('camera shake (GAME_DESIGN §12)', () => {
   it('shakes only for big merges, more for bigger cats', () => {
     expect(mergeShake(SHAKE.minSize - 1)).toBe(0);
     expect(mergeShake(SHAKE.minSize)).toBe(SHAKE.mergeBase);
-    expect(mergeShake(12)).toBeGreaterThan(mergeShake(11));
-    expect(mergeShake(12)).toBeLessThan(SHAKE.jackpot * 1.5);
+    expect(mergeShake(SIZE_COUNT)).toBeGreaterThan(mergeShake(SIZE_COUNT - 1));
+    expect(mergeShake(SIZE_COUNT)).toBeLessThan(SHAKE.jackpot);
   });
 
   it('escalates with the combo, capped', () => {

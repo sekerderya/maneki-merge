@@ -77,7 +77,7 @@ export interface GameEvents {
     readonly id: number;
     readonly tier: number;
     readonly newTier: number;
-    /** The new cat's size at the current stage (1–11), for effects that grow with the cat. */
+    /** The new cat's size at the current stage (1–10), for effects that grow with the cat. */
     readonly newSize: number;
     /** A golden merge (Golden Merge upgrade): it paid ×3 coins. */
     readonly golden: boolean;

@@ -61,12 +61,11 @@ describe('cat sizes (GAME_DESIGN §4)', () => {
     [8, 113],
     [9, 137],
     [10, 168],
-    [11, 205],
   ];
 
-  it("has 11 sizes per stage, the last one becoming the next stage's first", () => {
-    expect(SIZE_COUNT).toBe(11);
-    expect(STAGE_TIER_STEP).toBe(10);
+  it("has 10 sizes per stage, the last one becoming the next stage's first", () => {
+    expect(SIZE_COUNT).toBe(10);
+    expect(STAGE_TIER_STEP).toBe(9);
   });
 
   it.each(SIZES)('size %i: radius %i', (size, radius) => {
@@ -74,20 +73,20 @@ describe('cat sizes (GAME_DESIGN §4)', () => {
   });
 
   it('zooms out so the last cat shrinks to exactly the first one', () => {
-    expect(STAGE_ZOOM).toBeCloseTo(205 / 28, 12);
+    expect(STAGE_ZOOM).toBeCloseTo(168 / 28, 12);
     expect(sizeRadius(SIZE_COUNT) / STAGE_ZOOM).toBeCloseTo(sizeRadius(1), 12);
   });
 
-  it('covers about as much of the jar as Suika Game: sizes 11, 9, 8, 7, 6 and 5 fill ~55%', () => {
+  it('keeps the radii chosen against Suika Game: sizes 11, 9, 8, 7, 6 and 5 fill ~55%', () => {
     const area = [11, 9, 8, 7, 6, 5].reduce((sum, s) => sum + Math.PI * sizeRadius(s) ** 2, 0);
     expect(area / (JAR_WIDTH * JAR_HEIGHT)).toBeCloseTo(0.55, 2);
   });
 
   it('rejects unknown sizes', () => {
     expect(isSize(0)).toBe(false);
-    expect(isSize(12)).toBe(false);
+    expect(isSize(11)).toBe(false);
     expect(isSize(1.5)).toBe(false);
-    expect(isSize(11)).toBe(true);
+    expect(isSize(10)).toBe(true);
   });
 });
 
@@ -104,16 +103,15 @@ describe('tiers (GAME_DESIGN §4)', () => {
     [8, 256, 41],
     [9, 512, 70],
     [10, 1_024, 119],
-    [11, 2_048, 202],
-    [21, 2_097_152, 40_642],
-    [31, 2_147_483_648, 8_193_466],
-    [41, 2_199_023_255_552, 1_651_797_693],
-    [51, 2_251_799_813_685_248, 333_001_407_321],
+    [19, 524_288, 14_063],
+    [28, 268_435_456, 1_667_711],
+    [37, 137_438_953_472, 197_770_344],
+    [46, 70_368_744_177_664, 23_453_165_165],
   ];
 
-  it('has 51 tiers: stage 5 ends at tier 51', () => {
-    expect(TIER_COUNT).toBe(51);
-    expect(TIERS).toHaveLength(51);
+  it('has 46 tiers: stage 5 ends at tier 46', () => {
+    expect(TIER_COUNT).toBe(46);
+    expect(TIERS).toHaveLength(46);
     expect(TIER_COUNT).toBe(stageInfo(STAGE_COUNT).lastTier);
   });
 
@@ -123,10 +121,10 @@ describe('tiers (GAME_DESIGN §4)', () => {
 
   it('rejects unknown tiers', () => {
     expect(isTier(0)).toBe(false);
-    expect(isTier(52)).toBe(false);
+    expect(isTier(47)).toBe(false);
     expect(isTier(2.5)).toBe(false);
     expect(() => tierInfo(0)).toThrow(RangeError);
-    expect(() => tierInfo(52)).toThrow(RangeError);
+    expect(() => tierInfo(47)).toThrow(RangeError);
   });
 
   it('repeats the colours with the sizes, so every stage looks the same', () => {
@@ -138,18 +136,18 @@ describe('tiers (GAME_DESIGN §4)', () => {
       }
     }
     // The last cat takes the first one's colour: it becomes the next stage's first cat.
-    expect(tierColor(11)).toBe(tierColor(1));
+    expect(tierColor(10)).toBe(tierColor(1));
   });
 });
 
 describe('stages (GAME_DESIGN §7)', () => {
   // Stage, first tier, last tier, drop pool.
   const TABLE: readonly [number, number, number, [number, number]][] = [
-    [1, 1, 11, [1, 4]],
-    [2, 11, 21, [11, 14]],
-    [3, 21, 31, [21, 24]],
-    [4, 31, 41, [31, 34]],
-    [5, 41, 51, [41, 44]],
+    [1, 1, 10, [1, 4]],
+    [2, 10, 19, [10, 13]],
+    [3, 19, 28, [19, 22]],
+    [4, 28, 37, [28, 31]],
+    [5, 37, 46, [37, 40]],
   ];
 
   it('has 5 stages', () => {

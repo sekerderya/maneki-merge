@@ -47,7 +47,7 @@ function drawnSize(tier: number, stage: number): number {
   return Math.min(SIZE_COUNT, Math.max(1, tierSize(tier, stage)));
 }
 
-/** A size's look: sizes repeat their looks, so size 11 wears size 1's. */
+/** A size's look: sizes repeat their looks, so size 10 wears size 1's. */
 function sizeLook(size: number): CatLook {
   return catLook(size);
 }

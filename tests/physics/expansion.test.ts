@@ -244,7 +244,7 @@ describe('stage clear payouts (GAME_DESIGN §7)', () => {
     playUntilStage(run, STAGE_COUNT);
     const range = (from: number, to: number) =>
       Array.from({ length: to - from + 1 }, (_, i) => from + i);
-    const expected = [range(12, 21), range(22, 31), range(32, 41), range(42, 51)];
+    const expected = [range(11, 19), range(20, 28), range(29, 37), range(38, 46)];
     expect(of('expansionRevealed').map((e) => e.newTiers)).toEqual(expected);
     expect(of('expansionFinished').map((e) => e.newTiers)).toEqual(expected);
     expect(of('expansionRevealed').map((e) => e.stage)).toEqual([2, 3, 4, 5]);

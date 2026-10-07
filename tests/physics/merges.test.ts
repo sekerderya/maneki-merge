@@ -88,10 +88,10 @@ describe('MergeResolver (GAME_DESIGN §5)', () => {
     expect(cat.spin).toBeGreaterThan(0);
     expect(cat.spin * cat.targetRadius).toBeCloseTo(MERGE_SPIN_RIM_SPEED, 6);
 
-    // Stage 4 starts at tier 31: tier 36 is size 6 there, as big as a stage-1 tier 6.
+    // Stage 4 starts at tier 28: tier 33 is size 6 there, as big as a stage-1 tier 6.
     const big = new PhysicsWorld({ stage: 4 });
-    big.addBall({ tier: 35, x: 0, y: -sizeRadius(5) });
-    big.addBall({ tier: 35, x: -sizeRadius(5), y: -3 * sizeRadius(5), vy: 1200 });
+    big.addBall({ tier: 32, x: 0, y: -sizeRadius(5) });
+    big.addBall({ tier: 32, x: -sizeRadius(5), y: -3 * sizeRadius(5), vy: 1200 });
     const left = firstMerge(big, 60, stageInfo(4).lastTier)!.ball!;
     expect(left.size).toBe(6);
     expect(left.spin * sizeRadius(6)).toBeCloseTo(-MERGE_SPIN_RIM_SPEED, 6);
@@ -227,24 +227,24 @@ describe('MergeResolver (GAME_DESIGN §5)', () => {
 
 describe('growth without launches (TECH_SPEC §5)', () => {
   /**
-   * A big pair wedged between the walls (too wide to sit side by side, so gravity presses them
-   * together) under a pile of the stage's dropped tiers, settled without merges. Then every merge
-   * resolves at once: the big one grows between the walls while the pile chain-reacts on top.
+   * The biggest pair (size 9) stacked against the left wall, one on the floor and one on top of it,
+   * under a pile of the stage's dropped tiers, settled without merges. Then every merge resolves at once:
+   * the big one grows into the stage's last cat, wider than half the jar, while the pile
+   * chain-reacts on top.
    */
   it.each([
-    [10, 1, 1],
-    [20, 2, 2],
-    [40, 4, 3],
+    [9, 1, 1],
+    [18, 2, 2],
+    [36, 4, 3],
   ])('a tier-%i merge at stage %i (seed %i) pushes but never launches', (big, stage, seed) => {
     const world = new PhysicsWorld({ stage });
-    const { halfWidth, width } = world.geometry;
+    const { halfWidth } = world.geometry;
     const pool = stageInfo(stage).dropPool;
     const rng = new Rng(seed);
     const r = catRadius(big, stage);
-    const rise = Math.sqrt((2 * r) ** 2 - (width - 2 * r) ** 2);
     world.addBall({ tier: big, x: -halfWidth + r, y: -r });
-    world.addBall({ tier: big, x: halfWidth - r, y: -r - rise - 2 });
-    const top = -2 * r - rise;
+    world.addBall({ tier: big, x: -halfWidth + r + 1, y: -3 * r - 2 });
+    const top = -4 * r;
     for (let i = 0; i < 30; i++) {
       const x = (rng.next() * 2 - 1) * (halfWidth - 120);
       const tier = pool[rng.int(0, pool.length - 1)]!;

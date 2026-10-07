@@ -7,11 +7,13 @@ import {
   MemoryStorage,
   migrate,
   FORTUNE_TELLER_PRICES,
+  retireUpgrades,
   QUICK_GROWTH_PRICES,
   sanitize,
   SAVE_VERSION,
   SaveStore,
   SHRINE_EXPANSION_PRICES,
+  shrinkStages,
   WebStorageAdapter,
 } from '../../src/core/save';
 import type { Migration, SaveData, StorageAdapter, WebStorageLike } from '../../src/core/save';
@@ -190,7 +192,7 @@ describe('sanitize', () => {
     expect(d.upgrades.bigCatch).toBe(2); // floored
     expect(d.upgrades.goldenMerge).toBe(0);
     expect(d.upgrades.secondChance).toBe(0);
-    expect(d.records).toEqual({ bestScore: 0, bestStage: 1, highestTier: 51 });
+    expect(d.records).toEqual({ bestScore: 0, bestStage: 1, highestTier: 46 });
     expect(d.stats).toEqual(defaultSave().stats);
     expect(d.settings).toEqual({ sound: true, haptics: false, reduceMotion: false });
     expect(d.flags.hintsSeen).toEqual({ aim: false, merge: true });
@@ -206,7 +208,7 @@ describe('sanitize', () => {
   });
 
   it('keeps scores beyond 2^53 (later stages score in the quadrillions)', () => {
-    const result = sanitize({ records: { bestScore: 2 ** 56, bestStage: 5, highestTier: 51 } });
+    const result = sanitize({ records: { bestScore: 2 ** 56, bestStage: 5, highestTier: 46 } });
     expect(result.issues).toEqual([]);
     expect(result.data.records.bestScore).toBe(2 ** 56);
   });
@@ -280,10 +282,6 @@ describe('v2 → v3: Shrine Expansion and Fortune Teller refunds, Golden Merge (
     },
   });
 
-  it('is the current version', () => {
-    expect(SAVE_VERSION).toBe(3);
-  });
-
   it.each([
     [0, 0],
     [1, 1500],
@@ -319,8 +317,11 @@ describe('v2 → v3: Shrine Expansion and Fortune Teller refunds, Golden Merge (
     expect(result.data.upgrades).not.toHaveProperty('goldenTouch');
   });
 
-  it('caps a record tier from the 12-cat stages at the new last tier', () => {
-    expect(migrate(v2({}, 100, 56)).data.records.highestTier).toBe(51);
+  it('caps a record tier from the 12-cat stages at the 11-cat stages’ last tier', () => {
+    const capped = retireUpgrades(v2({}, 100, 56).data) as { records: { highestTier: number } };
+    expect(capped.records.highestTier).toBe(51);
+    // Then v3 → v4 caps it again, at today's last tier.
+    expect(migrate(v2({}, 100, 56)).data.records.highestTier).toBe(46);
     expect(migrate(v2({}, 100, 23)).data.records.highestTier).toBe(23);
     expect(migrate(v2({}, 100, 56)).status).toBe('migrated');
   });
@@ -338,6 +339,47 @@ describe('v2 → v3: Shrine Expansion and Fortune Teller refunds, Golden Merge (
     const broken = migrate(v2({ shrineExpansion: 2 }, 'lots'));
     expect(broken.status).toBe('repaired');
     expect(broken.issues).toEqual(['wallet.coins']);
+  });
+});
+
+describe('v3 → v4: 10 cats per stage (v0.15)', () => {
+  const v3 = (highestTier: unknown) => ({
+    version: 3,
+    data: {
+      wallet: { coins: 100 },
+      upgrades: { luckyPaw: 2 },
+      records: { bestScore: 900, bestStage: 4, highestTier },
+    },
+  });
+
+  it('is the current version', () => {
+    expect(SAVE_VERSION).toBe(4);
+  });
+
+  it.each([
+    [51, 46],
+    [47, 46],
+    [46, 46],
+    [23, 23],
+    [0, 0],
+  ])('turns a record tier of %i into %i', (before, after) => {
+    const result = migrate(v3(before));
+    expect(result.status).toBe('migrated');
+    expect(result.issues).toEqual([]);
+    expect(result.data.records).toEqual({ bestScore: 900, bestStage: 4, highestTier: after });
+    expect(result.data.wallet.coins).toBe(100);
+    expect(result.data.upgrades).toEqual({ ...defaultSave().upgrades, luckyPaw: 2 });
+  });
+
+  it('leaves malformed data for the repair', () => {
+    expect(shrinkStages(null)).toBeNull();
+    expect(shrinkStages({ records: 'none' })).toEqual({ records: 'none' });
+    expect(shrinkStages({ records: { highestTier: '51' } })).toEqual({
+      records: { highestTier: '51' },
+    });
+    const broken = migrate(v3(99));
+    expect(broken.status).toBe('repaired');
+    expect(broken.issues).toEqual(['records.highestTier']);
   });
 });
 

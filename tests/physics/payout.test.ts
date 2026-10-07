@@ -87,15 +87,15 @@ describe('payout pipeline (GAME_DESIGN §5, §9)', () => {
   it('pays a Jackpot of two last cats: 5 × C(last) with multipliers', () => {
     const { run, profile, coins } = setup({ luckyPaw: 1 });
     const last = stageInfo(1).lastTier;
-    const r = sizeRadius(11);
+    const r = sizeRadius(10);
     run.spawnBall(last, 0, -r);
     run.spawnBall(last, 0, -3 * r + 2);
     run.tick();
-    // 5 × 202 × 1.15 = 1161.5 → 1162
-    expect(coins).toEqual([1162]);
-    expect(profile.coins).toBe(1162);
+    // 5 × 119 × 1.15 = 684.25 → 684
+    expect(coins).toEqual([684]);
+    expect(profile.coins).toBe(684);
     expect(profile.stats).toMatchObject({ jackpots: 1, totalMerges: 0 });
-    expect(profile.records.bestScore).toBe(4096);
+    expect(profile.records.bestScore).toBe(2048);
   });
 
   it('pays every stage clear and records the stage reached', () => {
@@ -104,22 +104,22 @@ describe('payout pipeline (GAME_DESIGN §5, §9)', () => {
     run.spawnBall(1, 270, -28);
     run.spawnBall(2, -265, -100);
     for (let i = 0; i < 60; i++) run.tick();
-    // Two 10s, one on the other: they merge into the stage's last cat and clear the stage.
-    run.spawnBall(10, 0, -168);
-    run.spawnBall(10, 0, -503);
+    // Two 9s, one on the other: they merge into the stage's last cat and clear the stage.
+    run.spawnBall(9, 0, -137);
+    run.spawnBall(9, 0, -410);
     run.tick();
     expect(run.stage).toBe(2);
-    // The merge: 119 × 1.3 = 154.7 → 155. Then each cat pays its value, half of C(t), oldest
+    // The merge: 70 × 1.3 = 91. Then each cat pays its value, half of C(t), oldest
     // first: 1 → 0.5 × 1.3 = 0.65 → 1; 1 → 1; 2 → 1 × 1.3 = 1.3 → 1.
-    expect(coins).toEqual([155, 1, 1, 1]);
-    expect(profile.coins).toBe(158);
-    expect(profile.records).toEqual({ bestScore: 1024, bestStage: 2, highestTier: 11 });
+    expect(coins).toEqual([91, 1, 1, 1]);
+    expect(profile.coins).toBe(94);
+    expect(profile.records).toEqual({ bestScore: 512, bestStage: 2, highestTier: 10 });
     expect(profile.stats.totalMerges).toBe(1);
 
-    // The next clear pops the 11, now stage 2's smallest cat: 202 / 2 × 1.3 = 131.3 → 131.
+    // The next clear pops the 10, now stage 2's smallest cat: 119 / 2 × 1.3 = 77.35 → 77.
     run.jumpToStage(3);
     expect(run.stage).toBe(3);
-    expect(coins.slice(4)).toEqual([131]);
+    expect(coins.slice(4)).toEqual([77]);
     expect(profile.records.bestStage).toBe(3);
   });
 

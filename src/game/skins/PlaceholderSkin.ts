@@ -44,7 +44,7 @@ const STAGE_ITEMS: readonly (readonly FrameItem[])[] = STAGES.map(({ stage }) =>
   return items;
 });
 
-/** The size a tier is drawn at on `stage` (kept in 1–11, so a stray tier still renders). */
+/** The size a tier is drawn at on `stage` (kept in 1–10, so a stray tier still renders). */
 function drawnSize(tier: number, stage: number): number {
   return Math.min(SIZE_COUNT, Math.max(1, tierSize(tier, stage)));
 }

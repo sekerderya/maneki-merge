@@ -37,7 +37,7 @@ export interface StageInfo {
   readonly stage: number;
   /** The stage's smallest cat (size 1): the previous stage's last cat. */
   readonly firstTier: number;
-  /** The stage's last cat (size 11). Making it clears the stage and grows the jar. */
+  /** The stage's last cat (size 10). Making it clears the stage and grows the jar. */
   readonly lastTier: number;
   /** Tiers the dropper can produce, smallest first. */
   readonly dropPool: readonly number[];
@@ -64,7 +64,7 @@ export function stageInfo(stage: number): StageInfo {
   return info;
 }
 
-/** A tier's size (1–11) at `stage`; outside 1–11 when the stage can't hold that tier. */
+/** A tier's size (1–10) at `stage`; outside 1–10 when the stage can't hold that tier. */
 export function tierSize(tier: number, stage: number): number {
   return tier - stageInfo(stage).firstTier + 1;
 }

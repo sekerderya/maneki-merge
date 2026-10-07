@@ -174,9 +174,9 @@ describe('PhysicsWorld', () => {
     expect(world.speedLimit).toBeCloseTo(MAX_SPEED_BASE, 9);
     const half = world.wallInnerX;
 
-    const last = world.addBall({ tier: 11, x: 20, y: -400, vx: 90, vy: 180 });
-    expect(last.size).toBe(11);
-    expect(last.radius).toBe(205);
+    const last = world.addBall({ tier: 10, x: 20, y: -400, vx: 90, vy: 180 });
+    expect(last.size).toBe(10);
+    expect(last.radius).toBe(168);
     const angle = last.angle;
     const [vx, vy] = [last.vx, last.vy];
     world.setStage(2);
@@ -185,7 +185,7 @@ describe('PhysicsWorld', () => {
     expect(world.wallInnerX).toBe(half);
     expect(world.gravity).toBe(GRAVITY_BASE);
     expect(world.speedLimit).toBeCloseTo(MAX_SPEED_BASE, 9);
-    expect(last.tier).toBe(11);
+    expect(last.tier).toBe(10);
     expect(last.size).toBe(1);
     expect(last.radius).toBeCloseTo(sizeRadius(1), 9);
     expect(last.targetRadius).toBe(sizeRadius(1));
@@ -195,11 +195,11 @@ describe('PhysicsWorld', () => {
     expect(last.vy).toBeCloseTo(vy / STAGE_ZOOM, 6);
     expect(last.angle).toBe(angle);
     expect(last.body.mass).toBeCloseTo(
-      new PhysicsWorld({ stage: 2 }).addBall({ tier: 11, x: 0, y: -50 }).body.mass,
+      new PhysicsWorld({ stage: 2 }).addBall({ tier: 10, x: 0, y: -50 }).body.mass,
       9,
     );
     // It lands like any size-1 cat, and stage 2's cats join it.
-    const next = world.addBall({ tier: 12, x: 150, y: -300 });
+    const next = world.addBall({ tier: 11, x: 150, y: -300 });
     expect(next.size).toBe(2);
     run(world, 2);
     expect(last.y).toBeCloseTo(-sizeRadius(1), 0);
@@ -209,7 +209,7 @@ describe('PhysicsWorld', () => {
     expect(() => world.setStage(4)).toThrow(RangeError);
     expect(() => world.setStage(3)).toThrow(RangeError);
     expect(world.stage).toBe(2);
-    expect(world.sizeOf(21)).toBe(11);
+    expect(world.sizeOf(19)).toBe(10);
     expect(world.sizeOf(5)).toBeLessThan(1);
   });
 
@@ -300,9 +300,9 @@ describe('PhysicsWorld', () => {
   it('rejects invalid cats', () => {
     const world = new PhysicsWorld();
     expect(() => world.addBall({ tier: 0, x: 0, y: 0 })).toThrow(RangeError);
-    expect(() => world.addBall({ tier: 12, x: 0, y: 0 })).toThrow(RangeError);
-    expect(() => world.addBall({ tier: 52, x: 0, y: 0 })).toThrow(RangeError);
-    expect(() => new PhysicsWorld({ stage: 2 }).addBall({ tier: 10, x: 0, y: 0 })).toThrow(
+    expect(() => world.addBall({ tier: 11, x: 0, y: 0 })).toThrow(RangeError);
+    expect(() => world.addBall({ tier: 47, x: 0, y: 0 })).toThrow(RangeError);
+    expect(() => new PhysicsWorld({ stage: 2 }).addBall({ tier: 9, x: 0, y: 0 })).toThrow(
       RangeError,
     );
     expect(() => world.addBall({ tier: 1, x: Number.NaN, y: 0 })).toThrow(RangeError);

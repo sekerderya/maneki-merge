@@ -1,12 +1,12 @@
 /**
- * The lucky-cat art (GAME_DESIGN §13): ten looks, one per cat size, drawn as vector shapes in a
+ * The lucky-cat art (GAME_DESIGN §13): nine looks, one per cat size, drawn as vector shapes in a
  * 100 × 100 box. The body is the circle of radius 47 around (50, 50) plus its outline, which the
  * game scales onto the physics circle (`bodyEdge`); the ears poke out above it, inside the box.
  *
  * Every shape is an SVG path, so the same data feeds the game's canvas textures (`Path2D`,
  * game/skins/CatSkin.ts) and the DOM icons (inline SVG, ui/catIcon.ts). Pure data, no DOM.
  *
- * Looks repeat with the sizes: size 11 (a stage's last cat) wears look 1, because it becomes the
+ * Looks repeat with the sizes: size 10 (a stage's last cat) wears look 1, because it becomes the
  * next stage's size 1. A tier's look is the same at every stage (`catLook`).
  */
 import { STAGE_TIER_STEP } from './tiers';
@@ -170,7 +170,7 @@ function koban(y: number, rx: number, ry: number, width: number): ArtShape[] {
   ];
 }
 
-// ── The ten looks (sizes 1–10) ─────────────────────────────────────────────────
+// ── The nine looks (sizes 1–9) ──────────────────────────────────────────────────
 
 export const CAT_LOOKS: readonly CatLook[] = [
   {
@@ -394,38 +394,6 @@ export const CAT_LOOKS: readonly CatLook[] = [
       outline(2),
     ],
     number: { y: 83, size: 14.5, color: INK, halo: GOLD },
-  },
-  {
-    name: 'Kuro',
-    color: '#2F2934',
-    shapes: [
-      ...ears('#2F2934', '#2F2934', '#E996AC', 1.9),
-      body('#2F2934'),
-      ...cheeks('#E996AC', 0.45, 'left'),
-      ...goldEyes('#1E181F'),
-      { d: 'M47.6 47.5L52.4 47.5L50 50.3Z', fill: NOSE },
-      mouth(CREAM, 2.1, 52.5),
-      whiskers(CREAM, 1.4, 'left'),
-      {
-        d: 'M20 58Q50 72 80 58Q78 93 50 95Q22 93 20 58Z',
-        fill: '#D9483B',
-        stroke: '#1E181F',
-        width: 1.9,
-      },
-      {
-        // Asanoha (hemp-leaf) stars on the bib.
-        d:
-          'M28 71L34 71M29.5 68.4L32.5 73.6M32.5 68.4L29.5 73.6M66 71L72 71M67.5 68.4L70.5 73.6M70.5 68.4L67.5 73.6' +
-          'M34 84L38 84M35 82.3L37 85.7M37 82.3L35 85.7M62 84L66 84M63 82.3L65 85.7M65 82.3L63 85.7',
-        stroke: '#FFE9E4',
-        width: 1.3,
-      },
-      ...bell(66, 6.5, GOLD, '#1E181F', 1.8),
-      ...pawRight('#2F2934', '#8B7F94', '#E996AC', 1.9),
-      highlight(2.6, 0.22),
-      outline(1.9),
-    ],
-    number: { y: 84, size: 14, color: WHITE, halo: '#D9483B' },
   },
 ];
 

@@ -1,7 +1,7 @@
 /**
  * Cats in the physics world: a matter-js body plus the game data the world tracks for it
  * (tier, size, growth after a merge, first contact). The tier is the cat's number; the
- * size (its place in the current stage, 1–11) sets its radius and density. Contacts use the exact circle
+ * size (its place in the current stage, 1–10) sets its radius and density. Contacts use the exact circle
  * (circleCollision.ts); the body's polygon only feeds matter-js's broadphase bounds.
  */
 import Matter from 'matter-js';
@@ -25,7 +25,7 @@ export const MATTER_TICKS_PER_SECOND = 60;
 export interface BallView {
   readonly id: number;
   readonly tier: number;
-  /** The cat's size at the current stage (1–11). */
+  /** The cat's size at the current stage (1–10). */
   readonly size: number;
   readonly x: number;
   readonly y: number;
@@ -46,7 +46,7 @@ export interface BallView {
 
 export interface BallSpec {
   readonly tier: number;
-  /** 1–11: the tier's place in the world's stage (the world works it out). */
+  /** 1–10: the tier's place in the world's stage (the world works it out). */
   readonly size: number;
   readonly x: number;
   readonly y: number;
