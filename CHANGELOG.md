@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.19.1] - 2026-10-07
+
+The HUD closer to the owner's reference image.
+
+### Changed
+
+- The score card is a soft square in the coins card's colours with the paw badge over its top-left corner, a bigger "SCORE:" and the score in a sunken tan well (it was a long thin pill like the coins card).
+- The coins card runs off the screen's right edge, is thicker, and shows its number bigger.
+- Both numbers are white with a thin brown edge.
+
 ## [0.19.0] - 2026-10-07
 
 The owner's HUD art (M13, phase 3 of docs/ART_ASSETS.md).
