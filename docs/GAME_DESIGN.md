@@ -59,9 +59,10 @@ A shrine garden in the art of §13, top to bottom:
 
 ### 2.3 Game
 
-- The jar, with the danger line on its rim.
-- The dropper above the rim holds the current cat. A vertical aim guide shows where it will fall.
-- HUD at the top: pause button, score (with a small "Score" label), coins earned this run, a preview of the next cat in a bubble with a "Next" tag, and a stage label with a progress bar towards the stage's last cat and that cat as a small goal icon. The bar shows the biggest cat in the jar: its size − 1 out of 10 (§4); it turns gold at the last stage.
+- The screen the owner chose in v0.14 (the "Sakura garden" design): the whole screen is the scene, and the HUD floats over its top.
+- The jar (§6, §13.1), with the danger line on its rim.
+- The dropper: a calico cat's paw hangs from the top of the screen and holds the current cat by the head, just above the rim. It follows the aim, stays where it is while the next cat comes, lifts a little when it lets go, and is hidden while the jar grows. A dotted aim guide shows where the cat will fall, with a faint ghost of the cat where it lands.
+- HUD over the top of the scene. On the left, a cream score card with a paw-print badge, "SCORE:" and the score in a sunken well, and a stage card under it with "STAGE N", a progress bar towards the stage's last cat and that cat as a small goal icon. The bar shows the biggest cat in the jar: its size − 1 out of 10 (§4); it turns gold at the last stage. On the right, the next cat in a glass speech bubble with "NEXT" above it and its tail towards the paw, a pink pause button, and a "COINS:" card with the coins earned this run, which runs off the right edge under the bubble. Only the pause button takes touches; everywhere else a touch aims.
 - Overlays:
   - **Pause**: Resume, Sound, Haptics, Quit to Menu.
   - **Game Over**: score, best score, stage reached, the biggest cat made this run, coins earned this run, new-record badges (best score, best stage, biggest cat ever), Play Again, Menu.
@@ -134,7 +135,8 @@ Values are rounded only when paid (§5). Implement the formulas. Unit tests asse
 
 ## 6. Jar, danger line, game over
 
-- The jar is an open-top box, and its rim is the danger line.
+- The jar is open at the top: straight walls, a flat floor and rounded bottom corners (quarter circles of radius 112, 0.19 of the jar's width, v0.14). Its rim is the danger line.
+- The curves are part of the floor, which never bounces (§3): a cat landing alone on a curve slides gently down into place instead of being launched along it across the jar.
 - A cat is _over the line_ when its top edge is above the rim. A cat is ignored until 0.5 s after it lands (first contact).
 - If at least one cat is over the line continuously for 2.5 s, the game is over. While that timer runs, the rim flashes red and a short countdown shows.
 - **Lucky Save** (from the Second Chance upgrade) replaces the game over: every cat over the line plus the 6 smallest other cats (smaller tier first, then older first) pop into their value, the timer resets, and a 2 s grace period follows. Only landed cats count, so a cat still falling from the dropper is left alone. You get one save per run per upgrade level.
@@ -280,8 +282,10 @@ The owner chose the look in a design canvas: a cream shrine garden, ink outlines
   Neighbouring sizes differ in shape and accessories as well as colour, so they can be told apart without colour. The outer edge of each body's outline is exactly the cat's radius, so touching cats touch on screen.
 
 - **Numbers**: each cat has a plate (belly, tag, plate, koban) where its tier number sits. The cat rolls; the number stays upright and rides on its plate.
-- **Jar**: glass in a bamboo frame, standing on a wooden floor. Gold knobs on the posts and a dashed ink line across the opening mark the rim (the danger line); they flash red in danger.
-- **Background**: a cream sky with sakura branches, a torii and a shrine seen through the glass.
+- **Jar** (v0.14): glass in a bamboo frame whose bottom corners are curved, standing on two bamboo feet on a mint rug. A far rail runs across the top, tied to the posts with twine; the posts end in cut bamboo caps above the rim. A dashed line across the opening marks the rim (the danger line); it and the caps flash red in danger. The glass is a pale wash, so the garden shows through it.
+- **Dropper** (v0.14): a calico paw (white with orange and dark spots, pink pads) hanging from the top of the screen.
+- **Background** (v0.14): a sakura shrine garden on a cream sky: clouds, sakura branches and trees, a torii and a shrine seen through the glass, stone lanterns either side of the jar, and the wooden floor the rug lies on. It is drawn around the jar and moves and scales with it, so the floor and the lanterns line up with the jar on every screen.
+- **HUD** (v0.14): cream cards (#fff6e7) with a thick tan edge (#eccda2) and a soft drop shadow, cocoa labels in capitals, brown numbers; the next cat in a pale blue glass bubble; a glossy pink pause button.
 - **Palette**: cream ground, paper plates, ink outlines and text, cocoa for labels; coral only for the primary button of a screen (PLAY, Resume, Play Again), gold for coins, rewards and progress, red for danger and badges, mint for secondary buttons and "on". One font: Fredoka (700 for titles, numbers and buttons; 500–600 for labels).
 
 ### 13.2 Placeholder (`?skin=placeholder`)

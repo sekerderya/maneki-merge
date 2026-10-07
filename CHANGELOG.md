@@ -2,6 +2,30 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.14.0] - 2026-10-07
+
+The game screen from the owner's second design canvas: the "Sakura garden" design (M12).
+
+### Changed
+
+- The whole screen is the scene now, and the HUD floats over its top. On the left a cream score card with a paw-print badge and the score in a sunken well, with a stage card under it; on the right the next cat in a glass speech bubble, a glossy pink pause button and a coins card that runs off the right edge. Touches over the cards still aim; only the pause button is a button.
+- The dropper is a calico cat's paw hanging from the top of the screen. It holds the next cat by the head, follows the aim, lifts a little when it lets go, and hides while the jar grows. The aim guide is dotted.
+- The jar is a bamboo frame with a curved bottom and a glass back, standing on two bamboo feet on a mint rug, with a far rail tied to the posts and cut bamboo caps. The caps and the dashed rim line flash red in danger.
+- The physics jar has the same curved bottom: its floor's corners are quarter circles of radius 112 (0.19 of the jar's width). A cat landing alone on a curve slides gently into place instead of being launched across the jar.
+- The background is the sakura shrine garden: clouds, sakura branches and trees, a torii and a shrine seen through the glass, stone lanterns either side, a wooden floor. It is drawn around the jar and lines up with it on every screen size, also while the jar grows.
+- The jar is 300 px wide on a 390 px phone (the design's proportions; it was about 350 px), and it sits between the HUD and the bottom edge.
+
+### Decisions (where the request was open)
+
+- "Move the box a little higher": the jar sits midway between the HUD and the bottom edge, which on a 390 × 844 iPhone puts its rim at 287 px (the design had 327 px) with the same width.
+- The dropper stays where it was in physics (just above the rim), so a drop still takes exactly 1 s; the paw's arm reaches up to the top of the screen from there.
+- The cats are still v0.11's lucky cats: new maneki-neko cat sets are on the design canvas for the owner to choose from.
+- The 150-cat stress test now averages speeds over 0.1 s: the curved jar's taller pile shows more single-step velocity jitter, but its cats move no more than on the flat floor (TECH_SPEC §5).
+
+### Known issues
+
+- A narrower jar means smaller cats on screen (about 15% smaller than in v0.13). Say if the jar should be wider again: it is one number (`CAMERA_SIDE_MARGIN_RATIO`).
+
 ## [0.13.0] - 2026-10-06
 
 Physics feel: the owner's fourth feedback batch (M12).

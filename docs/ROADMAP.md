@@ -269,6 +269,12 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
   - [x] a dropped cat reaches the empty floor in 1 s (gravity 2150 u/s², speed limit 2400 u/s)
   - [x] the floor never bounces (a per-body restitution override); cats still bounce a little off each other
   - [x] cats shove each other harder: friction 0.05 / 0.2 for cats and jar alike, inertia × 2, mass ∝ r
+- [x] Batch 5 (v0.14.0), the game screen from the owner's second design canvas ("Sakura garden", GAME_DESIGN §2.3, §6, §13.1):
+  - [x] a calico paw hanging from the top of the screen holds the next cat and lets it go
+  - [x] the next cat in a glass speech bubble; cream score and coins cards, a pink pause button, a stage card
+  - [x] a bamboo jar with a curved bottom (rounded floor in the physics too), glass back, on a rug
+  - [x] the sakura shrine garden behind it, lined up with the jar on every screen; the jar sits a little higher than in the design, as the owner marked
+  - [ ] new cat art: five maneki-neko style sets for the owner to choose from (design canvas), then the chosen set in the game
 
 ## M13: Final art integration
 
