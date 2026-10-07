@@ -1,6 +1,6 @@
 {
   "name": "maneki-merge",
-  "version": "0.15.0",
+  "version": "0.16.0",
   "private": true,
   "description": "Lucky-cat merge game with a growing jar. Offline PWA for iOS and Android.",
   "type": "module",
@@ -21,7 +21,8 @@
     "test:e2e": "playwright test",
     "test:perf": "vitest run --mode perf tests/physics/performance.test.ts",
     "check": "npm run typecheck && npm run lint && npm run test:coverage",
-    "icons": "pwa-assets-generator --config pwa-assets.config.ts"
+    "icons": "pwa-assets-generator --config pwa-assets.config.ts",
+    "art": "node tools/build-art.ts"
   },
   "dependencies": {
     "@fontsource/fredoka": "^5.3.0",
@@ -39,6 +40,7 @@
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.13.0",
     "prettier": "^3.9.9",
+    "sharp": "^0.35.5",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.71.0",
     "vite": "^8.3.2",
