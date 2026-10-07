@@ -1,13 +1,7 @@
 import { formatNumber } from '../../core/format';
 import { catIcon, paintCatIcon } from '../catIcon';
 import { button, el } from '../dom';
-import {
-  ICON_COIN,
-  ICON_PAUSE,
-  ICON_PAW_PRINT,
-  NEXT_BUBBLE_BACK,
-  NEXT_BUBBLE_SHINE,
-} from '../icons';
+import { ICON_COIN, ICON_PAUSE, NEXT_BUBBLE_BACK, NEXT_BUBBLE_SHINE } from '../icons';
 
 export interface HudActions {
   onPause(): void;
@@ -19,8 +13,9 @@ export interface HudView {
   /** The cat after the one in the dropper. */
   setNext(tier: number): void;
   /**
-   * Stage label, the bar towards the stage's last cat and that cat (the goal), gold at the last
-   * stage. A new stage resets the bar without animating it backwards and makes the label glow.
+   * Stage label, the bar towards the stage's last cat, and "STAGE N+1 =" with that cat (the goal);
+   * the bar turns gold at the last stage, where the goal reads "GOAL =". A new stage resets the bar
+   * without animating it backwards and makes the label glow.
    */
   setStage(stage: number, fraction: number, goalTier: number, final: boolean): void;
   /** A coin landed on the counter. */
@@ -31,20 +26,18 @@ export interface HudView {
 
 /**
  * In-game HUD (GAME_DESIGN §2.3), floating over the top of the play area: on the left the score
- * card with its paw badge and the stage card under it; on the right the next cat in a glass
- * bubble, the pink pause button and the coins card. Only the pause button takes touches; the
- * rest lets them through to the game.
+ * card and the stage card under it; on the right the pink pause button, the coins card and the
+ * next cat in a round glass bubble under it. Only the pause button takes touches; the rest lets
+ * them through to the game.
  */
 export function createHud(root: HTMLElement, actions: HudActions): HudView {
   root.replaceChildren();
   root.classList.add('game-hud');
 
   const scoreCard = el('div', 'hud-card hud-score-card');
-  const paw = el('span', 'hud-paw');
-  paw.insertAdjacentHTML('beforeend', ICON_PAW_PRINT);
   const score = el('span', 'hud-score', '0');
   score.dataset['testid'] = 'hud-score';
-  scoreCard.append(paw, el('span', 'hud-label', 'Score'), score);
+  scoreCard.append(el('span', 'hud-label', 'Score'), score);
 
   const stage = el('div', 'hud-card hud-stage');
   const stageLabel = el('span', 'hud-stage-label', 'Stage 1');
@@ -56,16 +49,19 @@ export function createHud(root: HTMLElement, actions: HudActions): HudView {
   bar.setAttribute('aria-valuemax', '100');
   const fill = el('div', 'hud-bar-fill');
   bar.append(fill);
-  // The stage's last cat: making it grows the jar.
+  // The stage's last cat: making it grows the jar and opens the next stage.
+  const goalRow = el('div', 'hud-goal-row');
+  const goalLabel = el('span', 'hud-goal-label', 'Stage 2 =');
   const goal = catIcon(1);
   goal.classList.add('hud-goal');
   goal.dataset['testid'] = 'hud-goal';
-  stage.append(stageLabel, bar, goal);
+  goalRow.append(goalLabel, goal);
+  stage.append(stageLabel, bar, goalRow);
 
   const left = el('div', 'hud-left');
   left.append(scoreCard, stage);
 
-  // The next cat in a glass speech bubble, its tail towards the paw.
+  // The next cat in a round glass bubble under the coins card.
   const next = el('div', 'hud-next');
   next.dataset['testid'] = 'hud-next';
   const bubble = el('div', 'hud-next-bubble');
@@ -90,7 +86,7 @@ export function createHud(root: HTMLElement, actions: HudActions): HudView {
   coins.append(coinValue);
   coinsCard.append(el('span', 'hud-label', 'Coins'), coins);
 
-  // The bubble overlaps the coins card, and the pause button sits above both.
+  // The pause button on top, the coins card under it, the bubble under that.
   const right = el('div', 'hud-right');
   right.append(coinsCard, next, pause);
 
@@ -129,10 +125,12 @@ export function createHud(root: HTMLElement, actions: HudActions): HudView {
       } else {
         fill.style.transform = `scaleX(${fraction})`;
       }
+      goalLabel.textContent = final ? 'Goal =' : `Stage ${value + 1} =`;
       if (goal.dataset['tier'] !== String(goalTier)) paintCatIcon(goal, goalTier);
       goal.setAttribute('aria-label', `Goal: cat ${goalTier}`);
       bar.setAttribute('aria-valuenow', String(percent));
       bar.classList.toggle('is-final', final);
+      stage.classList.toggle('is-final', final);
     },
     pulseCoins() {
       restartAnimation(coinsCard, 'is-pulsing');
