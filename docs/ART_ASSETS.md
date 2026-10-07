@@ -67,6 +67,7 @@ narrower than their canvas: Claude crops the empty space.
 | 5   | 2 scene | `scene/paw.png`                    | Calico dropper arm hanging from the top                  | 2:3, 1024×1536    |
 | 6   | 3 HUD   | `hud/hud-kit.png`                  | Sheet: card, sunken well, pause button, NEXT bubble, …   | 1:1, 1024×1024    |
 | 7   | 3 HUD   | `hud/icons.png`                    | Sheet: coin, paw badge, sparkle, petals, puff            | 1:1, 1024×1024    |
+| 7b  | 4 menu  | `menu/mockup.png`                  | Whole main-menu screen, design reference (has words)     | 2:3, 1024×1536    |
 | 8   | 4 menu  | `menu/logo.png`                    | "Maneki Merge" logo (the only image with text)           | 3:2, 1536×1024    |
 | 9   | 4 menu  | `menu/hero.png`                    | Big golden maneki-neko on a pink cushion                 | 1:1, 1024×1024    |
 | 10  | 4 menu  | `menu/ui-kit.png`                  | Sheet: PLAY, secondary button, panel, card, close, gear  | 3:2, 1536×1024    |
@@ -300,6 +301,58 @@ Square 1:1.
 ```
 
 ### 4.5 Phase 4: menu
+
+**Menu mockup first** (`menu/mockup.png`, design reference only, not cut into the game). The v0.14
+menu (code-drawn) no longer matches the raster game screen, so the owner generates a whole-screen
+mockup first. Attach a screenshot of the game screen (e.g. `docs/screenshots/v0.19.4/rest-390x844.png`),
+the lineup sheet and the reference image. Words are allowed here because it is only a reference;
+in the game every label stays live text. Claude then builds the menu from it like the HUD (cards and
+buttons in CSS, measured against the mockup) and asks for the pieces that need art (likely the logo
+and the hero below), with prompts adjusted to the chosen mockup.
+
+```text
+A complete portrait main-menu screen for a cute casual mobile game called "Maneki Merge", shown
+flat and full-bleed: no phone frame, no hands, no device mockup.
+
+Style: match the attached in-game screenshot and reference image exactly. Polished casual
+mobile-game art, cute chibi kawaii illustration, thick warm dark-brown outlines (never black),
+soft pastel cel shading with gentle gradients and small glossy highlights, light from the upper
+left, warm cream and sakura-pink palette, crisp clean edges. The menu must look like it belongs to
+the same game as the screenshot.
+
+Background: the same sakura shrine garden as the game: cream sky with soft clouds, sakura branches
+in the top corners, a red torii gate and a small shrine in the distance, stone lanterns, pink
+bushes, a warm wooden deck at the bottom. A little softer and lighter than the foreground so the
+buttons read clearly.
+
+Layout, top to bottom:
+1. Top bar: on the left a round cream button with a dark-brown gear icon; on the right a coin
+   counter card with a shiny gold coin (a small embossed paw print on it) and the number "1,250".
+2. The logo "Maneki Merge" (spelled exactly like that) in chunky rounded bubbly letters, warm cream
+   with a soft pink-orange gradient and a thick dark-brown outline, a small gold bell hanging from
+   the "M", a few sakura petals around it.
+3. The hero, large, in the middle: the golden maneki-neko (cat number 9, Kin, from the attached
+   lineup sheet) sitting on a plump pink silk cushion with gold tassels, its raised beckoning paw
+   with pink pads facing us, red collar with a big gold bell, a happy smile, a soft warm glow
+   behind it, a few gold coins and four-pointed gold sparkles floating around. Two or three smaller
+   round lucky cats from the lineup (white, orange, sky blue), each with its raised paw, collar and
+   bell, peek in beside the cushion.
+4. Two small record cards side by side: "BEST SCORE" over "12,480" with a pink paw badge, and
+   "BEST STAGE" over "3" with a small red torii icon.
+5. A big glossy coral-pink pill-shaped PLAY button with a white paw icon and the word "PLAY" in
+   white rounded letters with a dark-brown outline, and a darker pink bottom edge, like the game's
+   pink pause button.
+6. Under it a smaller cream "UPGRADES" button with an up-arrow icon and a small red notification
+   dot on its corner.
+
+Every card and button: cream fill (#fff6e7), thin dark-brown outline, soft rounded corners and a
+tan bottom edge, like the score and coins cards in the screenshot. A rounded friendly font like
+Fredoka. Only these words: "Maneki Merge", "PLAY", "UPGRADES", "BEST SCORE", "BEST STAGE", plus
+the numbers. No other buttons or icons, no ads, no stars, no level map, no characters other than
+the lucky cats, no watermark, no signature. Keep everything important in the middle of the canvas,
+with some plain sky at the top and deck at the bottom, so it can stretch to taller phones.
+Portrait 2:3 (1024×1536).
+```
 
 **Logo** (`menu/logo.png`):
 
