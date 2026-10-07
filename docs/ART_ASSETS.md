@@ -57,24 +57,27 @@ the background 2× (the tool's upscale, or the free Upscayl app) to 2048×3072, 
 whole screen; the rest is sharp enough at the generated size. Rug, paw, logo and banner are
 narrower than their canvas: Claude crops the empty space.
 
-| #   | Phase   | File (in `art-source/`)            | What                                                     | Generate          |
-| --- | ------- | ---------------------------------- | -------------------------------------------------------- | ----------------- |
-| 0   | 0 style | `style/lineup.png`                 | The 9 cats on one sheet (style lock, not used in game)   | 1:1, 1024×1024    |
-| 1   | 1 cats  | `cats/size-01.png` … `size-09.png` | One cat per size (size 10 reuses size 1, GAME_DESIGN §4) | 1:1, 1024×1024    |
-| 2   | 2 scene | `scene/background.png`             | Shrine garden behind and around the jar                  | 2:3, 1024×1536 ×2 |
-| 3   | 2 scene | `scene/jar.png`                    | Empty bamboo-framed glass jar, front view                | 2:3, 1024×1536    |
-| 4   | 2 scene | `scene/rug.png`                    | Mint rug the jar stands on                               | 3:2, 1536×1024    |
-| 5   | 2 scene | `scene/paw.png`                    | Calico dropper arm hanging from the top                  | 2:3, 1024×1536    |
-| 6   | 3 HUD   | `hud/hud-kit.png`                  | Sheet: card, sunken well, pause button, NEXT bubble, …   | 1:1, 1024×1024    |
-| 7   | 3 HUD   | `hud/icons.png`                    | Sheet: coin, paw badge, sparkle, petals, puff            | 1:1, 1024×1024    |
-| 7b  | 4 menu  | `menu/mockup.png`                  | Whole main-menu screen, design reference (has words)     | 2:3, 1024×1536    |
-| 8   | 4 menu  | `menu/logo.png`                    | "Maneki Merge" logo (the only image with text)           | 3:2, 1536×1024    |
-| 9   | 4 menu  | `menu/hero.png`                    | Big golden maneki-neko on a pink cushion                 | 1:1, 1024×1024    |
-| 10  | 4 menu  | `menu/ui-kit.png`                  | Sheet: PLAY, secondary button, panel, card, close, gear  | 3:2, 1536×1024    |
-| 11  | 4 menu  | `menu/upgrade-icons.png`           | Sheet: 5 upgrade icons                                   | 3:2, 1536×1024    |
-| 12  | 4 menu  | `menu/settings-icons.png`          | Sheet: sound, haptics, reduce motion, how to play        | 1:1, 1024×1024    |
-| 13  | 4 menu  | `menu/banner.png`                  | Blank ribbon banner for "The shrine grows!" etc.         | 3:2, 1536×1024    |
-| 14  | 5 app   | `app-icon.png`                     | App icon                                                 | 1:1, 1024×1024    |
+| #   | Phase   | File (in `art-source/`)            | What                                                      | Generate          |
+| --- | ------- | ---------------------------------- | --------------------------------------------------------- | ----------------- |
+| 0   | 0 style | `style/lineup.png`                 | The 9 cats on one sheet (style lock, not used in game)    | 1:1, 1024×1024    |
+| 1   | 1 cats  | `cats/size-01.png` … `size-09.png` | One cat per size (size 10 reuses size 1, GAME_DESIGN §4)  | 1:1, 1024×1024    |
+| 2   | 2 scene | `scene/background.png`             | Shrine garden behind and around the jar                   | 2:3, 1024×1536 ×2 |
+| 3   | 2 scene | `scene/jar.png`                    | Empty bamboo-framed glass jar, front view                 | 2:3, 1024×1536    |
+| 4   | 2 scene | `scene/rug.png`                    | Mint rug the jar stands on                                | 3:2, 1536×1024    |
+| 5   | 2 scene | `scene/paw.png`                    | Calico dropper arm hanging from the top                   | 2:3, 1024×1536    |
+| 6   | 3 HUD   | `hud/hud-kit.png`                  | Sheet: card, sunken well, pause button, NEXT bubble, …    | 1:1, 1024×1024    |
+| 7   | 3 HUD   | `hud/icons.png`                    | Sheet: coin, paw badge, sparkle, petals, puff             | 1:1, 1024×1024    |
+| 7b  | 4 menu  | `menu/mockup.jpg`                  | Whole main-menu screen, design reference (done)           | 2:3, 1024×1536    |
+| 7c  | 4 menu  | `menu/background.png`              | Menu garden, the mockup without UI, logo and cat          | 2:3, 1024×1536    |
+| 8   | 4 menu  | `menu/logo.png`                    | "Maneki Merge" logo (the only image with text)            | 3:2, 1536×1024    |
+| 9   | 4 menu  | `menu/hero.png`                    | Big golden maneki-neko on a pink cushion                  | 1:1, 1024×1024    |
+| 9b  | 4 menu  | `menu/buttons.png`                 | Sheet: blank PLAY, UPGRADES, record card, gear, coin pill | 3:2, 1536×1024    |
+| 9c  | 4 menu  | `menu/menu-icons.png`              | Sheet: torii, paw badge, arrow, coin, sparkles, petals    | 1:1, 1024×1024    |
+| 10  | 4 menu  | `menu/ui-kit.png`                  | Sheet: PLAY, secondary button, panel, card, close, gear   | 3:2, 1536×1024    |
+| 11  | 4 menu  | `menu/upgrade-icons.png`           | Sheet: 5 upgrade icons                                    | 3:2, 1536×1024    |
+| 12  | 4 menu  | `menu/settings-icons.png`          | Sheet: sound, haptics, reduce motion, how to play         | 1:1, 1024×1024    |
+| 13  | 4 menu  | `menu/banner.png`                  | Blank ribbon banner for "The shrine grows!" etc.          | 3:2, 1536×1024    |
+| 14  | 5 app   | `app-icon.png`                     | App icon                                                  | 1:1, 1024×1024    |
 
 How the pieces go into the game:
 
@@ -354,23 +357,94 @@ with some plain sky at the top and deck at the bottom, so it can stretch to tall
 Portrait 2:3 (1024×1536).
 ```
 
+**Main menu pieces, cut from the mockup.** Done (2026-10-08): the owner picked a mockup
+(`menu/mockup.jpg`, 768×1376). Every main-menu piece is now an edit of that image, so it keeps the
+mockup's exact look. Attach **only the mockup** to each request, one asset per chat (or a new
+message in the same chat). Paste this block first (not the §4.0 style block), then the asset prompt:
+
+```text
+The attached image is the approved main-menu mockup of my mobile game. I need one piece of it as a
+separate game asset. Copy that piece exactly as it is drawn in the mockup: same shape, proportions,
+colours, outlines, shading and highlights. Do not redesign it.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard. No cast
+shadow, no glow, no sparkles unless I ask for them. No watermark, no signature.
+```
+
+In the game the words ("PLAY", "UPGRADES", "BEST SCORE", the numbers) stay live text (Fredoka) and
+the red dot on UPGRADES, the glow behind the cat and the twinkling sparkles are drawn in code.
+
+**Background** (`menu/background.png`): this one is a full-bleed edit, so skip the block above.
+
+```text
+Edit the attached image. Remove everything that is user interface or foreground: the gear button,
+the coin counter, the "Maneki Merge" logo with its bell, the golden cat and its pink cushion with
+tassels, the glow and the sparkles around the cat, the two record cards, the PLAY button and the
+UPGRADES button. Paint the garden behind them in their place so the scene is complete: the cream
+sky and soft clouds, the sakura branches at the top left and top right, the red torii gate on the
+left, the shrine on the right, the stone lanterns on both sides, the sakura trees and bushes, the
+wooden deck and the mat at the bottom. Keep everything else exactly the same: positions, colours,
+outlines and lighting. The middle stays calm and low-contrast, because the logo, the cat and the
+buttons go back on top of it. No text, no letters, no numbers anywhere. Same framing; if the canvas
+has to be wider, extend the garden at the sides, never crop the top or bottom.
+Portrait 2:3 (1024×1536).
+```
+
 **Logo** (`menu/logo.png`):
 
 ```text
-A cute mobile-game logo that reads exactly "Maneki Merge" (two words, spelled exactly like that),
-chunky rounded bubbly letters in warm cream with a thick dark-brown outline and a soft pink-orange
-gradient, a small gold bell hanging from the letter "M", a few sakura petals around. Plain flat
-white background. Landscape 3:2, the logo as wide as the canvas. The text must be spelled correctly.
+Only the "Maneki Merge" logo from the mockup, on its own: the same two lines, "Maneki" on top and
+"Merge" below, the same chunky rounded coral-pink letters with their cream highlights and thick
+dark-brown outline, the same gold bell hanging at the left of "Merge" and the same few small sakura
+petals around the letters. Spelled exactly "Maneki Merge". Centered, about 90% of the canvas width,
+with a small empty margin on every side. Landscape 3:2 (1536×1024).
 ```
 
-**Hero** (`menu/hero.png`): attach the lineup sheet too.
+**Hero** (`menu/hero.png`):
 
 ```text
-Cat number 9 (Kin, the golden maneki-neko) from the attached lineup sheet, drawn larger and more
-detailed as the main-menu hero: sitting on a plump pink silk cushion with gold tassels, raised
-beckoning paw, red bib with gold trim, big gold bell, sakura flower on one ear, happy face. Front
-view, centered. Plain flat solid white background, no floor shadow. Square 1:1.
+Only the golden lucky cat sitting on its pink cushion from the mockup, on its own: the same golden
+maneki-neko with the tabby stripes on its head, closed happy eyes, rosy cheeks and smile, the same
+raised beckoning paw with pink paw pads on the same side as in the mockup, the red collar with the
+gold bell, sitting on the same plump pink cushion with gold tassels. The whole cat and cushion are
+fully visible, from the ear tips to the tassels, centered, with a small empty margin on every side.
+No glow behind it, no sparkles, no coins, no shadow under the cushion. Square 1:1 (1024×1024).
 ```
+
+**Buttons and cards** (`menu/buttons.png`):
+
+```text
+These interface pieces from the mockup, as a sheet, spaced far apart, each drawn exactly as in the
+mockup (same colours, outline, gloss, bottom edge and corner rounding) and completely EMPTY:
+1. the big coral-pink PLAY button with NO text: just the glossy pill, about 3.2 times as wide as
+   it is tall;
+2. the cream UPGRADES button with NO text, NO arrow and NO red dot: just the pill, about 4 times as
+   wide as it is tall;
+3. one record card like the BEST SCORE card with NO text, NO icon and NO number: just the cream card
+   with its outline and the empty sunken beige well inside it, about 1.9 times as wide as it is tall;
+4. the round cream settings button WITH its brown gear;
+5. the coin counter pill from the top right with NO coin and NO number, about 2.5 times as wide as
+   it is tall.
+No text, no letters, no numbers anywhere. Landscape 3:2 (1536×1024).
+```
+
+If a shape comes out with the wrong proportions, it is built in CSS instead (like the HUD cards).
+
+**Small icons** (`menu/menu-icons.png`):
+
+```text
+These small icons from the mockup, as a sheet, spaced far apart, each drawn exactly as in the
+mockup and readable at 32 px:
+1. the small red torii gate icon from the BEST STAGE card;
+2. the round pink paw-print badge from the BEST SCORE card;
+3. the up-arrow icon from the UPGRADES button;
+4. the shiny gold coin from the coin counter;
+5. the four-pointed gold sparkle from around the cat, twice: one big, one small;
+6. three single sakura petals like the ones floating in the air, each at a different angle.
+No text, no letters, no numbers. Square 1:1 (1024×1024).
+```
+
+The shop and settings screens keep the sheets below (ui-kit, upgrade icons, settings icons, banner);
+they get their own mockups later.
 
 **UI kit sheet** (`menu/ui-kit.png`):
 
