@@ -109,11 +109,13 @@ test('an old save gets its Shrine Expansion and Fortune Teller coins back', asyn
   const errors = watchConsole(page);
   await page.goto('./?debug=1');
   await expect(page.getByTestId('play')).toBeVisible();
-  // A v0.11 save (version 2): Shrine Expansion 1, Fortune Teller 1, Golden Touch 2.
+  // A v0.11 save (version 2): Shrine Expansion 1, Fortune Teller 1, Golden Touch 2, and a
+  // record tier from the 12-cat stages.
   await page.evaluate((key) => {
     const data = {
       wallet: { coins: 100 },
       upgrades: { luckyPaw: 1, shrineExpansion: 1, fortuneTeller: 1, goldenTouch: 2 },
+      records: { bestScore: 900, bestStage: 5, highestTier: 54 },
     };
     localStorage.setItem(key, JSON.stringify({ version: 2, data }));
   }, SAVE_KEY);
@@ -127,7 +129,9 @@ test('an old save gets its Shrine Expansion and Fortune Teller coins back', asyn
     (key) => JSON.parse(localStorage.getItem(key) ?? '{}'),
     SAVE_KEY,
   );
-  expect(saved.version).toBe(3);
+  expect(saved.version).toBe(4);
+  // Capped at today's last tier (v3 → v4).
+  expect(saved.data.records.highestTier).toBe(46);
   expect(Object.keys(saved.data.upgrades)).toEqual([
     'luckyPaw',
     'bigCatch',
