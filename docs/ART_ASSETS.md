@@ -265,8 +265,8 @@ no shadow. Portrait 2:3.
 ### 4.4 Phase 3: HUD
 
 **Done (2026-10-07):** the coins card, the pause button and the next bubble are in the game (v0.19).
-The generator couldn't draw the score card in the coins card's style, so the score card is drawn in
-CSS (v0.19.1) with the paw badge cut out of the score image. The stage card was dropped until it has art.
+The generator couldn't draw the cards in the reference's proportions, so both cards are CSS
+(v0.19.2) with the coin and the paw badge cut out of the generated images. The stage card was dropped until it has art.
 
 **HUD kit sheet** (`hud/hud-kit.png`), elements well apart on a white background:
 

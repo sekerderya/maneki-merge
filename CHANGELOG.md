@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.19.2] - 2026-10-07
+
+The HUD cards measured against the owner's reference image.
+
+### Changed
+
+- The score card is shorter (66 px) with a thinner outline and softer corners; "SCORE:" is centred, and the score's well is a rounded pill in the reference's warm tan.
+- The coins card is a small card (no longer a long strip) coming out of the screen's right edge, rounded on the left only: "COINS:" centred and bigger, and under it a small coin with the number, evenly spaced. It is CSS now; the tool cuts the coin out of the generated card.
+- The pause button's outline is the reference's rose brown instead of dark brown.
+
 ## [0.19.1] - 2026-10-07
 
 The HUD closer to the owner's reference image.
