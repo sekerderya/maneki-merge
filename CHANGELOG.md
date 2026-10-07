@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.19.5] - 2026-10-08
+
+Cats roll on the jar's floor, from the owner's playtest of the soft landing.
+
+### Changed
+
+- A cat alone on the floor or a curve rolls like a ball instead of sliding: it turns as fast as it moves. A cat dropped by a wall now turns about once on its way down and across (it turned an eighth of that, sliding). A merged cat keeps its own spin.
+- The floor's rug is a little stronger (800 u/s², was 600), so a rolling cat still stops where it did, about half a second after landing.
+- The chaos test's Lucky Save run may last 300 s (its bot now clears stage 1 after the saves and the run ends at 196 s).
+
 ## [0.19.4] - 2026-10-08
 
 A soft landing on the jar's curved corners, the owner's choice among measured options.
