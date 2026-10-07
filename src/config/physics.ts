@@ -37,6 +37,14 @@ export const JAR_FRICTION_STATIC = BALL_FRICTION_STATIC;
 /** The floor never bounces: a cat that lands on it stops dead (physics/restitution.ts). */
 export const FLOOR_RESTITUTION = 0;
 
+/**
+ * The rounded bottom corners (v0.14) are part of the dead floor: on every step a cat touches one
+ * and no other cat, its speed and spin are multiplied by this. A cat landing on an empty curve
+ * slides gently down and stops near its foot instead of being launched across the jar; piles
+ * leaning on the curve are left to the physics.
+ */
+export const CORNER_GRIP = 0.85;
+
 export const ENABLE_SLEEPING = false;
 
 /** Jar walls are static rectangles at least this thick, so nothing tunnels out. */

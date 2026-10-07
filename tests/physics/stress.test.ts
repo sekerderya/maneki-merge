@@ -3,6 +3,12 @@ import { fillJar, inJar, maxOverlap, maxWallPenetration, STEPS_PER_SECOND } from
 
 /** "Settled": every cat slower than this fraction of the speed limit (a slow roll at most). */
 const SETTLED_SPEED_FRACTION = 0.05;
+/**
+ * Speeds are averaged over this many steps (0.1 s): resting cats deep in the pile show velocity
+ * jitter (a single step can read 150 u/s while the cat stays within a unit), which the taller pile
+ * in v0.14's curved jar reads more often. The average shows real motion only.
+ */
+const SPEED_WINDOW_STEPS = 12;
 
 describe('stability stress test (TECH_SPEC §5)', () => {
   it.each([1, 2, 3])(
@@ -13,12 +19,20 @@ describe('stability stress test (TECH_SPEC §5)', () => {
       const limit = world.speedLimit;
       let settledAt = -1;
       let fastest = 0;
+      const trail: Map<number, readonly [number, number]>[] = [];
       // Simulate 12 s and require the jar to stay settled from (at most) 10 s on.
       for (let step = 1; step <= 12 * STEPS_PER_SECOND; step++) {
         world.step();
+        for (const cat of world.balls) fastest = Math.max(fastest, cat.speed);
+        trail.push(new Map(world.balls.map((cat) => [cat.id, [cat.x, cat.y] as const])));
+        if (trail.length <= SPEED_WINDOW_STEPS) continue;
+        const before = trail.shift()!;
         let max = 0;
-        for (const cat of world.balls) max = Math.max(max, cat.speed);
-        fastest = Math.max(fastest, max);
+        for (const cat of world.balls) {
+          const [x, y] = before.get(cat.id)!;
+          const moved = Math.hypot(cat.x - x, cat.y - y);
+          max = Math.max(max, (moved * STEPS_PER_SECOND) / SPEED_WINDOW_STEPS);
+        }
         if (max < SETTLED_SPEED_FRACTION * limit) {
           if (settledAt < 0) settledAt = step / STEPS_PER_SECOND;
         } else {

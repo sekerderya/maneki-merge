@@ -7,6 +7,7 @@
  */
 import Matter from 'matter-js';
 import {
+  CORNER_GRIP,
   ENABLE_SLEEPING,
   FLOOR_RESTITUTION,
   GRAVITY_BASE,
@@ -30,7 +31,7 @@ import type { Ball, BallSpec } from './balls';
 
 /** A cat to add: the world works out its size at the current stage. */
 export type NewBall = Omit<BallSpec, 'size'>;
-import { installCircleCollisions } from './circleCollision';
+import { inRoundedCorner, installCircleCollisions, roundedFloorOf } from './circleCollision';
 import { jarGeometry } from './geometry';
 import type { JarGeometry } from './geometry';
 import { installRestitutionOverride } from './restitution';
@@ -139,18 +140,24 @@ export class PhysicsWorld {
       });
     this.leftWall = wall();
     this.rightWall = wall();
+    // The floor's rectangle reaches up to the rounded corners' centres (circleCollision.ts); its
+    // flat top is still y = 0.
+    const corner = jar.cornerRadius;
     const floor = Matter.Bodies.rectangle(
       0,
-      WALL_THICKNESS / 2,
+      (WALL_THICKNESS - corner) / 2,
       jar.width + 2 * WALL_THICKNESS,
-      WALL_THICKNESS,
+      WALL_THICKNESS + corner,
       {
         isStatic: true,
         label: 'floor',
         friction: JAR_FRICTION,
         frictionStatic: JAR_FRICTION_STATIC,
-        // A landing cat stops dead (restitution.ts).
-        plugin: { restitution: FLOOR_RESTITUTION },
+        // A landing cat stops dead (restitution.ts). Its bottom corners are rounded.
+        plugin: {
+          restitution: FLOOR_RESTITUTION,
+          roundedFloor: { top: 0, cx: jar.halfWidth - corner, cy: -corner, radius: corner },
+        },
       },
     );
     const offset = jar.halfWidth + WALL_THICKNESS / 2;
@@ -255,6 +262,17 @@ export class PhysicsWorld {
       if (ball.growing) ball.grow(PHYSICS_STEP_MS);
     }
     for (const ball of this.list) {
+      if (ball.touchesCorner) {
+        // The curve grips like the floor: a lone cat isn't launched along it (CORNER_GRIP).
+        ball.touchesCorner = false;
+        if (!ball.touchesCat) {
+          const { velocity, angularVelocity } = ball.body;
+          this.scratch.x = velocity.x * CORNER_GRIP;
+          this.scratch.y = velocity.y * CORNER_GRIP;
+          Matter.Body.setVelocity(ball.body, this.scratch);
+          Matter.Body.setAngularVelocity(ball.body, angularVelocity * CORNER_GRIP);
+        }
+      }
       if (ball.touchesGrowth) {
         ball.touchesGrowth = false;
         this.limitSpeed(ball.body, this.neighbourMaxSpeed);
@@ -294,17 +312,30 @@ export class PhysicsWorld {
     const now = this.timeMs;
     const contacts = this.sameTierContacts;
     contacts.length = 0;
+    for (const ball of this.list) ball.touchesCat = false;
     for (const pair of (this.engine.pairs as unknown as PairList).list) {
       if (!pair.isActive) continue;
       const a = ballOf(pair.bodyA);
       const b = ballOf(pair.bodyB);
       if (a && a.landedMs < 0) a.landedMs = now;
       if (b && b.landedMs < 0) b.landedMs = now;
-      if (!a || !b) continue;
+      if (!a || !b) {
+        if (a) this.markCorner(a, pair.bodyB);
+        if (b) this.markCorner(b, pair.bodyA);
+        continue;
+      }
+      a.touchesCat = true;
+      b.touchesCat = true;
       if (a.tier === b.tier) contacts.push(a, b);
       if (a.growing) b.touchesGrowth = true;
       if (b.growing) a.touchesGrowth = true;
     }
+  }
+
+  /** Notes a cat that rests on (or lands on) one of the floor's rounded corners. */
+  private markCorner(ball: Ball, other: Matter.Body): void {
+    const floor = roundedFloorOf(other);
+    if (floor && inRoundedCorner(ball.x, ball.y, ball.radius, floor)) ball.touchesCorner = true;
   }
 
   private limitSpeed(body: Matter.Body, max: number): void {

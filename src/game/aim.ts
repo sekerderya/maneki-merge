@@ -12,15 +12,17 @@ export interface Circle {
 
 /**
  * The y of the falling cat's centre at first contact: with the highest cat it would hit, or
- * resting on the floor (y = 0 is the floor, y grows downward). `fromY` is where it starts.
+ * resting on the floor at `floorY` (y = 0 is the flat floor, y grows downward; a rounded corner
+ * holds it higher, see `floorRestY`). `fromY` is where it starts.
  */
 export function landingY(
   x: number,
   radius: number,
   fromY: number,
   balls: readonly Circle[],
+  floorY = -radius,
 ): number {
-  let best = -radius;
+  let best = floorY;
   for (const b of balls) {
     const reach = b.radius + radius;
     const dx = b.x - x;

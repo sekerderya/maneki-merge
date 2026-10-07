@@ -12,6 +12,12 @@ export const JAR_WIDTH = 600;
 export const JAR_HEIGHT = 870;
 
 /**
+ * The jar's bottom corners are quarter circles of this radius (GAME_DESIGN §6): the curved
+ * bamboo jar the owner chose in v0.14 (0.19 of the jar's width).
+ */
+export const JAR_CORNER_RADIUS = 112;
+
+/**
  * Above the rim the camera keeps this fraction of the jar width free for the dropper
  * (TECH_SPEC §4). A cat waiting in the dropper sits in the middle of that band.
  */

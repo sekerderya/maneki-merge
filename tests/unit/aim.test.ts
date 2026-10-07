@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { sizeRadius } from '../../src/config/tiers';
 import { landingY } from '../../src/game/aim';
-import { jarGeometry } from '../../src/physics/geometry';
+import { floorRestY, jarGeometry } from '../../src/physics/geometry';
 import { RunController } from '../../src/run/RunController';
 
 describe('aim guide landing point', () => {
@@ -10,6 +10,14 @@ describe('aim guide landing point', () => {
   it('lands on the floor when nothing is below', () => {
     expect(landingY(0, 27, from, [])).toBe(-27);
     expect(landingY(0, 27, from, [{ x: 200, y: -40, radius: 40 }])).toBe(-27);
+  });
+
+  it('lands on the curve of a rounded corner when told where the floor is', () => {
+    const geo = jarGeometry(1);
+    const x = 260;
+    const floor = floorRestY(x, 28, geo);
+    expect(landingY(x, 28, from, [], floor)).toBe(floor);
+    expect(floor).toBeLessThan(-28);
   });
 
   it('lands on top of a cat straight below', () => {

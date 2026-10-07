@@ -11,6 +11,7 @@ import {
 import { sizeRadius, STAGE_ZOOM } from '../../src/config/tiers';
 import { MERGE_GROW_MS } from '../../src/config/timings';
 import { StateHasher } from '../../src/core/hash';
+import { floorRestY } from '../../src/physics/geometry';
 import { FixedStepper, PhysicsWorld } from '../../src/physics/PhysicsWorld';
 
 const STEPS_PER_SECOND = 120;
@@ -68,6 +69,50 @@ describe('PhysicsWorld', () => {
     run(world, 3);
     expect(cat.y).toBeCloseTo(-sizeRadius(3), 0);
     expect(cat.speed).toBeLessThan(1);
+  });
+
+  it.each([-1, 1])('rests a small cat dropped by a wall on the curved corner (side %i)', (side) => {
+    const world = new PhysicsWorld();
+    const g = world.geometry;
+    const r = sizeRadius(2);
+    const cat = world.addBall({ tier: 2, x: side * (g.halfWidth - r), y: g.dropY });
+    run(world, 4);
+    // The curve grips: it slides gently down and stops near the foot of the curve, on it, and
+    // is never launched across the jar.
+    expect(Math.abs(cat.x)).toBeLessThan(g.halfWidth - r - 10);
+    expect(Math.abs(cat.x)).toBeGreaterThan(g.halfWidth - g.cornerRadius - r);
+    expect(cat.y).toBeCloseTo(floorRestY(cat.x, r, g), 0);
+    expect(cat.speed).toBeLessThan(5);
+  });
+
+  it('keeps cats spawned across the floor apart, the outer ones held by the curves', () => {
+    const world = new PhysicsWorld();
+    const cats = [-200, -70, 70, 200].map((x) =>
+      world.addBall({ tier: 2, x, y: world.geometry.dropY }),
+    );
+    run(world, 4);
+    for (let i = 1; i < cats.length; i++) {
+      const [a, b] = [cats[i - 1]!, cats[i]!];
+      expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThan(a.radius + b.radius);
+    }
+  });
+
+  it('keeps every cat of a pile inside the curved corners', () => {
+    const world = new PhysicsWorld();
+    const g = world.geometry;
+    for (let i = 0; i < 40; i++) {
+      const tier = 1 + (i % 4);
+      const side = i % 2 === 0 ? -1 : 1;
+      world.addBall({
+        tier,
+        x: side * (g.halfWidth - sizeRadius(tier) - (i % 5) * 9),
+        y: -500 - i * 90,
+      });
+    }
+    run(world, 8);
+    for (const cat of world.balls) {
+      expect(cat.y).toBeLessThanOrEqual(floorRestY(cat.x, cat.radius, g) + 0.1 * cat.radius);
+    }
   });
 
   it.each([1, 2, 3, 4])(

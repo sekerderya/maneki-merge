@@ -1,17 +1,26 @@
 /**
  * Jar geometry in world units (TECH_SPEC §4): the origin is the centre of the jar floor and y
- * grows downward, so the rim is at y = −height. Every stage has the same jar: when the jar grows,
- * the run rescales the world instead (GAME_DESIGN §7). Pure math, no matter-js, so the game scene
- * can use it too.
+ * grows downward, so the rim is at y = −height. The bottom corners are quarter circles of
+ * `cornerRadius`. Every stage has the same jar: when the jar grows, the run rescales the world
+ * instead (GAME_DESIGN §7). Pure math, no matter-js, so the game scene can use it too.
  */
 import { clamp } from '../core/math';
-import { DROPPER_HEADROOM_RATIO, JAR_HEIGHT, JAR_WIDTH, stageInfo, STAGES } from '../config/stages';
+import {
+  DROPPER_HEADROOM_RATIO,
+  JAR_CORNER_RADIUS,
+  JAR_HEIGHT,
+  JAR_WIDTH,
+  stageInfo,
+  STAGES,
+} from '../config/stages';
 
 export interface JarGeometry {
   readonly stage: number;
   readonly width: number;
   readonly height: number;
   readonly halfWidth: number;
+  /** Radius of the rounded bottom corners. */
+  readonly cornerRadius: number;
   /** The rim, which is also the danger line. */
   readonly rimY: number;
   /** Height of the dropper band above the rim. */
@@ -28,6 +37,7 @@ const GEOMETRY: readonly JarGeometry[] = STAGES.map(({ stage }) =>
     width: JAR_WIDTH,
     height: JAR_HEIGHT,
     halfWidth: JAR_WIDTH / 2,
+    cornerRadius: JAR_CORNER_RADIUS,
     rimY: -JAR_HEIGHT,
     headroom: HEADROOM,
     dropY: -JAR_HEIGHT - HEADROOM / 2,
@@ -43,4 +53,17 @@ export function jarGeometry(stage: number): JarGeometry {
 export function clampDropX(x: number, radius: number, geometry: JarGeometry): number {
   const limit = Math.max(0, geometry.halfWidth - radius);
   return clamp(x, -limit, limit);
+}
+
+/**
+ * Where the centre of a cat of `radius` at `x` rests on the empty jar floor: y = −radius on the
+ * flat part, higher in a rounded corner. A cat at least as big as the corner never reaches into
+ * it (walls and floor stop it first), so it rests at −radius everywhere.
+ */
+export function floorRestY(x: number, radius: number, geometry: JarGeometry): number {
+  const corner = geometry.cornerRadius;
+  const dx = Math.abs(x) - (geometry.halfWidth - corner);
+  if (radius >= corner || dx <= 0) return -radius;
+  const reach = corner - radius;
+  return -corner + Math.sqrt(Math.max(0, reach * reach - dx * dx));
 }
