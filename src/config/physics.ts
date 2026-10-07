@@ -34,12 +34,24 @@ export const BALL_FRICTION_AIR = 0.01;
  */
 export const JAR_FRICTION = BALL_FRICTION;
 export const JAR_FRICTION_STATIC = BALL_FRICTION_STATIC;
-/**
- * The floor never bounces: a cat that lands on it stops dead (physics/restitution.ts). The
- * rounded bottom corners are part of the dead floor too: a dropped cat whose first touch is a
- * curve stops dead there and then slides down it freely (PhysicsWorld.step, TECH_SPEC §5).
- */
+/** The floor never bounces: a cat that lands on it stops dead (physics/restitution.ts). */
 export const FLOOR_RESTITUTION = 0;
+
+/**
+ * The first-landing cushion (v0.19.4, owner's choice B): a dropped cat whose first touch is a
+ * rounded corner, and no cat, loses its fall's speed over this long, braking in and out gently,
+ * instead of being swung along the curve across the jar. Only that once (TECH_SPEC §5).
+ */
+export const CORNER_CUSHION_MS = 500;
+/** How much of its speed the cushion leaves a cat, gravity aside. */
+export const CORNER_CUSHION_KEEP = 0.25;
+
+/**
+ * Rolling resistance in u/s²: a cat touching the jar floor (flat or curved) and no other cat
+ * slows down by this much, like a ball on a rug, and stops on gentle slopes (under 16°). Piles
+ * are left to the physics.
+ */
+export const FLOOR_ROLLING_RESISTANCE = 600;
 
 export const ENABLE_SLEEPING = false;
 

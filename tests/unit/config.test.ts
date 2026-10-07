@@ -6,9 +6,12 @@ import {
   BALL_INERTIA_SCALE,
   BALL_RESTITUTION,
   BASE_DENSITY,
+  CORNER_CUSHION_KEEP,
+  CORNER_CUSHION_MS,
   densityForSize,
   GROWTH_NEIGHBOUR_MAX_SPEED_BASE,
   FLOOR_RESTITUTION,
+  FLOOR_ROLLING_RESISTANCE,
   GRAVITY_BASE,
   JAR_FRICTION,
   JAR_FRICTION_STATIC,
@@ -254,6 +257,16 @@ describe('physics tunables (TECH_SPEC §5)', () => {
   it('steps at 120 Hz with thick walls', () => {
     expect(PHYSICS_STEP_MS).toBeCloseTo(1000 / 120, 10);
     expect(WALL_THICKNESS).toBeGreaterThanOrEqual(300);
+  });
+
+  it('cushions a first landing on a curve and slows lone cats on the floor (v0.19.4)', () => {
+    expect(CORNER_CUSHION_MS).toBe(500);
+    expect(CORNER_CUSHION_KEEP).toBe(0.25);
+    expect(FLOOR_ROLLING_RESISTANCE).toBe(600);
+    // A cat stops on slopes gentler than about 16°, the last bit of a curve.
+    const slope = (Math.asin(FLOOR_ROLLING_RESISTANCE / (GRAVITY_BASE * 1000)) * 180) / Math.PI;
+    expect(slope).toBeGreaterThan(15);
+    expect(slope).toBeLessThan(17);
   });
 
   it('makes mass grow like r', () => {

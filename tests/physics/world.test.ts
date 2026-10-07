@@ -1,18 +1,26 @@
 import Matter from 'matter-js';
 import { describe, expect, it, vi } from 'vitest';
 import {
+  CORNER_CUSHION_KEEP,
+  CORNER_CUSHION_MS,
   GRAVITY_BASE,
   GROWTH_NEIGHBOUR_MAX_SPEED_BASE,
   MAX_ANGULAR_SPEED,
   MAX_SPEED_BASE,
   PHYSICS_MAX_SUBSTEPS,
   PHYSICS_STEP_MS,
+  stepsFor,
 } from '../../src/config/physics';
 import { sizeRadius, STAGE_ZOOM } from '../../src/config/tiers';
 import { MERGE_GROW_MS } from '../../src/config/timings';
 import { StateHasher } from '../../src/core/hash';
 import { floorRestY } from '../../src/physics/geometry';
-import { FixedStepper, PhysicsWorld } from '../../src/physics/PhysicsWorld';
+import {
+  cushionFactors,
+  CUSHION_FACTORS,
+  FixedStepper,
+  PhysicsWorld,
+} from '../../src/physics/PhysicsWorld';
 
 const STEPS_PER_SECOND = 120;
 
@@ -61,6 +69,25 @@ describe('FixedStepper', () => {
   });
 });
 
+describe('the first-landing cushion (TECH_SPEC §5)', () => {
+  it('brakes in and out over CORNER_CUSHION_MS, leaving about CORNER_CUSHION_KEEP', () => {
+    expect(CUSHION_FACTORS).toHaveLength(stepsFor(CORNER_CUSHION_MS));
+    const kept = CUSHION_FACTORS.reduce((product, f) => product * f, 1);
+    expect(kept).toBeGreaterThan(0.95 * CORNER_CUSHION_KEEP);
+    expect(kept).toBeLessThan(CORNER_CUSHION_KEEP);
+    // No jolt: it starts and ends at almost nothing, peaks in the middle, never takes 5% a step.
+    const n = CUSHION_FACTORS.length;
+    expect(CUSHION_FACTORS[0]).toBeGreaterThan(0.999);
+    expect(CUSHION_FACTORS[n - 1]).toBeGreaterThan(0.999);
+    expect(Math.min(...CUSHION_FACTORS)).toBeGreaterThan(0.95);
+    for (let i = 0; i < n; i++) {
+      expect(CUSHION_FACTORS[i]).toBeCloseTo(CUSHION_FACTORS[n - 1 - i]!, 12);
+      if (i > 0 && i < n / 2) expect(CUSHION_FACTORS[i]!).toBeLessThan(CUSHION_FACTORS[i - 1]!);
+    }
+    expect(cushionFactors(4, 1)).toEqual([1, 1, 1, 1]);
+  });
+});
+
 describe('PhysicsWorld', () => {
   it('drops a cat onto the floor, where it rests at y = −r', () => {
     const world = new PhysicsWorld();
@@ -72,47 +99,49 @@ describe('PhysicsWorld', () => {
   });
 
   it.each([-1, 1])(
-    'lands a cat dropped by a wall dead on the curve, then lets it slide freely (side %i)',
+    'cushions a cat dropped by a wall on the curve, without a jolt, and lets it roll to rest (side %i)',
     (side) => {
       const world = new PhysicsWorld();
       const g = world.geometry;
       const r = sizeRadius(2);
       const cat = world.addBall({ tier: 2, x: side * (g.halfWidth - r), y: g.dropY });
-      while (cat.landedMs < 0) world.step();
-      // The landing takes the fall's speed, as on the flat floor: no swing across the jar.
-      expect(cat.speed).toBe(0);
-      expect(cat.y).toBeLessThan(-g.cornerRadius / 2);
-      // Then nothing holds it back: it speeds up down the curve (until v0.19.3 the curve
-      // multiplied a lone cat's speed by 0.85 on every step).
-      let speed = 0;
-      while (Math.abs(cat.x) > g.halfWidth - g.cornerRadius) {
+      let fall = 0;
+      while (cat.landedMs < 0) {
+        fall = cat.speed;
         world.step();
-        expect(cat.speed).toBeGreaterThan(0.99 * speed);
+      }
+      // The cushion starts gently: the landing keeps nearly all of the fall's speed.
+      expect(fall).toBeGreaterThan(1000);
+      expect(cat.speed).toBeGreaterThan(0.99 * fall);
+      expect(cat.cushionStep).toBe(1);
+      // No step takes more than 5% of the fall's speed (v0.19.3's dead landing took all of it at
+      // once), and the cat never swings across the middle of the jar.
+      let speed = cat.speed;
+      for (let i = 0; i < 2 * STEPS_PER_SECOND; i++) {
+        world.step();
+        expect(speed - cat.speed).toBeLessThan(0.05 * fall);
+        expect(side * cat.x).toBeGreaterThan(-r);
         speed = cat.speed;
       }
-      expect(speed).toBeGreaterThan(300);
-      // It rolls on, at most a little way up the other curve, and comes to rest on the floor.
-      let highest = Infinity;
-      for (let i = 0; i < 10 * STEPS_PER_SECOND; i++) {
-        world.step();
-        highest = Math.min(highest, cat.y);
-      }
-      expect(highest + r).toBeGreaterThan(-g.cornerRadius / 4);
+      // The cushion is over and the floor's rolling resistance has stopped it.
+      expect(cat.cushionStep).toBe(-1);
       expect(cat.speed).toBeLessThan(5);
       expect(cat.y).toBeCloseTo(floorRestY(cat.x, r, g), 0);
     },
   );
 
-  it('lands a cat on a curve dead only on its first touch, and not while it touches a cat', () => {
+  it('cushions only a dropped cat whose first touch is a curve, and no cat', () => {
     const world = new PhysicsWorld();
     const g = world.geometry;
-    // Rolling from the flat floor onto a curve keeps the speed.
+    // Rolling from the flat floor onto a curve: no cushion.
     const foot = g.halfWidth - g.cornerRadius;
     const roller = world.addBall({ tier: 2, x: foot - 40, y: -sizeRadius(2), vx: 500 });
     world.step();
     expect(roller.landedMs).toBe(PHYSICS_STEP_MS);
-    while (roller.x < foot + 10) world.step();
-    expect(roller.speed).toBeGreaterThan(300);
+    while (roller.x < foot + 10) {
+      world.step();
+      expect(roller.cushionStep).toBe(-1);
+    }
     // A cat that lands on a curve and on a cat at once is left to the physics.
     const pair = new PhysicsWorld();
     const x = foot + 60;
@@ -120,7 +149,30 @@ describe('PhysicsWorld', () => {
     pair.addBall({ tier: 2, x, y: lower.y - sizeRadius(1) - sizeRadius(2) + 1, vy: 300 });
     pair.step();
     expect(lower.landedMs).toBe(PHYSICS_STEP_MS);
+    expect(lower.cushionStep).toBe(-1);
     expect(lower.speed).toBeGreaterThan(0);
+  });
+
+  it('slows a lone cat rolling on the floor evenly, like a ball on a rug', () => {
+    const world = new PhysicsWorld();
+    const r = sizeRadius(2);
+    const cat = world.addBall({ tier: 2, x: -100, y: -r, vx: 300, landedMs: 0 });
+    // A pushed cat first starts to roll: about half its speed goes into its spin.
+    for (let i = 0; i < 12; i++) world.step();
+    expect(cat.speed).toBeLessThan(150);
+    // Then it loses FLOOR_ROLLING_RESISTANCE (600 u/s²: 5 u/s per step, plus a little air
+    // friction) on every step until it stops.
+    let speed = cat.speed;
+    let steps = 0;
+    while (cat.speed > 0 && steps < STEPS_PER_SECOND) {
+      world.step();
+      steps++;
+      if (cat.speed > 0) expect(speed - cat.speed).toBeGreaterThan(4.9);
+      expect(speed - cat.speed).toBeLessThan(6.5);
+      speed = cat.speed;
+    }
+    expect(steps).toBeLessThan(STEPS_PER_SECOND / 4);
+    expect(cat.x + 100).toBeLessThan(40);
   });
 
   it('keeps cats spawned across the floor (as in the Lucky Save e2e test) from merging', () => {

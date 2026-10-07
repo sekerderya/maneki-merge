@@ -7,8 +7,11 @@
  */
 import Matter from 'matter-js';
 import {
+  CORNER_CUSHION_KEEP,
+  CORNER_CUSHION_MS,
   ENABLE_SLEEPING,
   FLOOR_RESTITUTION,
+  FLOOR_ROLLING_RESISTANCE,
   GRAVITY_BASE,
   GROWTH_NEIGHBOUR_MAX_SPEED_BASE,
   JAR_FRICTION,
@@ -18,6 +21,7 @@ import {
   PHYSICS_MAX_SUBSTEPS,
   PHYSICS_STEP_MS,
   POSITION_ITERATIONS,
+  stepsFor,
   VELOCITY_ITERATIONS,
   WALL_HEIGHT_FACTOR,
   WALL_THICKNESS,
@@ -37,6 +41,24 @@ import { installRestitutionOverride } from './restitution';
 
 /** matter-js's gravity unit: gravity.y = 1 accelerates by 0.001 units/ms² (1000 units/s²). */
 const MATTER_GRAVITY_SCALE = 0.001;
+
+/**
+ * Speed factors for the `steps` steps of a cushion: 1 minus a sin² bump, so the braking eases in
+ * and out with no jolt, scaled so that together they leave about `keep` of the speed.
+ */
+export function cushionFactors(steps: number, keep: number): number[] {
+  const strength = (-2 * Math.log(keep)) / steps;
+  return Array.from(
+    { length: steps },
+    (_, i) => 1 - strength * Math.sin((Math.PI * (i + 0.5)) / steps) ** 2,
+  );
+}
+
+/** The first-landing cushion, one factor per step (CORNER_CUSHION_MS). */
+export const CUSHION_FACTORS: readonly number[] = cushionFactors(
+  stepsFor(CORNER_CUSHION_MS),
+  CORNER_CUSHION_KEEP,
+);
 
 /** The fields of matter-js internals this module reads but @types/matter-js leaves out. */
 interface PairList {
@@ -113,6 +135,9 @@ export class PhysicsWorld {
   private readonly maxSpeed = MAX_SPEED_BASE / MATTER_TICKS_PER_SECOND;
   private readonly neighbourMaxSpeed = GROWTH_NEIGHBOUR_MAX_SPEED_BASE / MATTER_TICKS_PER_SECOND;
   private readonly maxAngularSpeed = MAX_ANGULAR_SPEED / MATTER_TICKS_PER_SECOND;
+  /** Speed a lone cat on the floor loses per step (FLOOR_ROLLING_RESISTANCE), in matter-js units. */
+  private readonly rollingLoss =
+    (FLOOR_ROLLING_RESISTANCE * PHYSICS_STEP_MS) / 1000 / MATTER_TICKS_PER_SECOND;
 
   constructor(options: PhysicsWorldOptions = {}) {
     installCircleCollisions();
@@ -262,15 +287,22 @@ export class PhysicsWorld {
     }
     for (const ball of this.list) {
       if (ball.landsOnCorner) {
-        // The curve is part of the dead floor: the landing takes the fall's speed, so the cat
-        // isn't swung across the jar, and from there it slides down freely.
+        // A dropped cat landing alone on a curve: the cushion takes its fall's speed gently, so
+        // it isn't swung across the jar (CORNER_CUSHION_MS).
         ball.landsOnCorner = false;
-        if (!ball.touchesCat) {
-          this.scratch.x = 0;
-          this.scratch.y = 0;
-          Matter.Body.setVelocity(ball.body, this.scratch);
-          Matter.Body.setAngularVelocity(ball.body, 0);
-        }
+        if (!ball.touchesCat) ball.cushionStep = 0;
+      }
+      if (ball.cushionStep >= 0) {
+        const factor = CUSHION_FACTORS[ball.cushionStep] as number;
+        ball.cushionStep =
+          ball.cushionStep + 1 < CUSHION_FACTORS.length ? ball.cushionStep + 1 : -1;
+        if (!ball.touchesCat) this.scaleSpeed(ball.body, factor);
+      }
+      if (ball.touchesFloor && !ball.touchesCat) {
+        // Rolling resistance: a lone cat on the floor slows down like a ball on a rug.
+        const { x, y } = ball.body.velocity;
+        const speed = Math.sqrt(x * x + y * y);
+        this.scaleSpeed(ball.body, speed > this.rollingLoss ? 1 - this.rollingLoss / speed : 0);
       }
       if (ball.touchesGrowth) {
         ball.touchesGrowth = false;
@@ -299,7 +331,7 @@ export class PhysicsWorld {
       hasher.number(position.x).number(position.y);
       hasher.number(positionPrev.x).number(positionPrev.y);
       hasher.number(angle).number(anglePrev);
-      hasher.number(ball.radius).number(ball.landedMs);
+      hasher.number(ball.radius).number(ball.landedMs).number(ball.cushionStep);
     }
   }
 
@@ -311,7 +343,10 @@ export class PhysicsWorld {
     const now = this.timeMs;
     const contacts = this.sameTierContacts;
     contacts.length = 0;
-    for (const ball of this.list) ball.touchesCat = false;
+    for (const ball of this.list) {
+      ball.touchesCat = false;
+      ball.touchesFloor = false;
+    }
     for (const pair of (this.engine.pairs as unknown as PairList).list) {
       if (!pair.isActive) continue;
       const a = ballOf(pair.bodyA);
@@ -319,8 +354,8 @@ export class PhysicsWorld {
       if (a && a.landedMs < 0) a.landedMs = now;
       if (b && b.landedMs < 0) b.landedMs = now;
       if (!a || !b) {
-        if (a?.landedMs === now) this.markCornerLanding(a, pair.bodyB);
-        if (b?.landedMs === now) this.markCornerLanding(b, pair.bodyA);
+        if (a) this.markFloor(a, pair.bodyB, now);
+        if (b) this.markFloor(b, pair.bodyA, now);
         continue;
       }
       a.touchesCat = true;
@@ -331,10 +366,25 @@ export class PhysicsWorld {
     }
   }
 
-  /** Notes a cat that lands this step (its first contact) on one of the floor's rounded corners. */
-  private markCornerLanding(ball: Ball, other: Matter.Body): void {
+  /**
+   * Notes a cat touching the floor (`other` may be a wall), and one that lands this step (its
+   * first contact) on one of the floor's rounded corners.
+   */
+  private markFloor(ball: Ball, other: Matter.Body, now: number): void {
     const floor = roundedFloorOf(other);
-    if (floor && inRoundedCorner(ball.x, ball.y, ball.radius, floor)) ball.landsOnCorner = true;
+    if (!floor) return;
+    ball.touchesFloor = true;
+    if (ball.landedMs === now && inRoundedCorner(ball.x, ball.y, ball.radius, floor)) {
+      ball.landsOnCorner = true;
+    }
+  }
+
+  /** Multiplies a body's velocity and spin by `factor`. */
+  private scaleSpeed(body: Matter.Body, factor: number): void {
+    this.scratch.x = body.velocity.x * factor;
+    this.scratch.y = body.velocity.y * factor;
+    Matter.Body.setVelocity(body, this.scratch);
+    Matter.Body.setAngularVelocity(body, body.angularVelocity * factor);
   }
 
   private limitSpeed(body: Matter.Body, max: number): void {
