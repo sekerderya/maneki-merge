@@ -9,6 +9,7 @@ import { catRadius, stageInfo } from '../../src/config/stages';
 import { SIZE_COUNT, sizeRadius } from '../../src/config/tiers';
 import { MERGE_GROW_MS } from '../../src/config/timings';
 import { Rng } from '../../src/core/rng';
+import { floorRestY } from '../../src/physics/geometry';
 import type { MergeOutcome } from '../../src/physics/merges';
 import { MergeResolver, mergeSpinDirection } from '../../src/physics/merges';
 import { PhysicsWorld } from '../../src/physics/PhysicsWorld';
@@ -227,7 +228,7 @@ describe('MergeResolver (GAME_DESIGN §5)', () => {
 
 describe('growth without launches (TECH_SPEC §5)', () => {
   /**
-   * The biggest pair (size 9) stacked against the left wall, one on the floor and one on top of it,
+   * The biggest pair (size 9) side by side on the floor, wedged between the curved corners,
    * under a pile of the stage's dropped tiers, settled without merges. Then every merge resolves at once:
    * the big one grows into the stage's last cat, wider than half the jar, while the pile
    * chain-reacts on top.
@@ -238,13 +239,15 @@ describe('growth without launches (TECH_SPEC §5)', () => {
     [36, 4, 3],
   ])('a tier-%i merge at stage %i (seed %i) pushes but never launches', (big, stage, seed) => {
     const world = new PhysicsWorld({ stage });
-    const { halfWidth } = world.geometry;
+    const { geometry } = world;
+    const { halfWidth } = geometry;
     const pool = stageInfo(stage).dropPool;
     const rng = new Rng(seed);
     const r = catRadius(big, stage);
-    world.addBall({ tier: big, x: -halfWidth + r, y: -r });
-    world.addBall({ tier: big, x: -halfWidth + r + 1, y: -3 * r - 2 });
-    const top = -4 * r;
+    // Side by side, touching: the curves wedge them together.
+    for (const x of [-(r - 1), r - 1])
+      world.addBall({ tier: big, x, y: floorRestY(x, r, geometry) });
+    const top = -2 * r;
     for (let i = 0; i < 30; i++) {
       const x = (rng.next() * 2 - 1) * (halfWidth - 120);
       const tier = pool[rng.int(0, pool.length - 1)]!;

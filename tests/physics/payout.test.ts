@@ -13,6 +13,7 @@ import type { Scheduler } from '../../src/core/profile';
 import { defaultSave, MemoryStorage, SaveStore } from '../../src/core/save';
 import type { SaveData } from '../../src/core/save';
 import type { UpgradeLevels } from '../../src/core/upgrades';
+import { floorRestY } from '../../src/physics/geometry';
 import { startProfileRun } from '../../src/run/profileRun';
 import type { RunController } from '../../src/run/RunController';
 import { upgrades } from './fixtures';
@@ -125,12 +126,16 @@ describe('payout pipeline (GAME_DESIGN §5, §9)', () => {
 
   it('pays Lucky Save pops, then a forced timeout without saves ends the run', () => {
     const { run, profile, coins, stored } = setup({ secondChance: 1 });
-    for (const x of [-220, -80, 80, 220]) run.spawnBall(2, x, -33);
+    // Neighbours differ in tier, so the outer cats can roll off the curves without a merge.
+    [-220, -80, 80, 220].forEach((x, i) => {
+      const tier = 1 + (i % 2);
+      run.spawnBall(tier, x, floorRestY(x, run.radiusOf(tier), run.geometry));
+    });
     for (let i = 0; i < 60; i++) run.tick(); // landed and past the landing grace
     run.forceDangerTimeout();
     expect(run.luckySavesLeft).toBe(0);
     expect(run.state).toBe('playing');
-    // Each tier-2 cat pays its value: half of C(2) = 2.
+    // Each cat pays its value: half of C(1) = 1 and of C(2) = 2, at least 1.
     expect(coins).toEqual([1, 1, 1, 1]);
     expect(profile.coins).toBe(4);
 

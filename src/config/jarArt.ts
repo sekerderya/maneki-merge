@@ -56,11 +56,11 @@ export const JAR_BACK_PIECES: readonly JarPiece[] = [
   { left: -250, top: 18, right: 250, bottom: 62 },
 ];
 export const JAR_FRONT_PIECES: readonly JarPiece[] = [
-  { left: -338, top: JAR_ART_BOX.top, right: -288, bottom: -118 },
-  { left: 288, top: JAR_ART_BOX.top, right: 338, bottom: -118 },
-  { left: -340, top: -122, right: -180, bottom: 40 },
-  { left: 180, top: -122, right: 340, bottom: 40 },
-  { left: -184, top: -8, right: 184, bottom: 40 },
+  { left: -338, top: JAR_ART_BOX.top, right: -284, bottom: -118 },
+  { left: 284, top: JAR_ART_BOX.top, right: 338, bottom: -118 },
+  { left: -340, top: -122, right: -128, bottom: 40 },
+  { left: 128, top: -122, right: 340, bottom: 40 },
+  { left: -132, top: -8, right: 132, bottom: 40 },
 ];
 
 /** The dashed danger line across the opening while safe (it turns red in danger). */
@@ -224,7 +224,7 @@ export function jarRugShapes(): PaintShape[] {
 
 /** Behind the cats: the feet and the far rail across the top. */
 export function jarBackShapes(): PaintShape[] {
-  const feetX = HALF - RC * 0.62;
+  const feetX = HALF - RC * 0.75;
   const feet = [-feetX, feetX].flatMap((x): PaintShape[] => [
     {
       d: roundRectPath(x - T * 0.42, BOTTOM_Y + T / 2 - 4, T * 0.84, 34, 6),

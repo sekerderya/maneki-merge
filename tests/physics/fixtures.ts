@@ -24,7 +24,7 @@ export function fillJar(seed: number, count = 150, stage = 5): PhysicsWorld {
   const pool = stageInfo(stage).dropPool;
   const weights = dropWeights(0);
   const { halfWidth } = world.geometry;
-  const cell = 2 * catRadius(pool[pool.length - 1]!, stage) + 12;
+  const cell = 2 * catRadius(pool[pool.length - 1]!, stage) + 6;
   const perRow = Math.floor((2 * halfWidth) / cell);
   for (let i = 0; i < count; i++) {
     const tier = pool[rng.weightedIndex(weights)]!;

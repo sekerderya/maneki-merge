@@ -9,14 +9,14 @@ describe('jarGeometry (GAME_DESIGN §7, TECH_SPEC §4)', () => {
       const g = jarGeometry(s);
       expect(g.stage).toBe(s);
       expect([g.width, g.height, g.rimY, g.halfWidth]).toEqual([600, 870, -870, 300]);
-      expect(g.cornerRadius).toBe(112);
+      expect(g.cornerRadius).toBe(168);
     }
   });
 
-  it('puts the dropper in the middle of a 0.18 W band above the rim', () => {
+  it('puts the dropper in the middle of a 0.2 W band above the rim', () => {
     const g = jarGeometry(1);
-    expect(g.headroom).toBeCloseTo(108, 10);
-    expect(g.dropY).toBeCloseTo(-924, 10);
+    expect(g.headroom).toBeCloseTo(120, 10);
+    expect(g.dropY).toBeCloseTo(-930, 10);
   });
 
   it('keeps every stage’s biggest dropped cat above the rim', () => {
@@ -58,28 +58,28 @@ describe('floorRestY (GAME_DESIGN §6: the rounded bottom corners)', () => {
   const g = jarGeometry(1);
 
   it('rests a cat on the flat floor at −radius', () => {
-    expect(floorRestY(0, 28, g)).toBe(-28);
-    expect(floorRestY(-188, 28, g)).toBe(-28); // the corner starts at |x| = 300 − 112
+    expect(floorRestY(0, 34, g)).toBe(-34);
+    expect(floorRestY(-132, 34, g)).toBe(-34); // the corner starts at |x| = 300 − 168
   });
 
   it('holds a cat higher in a corner, touching the curve', () => {
-    for (const x of [-272, -230, 230, 272]) {
-      const y = floorRestY(x, 28, g);
-      expect(y).toBeLessThan(-28);
+    for (const x of [-266, -200, 200, 266]) {
+      const y = floorRestY(x, 34, g);
+      expect(y).toBeLessThan(-34);
       // The centre stays (corner − radius) from the corner's centre.
-      const cx = Math.sign(x) * (300 - 112);
-      expect(Math.hypot(x - cx, y + 112)).toBeCloseTo(112 - 28, 9);
+      const cx = Math.sign(x) * (300 - 168);
+      expect(Math.hypot(x - cx, y + 168)).toBeCloseTo(168 - 34, 9);
     }
     // Against the wall, a cat sits where the curve meets the wall.
-    expect(floorRestY(272, 28, g)).toBeCloseTo(-112, 9);
+    expect(floorRestY(266, 34, g)).toBeCloseTo(-168, 9);
   });
 
   it('is continuous where the curve meets the floor', () => {
-    expect(floorRestY(188.001, 40, g)).toBeCloseTo(-40, 3);
+    expect(floorRestY(132.001, 40, g)).toBeCloseTo(-40, 3);
   });
 
   it('leaves cats at least as big as the corner on the flat floor', () => {
-    expect(floorRestY(300 - 137, 137, g)).toBe(-137);
+    expect(floorRestY(300 - 168, 168, g)).toBe(-168);
     expect(floorRestY(0, 205, g)).toBe(-205);
   });
 });

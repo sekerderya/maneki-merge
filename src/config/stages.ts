@@ -13,15 +13,17 @@ export const JAR_HEIGHT = 870;
 
 /**
  * The jar's bottom corners are quarter circles of this radius (GAME_DESIGN §6): the curved
- * bamboo jar the owner chose in v0.14 (0.19 of the jar's width).
+ * bamboo jar the owner chose in v0.14. Since v0.19.3 it matches the bamboo art's inner corners
+ * (0.28 of the jar's width), so a cat in a corner never slips behind the bamboo.
  */
-export const JAR_CORNER_RADIUS = 112;
+export const JAR_CORNER_RADIUS = 168;
 
 /**
  * Above the rim the camera keeps this fraction of the jar width free for the dropper
- * (TECH_SPEC §4). A cat waiting in the dropper sits in the middle of that band.
+ * (TECH_SPEC §4). A cat waiting in the dropper sits in the middle of that band, which holds the
+ * biggest cat the dropper hands out (size 4) above the rim.
  */
-export const DROPPER_HEADROOM_RATIO = 0.18;
+export const DROPPER_HEADROOM_RATIO = 0.2;
 
 /**
  * The dropper hands out a stage's smallest DROP_SIZES sizes, with these base weights (smallest

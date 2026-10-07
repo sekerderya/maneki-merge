@@ -446,12 +446,15 @@ describe('stage clears (GAME_DESIGN §7)', () => {
 });
 
 /** A stack of big, different-tier cats (so none merge) that pokes over the stage-1 rim. */
-function buildTower(run: RunController): void {
-  run.spawnBall(10, 0, -168);
-  run.spawnBall(9, 0, -480);
-  run.spawnBall(8, 0, -740);
-  run.spawnBall(7, 0, -950);
-  run.spawnBall(6, 0, -1120);
+/** Tiers 10 down to 6 stacked in the middle of the jar, past the rim. Returns the tower's top. */
+function buildTower(run: RunController): number {
+  let top = 0;
+  for (const tier of [10, 9, 8, 7, 6]) {
+    const r = sizeRadius(tier);
+    run.spawnBall(tier, 0, top - r);
+    top -= 2 * r + 5;
+  }
+  return top;
 }
 
 describe('danger, Lucky Save and game over (GAME_DESIGN §6)', () => {
@@ -485,8 +488,8 @@ describe('danger, Lucky Save and game over (GAME_DESIGN §6)', () => {
 
   it('replaces the game over with a Lucky Save that pops cats into coins', () => {
     const { run, of } = setup({ upgrades: upgrades({ secondChance: 1 }) });
-    buildTower(run);
-    run.spawnBall(1, -250, -27);
+    // A tier-1 cat on top (in a corner it would roll under the tower and topple it).
+    run.spawnBall(1, 0, buildTower(run) - sizeRadius(1));
     let steps = 0;
     while (of('luckySave').length === 0 && steps < 120 * 10) {
       run.tick();

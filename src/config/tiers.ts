@@ -18,12 +18,12 @@ export const MIN_TIER = 1;
 export const MAX_TIER = TIER_COUNT;
 
 /**
- * r(size) = round(BASE × GROWTH^(size−1)) in world units; the jar is 600 wide. Chosen when a stage
- * held 11 sizes, so that sizes 11, 9, 8, 7, 6 and 5 covered about as much of the jar (55%) as the
- * same six fruits do in Suika Game's box. Size 11 left in v0.15; the others kept their radius.
+ * r(size) = round(BASE × GROWTH^(size−1)) in world units; the jar is 600 wide. v0.19.3 (owner):
+ * size 1 grew to size 2's old radius (34) and size 9 kept its 137, with an even step between them,
+ * so the steps are smaller (× 1.19 instead of × 1.22). Size 10 follows the same step (163).
  */
-export const SIZE_BASE_RADIUS = 28;
-export const SIZE_RADIUS_GROWTH = 1.22;
+export const SIZE_BASE_RADIUS = 34;
+export const SIZE_RADIUS_GROWTH = 1.19;
 
 /** S(t) = SCORE_BASE^t. */
 export const TIER_SCORE_BASE = 2;

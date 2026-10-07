@@ -11,7 +11,7 @@ import {
   SCENE_SPRITE_DIR,
 } from '../../src/config/sceneSprites';
 import type { PxRect } from '../../src/config/sceneSprites';
-import { JAR_HEIGHT, JAR_WIDTH } from '../../src/config/stages';
+import { JAR_CORNER_RADIUS, JAR_HEIGHT, JAR_WIDTH } from '../../src/config/stages';
 import { CAMERA_SIDE_MARGIN_RATIO } from '../../src/config/view';
 
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -32,6 +32,17 @@ describe('scene art sprites (GAME_DESIGN §13.1)', () => {
     expect(rim.y).toBeCloseTo(-JAR_HEIGHT, 9);
     // The art's opening has nearly the jar's shape, so cats don't look squashed next to it.
     expect(Math.abs(JAR_ART_SCALE_X / JAR_ART_SCALE_Y - 1)).toBeLessThan(0.05);
+  });
+
+  it('has the physics corners of the art’s inner corners, so cats never slip behind the bamboo', () => {
+    // Until v0.19.3 the physics corners were 112 and the art's about 168.
+    for (const scale of [JAR_ART_SCALE_X, JAR_ART_SCALE_Y]) {
+      expect(Math.abs(JAR_CORNER_RADIUS - JAR_ART.cornerRadius * scale)).toBeLessThan(2);
+    }
+    // Not less round than the art's corners, which would let a cat poke into the bamboo.
+    expect(JAR_CORNER_RADIUS).toBeGreaterThanOrEqual(
+      Math.floor(JAR_ART.cornerRadius * JAR_ART_SCALE_X),
+    );
   });
 
   it('cuts the jar into pieces inside its images, and the frame fits the camera', () => {

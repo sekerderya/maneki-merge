@@ -179,8 +179,9 @@ test('a Lucky Save pops cats into coins instead of ending the run', async ({ pag
   await page.getByTestId('play').click();
   await expect.poll(async () => (await state(page)).luckySaves, WAIT).toBe(1);
   const start = (await state(page)).ticks;
-  for (const x of [-200, -70, 70, 200]) {
-    await page.evaluate((at) => window.__game?.spawnTier(2, at), x);
+  // Neighbours differ in tier: the outer cats land on the curves and roll inwards, unmerged.
+  for (const [i, x] of [-200, -70, 70, 200].entries()) {
+    await page.evaluate(([t, at]) => window.__game?.spawnTier(t, at), [1 + (i % 2), x] as const);
   }
   // The cats must have landed (a 1.6 s fall) and passed the 0.5 s landing grace to count.
   // WebKit renders in software here, so the run can take a while to get there.
@@ -193,7 +194,7 @@ test('a Lucky Save pops cats into coins instead of ending the run', async ({ pag
   const s = await state(page);
   expect(s.runState).toBe('playing');
   expect(s.luckySaves).toBe(0);
-  // Each tier-2 cat pays its value: half of C(2) = 2.
+  // Each cat pays its value: half of C(1) = 1 and of C(2) = 2, at least 1.
   expect(s.runCoins).toBe(4);
   expect(s.balls).toBe(0);
 

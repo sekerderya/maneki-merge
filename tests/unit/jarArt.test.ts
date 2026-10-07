@@ -35,7 +35,7 @@ function drawable(shape: PaintShape): boolean {
 }
 
 describe('jar art (GAME_DESIGN §13)', () => {
-  it('has the physics jar as its inner edge: walls, 112-unit corners, floor', () => {
+  it('has the physics jar as its inner edge: walls, 168-unit corners, floor', () => {
     const geo = jarGeometry(1);
     expect(geo.cornerRadius).toBe(JAR_CORNER_RADIUS);
     const d = jarInsidePath();
@@ -66,6 +66,29 @@ describe('jar art (GAME_DESIGN §13)', () => {
     }
     // Both posts, from their caps down to the curves.
     expect(JAR_FRONT_PIECES.filter((p) => p.top === JAR_ART_BOX.top)).toHaveLength(2);
+    // Every point of the bamboo U, outline included, lies in a front piece.
+    const reach = JAR_FRAME / 2 + 5;
+    const rr = JAR_CORNER_RADIUS + JAR_FRAME / 2;
+    const cx = JAR_WIDTH / 2 - JAR_CORNER_RADIUS;
+    const centreLine: [number, number, number, number][] = [];
+    for (let y = JAR_CAP_Y; y <= -JAR_CORNER_RADIUS; y += 4) centreLine.push([JAR_POST_X, y, 1, 0]);
+    for (let a = 0; a <= 90; a += 1) {
+      const [c, s] = [Math.cos((a * Math.PI) / 180), Math.sin((a * Math.PI) / 180)];
+      centreLine.push([cx + rr * c, -JAR_CORNER_RADIUS + rr * s, c, s]);
+    }
+    for (let x = 0; x <= cx; x += 4) centreLine.push([x, JAR_FRAME / 2, 0, 1]);
+    for (const [x, y, nx, ny] of centreLine) {
+      for (let k = -reach; k <= reach; k += 3) {
+        for (const side of [-1, 1]) {
+          const px = side * (x + nx * k);
+          const py = y + ny * k;
+          const inside = JAR_FRONT_PIECES.some(
+            (p) => px >= p.left && px <= p.right && py >= p.top && py <= p.bottom,
+          );
+          expect(inside, `(${px.toFixed(1)}, ${py.toFixed(1)})`).toBe(true);
+        }
+      }
+    }
     expect(jarRugShapes().length).toBeGreaterThan(3);
     expect(jarBackShapes().some((s) => s.fill === '#EEF0D9')).toBe(false);
   });

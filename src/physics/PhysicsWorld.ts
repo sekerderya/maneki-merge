@@ -7,7 +7,6 @@
  */
 import Matter from 'matter-js';
 import {
-  CORNER_GRIP,
   ENABLE_SLEEPING,
   FLOOR_RESTITUTION,
   GRAVITY_BASE,
@@ -262,15 +261,15 @@ export class PhysicsWorld {
       if (ball.growing) ball.grow(PHYSICS_STEP_MS);
     }
     for (const ball of this.list) {
-      if (ball.touchesCorner) {
-        // The curve grips like the floor: a lone cat isn't launched along it (CORNER_GRIP).
-        ball.touchesCorner = false;
+      if (ball.landsOnCorner) {
+        // The curve is part of the dead floor: the landing takes the fall's speed, so the cat
+        // isn't swung across the jar, and from there it slides down freely.
+        ball.landsOnCorner = false;
         if (!ball.touchesCat) {
-          const { velocity, angularVelocity } = ball.body;
-          this.scratch.x = velocity.x * CORNER_GRIP;
-          this.scratch.y = velocity.y * CORNER_GRIP;
+          this.scratch.x = 0;
+          this.scratch.y = 0;
           Matter.Body.setVelocity(ball.body, this.scratch);
-          Matter.Body.setAngularVelocity(ball.body, angularVelocity * CORNER_GRIP);
+          Matter.Body.setAngularVelocity(ball.body, 0);
         }
       }
       if (ball.touchesGrowth) {
@@ -320,8 +319,8 @@ export class PhysicsWorld {
       if (a && a.landedMs < 0) a.landedMs = now;
       if (b && b.landedMs < 0) b.landedMs = now;
       if (!a || !b) {
-        if (a) this.markCorner(a, pair.bodyB);
-        if (b) this.markCorner(b, pair.bodyA);
+        if (a?.landedMs === now) this.markCornerLanding(a, pair.bodyB);
+        if (b?.landedMs === now) this.markCornerLanding(b, pair.bodyA);
         continue;
       }
       a.touchesCat = true;
@@ -332,10 +331,10 @@ export class PhysicsWorld {
     }
   }
 
-  /** Notes a cat that rests on (or lands on) one of the floor's rounded corners. */
-  private markCorner(ball: Ball, other: Matter.Body): void {
+  /** Notes a cat that lands this step (its first contact) on one of the floor's rounded corners. */
+  private markCornerLanding(ball: Ball, other: Matter.Body): void {
     const floor = roundedFloorOf(other);
-    if (floor && inRoundedCorner(ball.x, ball.y, ball.radius, floor)) ball.touchesCorner = true;
+    if (floor && inRoundedCorner(ball.x, ball.y, ball.radius, floor)) ball.landsOnCorner = true;
   }
 
   private limitSpeed(body: Matter.Body, max: number): void {

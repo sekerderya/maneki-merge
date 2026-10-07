@@ -40,6 +40,8 @@ import {
   SIZE_COUNT,
   sizeRadius,
   STAGE_TIER_STEP,
+  SIZE_BASE_RADIUS,
+  SIZE_RADIUS_GROWTH,
   STAGE_ZOOM,
   TIER_COUNT,
   tierInfo,
@@ -49,18 +51,18 @@ import * as timings from '../../src/config/timings';
 import { UPGRADE_IDS, UPGRADES } from '../../src/config/upgrades';
 
 describe('cat sizes (GAME_DESIGN §4)', () => {
-  // Size and radius: every stage holds these 11 sizes.
+  // Size and radius: every stage holds these 10 sizes.
   const SIZES: readonly [number, number][] = [
-    [1, 28],
-    [2, 34],
-    [3, 42],
-    [4, 51],
-    [5, 62],
-    [6, 76],
-    [7, 92],
-    [8, 113],
+    [1, 34],
+    [2, 40],
+    [3, 48],
+    [4, 57],
+    [5, 68],
+    [6, 81],
+    [7, 97],
+    [8, 115],
     [9, 137],
-    [10, 168],
+    [10, 163],
   ];
 
   it("has 10 sizes per stage, the last one becoming the next stage's first", () => {
@@ -73,13 +75,18 @@ describe('cat sizes (GAME_DESIGN §4)', () => {
   });
 
   it('zooms out so the last cat shrinks to exactly the first one', () => {
-    expect(STAGE_ZOOM).toBeCloseTo(168 / 28, 12);
+    expect(STAGE_ZOOM).toBeCloseTo(163 / 34, 12);
     expect(sizeRadius(SIZE_COUNT) / STAGE_ZOOM).toBeCloseTo(sizeRadius(1), 12);
   });
 
-  it('keeps the radii chosen against Suika Game: sizes 11, 9, 8, 7, 6 and 5 fill ~55%', () => {
-    const area = [11, 9, 8, 7, 6, 5].reduce((sum, s) => sum + Math.PI * sizeRadius(s) ** 2, 0);
-    expect(area / (JAR_WIDTH * JAR_HEIGHT)).toBeCloseTo(0.55, 2);
+  it("starts at size 2's old radius and keeps size 9's, with even steps between (v0.19.3)", () => {
+    // Until v0.19.3: r(s) = round(28 × 1.22^(s−1)).
+    const old = (size: number) => Math.round(28 * 1.22 ** (size - 1));
+    expect(sizeRadius(1)).toBe(old(2));
+    expect(sizeRadius(9)).toBe(old(9));
+    expect(SIZE_BASE_RADIUS * SIZE_RADIUS_GROWTH ** 8).toBeCloseTo(old(9), 0);
+    // Every step is smaller than before.
+    expect(SIZE_RADIUS_GROWTH).toBeLessThan(1.22);
   });
 
   it('rejects unknown sizes', () => {
@@ -260,14 +267,14 @@ describe('physics tunables (TECH_SPEC §5)', () => {
   });
 
   it('leaves room for the dropper above the rim (TECH_SPEC §4)', () => {
-    expect(DROPPER_HEADROOM_RATIO).toBe(0.18);
+    expect(DROPPER_HEADROOM_RATIO).toBe(0.2);
     expect(WALL_HEIGHT_FACTOR).toBeGreaterThan(1);
   });
 
   it('caps speeds above a natural fall', () => {
     // Free fall (no air friction) from the dropper to the floor, in units per second.
     const g = GRAVITY_BASE * 1000;
-    const fall = Math.sqrt(2 * g * 924);
+    const fall = Math.sqrt(2 * g * 930);
     expect(MAX_SPEED_BASE).toBeGreaterThan(fall);
     expect(GROWTH_NEIGHBOUR_MAX_SPEED_BASE).toBeLessThan(MAX_SPEED_BASE);
     // At the speed cap, the smallest cat (size 1, at every stage) moves less than its radius per
