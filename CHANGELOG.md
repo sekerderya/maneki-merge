@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.19.3] - 2026-10-08
+
+Cat sizes evened out and the jar's corners fixed, from the owner's playtest.
+
+### Changed
+
+- Cat sizes: the smallest cat is as big as the second one was (radius 34) and the 9 keeps its size (137), with an even, smaller step between every two sizes (× 1.19 instead of × 1.22): 34, 40, 48, 57, 68, 81, 97, 115, 137 and 163 for the stage's last cat (168 before). The jar now grows by 163 / 34 ≈ 4.8 at each stage clear instead of 6.
+- The dropper band above the rim is 0.2 of the jar's width (0.18), so the bigger size 4 still waits above the rim. Every dropped cat falls as far as before, so the 1 s drop is unchanged; on a 390 × 844 phone the jar sits 2–3 px lower.
+
+### Fixed
+
+- Cats no longer slip into the bamboo at the jar's bottom corners: the physics corners have the art's radius (168 instead of 112).
+- Cats no longer slow down on the bottom corners. A dropped cat whose first touch is a curve lands dead there, as on the flat floor, and then slides down at its natural speed and rolls on (before, the curve braked it on every step, so it crept down for 1–3 s). Landing dead keeps a cat dropped by a wall from being swung across the jar and up the other wall.
+
 ## [0.19.2] - 2026-10-07
 
 The HUD cards measured against the owner's reference image.

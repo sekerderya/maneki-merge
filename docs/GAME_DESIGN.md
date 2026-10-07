@@ -83,20 +83,20 @@ A shrine garden in the art of §13, top to bottom:
 
 Every stage holds the same 10 **sizes** of cat. A cat's **tier** is its number (the cat art doesn't show it, §13.1): it only ever goes up, from 1 at stage 1 to 46 at stage 5, and it sets the score and coins. A cat's size is its place in the current stage: `size = tier − firstTier(stage) + 1`, 1–10. The last size of a stage (10) becomes the first of the next one, so stage 1 holds tiers 1–10, stage 2 tiers 10–19, stage 3 19–28, stage 4 28–37 and stage 5 37–46 (§7). (Until v0.12 a stage held 12 sizes, until v0.15 11; sizes 12 (radius 250) and 11 (radius 205) are gone.)
 
-The radius depends on the size only: `r(s) = round(28 × 1.22^(s−1))` in world units; the jar is 600 × 870 at every stage. The sizes were chosen, when a stage still held 11, so that cats of sizes 11, 9, 8, 7, 6 and 5 covered about as much of the jar as the same six fruits (watermelon, pineapple, peach, pear, apple, persimmon) do in Suika Game's box: 55% of its area, piling up to about 88% of its height (Suika: about 55% and 86%). When size 11 left (v0.15), sizes 1–10 kept their radius, so the last cat is now 168 (0.28 of the jar's width).
+The radius depends on the size only: `r(s) = round(34 × 1.19^(s−1))` in world units; the jar is 600 × 870 at every stage. v0.19.3 (owner): size 1 grew to what size 2 was (34) and size 9 kept its radius (137), with an even step between them, so every step is smaller than before; size 10 follows the same step (163, 0.27 of the jar's width). Until then it was `round(28 × 1.22^(s−1))` (28 to 168), chosen, when a stage still held 11 sizes, so that sizes 11, 9, 8, 7, 6 and 5 covered about as much of the jar as the same six fruits do in Suika Game's box (55% of its area).
 
-| Size | Radius | Radius / jar width |
-| ---: | -----: | -----------------: |
-|    1 |     28 |              0.047 |
-|    2 |     34 |              0.057 |
-|    3 |     42 |              0.070 |
-|    4 |     51 |              0.085 |
-|    5 |     62 |              0.103 |
-|    6 |     76 |              0.127 |
-|    7 |     92 |              0.153 |
-|    8 |    113 |              0.188 |
-|    9 |    137 |              0.228 |
-|   10 |    168 |              0.280 |
+| Size | Radius | Radius / jar width | Until v0.19.3 |
+| ---: | -----: | -----------------: | ------------: |
+|    1 |     34 |              0.057 |            28 |
+|    2 |     40 |              0.067 |            34 |
+|    3 |     48 |              0.080 |            42 |
+|    4 |     57 |              0.095 |            51 |
+|    5 |     68 |              0.113 |            62 |
+|    6 |     81 |              0.135 |            76 |
+|    7 |     97 |              0.162 |            92 |
+|    8 |    115 |              0.192 |           113 |
+|    9 |    137 |              0.228 |           137 |
+|   10 |    163 |              0.272 |           168 |
 
 When two tier-`t` cats merge, they pay score `S(t) = 2^t` and base coins `C(t) = round(1.7^(t−1))`. Both keep growing with the tier through every stage: a stage-2 merge of two 13s pays like a tier-13 merge, not like a tier-3 one. A single cat's **value** is half of what its pair's merge pays: `C(t) / 2`. That is what it pays when it pops (§5).
 
@@ -133,8 +133,8 @@ Values are rounded only when paid (§5). Implement the formulas. Unit tests asse
 
 ## 6. Jar, danger line, game over
 
-- The jar is open at the top: straight walls, a flat floor and rounded bottom corners (quarter circles of radius 112, 0.19 of the jar's width, v0.14). Its rim is the danger line.
-- The curves are part of the floor, which never bounces (§3): a cat landing alone on a curve slides gently down into place instead of being launched along it across the jar.
+- The jar is open at the top: straight walls, a flat floor and rounded bottom corners (quarter circles of radius 168, 0.28 of the jar's width: the bamboo art's inner corners, v0.19.3; 112 from v0.14). Its rim is the danger line.
+- The curves are part of the floor, which never bounces (§3): a dropped cat whose first touch is a curve stops dead there, as it would on the flat floor, instead of being swung along the curve across the jar. Then nothing holds it back: it slides down the curve at its natural speed and rolls on along the floor (v0.19.3, owner: cats shouldn't slow down on the curves; until then the curve braked a lone cat on every step, so it crept down).
 - A cat is _over the line_ when its top edge is above the rim. A cat is ignored until 0.5 s after it lands (first contact).
 - If at least one cat is over the line continuously for 2.5 s, the game is over. While that timer runs, the rim flashes red and a short countdown shows.
 - **Lucky Save** (from the Second Chance upgrade) replaces the game over: every cat over the line plus the 6 smallest other cats (smaller tier first, then older first) pop into their value, the timer resets, and a 2 s grace period follows. Only landed cats count, so a cat still falling from the dropper is left alone. You get one save per run per upgrade level.
@@ -152,13 +152,13 @@ Every stage plays the same way: the same 600 × 870 jar (aspect 1 : 1.45), the s
 |     4 | 28–37 | 28–31             |                  37 |
 |     5 | 37–46 | 37–40             |                  46 |
 
-**The loop.** When the jar grows, it grows by `r(10) / r(1) = 168 / 28 = 6` in every direction, and the camera zooms out by as much: the last cat shrinks on screen to exactly the size the first cat had, and takes its place. The 10 of stage 1 is the smallest cat of stage 2, shown like a 1 was (same size and look), with its own tier. The floor stays at the bottom of the jar, and the jar looks the same on screen at every stage.
+**The loop.** When the jar grows, it grows by `r(10) / r(1) = 163 / 34 ≈ 4.8` in every direction (6 until v0.19.3), and the camera zooms out by as much: the last cat shrinks on screen to exactly the size the first cat had, and takes its place. The 10 of stage 1 is the smallest cat of stage 2, shown like a 1 was (same size and look), with its own tier. The floor stays at the bottom of the jar, and the jar looks the same on screen at every stage.
 
 ### 7.1 Stage clear and expansion (about 2.1 s)
 
 1. **Stage clear.** The moment the last cat is made (its merge pays as usual), every other cat in the jar pops into its value (§4, §5), oldest first, one after another within a quarter of a second, with a "+coins" each and a fanfare. "The shrine grows!" shows (or "Stage clear!" at the last stage, §7.2).
 2. Input is disabled and the dropper hides. For 0.5 s the last cat finishes growing and settles alone in the jar; the danger timer is reset.
-3. **Zoom** (about 1.2 s): time stops (physics, the drop cooldown and the combo window freeze), with a whoosh and gold sparks along the rim. The camera zooms out by 6, at an even rate on screen (ease in-out), while the walls slide outward and the rim rises. The camera leads a little, so the jar visibly widens into the new frame; both arrive together. The floor stays put.
+3. **Zoom** (about 1.2 s): time stops (physics, the drop cooldown and the combo window freeze), with a whoosh and gold sparks along the rim. The camera zooms out by about 4.8, at an even rate on screen (ease in-out), while the walls slide outward and the rim rises. The camera leads a little, so the jar visibly widens into the new frame; both arrive together. The floor stays put.
 4. **Reveal** (0.4 s): the world is now the next stage's. The last cat is size 1 of the new stage, the dropper's cats move to the new stage's pool (§8), and a "New cats unlocked!" banner shows the new goal (the new stage's last cat).
 5. Physics resumes, the dropper returns, and input is enabled again.
 
@@ -281,7 +281,7 @@ The owner chose the scene in a design canvas (v0.14): a cream shrine garden, ink
 
 - **Numbers**: the cat art shows no numbers (v0.16, the owner's call): a cat's look tells its size. The tier still sets the score and coins (§4). The vector looks (`?skin=vector`) and the placeholders still show their number, upright on the cat's plate.
 - **Vector cats** (`?skin=vector`, `src/config/catArt.ts`): the code-drawn looks of v0.11–v0.15 (Sakura, Mint, Tangerine, Lavender, Sky, Calico, Matcha, Daruma, Indigo), kept as a fallback.
-- **Jar** (v0.17 art; v0.14 layout): a bamboo U frame with curved bottom corners on two bamboo feet, a rail across the top tied to the posts with twine, and cut caps on the posts. The art's opening is stretched onto the physics jar (its inner edge, the glass's pale rim, lies inside the opening, behind the cats); the bamboo is drawn in front of the cats. Its corners are a little rounder than the physics corners (radius 168 against 112), so a cat deep in a corner tucks a few pixels behind the bamboo. A dashed line across the opening marks the rim (the danger line) and flashes red in danger (the vector jar's caps flash too). The glass is a pale wash, so the garden shows through it. The bamboo is thicker than the vector frame's, so the camera shows 0.19 of the jar's width beside each wall (0.15 before v0.17): a 283 px jar on a 390 px phone.
+- **Jar** (v0.17 art; v0.14 layout): a bamboo U frame with curved bottom corners on two bamboo feet, a rail across the top tied to the posts with twine, and cut caps on the posts. The art's opening is stretched onto the physics jar (its inner edge, the glass's pale rim, lies inside the opening, behind the cats); the bamboo is drawn in front of the cats. Its inner corners have the physics corners' radius (168, v0.19.3; a config test checks the art against it), so a cat in a corner touches the bamboo and never slips behind it (until v0.19.3 the physics corners were 112). A dashed line across the opening marks the rim (the danger line) and flashes red in danger (the vector jar's caps flash too). The glass is a pale wash, so the garden shows through it. The bamboo is thicker than the vector frame's, so the camera shows 0.19 of the jar's width beside each wall (0.15 before v0.17): a 283 px jar on a 390 px phone.
 - **Dropper** (v0.17 art): a calico paw (white with orange and dark spots, pink pads) hanging from the top of the screen; a plain row of its arm is stretched up to the screen's top.
 - **Background** (v0.17 art): a painted sakura shrine garden: sakura branches and clouds on a cream sky, a torii and a shrine seen through the glass, stone lanterns either side, and a rug on the wooden floor where the jar stands. It moves and scales with the jar so the feet stay on the rug; it always spans the screen's width, its top fades into the sky colour, and the floor colour fills the screen below it. The separate rug image is unused: the background has its own.
 - **HUD** (v0.19 art, v0.19.2 cards after the owner's reference image): both cards are CSS in the reference's style: cream with a thin dark outline, rounded corners and a tan bottom edge. The score card (138 × 66 px) has "SCORE:" centred on top and the score in a rounded tan well, with the art's pink paw badge over its left edge. The coins card comes out of the screen's right edge (rounded on the left only) with "COINS:" centred over the art's small gold coin and the run's coins, evenly spaced. Both numbers are white with a thin brown edge. The next cat sits in a round pale blue glass bubble with a cream "NEXT" tag; the pause button is the art's glossy pink square, its outline recoloured to the reference's rose brown. Flying coins land on the coin. The vector HUD of v0.14 stays for `?skin=vector`.
