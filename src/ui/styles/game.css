@@ -229,6 +229,126 @@
   height: 20px;
 }
 
+/*
+ * The owner's HUD art (GAME_DESIGN §13.1, v0.19): the cards, the bubble and the pause button are
+ * images (custom properties set by ui/hud/hud.ts); the labels and numbers sit on them.
+ */
+.game-hud.is-art .hud-card {
+  border: none;
+  border-radius: 0;
+  background: var(--hud-art) center / 100% 100% no-repeat;
+  box-shadow: none;
+  filter: drop-shadow(0 3px 3px rgba(122, 78, 46, 0.22));
+}
+
+.game-hud.is-art .hud-left {
+  width: 160px;
+}
+
+.game-hud.is-art .hud-score-card,
+.game-hud.is-art .hud-coins-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+  height: auto;
+  aspect-ratio: var(--hud-card-ratio);
+  padding: 0 var(--hud-text-right) 2px var(--hud-text-left);
+  text-align: left;
+}
+
+.game-hud.is-art .hud-score-card {
+  --hud-art: var(--hud-score-art);
+  width: 160px;
+}
+
+.game-hud.is-art .hud-label {
+  font-size: 10px;
+}
+
+.game-hud.is-art .hud-score {
+  justify-content: flex-start;
+  height: auto;
+  background: none;
+  box-shadow: none;
+  font-size: 21px;
+}
+
+.game-hud.is-art .hud-right {
+  width: 152px;
+  height: 182px;
+}
+
+.game-hud.is-art .hud-coins-card {
+  --hud-art: var(--hud-coins-art);
+  right: 0;
+  top: 54px;
+  width: 152px;
+}
+
+.game-hud.is-art .hud-coins {
+  margin-left: 0;
+  font-size: 20px;
+}
+
+/* Where flying coins land: the card's own coin. */
+.hud-coin-spot {
+  position: absolute;
+  left: var(--hud-coin-x);
+  top: var(--hud-coin-y);
+  width: 0;
+  height: 0;
+}
+
+.game-hud.is-art .hud-next {
+  top: 106px;
+  right: 8px;
+  width: 70px;
+  height: auto;
+  aspect-ratio: var(--hud-next-ratio);
+}
+
+.game-hud.is-art .hud-next-bubble {
+  background: var(--hud-next-art) center / 100% 100% no-repeat;
+  filter: drop-shadow(0 3px 3px rgba(122, 78, 46, 0.18));
+}
+
+/* "NEXT" on the bubble's tag. */
+.game-hud.is-art .hud-next-label {
+  top: var(--hud-next-tag);
+  font-size: 9px;
+  text-shadow: none;
+  transform: translateY(-50%);
+}
+
+.game-hud.is-art .hud-next-cats {
+  top: var(--hud-next-cy);
+}
+
+.game-hud.is-art .hud-next-cats .cat-icon {
+  --size: 46px;
+}
+
+.game-hud.is-art .pause-btn {
+  top: 0;
+  width: 46px;
+  height: 46px;
+  border: none;
+  border-radius: 0;
+  background: var(--hud-pause-art) center / 100% 100% no-repeat;
+  box-shadow: none;
+  filter: drop-shadow(0 3px 3px rgba(217, 97, 126, 0.25));
+}
+
+.game-hud.is-art .pause-btn::before {
+  content: none;
+}
+
+.game-hud.is-art .pause-btn:active {
+  box-shadow: none;
+}
+
 /* Very narrow phones: the HUD shrinks a little so both sides keep their room. */
 @media (max-width: 359px) {
   .game-hud {

@@ -76,7 +76,7 @@ export function createGameScreen(
   const banners = createBanners(playArea);
 
   const hudRoot = el('header');
-  const hud = createHud(hudRoot, actions);
+  const hud = createHud(hudRoot, actions, sceneArt);
 
   root.append(playArea, hudRoot);
   const coins = createCoinFly(root, playArea, hud.coinTarget);
