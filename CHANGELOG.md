@@ -11,6 +11,10 @@ The owner's HUD art (M13, phase 3 of docs/ART_ASSETS.md).
 - The score and coins cards, the next-cat bubble and the pause button are the owner's images, with the labels and numbers as live text on them: "SCORE:" and the score after a pink paw badge, "COINS:" and the run's coins after a gold coin, "NEXT" on the bubble's tag. Flying coins land on the card's coin.
 - `npm run art` also builds the HUD (`tools/buildHud.ts`). The score card is the coins card with the paw badge pasted over its coin, since the generator kept drawing the score panel in another style.
 
+### Fixed
+
+- The art pause button is 48 px, the touch-target minimum (it was 46).
+
 ## [0.18.0] - 2026-10-07
 
 Clearer cats and a smaller HUD, from the owner's comparison with the reference image.
