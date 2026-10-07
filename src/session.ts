@@ -124,30 +124,15 @@ export class GameSession {
     this.current = run;
     connectRunFeedback(events, this.parts.feedback);
 
-    const showProgress = (): void => {
-      const p = run.progress;
-      hud.setStage(run.stage, p.fraction, p.goalTier, p.final);
-    };
     const showPreview = (): void => hud.setNext(run.next.tier);
     hud.setScore(run.score);
     hud.setCoins(run.coins);
     showPreview();
-    showProgress();
 
-    events.on('scoreChanged', (e) => {
-      hud.setScore(e.score);
-      showProgress();
-    });
-    // The menu catches up with the wallet when the run ends (it is hidden until then). Coins also
-    // change when cats pop, which can shrink the biggest cat in the jar.
-    events.on('runCoinsChanged', (e) => {
-      hud.setCoins(e.coins);
-      showProgress();
-    });
-    events.on('catDropped', () => {
-      showPreview();
-      showProgress();
-    });
+    events.on('scoreChanged', (e) => hud.setScore(e.score));
+    // The menu catches up with the wallet when the run ends (it is hidden until then).
+    events.on('runCoinsChanged', (e) => hud.setCoins(e.coins));
+    events.on('catDropped', showPreview);
 
     // Banners sit in the empty top of the jar (GAME_DESIGN §2.3).
     const jarY = (fraction: number): number | undefined => {
@@ -181,12 +166,10 @@ export class GameSession {
     // Stage clears and expansions (GAME_DESIGN §7, §7.1, §7.2): "Stage clear!" at the last stage.
     events.on('stageCleared', (e) => {
       banners.combo(0, 0);
-      showProgress();
       banners.show(e.next === 'expand' ? 'The shrine grows!' : 'Stage clear!', { y: bannerY() });
     });
     events.on('expansionRevealed', (e) => {
       showPreview();
-      showProgress();
       // The new stage's last cat is the next goal.
       const goal = e.newTiers[e.newTiers.length - 1];
       banners.show('New cats unlocked!', {
@@ -196,10 +179,7 @@ export class GameSession {
         y: bannerY(),
       });
     });
-    events.on('expansionFinished', () => {
-      showPreview();
-      showProgress();
-    });
+    events.on('expansionFinished', showPreview);
     events.on('paused', () => banners.setPaused(true));
     events.on('resumed', () => banners.setPaused(false));
     events.on('gameOver', (e) => this.onGameOver(e));

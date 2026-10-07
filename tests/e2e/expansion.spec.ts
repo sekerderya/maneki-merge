@@ -50,8 +50,12 @@ async function makeLastCat(page: Page): Promise<void> {
 test('making the last cat (two 9s) clears stage 1 and grows the jar', async ({ page }) => {
   const errors = watchConsole(page);
   await startRun(page, 3);
-  await expect(page.getByTestId('hud-stage')).toHaveText('Stage 1');
-  await expect(page.getByTestId('hud-goal')).toHaveAttribute('data-tier', '10');
+  await expect
+    .poll(async () => {
+      const s = await state(page);
+      return [s.stage, s.lastTier];
+    })
+    .toEqual([1, 10]);
 
   await makeLastCat(page);
   await expect(page.getByTestId('banner')).toHaveText('The shrine grows!', WAIT);
@@ -66,8 +70,12 @@ test('making the last cat (two 9s) clears stage 1 and grows the jar', async ({ p
   // can take most of that between two separate checks.
   const banner = page.getByTestId('banner').filter({ hasText: 'New cats unlocked!' });
   await expect(banner.locator('.cat-icon')).toHaveAttribute('data-tier', '19', WAIT);
-  await expect(page.getByTestId('hud-stage')).toHaveText('Stage 2');
-  await expect(page.getByTestId('hud-goal')).toHaveAttribute('data-tier', '19');
+  await expect
+    .poll(async () => {
+      const s = await state(page);
+      return [s.stage, s.lastTier];
+    })
+    .toEqual([2, 19]);
 
   await expect.poll(async () => (await state(page)).runState, WAIT).toBe('playing');
   const s = await state(page);
@@ -90,8 +98,12 @@ test('with no upgrades, clearing stage 2 grows the jar into stage 3', async ({ p
     await expect.poll(async () => (await state(page)).stage, long).toBe(stage);
     await expect.poll(async () => (await state(page)).runState, long).toBe('playing');
   }
-  await expect(page.getByTestId('hud-stage')).toHaveText('Stage 3');
-  await expect(page.getByTestId('hud-goal')).toHaveAttribute('data-tier', '28');
+  await expect
+    .poll(async () => {
+      const s = await state(page);
+      return [s.stage, s.lastTier];
+    })
+    .toEqual([3, 28]);
   expect(errors).toEqual([]);
 });
 
@@ -130,7 +142,11 @@ test('the debug jump plays every expansion in turn', async ({ page }) => {
   await page.evaluate(() => window.__game?.setStage(3));
   await expect.poll(async () => (await state(page)).stage, { timeout: 80_000 }).toBe(3);
   await expect.poll(async () => (await state(page)).runState, WAIT).toBe('playing');
-  await expect(page.getByTestId('hud-stage')).toHaveText('Stage 3');
-  await expect(page.getByTestId('hud-goal')).toHaveAttribute('data-tier', '28');
+  await expect
+    .poll(async () => {
+      const s = await state(page);
+      return [s.stage, s.lastTier];
+    })
+    .toEqual([3, 28]);
   expect(errors).toEqual([]);
 });

@@ -12,12 +12,6 @@ export interface HudView {
   setCoins(coins: number): void;
   /** The cat after the one in the dropper. */
   setNext(tier: number): void;
-  /**
-   * Stage label, the bar towards the stage's last cat, and "STAGE N+1 =" with that cat (the goal);
-   * the bar turns gold at the last stage, where the goal reads "GOAL =". A new stage resets the bar
-   * without animating it backwards and makes the label glow.
-   */
-  setStage(stage: number, fraction: number, goalTier: number, final: boolean): void;
   /** A coin landed on the counter. */
   pulseCoins(): void;
   /** Where flying coins land. */
@@ -26,7 +20,7 @@ export interface HudView {
 
 /**
  * In-game HUD (GAME_DESIGN §2.3), floating over the top of the play area: on the left the score
- * card and the stage card under it; on the right the pink pause button, the coins card and the
+ * card (the stage card left in v0.18, until it has art); on the right the pink pause button, the coins card and the
  * next cat in a round glass bubble under it. Only the pause button takes touches; the rest lets
  * them through to the game.
  */
@@ -39,27 +33,8 @@ export function createHud(root: HTMLElement, actions: HudActions): HudView {
   score.dataset['testid'] = 'hud-score';
   scoreCard.append(el('span', 'hud-label', 'Score'), score);
 
-  const stage = el('div', 'hud-card hud-stage');
-  const stageLabel = el('span', 'hud-stage-label', 'Stage 1');
-  stageLabel.dataset['testid'] = 'hud-stage';
-  const bar = el('div', 'hud-bar');
-  bar.setAttribute('role', 'progressbar');
-  bar.setAttribute('aria-label', "Progress to the stage's last cat");
-  bar.setAttribute('aria-valuemin', '0');
-  bar.setAttribute('aria-valuemax', '100');
-  const fill = el('div', 'hud-bar-fill');
-  bar.append(fill);
-  // The stage's last cat: making it grows the jar and opens the next stage.
-  const goalRow = el('div', 'hud-goal-row');
-  const goalLabel = el('span', 'hud-goal-label', 'Stage 2 =');
-  const goal = catIcon(1);
-  goal.classList.add('hud-goal');
-  goal.dataset['testid'] = 'hud-goal';
-  goalRow.append(goalLabel, goal);
-  stage.append(stageLabel, bar, goalRow);
-
   const left = el('div', 'hud-left');
-  left.append(scoreCard, stage);
+  left.append(scoreCard);
 
   // The next cat in a round glass bubble under the coins card.
   const next = el('div', 'hud-next');
@@ -92,13 +67,11 @@ export function createHud(root: HTMLElement, actions: HudActions): HudView {
 
   root.append(left, right);
 
-  let shownStage = 0;
   const restartAnimation = (node: HTMLElement, className: string): void => {
     node.classList.remove(className);
     void node.offsetWidth; // restart the CSS animation
     node.classList.add(className);
   };
-  stageLabel.addEventListener('animationend', () => stageLabel.classList.remove('is-new'));
   coinsCard.addEventListener('animationend', () => coinsCard.classList.remove('is-pulsing'));
 
   return {
@@ -110,27 +83,6 @@ export function createHud(root: HTMLElement, actions: HudActions): HudView {
     },
     setNext(tier) {
       paintCatIcon(nextCat, tier);
-    },
-    setStage(value, fraction, goalTier, final) {
-      const percent = Math.round(fraction * 100);
-      if (value !== shownStage) {
-        // A run start or an expansion: jump to the new fill instead of sliding back.
-        fill.classList.add('is-instant');
-        fill.style.transform = `scaleX(${fraction})`;
-        void fill.offsetWidth;
-        fill.classList.remove('is-instant');
-        stageLabel.textContent = `Stage ${value}`;
-        if (shownStage !== 0 && value > shownStage) restartAnimation(stageLabel, 'is-new');
-        shownStage = value;
-      } else {
-        fill.style.transform = `scaleX(${fraction})`;
-      }
-      goalLabel.textContent = final ? 'Goal =' : `Stage ${value + 1} =`;
-      if (goal.dataset['tier'] !== String(goalTier)) paintCatIcon(goal, goalTier);
-      goal.setAttribute('aria-label', `Goal: cat ${goalTier}`);
-      bar.setAttribute('aria-valuenow', String(percent));
-      bar.classList.toggle('is-final', final);
-      stage.classList.toggle('is-final', final);
     },
     pulseCoins() {
       restartAnimation(coinsCard, 'is-pulsing');
