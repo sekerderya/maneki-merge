@@ -90,74 +90,6 @@
   white-space: nowrap;
 }
 
-/* The stage card, as tall as the score card: "STAGE N" on top, the bar towards the stage's last
-   cat, and "STAGE N+1 =" with that cat. */
-.hud-stage {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  height: 66px;
-  padding: 5px 8px 0;
-}
-
-.hud-stage-label {
-  display: inline-block;
-  line-height: 1;
-  color: var(--hud-label);
-  font-size: 12px;
-  font-weight: var(--weight-bold);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  transform-origin: center;
-}
-
-.hud-bar {
-  align-self: stretch;
-  flex: none;
-  height: 7px;
-  border-radius: var(--radius-pill);
-  background: #ead5b8;
-  box-shadow: inset 0 1px 2px rgba(122, 78, 46, 0.25);
-  overflow: hidden;
-}
-
-.hud-bar-fill {
-  width: 100%;
-  height: 100%;
-  border-radius: var(--radius-pill);
-  transform: scaleX(0);
-  transform-origin: left center;
-  background: linear-gradient(180deg, #fad36a 0%, #eda92f 100%);
-  transition: transform 220ms ease-out;
-}
-
-/* The stage's goal: its last cat, small, after "STAGE N+1 =". */
-.hud-goal-row {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.hud-goal-label {
-  color: var(--hud-label);
-  font-size: 11px;
-  font-weight: var(--weight-bold);
-  letter-spacing: 0.04em;
-  line-height: 1;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.hud-goal.cat-icon {
-  --size: 30px;
-}
-
-.hud-stage.is-final .hud-goal {
-  filter: drop-shadow(0 0 5px rgba(242, 184, 59, 0.9));
-}
-
 /* The right cluster: the pause button on top, the coins card under it, the next bubble under
    that. */
 .hud-right {
@@ -323,6 +255,12 @@
   height: 100%;
 }
 
+/* The cat art's dark outline (v0.18), as on the canvas: 1 px round the sprite. */
+.cat-icon > img {
+  filter: drop-shadow(1px 0 0 #3b2620) drop-shadow(-1px 0 0 #3b2620) drop-shadow(0 1px 0 #3b2620)
+    drop-shadow(0 -1px 0 #3b2620);
+}
+
 .cat-icon-num {
   position: absolute;
   left: 50%;
@@ -459,29 +397,6 @@
   50% {
     transform: translate(-50%, -6px);
   }
-}
-
-/* Stage label and bar: a short glow when the jar grows; at the last stage the bar stays gold. */
-.hud-stage-label.is-new {
-  animation: stage-label-glow 900ms ease-out;
-}
-
-@keyframes stage-label-glow {
-  0% {
-    color: var(--color-coral);
-    transform: scale(1.25);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-.hud-bar-fill.is-instant {
-  transition: none;
-}
-
-.hud-bar.is-final .hud-bar-fill {
-  background: linear-gradient(90deg, var(--color-gold), var(--color-gold-light), var(--color-gold));
 }
 
 /* Banners (GAME_DESIGN §2.3): over the jar, never in the way of a touch. Each runs one
@@ -718,7 +633,6 @@
 }
 
 .reduce-motion .hint-pill,
-.reduce-motion .hud-stage-label.is-new,
 .reduce-motion .combo.is-step,
 .reduce-motion .hud-coins-card.is-pulsing {
   animation: none;

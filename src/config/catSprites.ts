@@ -20,6 +20,20 @@ export interface CatSprite {
   readonly color: string;
 }
 
+/**
+ * The thick dark outline the game draws around every cat (v0.18, like the owner's reference
+ * image): it keeps neighbouring cats apart. Its width in world units is CAT_OUTLINE_RATIO of the
+ * cat's radius, but at least CAT_OUTLINE_MIN, so small cats keep a visible line. The body is drawn
+ * that much smaller, so the outline's outer edge is the physics radius.
+ */
+export const CAT_OUTLINE_COLOR = '#3b2620';
+export const CAT_OUTLINE_RATIO = 0.05;
+export const CAT_OUTLINE_MIN = 4.5;
+/** The outline's width in world units for a cat of `radius`. */
+export function catOutlineWidth(radius: number): number {
+  return Math.max(CAT_OUTLINE_MIN, CAT_OUTLINE_RATIO * radius);
+}
+
 /** Where the sprites live, relative to the app's base URL. */
 export const CAT_SPRITE_DIR = 'assets/cats/';
 /** Boot waits this long for the cat images at most, then falls back to the vector cats. */
