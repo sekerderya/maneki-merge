@@ -2,6 +2,21 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.14.1] - 2026-10-07
+
+HUD layout from the owner's marked-up screenshot.
+
+### Changed
+
+- The score card lost its paw-print badge and is narrower (116 px instead of 166 px); "SCORE:" and the score are centred.
+- The stage card is as narrow as the score card and as tall: "STAGE N" centred on top, a thin progress bar, and "STAGE N+1 =" with the cat that opens it (the stage's last cat). At the last stage it reads "GOAL =".
+- The next cat moved under the coins card, on the right, in a round glass bubble without the speech-bubble tail, with a small "NEXT" tag on its rim.
+
+### Decisions (where the request was open)
+
+- The progress bar stays, thin, between the two rows of the stage card, so the player still sees how close the next stage is.
+- On short screens (375 × 667) the bubble reaches the dropper's height, so the paw passes under it when aimed at the far right.
+
 ## [0.14.0] - 2026-10-07
 
 The game screen from the owner's second design canvas: the "Sakura garden" design (M12).
