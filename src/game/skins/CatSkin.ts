@@ -16,13 +16,12 @@ import {
 import type { ArtShape, CatLook } from '../../config/catArt';
 import { FIRST_STAGE, STAGES, tierSize } from '../../config/stages';
 import { SIZE_COUNT, sizeRadius } from '../../config/tiers';
-import { CAT_NUMBER_HALO_RATIO, CAT_PX_PER_UNIT } from '../../config/view';
+import { CAT_PX_PER_UNIT } from '../../config/view';
 import type { BallSkin, NumberFrame, SkinFrame } from './BallSkin';
+import { context, drawNumber } from './canvas';
 import { stageSkinSet } from './skinSets';
 
-const FONT_FAMILY = 'Fredoka, system-ui, sans-serif';
 const UNITS_PER_PIXEL = 1 / CAT_PX_PER_UNIT;
-const PAD_PX = 2;
 
 type FrameKind = 'b' | 'n';
 type FrameItem = readonly [tier: number, kind: FrameKind];
@@ -181,7 +180,7 @@ export class CatSkin implements BallSkin {
     const size = drawnSize(tier, stage);
     const look = sizeLook(size);
     const canvas = document.createElement('canvas');
-    drawNumber(canvas, tier, look, artScale(size, look));
+    drawLookNumber(canvas, tier, look, artScale(size, look));
     const key = this.addTexture(`cat-s${stage}-n${tier}`, canvas);
     const frame = { key, unitsPerPixel: UNITS_PER_PIXEL, offset: numberOffset(look) };
     frames.set(tier, frame);
@@ -195,43 +194,14 @@ export class CatSkin implements BallSkin {
   }
 }
 
-function context(
-  canvas: HTMLCanvasElement,
-  width: number,
-  height: number,
-): CanvasRenderingContext2D {
-  canvas.width = Math.max(1, Math.ceil(width));
-  canvas.height = Math.max(1, Math.ceil(height));
-  const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('2D canvas unavailable');
-  return ctx;
-}
-
 /** The tier's number in the look's colours, `scale` texture pixels per box unit. */
-function drawNumber(canvas: HTMLCanvasElement, tier: number, look: CatLook, scale: number): void {
+function drawLookNumber(
+  canvas: HTMLCanvasElement,
+  tier: number,
+  look: CatLook,
+  scale: number,
+): void {
   const text = String(tier);
   const fontPx = look.number.size * scale * (text.length > 1 ? ART_TWO_DIGIT_SCALE : 1);
-  const font = `700 ${fontPx}px ${FONT_FAMILY}`;
-  const halo = fontPx * CAT_NUMBER_HALO_RATIO;
-
-  const probe = context(canvas, 1, 1);
-  probe.font = font;
-  const m = probe.measureText(text);
-  const ascent = m.actualBoundingBoxAscent;
-  const inkHeight = ascent + m.actualBoundingBoxDescent;
-  const inkWidth = m.actualBoundingBoxLeft + m.actualBoundingBoxRight;
-
-  const ctx = context(canvas, inkWidth + 2 * (halo + PAD_PX), inkHeight + 2 * (halo + PAD_PX));
-  ctx.font = font;
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'alphabetic';
-  // Centre the ink box, so the number sits in the middle of its plate.
-  const x = (canvas.width - inkWidth) / 2 + m.actualBoundingBoxLeft;
-  const y = (canvas.height - inkHeight) / 2 + ascent;
-  ctx.lineJoin = 'round';
-  ctx.lineWidth = halo;
-  ctx.strokeStyle = look.number.halo;
-  ctx.strokeText(text, x, y);
-  ctx.fillStyle = look.number.color;
-  ctx.fillText(text, x, y);
+  drawNumber(canvas, text, fontPx, look.number.color, look.number.halo);
 }

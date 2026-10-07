@@ -1,13 +1,14 @@
 import { ART_BOX, ART_PAD, ART_TWO_DIGIT_SCALE, catLook } from '../config/catArt';
+import { CAT_SPRITE_DIR, catSprite } from '../config/catSprites';
 import type { ArtShape, CatLook } from '../config/catArt';
 import { OUTLINE_DARKEN, tierColor } from '../config/skin';
 import { darken } from '../core/color';
 import { el } from './dom';
 
-/** Which art DOM icons use; `?skin=placeholder` switches them along with the game. */
-export type IconSkin = 'cat' | 'placeholder';
+/** Which art DOM icons use; `?skin=` switches them along with the game. */
+export type IconSkin = 'art' | 'vector' | 'placeholder';
 
-let iconSkin: IconSkin = 'cat';
+let iconSkin: IconSkin = 'art';
 
 export function setIconSkin(skin: IconSkin): void {
   iconSkin = skin;
@@ -15,6 +16,8 @@ export function setIconSkin(skin: IconSkin): void {
 
 const SIDE = ART_BOX + 2 * ART_PAD;
 const VIEW_BOX = `${-ART_PAD} ${-ART_PAD} ${SIDE} ${SIDE}`;
+const HERO_ART_LOOK = 9;
+const HERO_VECTOR_LOOK = 6;
 /** DOM icons are small, so their numbers are drawn this much bigger than on the art's plate. */
 const ICON_NUMBER_BOOST = 1.3;
 
@@ -45,8 +48,9 @@ export function catSvg(look: CatLook): string {
 }
 
 /**
- * A cat as a DOM icon (HUD preview and goal, banners, Game Over): its art with the tier number on
- * its plate. Size comes from CSS (`--size`); the text content is the tier.
+ * A cat as a DOM icon (HUD preview and goal, banners, Game Over): its art, with the tier number on
+ * its plate for the vector and placeholder skins (the cat art shows none). Size comes from CSS
+ * (`--size`); `data-tier` holds the tier.
  */
 export function catIcon(tier: number): HTMLElement {
   const icon = el('span', 'cat-icon');
@@ -65,6 +69,10 @@ export function paintCatIcon(icon: HTMLElement, tier: number): void {
     return;
   }
   icon.classList.remove('is-placeholder');
+  if (iconSkin === 'art') {
+    paintArt(icon, tier);
+    return;
+  }
   const look = catLook(tier);
   const plate = look.number;
   const digits = tier >= 10 ? ART_TWO_DIGIT_SCALE : 1;
@@ -75,6 +83,36 @@ export function paintCatIcon(icon: HTMLElement, tier: number): void {
   number.style.setProperty('--num-halo', plate.halo);
   icon.innerHTML = catSvg(look);
   icon.append(number);
+}
+
+/**
+ * The cat on the menu's cushion (GAME_DESIGN §2.1): the golden Kin (look 9) of the cat art, or the
+ * calico (look 6) of the vector cats. The placeholder skin keeps the vector cat.
+ */
+export function paintHeroCat(node: HTMLElement): void {
+  if (iconSkin === 'art') {
+    const image = el('img');
+    image.src = catSpriteUrl(HERO_ART_LOOK);
+    image.alt = '';
+    image.draggable = false;
+    node.replaceChildren(image);
+  } else {
+    node.innerHTML = catSvg(catLook(HERO_VECTOR_LOOK));
+  }
+}
+
+/** The URL of a tier's cat sprite (GAME_DESIGN §13.1). */
+export function catSpriteUrl(tier: number): string {
+  return `${import.meta.env.BASE_URL}${CAT_SPRITE_DIR}${catSprite(tier).file}`;
+}
+
+/** The raster cat: just its sprite, with no number (its look tells its size). */
+function paintArt(icon: HTMLElement, tier: number): void {
+  const image = el('img');
+  image.src = catSpriteUrl(tier);
+  image.alt = '';
+  image.draggable = false;
+  icon.replaceChildren(image);
 }
 
 /** The flat placeholder look: a CSS circle with the number in the middle. */

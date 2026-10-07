@@ -44,11 +44,15 @@ import { JarView } from './JarView';
 import { PawView, pawLift } from './PawView';
 import { comboShake, mergeParticleCount, mergeShake, Shake } from './shake';
 import type { BallSkin } from './skins/BallSkin';
+import { ArtSkin } from './skins/ArtSkin';
 import { CatSkin } from './skins/CatSkin';
 import { PlaceholderSkin } from './skins/PlaceholderSkin';
 
-/** Which cat art the scene draws: the lucky cats, or flat placeholders (`?skin=placeholder`). */
-export type SceneSkin = 'cat' | 'placeholder';
+/**
+ * Which cat art the scene draws: the raster cats, the earlier vector cats (`?skin=vector`) or flat
+ * placeholders (`?skin=placeholder`).
+ */
+export type SceneSkin = 'art' | 'vector' | 'placeholder';
 
 export const GAME_SCENE_KEY = 'game';
 
@@ -103,7 +107,11 @@ export class GameScene extends Phaser.Scene {
   /** The stage whose textures are being drawn ahead of an expansion's reveal (0: none). */
   private preparing = 0;
 
-  constructor(private readonly skinId: SceneSkin = 'cat') {
+  /** `catArt`: the cat art's images (`loadCatArt`), needed by the `art` skin. */
+  constructor(
+    private readonly skinId: SceneSkin = 'art',
+    private readonly catArt: readonly HTMLImageElement[] = [],
+  ) {
     super(GAME_SCENE_KEY);
   }
 
@@ -111,7 +119,9 @@ export class GameScene extends Phaser.Scene {
     this.skin =
       this.skinId === 'placeholder'
         ? new PlaceholderSkin(this.textures)
-        : new CatSkin(this.textures);
+        : this.skinId === 'art'
+          ? new ArtSkin(this.textures, this.catArt)
+          : new CatSkin(this.textures);
     this.skin.prepare(FIRST_STAGE, Infinity);
 
     const layer = (): Phaser.GameObjects.Layer => this.add.layer();

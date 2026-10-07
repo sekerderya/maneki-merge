@@ -74,7 +74,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,webp,ico,woff2}'],
         navigateFallback: 'index.html',
         cleanupOutdatedCaches: true,
         // Phaser alone is larger than Workbox's 2 MiB default.

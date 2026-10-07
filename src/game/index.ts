@@ -12,6 +12,8 @@ import { GAME_SCENE_KEY, GameScene } from './GameScene';
 import type { JarBox, SceneSkin } from './GameScene';
 import type { PayoutKind } from './fx/MergeFx';
 
+export { loadCatArt } from './skins/ArtSkin';
+
 export interface GameView {
   /** Shows a run (replacing the previous one) and wakes the loop. */
   show(run: RunController): void;
@@ -41,8 +43,9 @@ export interface GameView {
  */
 export function createGame(
   parent: HTMLElement,
-  skin: SceneSkin = 'cat',
+  skin: SceneSkin = 'art',
   insetTop: () => number = () => 0,
+  catArt: readonly HTMLImageElement[] = [],
 ): GameView {
   let resolution = 1;
   let pending: RunController | null = null;
@@ -72,7 +75,7 @@ export function createGame(
     scale: { mode: Phaser.Scale.NONE, width: 1, height: 1 },
     input: { activePointers: 1, keyboard: false, gamepad: false },
     render: { antialias: true, powerPreference: 'high-performance' },
-    scene: new GameScene(skin),
+    scene: new GameScene(skin, catArt),
     callbacks: {
       postBoot: (booted) => {
         scene = booted.scene.getScene(GAME_SCENE_KEY) as GameScene;

@@ -42,6 +42,7 @@ describe('parseUrlFlags', () => {
     ['?skin=placeholder', 'placeholder'],
     ['?skin=Placeholder', 'placeholder'],
     ['?skin=art', 'art'],
+    ['?skin=vector', 'vector'],
     ['?skin=neon', null],
     ['?skin=', null],
   ])('parses %s as skin=%s', (search, skin) => {

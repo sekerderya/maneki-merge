@@ -1,7 +1,6 @@
 import { APP_NAME } from '../../config/app';
-import { catLook } from '../../config/catArt';
 import { formatNumber } from '../../core/format';
-import { catSvg } from '../catIcon';
+import { paintHeroCat } from '../catIcon';
 import { button, el } from '../dom';
 import { ICON_ARROW_UP, ICON_COIN, ICON_GEAR, ICON_PAW, ICON_SHARE } from '../icons';
 
@@ -24,9 +23,6 @@ export interface MenuView {
   /** The dot on UPGRADES: at least one upgrade is affordable. */
   setUpgradesAffordable(affordable: boolean): void;
 }
-
-/** The cat on the menu's cushion: the classic calico maneki-neko. */
-const HERO_LOOK = 6;
 
 /**
  * The shrine garden behind the hero (GAME_DESIGN §2.1): sakura trees, clouds, a little shrine and
@@ -100,7 +96,7 @@ export function createMenuScreen(root: HTMLElement, actions: MenuActions): MenuV
   }
   figure.insertAdjacentHTML('beforeend', CUSHION);
   const cat = el('span', 'hero-cat');
-  cat.innerHTML = catSvg(catLook(HERO_LOOK));
+  paintHeroCat(cat);
   figure.append(cat);
   hero.append(figure);
 

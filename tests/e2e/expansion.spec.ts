@@ -51,7 +51,7 @@ test('making the last cat (two 9s) clears stage 1 and grows the jar', async ({ p
   const errors = watchConsole(page);
   await startRun(page, 3);
   await expect(page.getByTestId('hud-stage')).toHaveText('Stage 1');
-  await expect(page.getByTestId('hud-goal')).toHaveText('10');
+  await expect(page.getByTestId('hud-goal')).toHaveAttribute('data-tier', '10');
 
   await makeLastCat(page);
   await expect(page.getByTestId('banner')).toHaveText('The shrine grows!', WAIT);
@@ -65,9 +65,9 @@ test('making the last cat (two 9s) clears stage 1 and grows the jar', async ({ p
   // One wait for the banner and its cat: it only shows for 2 s, and a slow software renderer
   // can take most of that between two separate checks.
   const banner = page.getByTestId('banner').filter({ hasText: 'New cats unlocked!' });
-  await expect(banner.locator('.cat-icon')).toHaveText(['19'], WAIT);
+  await expect(banner.locator('.cat-icon')).toHaveAttribute('data-tier', '19', WAIT);
   await expect(page.getByTestId('hud-stage')).toHaveText('Stage 2');
-  await expect(page.getByTestId('hud-goal')).toHaveText('19');
+  await expect(page.getByTestId('hud-goal')).toHaveAttribute('data-tier', '19');
 
   await expect.poll(async () => (await state(page)).runState, WAIT).toBe('playing');
   const s = await state(page);
@@ -91,7 +91,7 @@ test('with no upgrades, clearing stage 2 grows the jar into stage 3', async ({ p
     await expect.poll(async () => (await state(page)).runState, long).toBe('playing');
   }
   await expect(page.getByTestId('hud-stage')).toHaveText('Stage 3');
-  await expect(page.getByTestId('hud-goal')).toHaveText('28');
+  await expect(page.getByTestId('hud-goal')).toHaveAttribute('data-tier', '28');
   expect(errors).toEqual([]);
 });
 
@@ -131,6 +131,6 @@ test('the debug jump plays every expansion in turn', async ({ page }) => {
   await expect.poll(async () => (await state(page)).stage, { timeout: 80_000 }).toBe(3);
   await expect.poll(async () => (await state(page)).runState, WAIT).toBe('playing');
   await expect(page.getByTestId('hud-stage')).toHaveText('Stage 3');
-  await expect(page.getByTestId('hud-goal')).toHaveText('28');
+  await expect(page.getByTestId('hud-goal')).toHaveAttribute('data-tier', '28');
   expect(errors).toEqual([]);
 });

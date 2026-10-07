@@ -1,5 +1,5 @@
-/** Skins that `?skin=` may force. `art` arrives with the final art in M13. */
-export const SKIN_IDS = ['placeholder', 'art'] as const;
+/** Skins that `?skin=` may force: `art` is the default, `vector` the code-drawn cats of v0.11–v0.15. */
+export const SKIN_IDS = ['placeholder', 'vector', 'art'] as const;
 export type SkinId = (typeof SKIN_IDS)[number];
 
 export interface UrlFlags {

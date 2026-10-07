@@ -156,7 +156,7 @@ test('game over shows coins earned and new-record badges', async ({ page }) => {
   await expect(page.getByTestId('go-new-best')).toBeVisible();
   await expect(page.getByTestId('go-new-tier')).toBeVisible();
   await expect(page.getByTestId('go-new-stage')).toBeHidden();
-  await expect(page.getByTestId('go-tier')).toContainText('5');
+  await expect(page.getByTestId('go-tier').locator('.cat-icon')).toHaveAttribute('data-tier', '5');
 
   // A smaller second run breaks no record.
   await page.getByTestId('play-again').click();

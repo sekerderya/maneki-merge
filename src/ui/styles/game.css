@@ -304,7 +304,7 @@
   }
 }
 
-/* A cat as a DOM icon: its art (inline SVG) with the number on its plate. */
+/* A cat as a DOM icon: its art (a sprite, or inline SVG) with the number on its plate. */
 .cat-icon {
   --size: 38px;
   position: relative;
@@ -315,7 +315,8 @@
   line-height: 1;
 }
 
-.cat-icon > svg {
+.cat-icon > svg,
+.cat-icon > img {
   position: absolute;
   inset: 0;
   width: 100%;

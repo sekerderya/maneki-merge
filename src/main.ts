@@ -6,7 +6,8 @@ import type { Scheduler } from './core/profile';
 import { SaveStore } from './core/save';
 import { parseUrlFlags } from './core/urlFlags';
 import { installDebugHooks } from './debug';
-import { createGame } from './game';
+import { createGame, loadCatArt } from './game';
+import type { SceneSkin } from './game/GameScene';
 import {
   BackStack,
   detectInstallContext,
@@ -37,14 +38,19 @@ import { createMenuScreen } from './ui/screens/menuScreen';
 import type { InstallHint } from './ui/screens/menuScreen';
 import type { InstallContext } from './platform';
 
-/** Boot order (TECH_SPEC §3): fonts → save → UI → Phaser → service worker. */
+/** Boot order (TECH_SPEC §3): fonts and cat art → save → UI → Phaser → service worker. */
 async function boot(): Promise<void> {
   setupViewport();
   const flags = parseUrlFlags(window.location.search);
-  const skin = flags.skin === 'placeholder' ? 'placeholder' : 'cat';
-  setIconSkin(skin);
+  let skin: SceneSkin = flags.skin ?? 'art';
 
-  await loadFonts();
+  // The cat art loads with the fonts; if it can't, the game falls back to the vector cats.
+  const [, catArt] = await Promise.all([
+    loadFonts(),
+    skin === 'art' ? loadCatArt(import.meta.env.BASE_URL).catch(() => null) : null,
+  ]);
+  if (skin === 'art' && !catArt) skin = 'vector';
+  setIconSkin(skin);
 
   // Save (TECH_SPEC §8): load it once; the profile writes it back, throttled.
   const storage = openStorage();
@@ -169,7 +175,7 @@ async function boot(): Promise<void> {
 
   // Phaser renders into the play area under the HUD; its loop sleeps while the menu is up. The
   // jar fits below the HUD, and the garden behind the canvas follows the jar.
-  const game = createGame(gameScreen.playArea, skin, () => gameScreen.hudBottom());
+  const game = createGame(gameScreen.playArea, skin, () => gameScreen.hudBottom(), catArt ?? []);
   gameScreen.onHudResize(() => game.refit());
   game.onJarBox((box, growing) => gameScreen.setJarBox(box, growing));
   // The menu and the pause overlay show what the profile holds.
