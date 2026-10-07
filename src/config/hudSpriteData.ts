@@ -13,15 +13,7 @@ export const HUD_COINS_SPRITE: HudCardSprite = {
   iconX: 0.13,
   iconY: 0.5,
 };
-export const HUD_SCORE_SPRITE: HudCardSprite = {
-  file: 'score.webp',
-  width: 1156,
-  height: 346,
-  textLeft: 0.28,
-  textRight: 0.93,
-  iconX: 0.13,
-  iconY: 0.5,
-};
+export const HUD_BADGE_SPRITE: HudSprite = { file: 'paw-badge.webp', width: 298, height: 298 };
 export const HUD_NEXT_SPRITE: HudBubbleSprite = {
   file: 'next.webp',
   width: 823,

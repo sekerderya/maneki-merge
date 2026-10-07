@@ -230,8 +230,9 @@
 }
 
 /*
- * The owner's HUD art (GAME_DESIGN §13.1, v0.19): the cards, the bubble and the pause button are
- * images (custom properties set by ui/hud/hud.ts); the labels and numbers sit on them.
+ * The owner's HUD art (GAME_DESIGN §13.1, v0.19): the coins card, the bubble and the pause button
+ * are images (custom properties set by ui/hud/hud.ts); the labels and numbers sit on them. The
+ * score card is drawn here in the coins card's colours, with the art's paw badge on its corner.
  */
 .game-hud.is-art .hud-card {
   border: none;
@@ -241,55 +242,104 @@
   filter: drop-shadow(0 3px 3px rgba(122, 78, 46, 0.22));
 }
 
-.game-hud.is-art .hud-left {
-  width: 160px;
+/* The numbers: white with a thin brown edge, like the reference image. */
+.game-hud.is-art .hud-score,
+.game-hud.is-art .hud-coins {
+  color: #fff;
+  font-weight: var(--weight-bold);
+  text-shadow:
+    1.5px 0 0 #5e2310,
+    -1.5px 0 0 #5e2310,
+    0 1.5px 0 #5e2310,
+    0 -1.5px 0 #5e2310,
+    1px 1px 0 #5e2310,
+    -1px 1px 0 #5e2310,
+    1px -1px 0 #5e2310,
+    -1px -1px 0 #5e2310,
+    0 2.5px 0 #5e2310;
 }
 
-.game-hud.is-art .hud-score-card,
+.game-hud.is-art .hud-left {
+  width: 146px;
+}
+
+.game-hud.is-art .hud-score-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 146px;
+  height: auto;
+  padding: 6px 8px 9px;
+  border: 3px solid #5e2310;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #fff6e7 0%, #f9e5c5 55%);
+  box-shadow:
+    inset 0 0 0 2px #fff6e7,
+    inset 0 -5px 0 #e9bf91,
+    0 3px 4px rgba(122, 78, 46, 0.22);
+  filter: none;
+  text-align: left;
+}
+
+.hud-score-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+}
+
+/* The paw badge sits over the card's top-left corner. */
+.hud-badge {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  margin: -14px 0 -6px -14px;
+}
+
+.game-hud.is-art .hud-score-head .hud-label {
+  font-size: 15px;
+}
+
+.game-hud.is-art .hud-score {
+  justify-content: center;
+  height: 34px;
+  border-radius: 11px;
+  background: #d6b08a;
+  box-shadow: inset 0 2px 3px rgba(94, 35, 16, 0.35);
+  font-size: 24px;
+}
+
+.game-hud.is-art .hud-right {
+  width: 152px;
+  height: 186px;
+}
+
+/* The coins card runs off the screen's right edge, so it seems to come out of it. */
 .game-hud.is-art .hud-coins-card {
+  --hud-art: var(--hud-coins-art);
+  right: calc(-12px - var(--safe-right) - 64px);
+  top: 54px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
   gap: 2px;
+  --hud-coins-width: 226px;
+  width: var(--hud-coins-width);
   height: auto;
   aspect-ratio: var(--hud-card-ratio);
-  padding: 0 var(--hud-text-right) 2px var(--hud-text-left);
+  padding: 0 0 3px calc(var(--hud-coins-width) * var(--hud-text-left));
   text-align: left;
 }
 
-.game-hud.is-art .hud-score-card {
-  --hud-art: var(--hud-score-art);
-  width: 160px;
-}
-
-.game-hud.is-art .hud-label {
-  font-size: 10px;
-}
-
-.game-hud.is-art .hud-score {
-  justify-content: flex-start;
-  height: auto;
-  background: none;
-  box-shadow: none;
-  font-size: 21px;
-}
-
-.game-hud.is-art .hud-right {
-  width: 152px;
-  height: 182px;
-}
-
-.game-hud.is-art .hud-coins-card {
-  --hud-art: var(--hud-coins-art);
-  right: 0;
-  top: 54px;
-  width: 152px;
+.game-hud.is-art .hud-coins-card .hud-label {
+  font-size: 12px;
 }
 
 .game-hud.is-art .hud-coins {
   margin-left: 0;
-  font-size: 20px;
+  font-size: 25px;
 }
 
 /* Where flying coins land: the card's own coin. */
@@ -302,7 +352,7 @@
 }
 
 .game-hud.is-art .hud-next {
-  top: 106px;
+  top: 124px;
   right: 8px;
   width: 70px;
   height: auto;

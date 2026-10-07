@@ -1,18 +1,17 @@
 /**
- * The HUD part of the art pipeline (TECH_SPEC §14): the coins card, the score card, the next-cat
- * bubble and the pause button from `art-source/hud/`, written to `public/assets/hud/` with their
+ * The HUD part of the art pipeline (TECH_SPEC §14): the coins card, the score card's paw badge,
+ * the next-cat bubble and the pause button from `art-source/hud/`, written to `public/assets/hud/` with their
  * measurements in `src/config/hudSpriteData.ts`.
  *
  * - Coins card: the white is cut; the gold coin on its left end is found, and the text goes to
  *   its right.
- * - Score card: the coins card with the pink paw badge of `score` pasted over its coin, so both
- *   cards have the same panel (the generator drew the score panel in another style).
+ * - Paw badge: the pink paw disc (and its outline) cut out of `score`; the score card itself is
+ *   drawn in CSS in the coins card's colours (the generator couldn't draw its shape).
  * - Next bubble: the circle and the tag on its rim are measured (the cat and "NEXT" go there).
  * - Pause button: cut and cropped.
  */
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import sharp from 'sharp';
 import {
   alphaAt,
   crop,
@@ -62,8 +61,9 @@ export async function buildHud(): Promise<void> {
   const coin = { x: gold.x, y: Math.round(coins.height / 2 - gold.w / 2), w: gold.w, h: gold.w };
   const coinsData = await saveCard(coins, coin, 'coins.webp');
 
-  const score = await scoreCard(coins, coin, await findSource(SOURCE_DIR, 'score'));
-  const scoreData = await saveCard(score, coin, 'score.webp');
+  const badge = await pawBadge(await findSource(SOURCE_DIR, 'score'));
+  await saveWebp(badge, join(OUT_DIR, 'paw-badge.webp'));
+  const badgeData: Sprite = { file: 'paw-badge.webp', width: badge.width, height: badge.height };
 
   const bubble = await cutAndCrop(await findSource(SOURCE_DIR, 'next'));
   await saveWebp(bubble, join(OUT_DIR, 'next.webp'));
@@ -97,7 +97,7 @@ export async function buildHud(): Promise<void> {
   await saveWebp(pause, join(OUT_DIR, 'pause.webp'));
   const pauseData: Sprite = { file: 'pause.webp', width: pause.width, height: pause.height };
 
-  await writeFile(DATA_FILE, dataModule(coinsData, scoreData, bubbleData, pauseData));
+  await writeFile(DATA_FILE, dataModule(coinsData, badgeData, bubbleData, pauseData));
   console.log(
     `HUD: cards ${coins.width}×${coins.height} (text from ${coinsData.textLeft}), ` +
       `bubble ${bubble.width}×${bubble.height}, pause ${pause.width}×${pause.height}; wrote ${DATA_FILE}`,
@@ -158,8 +158,8 @@ function colourBox(image: Rgba, test: (c: number[]) => boolean): Rect {
   return { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 };
 }
 
-/** The coins card with the score image's paw badge (and its outline) over the coin. */
-async function scoreCard(coins: Rgba, coin: Rect, path: string): Promise<Rgba> {
+/** The score image's pink paw badge, its disc and outline, on a transparent square. */
+async function pawBadge(path: string): Promise<Rgba> {
   const source = await loadRgba(path);
   cutBackground(source);
   const pink = colourBox(source, isPink);
@@ -182,38 +182,7 @@ async function scoreCard(coins: Rgba, coin: Rect, path: string): Promise<Rgba> {
         badge.data[4 * (y * side + x) + 3] = 0;
     }
   }
-  // As big as the coin with its outline, centred on it.
-  const coinOutline = Math.round(coin.w * 0.05);
-  const target = Math.round(coin.w + 2 * coinOutline);
-  const scaled = await sharp(
-    Buffer.from(badge.data.buffer, badge.data.byteOffset, badge.data.length),
-    {
-      raw: { width: side, height: side, channels: 4 },
-    },
-  )
-    .resize(target, target)
-    .png()
-    .toBuffer();
-  const { data } = await sharp(
-    Buffer.from(coins.data.buffer, coins.data.byteOffset, coins.data.length),
-    {
-      raw: { width: coins.width, height: coins.height, channels: 4 },
-    },
-  )
-    .composite([
-      {
-        input: scaled,
-        left: Math.round(coin.x + coin.w / 2 - target / 2),
-        top: Math.round(coin.y + coin.h / 2 - target / 2),
-      },
-    ])
-    .raw()
-    .toBuffer({ resolveWithObject: true });
-  return {
-    data: new Uint8ClampedArray(data.buffer, data.byteOffset, data.length),
-    width: coins.width,
-    height: coins.height,
-  };
+  return badge;
 }
 
 async function saveCard(image: Rgba, icon: Rect, file: string): Promise<CardData> {
@@ -229,7 +198,7 @@ async function saveCard(image: Rgba, icon: Rect, file: string): Promise<CardData
   };
 }
 
-function dataModule(coins: CardData, score: CardData, bubble: BubbleData, pause: Sprite): string {
+function dataModule(coins: CardData, badge: Sprite, bubble: BubbleData, pause: Sprite): string {
   const obj = (o: object): string =>
     '{ ' +
     Object.entries(o)
@@ -243,7 +212,7 @@ function dataModule(coins: CardData, score: CardData, bubble: BubbleData, pause:
 import type { HudBubbleSprite, HudCardSprite, HudSprite } from './hudSprites';
 
 export const HUD_COINS_SPRITE: HudCardSprite = ${obj(coins)};
-export const HUD_SCORE_SPRITE: HudCardSprite = ${obj(score)};
+export const HUD_BADGE_SPRITE: HudSprite = ${obj(badge)};
 export const HUD_NEXT_SPRITE: HudBubbleSprite = ${obj(bubble)};
 export const HUD_PAUSE_SPRITE: HudSprite = ${obj(pause)};
 `;

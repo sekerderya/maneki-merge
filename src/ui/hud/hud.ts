@@ -1,8 +1,8 @@
 import {
+  HUD_BADGE_ART,
   HUD_COINS_ART,
   HUD_NEXT_ART,
   HUD_PAUSE_ART,
-  HUD_SCORE_ART,
   HUD_SPRITE_DIR,
 } from '../../config/hudSprites';
 import type { HudSprite } from '../../config/hudSprites';
@@ -26,22 +26,25 @@ export interface HudView {
   readonly coinTarget: HTMLElement;
 }
 
+function artPath(sprite: HudSprite): string {
+  return `${import.meta.env.BASE_URL}${HUD_SPRITE_DIR}${sprite.file}`;
+}
+
 /** The CSS `url()` of a HUD sprite. */
 function artUrl(sprite: HudSprite): string {
-  return `url("${import.meta.env.BASE_URL}${HUD_SPRITE_DIR}${sprite.file}")`;
+  return `url("${artPath(sprite)}")`;
 }
 
 /** The HUD art's images and measurements, as CSS custom properties on the HUD. */
 function setArtProperties(root: HTMLElement): void {
   const set = (name: string, value: string | number): void =>
     root.style.setProperty(name, String(value));
-  set('--hud-score-art', artUrl(HUD_SCORE_ART));
   set('--hud-coins-art', artUrl(HUD_COINS_ART));
   set('--hud-next-art', artUrl(HUD_NEXT_ART));
   set('--hud-pause-art', artUrl(HUD_PAUSE_ART));
   set('--hud-card-ratio', `${HUD_COINS_ART.width} / ${HUD_COINS_ART.height}`);
-  set('--hud-text-left', `${HUD_COINS_ART.textLeft * 100}%`);
-  set('--hud-text-right', `${(1 - HUD_COINS_ART.textRight) * 100}%`);
+  // Fractions of the card's width (padding percentages would be of the container's).
+  set('--hud-text-left', HUD_COINS_ART.textLeft);
   set('--hud-coin-x', `${HUD_COINS_ART.iconX * 100}%`);
   set('--hud-coin-y', `${HUD_COINS_ART.iconY * 100}%`);
   set('--hud-next-ratio', `${HUD_NEXT_ART.width} / ${HUD_NEXT_ART.height}`);
@@ -65,7 +68,19 @@ export function createHud(root: HTMLElement, actions: HudActions, art = false): 
   const scoreCard = el('div', 'hud-card hud-score-card');
   const score = el('span', 'hud-score', '0');
   score.dataset['testid'] = 'hud-score';
-  scoreCard.append(el('span', 'hud-label', 'Score'), score);
+  const scoreLabel = el('span', 'hud-label', 'Score');
+  if (art) {
+    // The paw badge on the card's top-left corner, "SCORE:" beside it, the score in a well.
+    const head = el('div', 'hud-score-head');
+    const badge = el('img', 'hud-badge');
+    badge.src = artPath(HUD_BADGE_ART);
+    badge.alt = '';
+    badge.draggable = false;
+    head.append(badge, scoreLabel);
+    scoreCard.append(head, score);
+  } else {
+    scoreCard.append(scoreLabel, score);
+  }
 
   const left = el('div', 'hud-left');
   left.append(scoreCard);
