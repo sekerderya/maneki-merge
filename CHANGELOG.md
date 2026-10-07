@@ -2,6 +2,26 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.17.0] - 2026-10-07
+
+The owner's scene art (M13, phase 2 of docs/ART_ASSETS.md).
+
+### Added
+
+- The bamboo jar, the calico paw and the painted shrine-garden background from the owner's images. The jar's glass rim and top rail are drawn behind the cats, its bamboo in front; the paw's arm stretches up to the top of the screen; the background follows the jar so its feet stand on the painted rug, fades into the sky at the top and always spans the screen.
+- `npm run art` also builds the scene (`tools/buildScene.ts`): it cuts the white, measures the jar's opening and splits the jar into its two layers.
+
+### Changed
+
+- The camera shows 0.19 of the jar's width beside each wall instead of 0.15, so the thicker bamboo and its rail fit on screen: the jar is 283 px wide on a 390 px phone instead of 300.
+- `?skin=vector` (and the fallback when the art can't load) also brings back the vector jar, paw and garden.
+
+### Decisions (where the request was open)
+
+- The physics corners stay at radius 112: the art's corners are rounder (168), and matching them changed the physics tests' settled piles. A cat deep in a corner tucks a few pixels behind the bamboo, which is drawn in front of it.
+- The background's own rug is used; the separate rug image is kept in `art-source/` but unused.
+- The jar's caps don't flash red in danger with the art (the dashed rim line still does).
+
 ## [0.16.0] - 2026-10-07
 
 The owner's cat art (M13, phase 1 of docs/ART_ASSETS.md).

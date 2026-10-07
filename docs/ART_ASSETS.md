@@ -208,6 +208,10 @@ Size 1 is also drawn as each stage's biggest cat (size 10), so it must look good
 
 ### 4.3 Phase 2: scene
 
+**Done (2026-10-07):** jar, paw and background are in the game (v0.17). The background came with its
+own rug, so `scene/rug.jpg` is unused. The background is 768 px wide; a 2× upscaled copy would be
+sharper on phones.
+
 **Background** (`scene/background.png`): style block, then:
 
 ```text
