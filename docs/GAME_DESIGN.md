@@ -21,7 +21,7 @@ A shrine garden in the art of §13, top to bottom:
 
 - Top bar: the **settings** button (a gear) on the left opens the settings panel (§2.4); the coin balance on the right.
 - The title "Maneki Merge".
-- The hero: the calico lucky cat (look 6, no number) sitting on a pink cushion in front of a sakura garden with a little shrine and a torii, with a few coins floating around it. It takes whatever height is left, so short screens get a smaller cat.
+- The hero: the golden lucky cat (Kin, look 9 of the cat art; the calico look 6 with `?skin=vector`) sitting on a pink cushion in front of a sakura garden with a little shrine and a torii, with a few coins floating around it. It takes whatever height is left, so short screens get a smaller cat.
 - Best score and best stage as two labelled chips.
 - **PLAY**: a big round coral button, the only coral thing on the screen.
 - **UPGRADES**: below PLAY. Shows a red dot when any upgrade is affordable and opens the shop panel.
@@ -81,7 +81,7 @@ A shrine garden in the art of §13, top to bottom:
 
 ## 4. Cats: sizes and tiers
 
-Every stage holds the same 10 **sizes** of cat. A cat's **tier** is the number on it: it only ever goes up, from 1 at stage 1 to 46 at stage 5, and it sets the score and coins. A cat's size is its place in the current stage: `size = tier − firstTier(stage) + 1`, 1–10. The last size of a stage (10) becomes the first of the next one, so stage 1 holds tiers 1–10, stage 2 tiers 10–19, stage 3 19–28, stage 4 28–37 and stage 5 37–46 (§7). (Until v0.12 a stage held 12 sizes, until v0.15 11; sizes 12 (radius 250) and 11 (radius 205) are gone.)
+Every stage holds the same 10 **sizes** of cat. A cat's **tier** is its number (the cat art doesn't show it, §13.1): it only ever goes up, from 1 at stage 1 to 46 at stage 5, and it sets the score and coins. A cat's size is its place in the current stage: `size = tier − firstTier(stage) + 1`, 1–10. The last size of a stage (10) becomes the first of the next one, so stage 1 holds tiers 1–10, stage 2 tiers 10–19, stage 3 19–28, stage 4 28–37 and stage 5 37–46 (§7). (Until v0.12 a stage held 12 sizes, until v0.15 11; sizes 12 (radius 250) and 11 (radius 205) are gone.)
 
 The radius depends on the size only: `r(s) = round(28 × 1.22^(s−1))` in world units; the jar is 600 × 870 at every stage. The sizes were chosen, when a stage still held 11, so that cats of sizes 11, 9, 8, 7, 6 and 5 covered about as much of the jar as the same six fruits (watermelon, pineapple, peach, pear, apple, persimmon) do in Suika Game's box: 55% of its area, piling up to about 88% of its height (Suika: about 55% and 86%). When size 11 left (v0.15), sizes 1–10 kept their radius, so the last cat is now 168 (0.28 of the jar's width).
 
@@ -142,7 +142,7 @@ Values are rounded only when paid (§5). Implement the formulas. Unit tests asse
 
 ## 7. Stages (signature mechanic)
 
-Every stage plays the same way: the same 600 × 870 jar (aspect 1 : 1.45), the same 10 sizes, the same drop pool of sizes 1–4 (§8) and the same goal, **making the stage's last cat** (size 10, from two size-9 cats). The last cat of a stage is the first cat of the next one. Only the numbers on the cats, and so the score and coins, keep growing. Every stage is open from the start: there are no stage locks (Shrine Expansion was removed in v0.12).
+Every stage plays the same way: the same 600 × 870 jar (aspect 1 : 1.45), the same 10 sizes, the same drop pool of sizes 1–4 (§8) and the same goal, **making the stage's last cat** (size 10, from two size-9 cats). The last cat of a stage is the first cat of the next one. Only the cats' tiers, and so the score and coins, keep growing. Every stage is open from the start: there are no stage locks (Shrine Expansion was removed in v0.12).
 
 | Stage | Tiers | Drops (sizes 1–4) | Last cat (the goal) |
 | ----: | ----- | ----------------- | ------------------: |
@@ -152,7 +152,7 @@ Every stage plays the same way: the same 600 × 870 jar (aspect 1 : 1.45), the s
 |     4 | 28–37 | 28–31             |                  37 |
 |     5 | 37–46 | 37–40             |                  46 |
 
-**The loop.** When the jar grows, it grows by `r(10) / r(1) = 168 / 28 = 6` in every direction, and the camera zooms out by as much: the last cat shrinks on screen to exactly the size the first cat had, and takes its place. The 10 of stage 1 is the smallest cat of stage 2, shown like a 1 was (same size and colour), with its own number. The floor stays at the bottom of the jar, and the jar looks the same on screen at every stage.
+**The loop.** When the jar grows, it grows by `r(10) / r(1) = 168 / 28 = 6` in every direction, and the camera zooms out by as much: the last cat shrinks on screen to exactly the size the first cat had, and takes its place. The 10 of stage 1 is the smallest cat of stage 2, shown like a 1 was (same size and look), with its own tier. The floor stays at the bottom of the jar, and the jar looks the same on screen at every stage.
 
 ### 7.1 Stage clear and expansion (about 2.1 s)
 
@@ -257,29 +257,28 @@ If a save can't be read, or some of its fields are invalid, a copy is kept (TECH
 
 ## 13. Art
 
-### 13.1 The lucky cats (the default since v0.11)
+### 13.1 The lucky cats (the cat art, the default since v0.16)
 
-The owner chose the look in a design canvas: a cream shrine garden, ink outlines, soft pastels. Everything is drawn in code from vector data, so it stays sharp at every zoom and works offline.
+The owner chose the scene in a design canvas (v0.14): a cream shrine garden, ink outlines, soft pastels. Since v0.16 the cats are raster art the owner generated with an AI image tool from a reference image (docs/ART_ASSETS.md); the jar, the paw, the scene and the HUD are still drawn in code from vector data until their art arrives.
 
-- **Cats** (`src/config/catArt.ts`): round daruma-like bodies with ears on top, one look per size, getting richer as they grow. Size 10 (a stage's last cat) wears look 1, because it becomes the next stage's size 1.
+- **Cats** (`public/assets/cats/`, `src/config/catSprites.ts`): round maneki-neko balls in the reference image's style, one look per size. Every cat is a perfect circle with only its ears above it, raises one paw (on the viewer's right, palm and pink pads forward) and wears a collar with a gold bell. Each look is one solid body colour with a lighter belly, so the nine look clearly different at a glance (the owner rejected multi-colour coats as hard to tell apart). Size 10 (a stage's last cat) wears look 1, because it becomes the next stage's size 1.
 
-  | Size | Look      | What makes it different                        |
-  | ---: | --------- | ---------------------------------------------- |
-  |    1 | Sakura    | Plain pink mochi, sleepy eyes                  |
-  |    2 | Mint      | Red polka-dot bib                              |
-  |    3 | Tangerine | Tabby stripes, blue collar, gold tag           |
-  |    4 | Lavender  | Silver bell, the first raised paw              |
-  |    5 | Sky       | Wave-pattern (seigaiha) belly band, gold bell  |
-  |    6 | Calico    | The classic maneki-neko: red collar, gold bell |
-  |    7 | Matcha    | Holds a gold koban                             |
-  |    8 | Daruma    | Daruma face, gold swirls                       |
-  |    9 | Indigo    | Gold chain and koban, gold eyes                |
+  | Size | Look   | Body colour | What else makes it different                    |
+  | ---: | ------ | ----------- | ----------------------------------------------- |
+  |    1 | Shiro  | white       | Closed happy eyes, red collar                   |
+  |    2 | Kuro   | charcoal    | Grey belly, big golden eyes, red collar         |
+  |    3 | Mikan  | orange      | Tabby stripes, sky-blue collar                  |
+  |    4 | Sora   | sky blue    | Winking, dark stripes, red collar               |
+  |    5 | Sakura | pink        | Tongue out, mint collar                         |
+  |    6 | Matcha | green       | Forehead stripes, red collar                    |
+  |    7 | Fuji   | purple      | Gold collar, sakura flower on one ear           |
+  |    8 | Aka    | red         | Tabby stripes, gold collar and a gold coin      |
+  |    9 | Kin    | gold        | Red bib with gold trim, sakura flower on an ear |
 
-  The tenth look (Kuro: black cat, red bib, gold eyes) left with size 11 in v0.15, and the eleventh (Kimono: kimono and obi, both paws raised) with size 12 in v0.12; both are in the git history.
+  The tool (`npm run art`, TECH_SPEC §14) removes the images' white background and fits each body circle, and the game scales that circle onto the physics radius, so touching cats touch on screen.
 
-  Neighbouring sizes differ in shape and accessories as well as colour, so they can be told apart without colour. The outer edge of each body's outline is exactly the cat's radius, so touching cats touch on screen.
-
-- **Numbers**: each cat has a plate (belly, tag, plate, koban) where its tier number sits. The cat rolls; the number stays upright and rides on its plate.
+- **Numbers**: the cat art shows no numbers (v0.16, the owner's call): a cat's look tells its size. The tier still sets the score and coins (§4). The vector looks (`?skin=vector`) and the placeholders still show their number, upright on the cat's plate.
+- **Vector cats** (`?skin=vector`, `src/config/catArt.ts`): the code-drawn looks of v0.11–v0.15 (Sakura, Mint, Tangerine, Lavender, Sky, Calico, Matcha, Daruma, Indigo), kept as a fallback.
 - **Jar** (v0.14): glass in a bamboo frame whose bottom corners are curved, standing on two bamboo feet on a mint rug. A far rail runs across the top, tied to the posts with twine; the posts end in cut bamboo caps above the rim. A dashed line across the opening marks the rim (the danger line); it and the caps flash red in danger. The glass is a pale wash, so the garden shows through it.
 - **Dropper** (v0.14): a calico paw (white with orange and dark spots, pink pads) hanging from the top of the screen.
 - **Background** (v0.14): a sakura shrine garden on a cream sky: clouds, sakura branches and trees, a torii and a shrine seen through the glass, stone lanterns either side of the jar, and the wooden floor the rug lies on. It is drawn around the jar and moves and scales with it, so the floor and the lanterns line up with the jar on every screen.
@@ -291,14 +290,12 @@ The owner chose the look in a design canvas: a cream shrine garden, ink outlines
 - Each size is a flat circle in its own colour with a darker outline, and the tier number in bold Fredoka, centered. The number stays upright while the circle rotates.
 - There are 9 colours, repeating every 9 tiers (size 10 = size 1's colour).
 
-### 13.3 Owner art (optional, M13)
+### 13.3 Owner art (M13)
 
-- If the owner delivers drawn art later: `art-source/size-01.png` … `size-09.png`, one cat per size; they repeat every stage like the looks above:
-  - square, with a transparent background
-  - the round body touching the edges of the square
-  - at least 512×512 (1024×1024 preferred for sizes 8–9, and for size 1, which is also drawn as a stage's last cat)
-- Optional extras: `app-icon.png` (1024×1024), `logo.png`, `background.png`, `jar.png`, and a music loop (OGG/MP3, licensed for use, with a music switch in Settings).
-- Cats rotate like Suika fruit (v0.11); the numbers stay upright.
+The owner generates the art phase by phase with the prompts in docs/ART_ASSETS.md and drops the files into `art-source/`: the cats are in (v0.16); the scene, the HUD kit, the menu art and the app icon follow. Images come on a plain white background; the tool cuts it out.
+
+- Cats roll like Suika fruit (v0.11).
+- Optional later: a music loop (OGG/MP3, licensed for use, with a music switch in Settings).
 
 ## 14. Balance targets (M10, set aside in v0.10)
 

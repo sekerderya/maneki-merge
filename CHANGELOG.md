@@ -2,6 +2,23 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.16.0] - 2026-10-07
+
+The owner's cat art (M13, phase 1 of docs/ART_ASSETS.md).
+
+### Added
+
+- Nine new lucky cats, raster art the owner generated with an AI image tool: round maneki-neko balls, each one body colour with a lighter belly, one raised paw and a collar with a gold bell (Shiro, Kuro, Mikan, Sora, Sakura, Matcha, Fuji, Aka, Kin). They are the default skin (`ArtSkin`), in the jar, the dropper, the HUD, the banners and Game Over.
+- `npm run art` (`tools/build-art.ts`, sharp): cuts the images' white background, fits each body circle so touching cats touch on screen, and writes `public/assets/cats/*.webp` and `src/config/catSpriteData.ts`.
+- docs/ART_ASSETS.md: the asset plan, the prompts and the checklist for the owner's art phases.
+- `?skin=vector` shows the code-drawn cats of v0.11–v0.15.
+
+### Changed
+
+- The cats show no numbers (the owner's call): a cat's look tells its size. The vector and placeholder skins still show them.
+- The menu's hero is the golden Kin (the calico with `?skin=vector`).
+- The service worker also precaches `.webp` files.
+
 ## [0.15.0] - 2026-10-07
 
 Shorter stages: the stage loop runs on 10 cats.
