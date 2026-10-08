@@ -8,11 +8,14 @@
  *    skipped. Three touching cats give one merge; the third can merge on a later step.
  * 3. Two of the stage's last cat (the cap tier) make a Jackpot and vanish. Otherwise both
  *    vanish and a cat of the next tier is born at rest exactly at their midpoint, and grows from
- *    the old size into its own over MERGE_GROW_MS.
+ *    the old size into its own over MERGE_GROW_MS. When one of them is golden (GAME_DESIGN §15.4)
+ *    the new cat is two tiers up, never above the cap. It is never golden itself.
  * 4. The new cat starts to turn, as if another cat had clipped it (`mergeSpinDirection`).
+ * 5. Every boulder that one of a merge's two cats touched takes a hit, once per merge
+ *    (GAME_DESIGN §15.3); a Jackpot counts as a merge. The caller applies the hits.
  *
  * New cats aren't in this step's contacts, so a chain continues on the next step at the earliest.
- * Scores, coins and events are the caller's job (RunController).
+ * Scores, coins, events and the hits' effect are the caller's job (RunController).
  */
 import { MERGE_SPIN_MIN_SLIDE, MERGE_SPIN_RIM_SPEED } from '../config/physics';
 import { sizeRadius } from '../config/tiers';
@@ -23,6 +26,10 @@ export interface MergeOutcome {
   readonly kind: 'merge' | 'jackpot';
   /** The tier of the two cats that met. */
   readonly tier: number;
+  /** The merged cat's tier: tier + 1, or tier + 2 when a golden cat merged (the tier for a Jackpot). */
+  readonly newTier: number;
+  /** One of the two cats was golden. */
+  readonly golden: boolean;
   /** Their midpoint, in world units. */
   readonly x: number;
   readonly y: number;
@@ -57,6 +64,17 @@ export class MergeResolver {
   private readonly pairs: [Ball, Ball][] = [];
   private readonly used = new Set<Ball>();
   private readonly outcomes: MergeOutcome[] = [];
+  /** Which merge (index into `outcomes`) each merged cat took part in. */
+  private readonly mergeOf = new Map<Ball, number>();
+  private readonly hitList: Ball[] = [];
+
+  /**
+   * The boulders the last `resolve` hit, once per merge that hit each (a boulder two merges hit is
+   * listed twice), in the order of the boulders' ids, then the merges. Reused by the next call.
+   */
+  get hits(): readonly Ball[] {
+    return this.hitList;
+  }
 
   /**
    * Resolves the last step's same-tier contacts. The returned list is reused by the next call.
@@ -64,6 +82,7 @@ export class MergeResolver {
   resolve(world: PhysicsWorld, tierCap: number): readonly MergeOutcome[] {
     const outcomes = this.outcomes;
     outcomes.length = 0;
+    this.hitList.length = 0;
     const contacts = world.sameTierContacts;
     if (contacts.length === 0) return outcomes;
 
@@ -82,16 +101,19 @@ export class MergeResolver {
       if (a.removed || b.removed || used.has(a) || used.has(b)) continue;
       used.add(a);
       used.add(b);
+      this.mergeOf.set(a, outcomes.length);
+      this.mergeOf.set(b, outcomes.length);
       const x = (a.x + b.x) / 2;
       const y = (a.y + b.y) / 2;
+      const golden = a.golden || b.golden;
       if (a.tier >= tierCap) {
         world.removeBall(a);
         world.removeBall(b);
-        outcomes.push({ kind: 'jackpot', tier: a.tier, x, y, ball: null });
+        outcomes.push({ kind: 'jackpot', tier: a.tier, newTier: a.tier, golden, x, y, ball: null });
         continue;
       }
       const startRadius = Math.max(a.radius, b.radius);
-      const tier = a.tier + 1;
+      const tier = Math.min(a.tier + (golden ? 2 : 1), tierCap);
       const spin =
         (mergeSpinDirection(a, b) * MERGE_SPIN_RIM_SPEED) / sizeRadius(world.sizeOf(tier));
       world.removeBall(a);
@@ -100,9 +122,25 @@ export class MergeResolver {
       // so a pile that is over the line keeps counting.
       const landedMs = Math.min(a.landedMs, b.landedMs);
       const ball = world.addBall({ tier, x, y, spin, startRadius, landedMs });
-      outcomes.push({ kind: 'merge', tier: a.tier, x, y, ball });
+      outcomes.push({ kind: 'merge', tier: a.tier, newTier: tier, golden, x, y, ball });
     }
     used.clear();
+    this.collectHits(world.boulderContacts);
+    this.mergeOf.clear();
     return outcomes;
+  }
+
+  /** The boulders this step's merges hit: once per (boulder, merge). */
+  private collectHits(boulderContacts: readonly Ball[]): void {
+    if (boulderContacts.length === 0 || this.mergeOf.size === 0) return;
+    const hits: [Ball, number][] = [];
+    for (let i = 0; i < boulderContacts.length; i += 2) {
+      const merge = this.mergeOf.get(boulderContacts[i] as Ball);
+      if (merge === undefined) continue;
+      const boulder = boulderContacts[i + 1] as Ball;
+      if (!hits.some(([b, m]) => b === boulder && m === merge)) hits.push([boulder, merge]);
+    }
+    hits.sort((p, q) => p[0].id - q[0].id || p[1] - q[1]);
+    for (const [boulder] of hits) this.hitList.push(boulder);
   }
 }

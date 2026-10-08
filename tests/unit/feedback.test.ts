@@ -12,7 +12,7 @@ describe('run feedback wiring (GAME_DESIGN §12)', () => {
       vibrate: (name) => log.push(`buzz:${name}`),
     });
     const at = { x: 0, y: 0 };
-    events.emit('catDropped', { tier: 1, x: 0 });
+    events.emit('catDropped', { kind: 'cat', tier: 1, golden: false, x: 0 });
     // Stage 2: tier 15 is size 5, and the pitch follows the size.
     events.emit('merged', {
       id: 1,
@@ -56,7 +56,7 @@ describe('run feedback wiring (GAME_DESIGN §12)', () => {
     ]);
 
     off();
-    events.emit('catDropped', { tier: 1, x: 0 });
+    events.emit('catDropped', { kind: 'cat', tier: 1, golden: false, x: 0 });
     expect(log).toHaveLength(17);
   });
 

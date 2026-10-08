@@ -1,4 +1,5 @@
 /** Shared setups for the headless physics tests. */
+import type { PickId } from '../../src/config/picks';
 import { catRadius, stageInfo } from '../../src/config/stages';
 import { dropWeights } from '../../src/core/dropQueue';
 import { Rng } from '../../src/core/rng';
@@ -6,6 +7,7 @@ import { defaultUpgradeLevels } from '../../src/core/upgrades';
 import type { UpgradeLevels } from '../../src/core/upgrades';
 import type { BallView } from '../../src/physics/balls';
 import { PhysicsWorld } from '../../src/physics/PhysicsWorld';
+import type { RunController } from '../../src/run/RunController';
 
 export const STEPS_PER_SECOND = 120;
 
@@ -66,4 +68,37 @@ export function inJar(cat: BallView, halfWidth: number): boolean {
   return (
     Number.isFinite(cat.x) && Number.isFinite(cat.y) && Math.abs(cat.x) < halfWidth && cat.y < 0
   );
+}
+
+/** A player's input: drop at x, take a ball with the magnet, or choose a pick's option. */
+export type PlayInput =
+  | { readonly drop: number }
+  | { readonly take: number }
+  | { readonly choose: PickId };
+
+/**
+ * A bot's move with the dropper's ball: a cat or boulder drops at `x`; a magnet takes the takeable
+ * ball at `pick` (0–1) along the jar's balls (GAME_DESIGN §15.2); a waiting pick takes its first
+ * option. Returns the input made, or null when the run isn't ready for one.
+ */
+export function botMove(run: RunController, x: number, pick = 0): PlayInput | null {
+  const offer = run.pickOffer;
+  if (run.state === 'choosing' && offer) {
+    const id = offer.options[0]!;
+    return run.choose(id) ? { choose: id } : null;
+  }
+  if (run.canTake) {
+    const takeable = run.balls.filter((ball) => run.takeable(ball));
+    const ball = takeable[Math.min(takeable.length - 1, Math.floor(pick * takeable.length))];
+    return ball && run.take(ball.id) ? { take: ball.id } : null;
+  }
+  if (run.canDrop) return run.drop(x) ? { drop: x } : null;
+  return null;
+}
+
+/** Applies a recorded input again; returns whether the run accepted it. */
+export function replayInput(run: RunController, input: PlayInput): boolean {
+  if ('drop' in input) return run.drop(input.drop);
+  if ('take' in input) return run.take(input.take);
+  return run.choose(input.choose);
 }

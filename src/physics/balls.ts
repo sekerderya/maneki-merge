@@ -1,8 +1,10 @@
 /**
- * Cats in the physics world: a matter-js body plus the game data the world tracks for it
- * (tier, size, growth after a merge, first contact). The tier is the cat's number; the
- * size (its place in the current stage, 1–10) sets its radius and density. Contacts use the exact circle
- * (circleCollision.ts); the body's polygon only feeds matter-js's broadphase bounds.
+ * Balls in the physics world: a matter-js body plus the game data the world tracks for it
+ * (kind, tier, size, golden, growth after a merge, first contact). A ball is a cat or a boulder
+ * (GAME_DESIGN §15.3), which never merges and breaks after `hitsLeft` merges next to it. The tier
+ * is the cat's number (a boulder's is the tier of its size); the size (its place in the current
+ * stage, 1–10) sets its radius and density. Contacts use the exact circle (circleCollision.ts);
+ * the body's polygon only feeds matter-js's broadphase bounds.
  */
 import Matter from 'matter-js';
 import {
@@ -21,10 +23,18 @@ import type { CircleShape } from './circleCollision';
 /** matter-js velocities are per base tick of 1000/60 ms; config speeds are per second. */
 export const MATTER_TICKS_PER_SECOND = 60;
 
-/** What rendering and game rules may read about a cat. */
+/** A ball is a cat or a boulder. */
+export type BallKind = 'cat' | 'boulder';
+
+/** What rendering and game rules may read about a ball. */
 export interface BallView {
   readonly id: number;
+  readonly kind: BallKind;
   readonly tier: number;
+  /** A golden cat skips a tier when it merges (GAME_DESIGN §15.4). */
+  readonly golden: boolean;
+  /** The merges a boulder still needs to break; 0 for a cat. */
+  readonly hitsLeft: number;
   /** The cat's size at the current stage (1–10). */
   readonly size: number;
   readonly x: number;
@@ -45,7 +55,12 @@ export interface BallView {
 }
 
 export interface BallSpec {
+  /** A cat by default. */
+  readonly kind?: BallKind;
   readonly tier: number;
+  readonly golden?: boolean;
+  /** A boulder's merges to break (at least 1). */
+  readonly hits?: number;
   /** 1–10: the tier's place in the world's stage (the world works it out). */
   readonly size: number;
   readonly x: number;
@@ -66,6 +81,8 @@ export class Ball implements BallView, CircleShape {
   targetRadius: number;
   /** Play time of the first contact, or −1. */
   landedMs: number;
+  /** The merges a boulder still needs to break; 0 for a cat. */
+  hitsLeft: number;
   /** Set once the world has removed the cat. */
   removed = false;
   /** Set by the world during a step when the cat touches a growing cat. */
@@ -88,11 +105,15 @@ export class Ball implements BallView, CircleShape {
     readonly body: Matter.Body,
     startRadius: number,
     landedMs: number,
+    readonly kind: BallKind = 'cat',
+    readonly golden = false,
+    hitsLeft = 0,
   ) {
     this.targetRadius = sizeRadius(size);
     this.radius = Math.min(startRadius, this.targetRadius);
     this.growFrom = this.radius;
     this.landedMs = landedMs;
+    this.hitsLeft = hitsLeft;
   }
 
   get x(): number {
@@ -171,6 +192,11 @@ function setCircleMass(body: Matter.Body, size: number, radius: number): void {
 
 export function createBall(id: number, spec: BallSpec): Ball {
   if (!isTier(spec.tier)) throw new RangeError(`Unknown tier: ${spec.tier}`);
+  const kind = spec.kind ?? 'cat';
+  const hits = kind === 'boulder' ? (spec.hits ?? 1) : 0;
+  if (kind === 'boulder' && !(Number.isInteger(hits) && hits >= 1)) {
+    throw new RangeError(`Invalid boulder hits: ${spec.hits}`);
+  }
   if (!isSize(spec.size)) throw new RangeError(`Tier ${spec.tier} has no size here: ${spec.size}`);
   if (!Number.isFinite(spec.x) || !Number.isFinite(spec.y)) {
     throw new RangeError(`Invalid position: ${spec.x}, ${spec.y}`);
@@ -184,7 +210,7 @@ export function createBall(id: number, spec: BallSpec): Ball {
     spec.y,
     hull,
     {
-      label: 'cat',
+      label: kind,
       friction: BALL_FRICTION,
       frictionStatic: BALL_FRICTION_STATIC,
       restitution: BALL_RESTITUTION,
@@ -192,7 +218,18 @@ export function createBall(id: number, spec: BallSpec): Ball {
     },
     BALL_HULL_SIDES,
   );
-  const ball = new Ball(id, spec.tier, spec.size, body, radius, spec.landedMs ?? -1);
+  const golden = kind === 'cat' && (spec.golden ?? false);
+  const ball = new Ball(
+    id,
+    spec.tier,
+    spec.size,
+    body,
+    radius,
+    spec.landedMs ?? -1,
+    kind,
+    golden,
+    hits,
+  );
   (body.plugin as { circle?: Ball }).circle = ball;
   setCircleMass(body, spec.size, radius);
   if (spec.vx || spec.vy) {
@@ -205,7 +242,7 @@ export function createBall(id: number, spec: BallSpec): Ball {
   return ball;
 }
 
-/** The cat a matter-js body belongs to, if any. */
+/** The ball a matter-js body belongs to, if any. */
 export function ballOf(body: Matter.Body): Ball | undefined {
   return (body.plugin as { circle?: Ball } | undefined)?.circle;
 }

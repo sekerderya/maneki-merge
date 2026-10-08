@@ -13,10 +13,13 @@ import {
 const RIM = -870;
 let nextId = 1;
 
-function cat(tier: number, y: number, landedMs = 0): BallView {
+function cat(tier: number, y: number, landedMs = 0, kind: BallView['kind'] = 'cat'): BallView {
   return {
     id: nextId++,
+    kind,
     tier,
+    golden: false,
+    hitsLeft: kind === 'boulder' ? 1 : 0,
     size: tier,
     x: 0,
     y,
@@ -129,5 +132,13 @@ describe('Lucky Save victims (GAME_DESIGN §6)', () => {
     expect(luckySaveVictims(cats, RIM, 1)).toEqual([cats[1]]);
     expect(luckySaveVictims(cats, RIM)).toEqual(cats);
     expect(luckySaveVictims([], RIM)).toEqual([]);
+  });
+
+  it('pops boulders over the line but never counts them among the smallest (GAME_DESIGN §15.3)', () => {
+    const over = cat(2, RIM, 0, 'boulder');
+    const low = cat(1, -100, 0, 'boulder');
+    const cats = [over, low, cat(3, -100), cat(4, -100)];
+    expect(luckySaveVictims(cats, RIM, 1)).toEqual([over, cats[2]]);
+    expect(luckySaveVictims(cats, RIM)).not.toContain(low);
   });
 });

@@ -2,7 +2,9 @@
  * Typed event bus. The run emits, and the presentation layers (HUD, FX, audio, haptics, save)
  * listen; `game` and `ui` only talk to each other through it (TECH_SPEC §3).
  */
+import type { PickId, PickKind } from '../config/picks';
 import type { UpgradeId } from '../config/upgrades';
+import type { DropKind } from './dropQueue';
 
 export type Handler<P> = (payload: P) => void;
 
@@ -69,9 +71,38 @@ export interface WorldPoint {
  */
 export interface GameEvents {
   runStarted: { readonly seed: number; readonly stage: number };
-  catDropped: { readonly tier: number; readonly x: number };
-  /** The cooldown is over and the dropper holds the next cat (also after an expansion). */
-  dropReady: { readonly tier: number };
+  /** A cat or a boulder left the dropper. */
+  catDropped: {
+    readonly kind: 'cat' | 'boulder';
+    readonly tier: number;
+    readonly golden: boolean;
+    readonly x: number;
+  };
+  /**
+   * The cooldown is over and the dropper holds the next ball (also after an expansion, and after a
+   * magnet took a ball): a cat or a boulder to drop, or a magnet to use.
+   */
+  dropReady: { readonly kind: DropKind; readonly tier: number };
+  /** The magnet took a ball out of the jar (GAME_DESIGN §15.2): it is now in the dropper. */
+  ballTaken: {
+    readonly id: number;
+    readonly kind: 'cat' | 'boulder';
+    readonly tier: number;
+    readonly golden: boolean;
+    readonly at: WorldPoint;
+  };
+  /** A merge next to a boulder knocked a band off; it breaks after `hitsLeft` more. */
+  boulderHit: { readonly id: number; readonly hitsLeft: number; readonly at: WorldPoint };
+  /**
+   * A boulder crumbled: its last hit, or it went with a stage clear's pops or a Lucky Save. It
+   * pays nothing.
+   */
+  boulderBroken: {
+    readonly id: number;
+    readonly tier: number;
+    readonly at: WorldPoint;
+    readonly reason: 'hits' | 'cashOut' | 'luckySave';
+  };
   merged: {
     /** The new cat's id (BallView.id), so the scene can pop its sprite. */
     readonly id: number;
@@ -129,6 +160,13 @@ export interface GameEvents {
   expansionRevealed: { readonly stage: number; readonly newTiers: readonly number[] };
   expansionFinished: { readonly stage: number; readonly newTiers: readonly number[] };
   luckySave: { readonly savesLeft: number };
+  /**
+   * A stage clear's pick (GAME_DESIGN §15.5): the run waits (state `choosing`) until one of
+   * `options` is chosen. A trial comes first, then a blessing.
+   */
+  pickOffered: { readonly kind: PickKind; readonly options: readonly PickId[] };
+  /** An option was chosen: its level for the rest of the run is now `level`. */
+  pickChosen: { readonly kind: PickKind; readonly id: PickId; readonly level: number };
   paused: Record<string, never>;
   resumed: Record<string, never>;
   gameOver: {

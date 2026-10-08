@@ -74,9 +74,10 @@ export class DangerMonitor {
 }
 
 /**
- * The cats a Lucky Save pops (GAME_DESIGN §6): every landed cat over the line, plus the `count`
- * smallest of the other landed cats (smaller tier first, then older first). A cat still falling
- * from the dropper is left alone. Returned oldest first.
+ * The balls a Lucky Save pops (GAME_DESIGN §6): every landed ball over the line (boulders too,
+ * §15.3), plus the `count` smallest of the other landed cats (smaller tier first, then older
+ * first; boulders don't count among them). A ball still falling from the dropper is left alone.
+ * Returned oldest first.
  */
 export function luckySaveVictims<T extends BallView>(
   cats: readonly T[],
@@ -87,7 +88,8 @@ export function luckySaveVictims<T extends BallView>(
   const rest: T[] = [];
   for (const cat of cats) {
     if (cat.landedMs < 0) continue;
-    (isOverLine(cat, rimY) ? over : rest).push(cat);
+    if (isOverLine(cat, rimY)) over.push(cat);
+    else if (cat.kind === 'cat') rest.push(cat);
   }
   rest.sort((a, b) => a.tier - b.tier || a.id - b.id);
   const victims = over.concat(rest.slice(0, count));

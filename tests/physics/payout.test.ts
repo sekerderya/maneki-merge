@@ -88,6 +88,8 @@ describe('payout pipeline (GAME_DESIGN §5, §9)', () => {
     run.spawnBall(9, 0, -137);
     run.spawnBall(9, 0, -410);
     run.tick();
+    // The stage clear's picks wait for a choice; then the instant expansion runs.
+    while (run.state === 'choosing') run.choose(run.pickOffer!.options[0]!);
     expect(run.stage).toBe(2);
     // The merge: 70 × 1.3 = 91. Then each cat pays its value, half of C(t), oldest
     // first: 1 → 0.5 × 1.3 = 0.65 → 1; 1 → 1; 2 → 1 × 1.3 = 1.3 → 1.

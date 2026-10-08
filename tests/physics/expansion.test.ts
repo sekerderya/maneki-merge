@@ -12,7 +12,15 @@ import type { BallView } from '../../src/physics/balls';
 import { FixedStepper } from '../../src/physics/PhysicsWorld';
 import { RunController } from '../../src/run/RunController';
 import type { RunOptions } from '../../src/run/RunController';
-import { inJar, maxWallPenetration, STEPS_PER_SECOND, upgrades } from './fixtures';
+import {
+  botMove,
+  inJar,
+  maxWallPenetration,
+  replayInput,
+  STEPS_PER_SECOND,
+  upgrades,
+} from './fixtures';
+import type { PlayInput } from './fixtures';
 
 const EXPANSION_STEPS = stepsFor(EXPANSION_DURATION_MS);
 
@@ -49,11 +57,18 @@ function ticks(run: RunController, n: number): void {
   for (let i = 0; i < n; i++) run.tick();
 }
 
-/** Ticks until the run plays again at `stage` (the timed expansions in between included). */
+/** One tick, or, while a stage clear's pick waits, its first option (GAME_DESIGN §15.5). */
+function step(run: RunController): void {
+  const offer = run.pickOffer;
+  if (run.state === 'choosing' && offer) run.choose(offer.options[0]!);
+  else run.tick();
+}
+
+/** Ticks until the run plays again at `stage` (the timed expansions and picks included). */
 function playUntilStage(run: RunController, stage: number): void {
   for (let i = 0; i < 20 * EXPANSION_STEPS; i++) {
     if (run.stage === stage && run.state === 'playing') return;
-    run.tick();
+    step(run);
   }
   throw new Error(`Never reached stage ${stage}`);
 }
@@ -123,7 +138,7 @@ describe('clearing stages under a pile (GAME_DESIGN §7.1)', () => {
       const last = run.balls[0]!;
       expect(last.tier).toBe(stageInfo(run.stage).lastTier);
       while (run.expansion?.phase === 'clear') {
-        run.tick();
+        step(run);
         checkTick();
       }
       const before = [last.x, last.y];
@@ -256,8 +271,9 @@ describe('time stop (GAME_DESIGN §7.1)', () => {
     const { run } = setup();
     makeLastCat(run);
     expect(run.combo).toBe(1);
-    while (run.expansion?.phase === 'clear') run.tick();
-    // The clear took 0.5 s of the 1 s combo window; the rest waits for the zoom and reveal.
+    while (run.expansion?.phase === 'clear') step(run);
+    // The clear took 0.5 s of the 1 s combo window; the rest waits for the picks, the zoom and the
+    // reveal.
     const playTime = run.playTimeMs;
     expect(run.combo).toBe(1);
     playUntilStage(run, 2);
@@ -295,8 +311,8 @@ describe('every stage: Jackpots and drop pools (GAME_DESIGN §5, §7, §8)', () 
     ticks(run, 2 * STEPS_PER_SECOND);
     const aim = new Rng(stage);
     for (let i = 0; i < 25 && run.state === 'playing'; i++) {
-      while (!run.canDrop && run.state === 'playing') run.tick();
-      run.drop((aim.next() * 2 - 1) * run.geometry.halfWidth);
+      while (!run.canDrop && !run.canTake && run.state === 'playing') run.tick();
+      botMove(run, (aim.next() * 2 - 1) * run.geometry.halfWidth);
     }
     const dropped = of('catDropped').map((d) => d.tier);
     expect(dropped.length).toBeGreaterThan(10);
@@ -333,11 +349,13 @@ describe('render interpolation', () => {
 describe('determinism through every expansion', () => {
   interface Input {
     readonly tick: number;
-    readonly x: number | 'jump';
+    readonly input: PlayInput | 'jump';
   }
 
   function record(seed: number): { inputs: Input[]; hashes: string[] } {
     const run = new RunController({ seed, upgrades: upgrades({ comboCharm: 3 }) });
+    run.setPickLevel('moreMagnets', 5);
+    run.setPickLevel('moreBoulders', 5);
     const frames = new Rng(seed * 7 + 1);
     const aim = new Rng(seed + 5);
     const inputs: Input[] = [];
@@ -348,12 +366,10 @@ describe('determinism through every expansion', () => {
       if (!jumped && run.ticks >= 3 * STEPS_PER_SECOND && run.state === 'playing') {
         jumped = true;
         run.jumpToStage(5);
-        inputs.push({ tick: run.ticks, x: 'jump' });
+        inputs.push({ tick: run.ticks, input: 'jump' });
       }
-      if (run.canDrop) {
-        const x = (aim.next() * 2 - 1) * run.geometry.halfWidth;
-        if (run.drop(x)) inputs.push({ tick: run.ticks, x });
-      }
+      const move = botMove(run, (aim.next() * 2 - 1) * run.geometry.halfWidth, aim.next());
+      if (move) inputs.push({ tick: run.ticks, input: move });
       run.update(3 + frames.next() * 30);
       if (run.ticks >= next) {
         hashes.push(`${run.ticks}:${run.stateHash()}`);
@@ -368,13 +384,15 @@ describe('determinism through every expansion', () => {
     const recorded = record(8);
     const checks = recorded.hashes.map((h) => Number(h.split(':')[0]));
     const run = new RunController({ seed: 8, upgrades: upgrades({ comboCharm: 3 }) });
+    run.setPickLevel('moreMagnets', 5);
+    run.setPickLevel('moreBoulders', 5);
     const hashes: string[] = [];
     let i = 0;
     while (run.ticks < Math.max(...checks)) {
       while (i < recorded.inputs.length && recorded.inputs[i]!.tick === run.ticks) {
-        const input = recorded.inputs[i++]!;
-        if (input.x === 'jump') run.jumpToStage(5);
-        else expect(run.drop(input.x)).toBe(true);
+        const { input } = recorded.inputs[i++]!;
+        if (input === 'jump') run.jumpToStage(5);
+        else expect(replayInput(run, input)).toBe(true);
       }
       run.tick();
       if (checks.includes(run.ticks)) hashes.push(`${run.ticks}:${run.stateHash()}`);

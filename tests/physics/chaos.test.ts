@@ -5,7 +5,7 @@ import type { GameEvents } from '../../src/core/events';
 import { Rng } from '../../src/core/rng';
 import type { UpgradeLevels } from '../../src/core/upgrades';
 import { RunController } from '../../src/run/RunController';
-import { inJar, STEPS_PER_SECOND, upgrades } from './fixtures';
+import { botMove, inJar, STEPS_PER_SECOND, upgrades } from './fixtures';
 
 interface Scenario {
   readonly name: string;
@@ -37,8 +37,10 @@ const SCENARIOS: readonly Scenario[] = [
 ];
 
 /**
- * A bot drops every cat the moment it can, at a random x (and, in one scenario, clears the stage
- * now and then with the debug jump). On every tick the physics invariants hold (nothing escapes,
+ * A bot drops every cat or boulder the moment it can, at a random x, uses every magnet on a random
+ * ball and takes the first option of every pick (and, in one scenario, clears the stage now and
+ * then with the debug jump). Trials and blessings are raised so boulders, magnets and golden cats
+ * come often. On every tick the physics invariants hold (nothing escapes,
  * nothing beats the speed limit), and at the end the events add up to the run's totals.
  *
  * "Escapes": a cat squeezed against a wall by a newly merged neighbour can be pushed a little way
@@ -52,12 +54,26 @@ describe('chaos runs', () => {
     '$name',
     ({ seed, levels, maxSeconds, clearEverySeconds }) => {
       const events = new EventBus<GameEvents>();
-      const totals = { score: 0, coins: 0, banked: 0, drops: 0, merges: 0, jackpots: 0, pops: 0 };
+      const totals = {
+        score: 0,
+        coins: 0,
+        banked: 0,
+        drops: 0,
+        merges: 0,
+        jackpots: 0,
+        pops: 0,
+        takes: 0,
+        broken: 0,
+        golden: 0,
+      };
       let expansions = 0;
       let saves = 0;
       events.on('catDropped', () => totals.drops++);
+      events.on('ballTaken', () => totals.takes++);
+      events.on('boulderBroken', () => totals.broken++);
       events.on('merged', (p) => {
         totals.merges++;
+        if (p.golden) totals.golden++;
         totals.score += p.score;
         totals.coins += p.coins;
       });
@@ -78,6 +94,10 @@ describe('chaos runs', () => {
         upgrades: levels,
         bank: (coins) => (totals.banked += coins),
       });
+      run.setPickLevel('moreMagnets', 2);
+      run.setPickLevel('moreBoulders', 2);
+      run.setPickLevel('ironBands', 1);
+      run.setPickLevel('goldenCats', 3);
 
       const aim = new Rng(seed * 31 + 7);
       /** Each debug clear puts the stage's last cat into the jar. */
@@ -85,7 +105,10 @@ describe('chaos runs', () => {
       /** Cats whose centre was outside the jar after the previous tick. */
       let poking = new Set<number>();
       for (let tick = 0; tick < maxSeconds * STEPS_PER_SECOND && run.state !== 'over'; tick++) {
-        if (run.canDrop) run.drop((aim.next() * 2 - 1) * run.geometry.halfWidth);
+        // Picks may follow each other before time moves on.
+        while (botMove(run, (aim.next() * 2 - 1) * run.geometry.halfWidth, aim.next())) {
+          if (run.state !== 'choosing') break;
+        }
         const every = clearEverySeconds ? clearEverySeconds * STEPS_PER_SECOND : 0;
         if (every && tick % every === every - 1 && run.state === 'playing' && run.stage < 5) {
           run.jumpToStage(run.stage + 1);
@@ -113,9 +136,17 @@ describe('chaos runs', () => {
       expect(totals.coins).toBe(run.coins);
       expect(totals.banked).toBe(run.coins);
       expect(run.balls).toHaveLength(
-        totals.drops + spawned - totals.merges - 2 * totals.jackpots - totals.pops,
+        totals.drops +
+          spawned -
+          totals.merges -
+          2 * totals.jackpots -
+          totals.pops -
+          totals.takes -
+          totals.broken,
       );
       expect(totals.merges).toBeGreaterThan(50);
+      expect(totals.takes).toBeGreaterThan(0);
+      expect(totals.golden).toBeGreaterThan(0);
       if (clearEverySeconds) expect(expansions).toBe(4);
       if (levels.secondChance > 0) {
         expect(saves).toBe(levels.secondChance);

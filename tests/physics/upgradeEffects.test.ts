@@ -27,14 +27,26 @@ function runAfterBuying(id: UpgradeId, level: number, instantExpansion = false):
   return startProfileRun(profile, { seed: SEED, instantExpansion });
 }
 
-/** The first `count` cats the dropper hands out, dropped across the jar one by one. */
+/**
+ * The first `count` balls the dropper hands out, dropped across the jar one by one. A magnet
+ * (GAME_DESIGN §15.2) takes the oldest ball and drops it again, so the queue moves on as in play;
+ * that re-drop isn't counted.
+ */
 function drops(run: RunController, count: number): Drop[] {
   const out: Drop[] = [];
   const span = run.geometry.halfWidth * 0.8;
+  const wait = (): void => {
+    for (let t = 0; t <= stepsFor(DROP_COOLDOWN_MS); t++) run.tick();
+  };
   for (let i = 0; i < count; i++) {
     out.push(run.current);
+    if (run.current.kind === 'magnet') {
+      const ball = run.balls.find((b) => run.takeable(b));
+      expect(run.take(ball!.id)).toBe(true);
+      wait();
+    }
     expect(run.drop(((i % 7) / 3 - 1) * span)).toBe(true);
-    for (let t = 0; t <= stepsFor(DROP_COOLDOWN_MS); t++) run.tick();
+    wait();
   }
   return out;
 }

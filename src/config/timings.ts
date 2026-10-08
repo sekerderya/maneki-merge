@@ -27,3 +27,9 @@ export const EXPANSION_CLEAR_MS = 500;
 export const EXPANSION_ZOOM_MS = 1200;
 export const EXPANSION_REVEAL_MS = 400;
 export const EXPANSION_DURATION_MS = EXPANSION_CLEAR_MS + EXPANSION_ZOOM_MS + EXPANSION_REVEAL_MS;
+
+/**
+ * The magnet's catch (GAME_DESIGN §15.2): the taken ball flies up into the paw, and can be dropped
+ * this long after.
+ */
+export const MAGNET_TAKE_MS = 250;

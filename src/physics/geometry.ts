@@ -6,6 +6,7 @@
  */
 import { clamp } from '../core/math';
 import {
+  DROP_SIZES,
   DROPPER_HEADROOM_RATIO,
   JAR_CORNER_RADIUS,
   JAR_HEIGHT,
@@ -13,6 +14,7 @@ import {
   stageInfo,
   STAGES,
 } from '../config/stages';
+import { sizeRadius } from '../config/tiers';
 
 export interface JarGeometry {
   readonly stage: number;
@@ -47,6 +49,18 @@ const GEOMETRY: readonly JarGeometry[] = STAGES.map(({ stage }) =>
 export function jarGeometry(stage: number): JarGeometry {
   stageInfo(stage); // throws for an unknown stage
   return GEOMETRY[stage - 1] as JarGeometry;
+}
+
+/** The biggest drop's radius (size 4): the dropper band above the rim is sized for it. */
+export const MAX_DROP_RADIUS = sizeRadius(DROP_SIZES);
+
+/**
+ * Where a dropped ball of `radius` starts: the middle of the dropper band, or, for a ball bigger
+ * than the biggest drop (one a magnet took out of the jar, GAME_DESIGN §15.2), higher, with its
+ * bottom where the biggest drop's bottom would be.
+ */
+export function dropStartY(radius: number, geometry: JarGeometry): number {
+  return geometry.dropY + Math.min(0, MAX_DROP_RADIUS - radius);
 }
 
 /** Keeps a cat of `radius` centred at `x` inside the jar walls. `x` must be finite. */

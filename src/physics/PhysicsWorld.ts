@@ -120,8 +120,14 @@ export class PhysicsWorld {
   /**
    * Same-tier cats that touched during the last step, as a flat list: pair i is
    * [2i] and [2i + 1]. matter-js keeps one pair per two bodies, so there are no duplicates.
+   * Boulders never merge, so they are never in it.
    */
   readonly sameTierContacts: Ball[] = [];
+  /**
+   * Cats touching boulders during the last step, as a flat list: pair i is the cat [2i] and the
+   * boulder [2i + 1] (a merge of that cat hits the boulder, GAME_DESIGN §15.3).
+   */
+  readonly boulderContacts: Ball[] = [];
 
   private readonly engine: Matter.Engine;
   private readonly list: Ball[] = [];
@@ -194,7 +200,7 @@ export class PhysicsWorld {
     Matter.Composite.add(this.engine.world, [floor, this.leftWall, this.rightWall]);
   }
 
-  /** Every cat in the world, oldest first. */
+  /** Every ball in the world (cats and boulders), oldest first. */
   get balls(): readonly Ball[] {
     return this.list;
   }
@@ -326,7 +332,8 @@ export class PhysicsWorld {
     for (const ball of this.list) {
       const { position, angle } = ball.body;
       const { positionPrev, anglePrev } = ball.body as unknown as VerletBody;
-      hasher.number(ball.id).number(ball.tier);
+      hasher.number(ball.id).string(ball.kind).number(ball.tier);
+      hasher.bool(ball.golden).number(ball.hitsLeft);
       hasher.number(position.x).number(position.y);
       hasher.number(positionPrev.x).number(positionPrev.y);
       hasher.number(angle).number(anglePrev);
@@ -342,6 +349,8 @@ export class PhysicsWorld {
     const now = this.timeMs;
     const contacts = this.sameTierContacts;
     contacts.length = 0;
+    const boulders = this.boulderContacts;
+    boulders.length = 0;
     for (const ball of this.list) {
       ball.touchesCat = false;
       ball.touchesFloor = false;
@@ -359,7 +368,13 @@ export class PhysicsWorld {
       }
       a.touchesCat = true;
       b.touchesCat = true;
-      if (a.tier === b.tier) contacts.push(a, b);
+      if (a.kind === 'cat' && b.kind === 'cat') {
+        if (a.tier === b.tier) contacts.push(a, b);
+      } else if (a.kind === 'cat') {
+        boulders.push(a, b);
+      } else if (b.kind === 'cat') {
+        boulders.push(b, a);
+      }
       if (a.growing) b.touchesGrowth = true;
       if (b.growing) a.touchesGrowth = true;
     }

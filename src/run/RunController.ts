@@ -1,18 +1,21 @@
 /**
  * One run, headless (TECH_SPEC §3–§5): dropping cats, the cooldown and queue, merges and their
- * payouts, the combo timer, stage clears and the expansion timeline, the
- * danger line, Lucky Saves and game over. The game scene renders it and forwards input; the HUD,
- * FX, audio and save listen to its events.
+ * payouts, the combo timer, stage clears and the expansion timeline, the danger line, Lucky Saves
+ * and game over; and the special balls, trials and blessings of GAME_DESIGN §15 (magnets taking a
+ * ball out of the jar, boulders breaking, golden cats, the picks at every stage clear). The game
+ * scene renders it and forwards input; the HUD, FX, audio and save listen to its events.
  *
  * Time comes in fixed ticks of PHYSICS_STEP_MS. `update(frameMs)` only decides how many ticks a
  * frame runs, and every timer counts ticks, so a run is a pure function of its seed and of the
  * tick at which each input arrives: the same inputs replay the same run at any frame rate.
  *
- * Tick pipeline while playing: physics step → merges (payouts and events, oldest first) → combo
- * expiry → stage clear → drop ready → danger. The stage clear goes first, so making the stage's
- * last cat saves the jar even on the step the danger timer would run out.
+ * Tick pipeline while playing: physics step → merges (payouts and events, oldest first) → boulder
+ * hits → combo expiry → stage clear → drop ready → danger. The stage clear goes first, so making
+ * the stage's last cat saves the jar even on the step the danger timer would run out.
  */
 import { PHYSICS_STEP_MS, stepsFor } from '../config/physics';
+import { MAGNET_SIZE, PICK_ORDER, PICKS } from '../config/picks';
+import type { PickId, PickKind } from '../config/picks';
 import { catRadius, STAGE_COUNT, stageHoldsTier, stageInfo } from '../config/stages';
 import {
   DROP_COOLDOWN_MS,
@@ -20,26 +23,36 @@ import {
   EXPANSION_DURATION_MS,
   EXPANSION_ZOOM_MS,
   LUCKY_SAVE_GRACE_MS,
+  MAGNET_TAKE_MS,
 } from '../config/timings';
-import type { Drop } from '../core/dropQueue';
+import type { Drop, DropOdds } from '../core/dropQueue';
 import { DropQueue } from '../core/dropQueue';
 import { RunEconomy } from '../core/economy';
 import { EventBus } from '../core/events';
 import type { GameEvents } from '../core/events';
 import { StateHasher } from '../core/hash';
+import { defaultPickLevels, drawOffer, dropOdds } from '../core/picks';
+import type { PickLevels } from '../core/picks';
 import { nextStage, stageProgress } from '../core/progression';
 import type { StageProgress } from '../core/progression';
 import { Rng } from '../core/rng';
 import { defaultUpgradeLevels, deriveStats } from '../core/upgrades';
 import type { DerivedStats, UpgradeLevels } from '../core/upgrades';
-import type { Ball, BallView } from '../physics/balls';
+import type { Ball, BallKind, BallView } from '../physics/balls';
 import { DangerMonitor, luckySaveVictims } from '../physics/danger';
-import { clampDropX } from '../physics/geometry';
+import { clampDropX, dropStartY } from '../physics/geometry';
 import type { JarGeometry } from '../physics/geometry';
 import { MergeResolver } from '../physics/merges';
 import { FixedStepper, PhysicsWorld } from '../physics/PhysicsWorld';
 
-export type RunState = 'playing' | 'paused' | 'expanding' | 'over';
+/** `choosing`: a stage clear's pick waits for `choose` (GAME_DESIGN §15.5); time stands still. */
+export type RunState = 'playing' | 'paused' | 'expanding' | 'choosing' | 'over';
+
+/** A stage clear's pick: the options on its cards. */
+export interface PickOffer {
+  readonly kind: PickKind;
+  readonly options: readonly PickId[];
+}
 
 export interface RunOptions {
   readonly seed: number;
@@ -49,15 +62,26 @@ export interface RunOptions {
   readonly events?: EventBus<GameEvents>;
   /** Receives every payout before its event fires (M7 puts the coins in the wallet). */
   readonly bank?: (coins: number) => void;
-  /** Runs each whole expansion sequence inside one tick (tests, balance simulator). */
+  /**
+   * Runs each whole expansion sequence inside one tick (tests, balance simulator), up to a pick:
+   * after the last `choose` the rest runs at once too.
+   */
   readonly instantExpansion?: boolean;
+}
+
+/** Debug and test balls (`spawnBall`): a cat by default. */
+export interface SpawnOptions {
+  readonly kind?: BallKind;
+  readonly golden?: boolean;
+  /** A boulder's merges to break (1 by default). */
+  readonly hits?: number;
 }
 
 /**
  * The expansion sequence (GAME_DESIGN §7.1). `clear`: the other cats have popped and the last cat
- * settles while the jar holds still; `zoom`: time stops and the camera zooms out while the jar
- * grows; `reveal`: the world is the new stage's ("New cats unlocked!"). The scene derives camera
- * and jar visuals from it.
+ * settles while the jar holds still (the picks come at its end); `zoom`: time stops and the camera
+ * zooms out while the jar grows; `reveal`: the world is the new stage's ("New cats unlocked!").
+ * The scene derives camera and jar visuals from it.
  */
 export interface ExpansionView {
   readonly from: number;
@@ -73,6 +97,8 @@ export interface ExpansionView {
 interface Expansion {
   from: number;
   to: number;
+  /** The picks come between the clear and the zoom (a debug jump skips them). */
+  picks: boolean;
   elapsedSteps: number;
   elapsedMs: number;
   progress: number;
@@ -84,6 +110,13 @@ const COOLDOWN_STEPS = stepsFor(DROP_COOLDOWN_MS);
 const CLEAR_STEPS = stepsFor(EXPANSION_CLEAR_MS);
 const ZOOM_STEPS = stepsFor(EXPANSION_ZOOM_MS);
 const EXPANSION_STEPS = stepsFor(EXPANSION_DURATION_MS);
+const TAKE_STEPS = stepsFor(MAGNET_TAKE_MS);
+/**
+ * The special balls' rolls and the picks' draws use their own generators, seeded from the run seed
+ * with these salts, so the tiers a seed drops never depend on the picks.
+ */
+const SPECIAL_SEED_SALT = 0x9e3779b9;
+const PICK_SEED_SALT = 0x7f4a7c15;
 
 export class RunController {
   readonly events: EventBus<GameEvents>;
@@ -92,6 +125,10 @@ export class RunController {
 
   private readonly world: PhysicsWorld;
   private readonly rng: Rng;
+  /** Rolls each queued item's kind and golden (always two draws, whatever the chances). */
+  private readonly specialRng: Rng;
+  /** Draws the stage clears' cards. */
+  private readonly pickRng: Rng;
   private readonly queue: DropQueue;
   private readonly economy: RunEconomy;
   private readonly merges = new MergeResolver();
@@ -116,6 +153,11 @@ export class RunController {
   private expansionState: Expansion | null = null;
   /** Debug only (`jumpToStage`): the stage the jump keeps clearing towards. */
   private debugTargetStage = 0;
+  /** The trials' and blessings' levels this run (GAME_DESIGN §15). */
+  private readonly levels = defaultPickLevels();
+  /** The pick waiting for `choose`, and the kinds still to come at this clear. */
+  private offer: PickOffer | null = null;
+  private pickQueue: PickKind[] = [];
 
   constructor(options: RunOptions) {
     if (!Number.isFinite(options.seed)) throw new RangeError(`Invalid seed: ${options.seed}`);
@@ -127,10 +169,13 @@ export class RunController {
     this.savesLeft = this.stats.luckySaves;
     this.world = new PhysicsWorld();
     this.rng = new Rng(options.seed);
+    this.specialRng = new Rng((Math.trunc(options.seed) ^ SPECIAL_SEED_SALT) >>> 0);
+    this.pickRng = new Rng((Math.trunc(options.seed) ^ PICK_SEED_SALT) >>> 0);
     this.queue = new DropQueue({
       rng: this.rng,
+      specialRng: this.specialRng,
       stage: this.world.stage,
-      bigCatchLevel: this.stats.bigCatchLevel,
+      odds: this.odds(),
     });
     this.economy = new RunEconomy(this.stats);
     this.events.emit('runStarted', { seed: this.seed, stage: this.world.stage });
@@ -151,7 +196,7 @@ export class RunController {
     return this.world.geometry;
   }
 
-  /** Every cat in the jar, oldest first. */
+  /** Every ball in the jar (cats and boulders), oldest first. */
   get balls(): readonly BallView[] {
     return this.world.balls;
   }
@@ -185,18 +230,24 @@ export class RunController {
     return this.tickCount;
   }
 
-  /** The cat in the dropper. */
+  /** The ball in the dropper: a cat or a boulder to drop, or a magnet to use. */
   get current(): Drop {
     return this.queue.current;
   }
 
-  /** The cat after the one in the dropper (the HUD's "Next"). */
+  /** The ball after the one in the dropper (the HUD's "Next"). */
   get next(): Drop {
     return this.queue.next;
   }
 
+  /** The dropper holds a cat or a boulder and the cooldown is over. */
   get canDrop(): boolean {
-    return this.runState === 'playing' && this.world.steps >= this.dropAllowedAt;
+    return this.ready && this.queue.current.kind !== 'magnet';
+  }
+
+  /** The dropper holds a magnet and the cooldown is over: `take` works. */
+  get canTake(): boolean {
+    return this.ready && this.queue.current.kind === 'magnet';
   }
 
   get cooldownRemainingMs(): number {
@@ -216,16 +267,33 @@ export class RunController {
     return this.savesLeft;
   }
 
+  /** The pick waiting for `choose`, or null. */
+  get pickOffer(): PickOffer | null {
+    return this.offer;
+  }
+
+  /** The trials' and blessings' levels this run. */
+  get pickLevels(): PickLevels {
+    return { ...this.levels };
+  }
+
   /** The HUD's progress bar: the biggest cat in the jar against the stage's last cat. */
   get progress(): StageProgress {
     let biggest = 0;
-    for (const cat of this.world.balls) biggest = Math.max(biggest, cat.tier);
+    for (const ball of this.world.balls) {
+      if (ball.kind === 'cat') biggest = Math.max(biggest, ball.tier);
+    }
     return stageProgress(biggest, this.world.stage);
   }
 
-  /** The radius of a `tier` cat at the current stage, in world units. */
+  /** The radius of a `tier` ball at the current stage, in world units. */
   radiusOf(tier: number): number {
     return catRadius(tier, this.world.stage);
+  }
+
+  /** Whether the magnet can take this ball: any ball that has landed (GAME_DESIGN §15.2). */
+  takeable(ball: BallView): boolean {
+    return ball.landedMs >= 0;
   }
 
   /** The running expansion sequence, or null. */
@@ -241,26 +309,83 @@ export class RunController {
     return this.stepper.alpha;
   }
 
+  /** The dropper's cooldown is over while playing (whatever it holds). */
+  private get ready(): boolean {
+    return this.runState === 'playing' && this.world.steps >= this.dropAllowedAt;
+  }
+
+  /** Time runs while playing or expanding; a pause, a pick and game over stop it. */
+  private get ticking(): boolean {
+    return this.runState === 'playing' || this.runState === 'expanding';
+  }
+
   // ── Input ──────────────────────────────────────────────────────────────────
 
   /**
-   * Drops the cat in the dropper at `x` (clamped so it starts inside the jar). Ignored, and
-   * returns false, during the cooldown, a pause, an expansion or after game over.
+   * Drops the cat or boulder in the dropper at `x` (clamped so it starts inside the jar; a ball
+   * bigger than the biggest drop starts higher, `dropStartY`). Ignored, and returns false, while
+   * the dropper holds a magnet, during the cooldown, a pause, an expansion or a pick, or after game
+   * over.
    */
   drop(x: number): boolean {
     if (!this.canDrop || !Number.isFinite(x)) return false;
-    const cat = this.queue.take();
+    const item = this.queue.take();
     const geo = this.world.geometry;
-    const at = clampDropX(x, this.radiusOf(cat.tier), geo);
-    this.world.addBall({ tier: cat.tier, x: at, y: geo.dropY });
+    const radius = this.radiusOf(item.tier);
+    const at = clampDropX(x, radius, geo);
+    const kind = item.kind === 'boulder' ? 'boulder' : 'cat';
+    this.world.addBall({
+      kind,
+      tier: item.tier,
+      golden: item.golden,
+      hits: item.hits,
+      x: at,
+      y: dropStartY(radius, geo),
+    });
     this.dropAllowedAt = this.world.steps + COOLDOWN_STEPS;
     this.dropAnnounced = false;
-    this.events.emit('catDropped', { tier: cat.tier, x: at });
+    this.events.emit('catDropped', { kind, tier: item.tier, golden: item.golden, x: at });
+    return true;
+  }
+
+  /**
+   * The magnet in the dropper takes the ball `id` out of the jar (GAME_DESIGN §15.2): it becomes
+   * the dropper's ball, with its tier and golden glow or, for a boulder, its size and the hits it
+   * still needs, and can be dropped MAGNET_TAKE_MS later. NEXT stays. Returns false when the
+   * dropper holds no ready magnet, or the ball isn't in the jar or hasn't landed.
+   */
+  take(id: number): boolean {
+    if (!this.canTake) return false;
+    const ball = this.world.balls.find((b) => b.id === id);
+    if (!ball || !this.takeable(ball)) return false;
+    const at = { x: ball.x, y: ball.y };
+    this.world.removeBall(ball);
+    const { kind, tier, golden, hitsLeft } = ball;
+    this.queue.replaceCurrent({ kind, tier, golden, hits: hitsLeft });
+    this.dropAllowedAt = this.world.steps + TAKE_STEPS;
+    this.dropAnnounced = false;
+    this.events.emit('ballTaken', { id, kind, tier, golden, at });
+    return true;
+  }
+
+  /**
+   * Chooses one of the waiting pick's options (GAME_DESIGN §15.5): its level goes up for the rest
+   * of the run and applies to the balls queued from now on. The next pick follows, then the zoom
+   * (at the last stage: play). Returns false when no pick waits or `id` isn't one of its options.
+   */
+  choose(id: PickId): boolean {
+    const offer = this.offer;
+    if (this.runState !== 'choosing' || !offer || !offer.options.includes(id)) return false;
+    this.levels[id]++;
+    this.offer = null;
+    this.queue.setOdds(this.odds());
+    this.events.emit('pickChosen', { kind: offer.kind, id, level: this.levels[id] });
+    if (!this.offerNextPick()) this.afterPicks();
     return true;
   }
 
   pause(): void {
-    if (this.runState !== 'playing' && this.runState !== 'expanding') return;
+    if (!this.ticking && this.runState !== 'choosing') return;
     this.resumeTo = this.runState;
     this.runState = 'paused';
     this.events.emit('paused', {});
@@ -275,13 +400,13 @@ export class RunController {
 
   /** Runs as many fixed ticks as the frame's time covers (at most PHYSICS_MAX_SUBSTEPS). */
   update(frameMs: number): void {
-    if (this.runState === 'paused' || this.runState === 'over') return;
+    if (!this.ticking) return;
     this.stepper.advance(frameMs, this.tickFn);
   }
 
   /** One fixed tick. */
   tick(): void {
-    if (this.runState === 'paused' || this.runState === 'over') return;
+    if (!this.ticking) return;
     this.tickCount++;
     if (this.runState === 'expanding') this.expansionTick();
     else this.playStep();
@@ -290,16 +415,48 @@ export class RunController {
   // ── Debug and test hooks (`?debug=1`, TECH_SPEC §11) ──────────────────────
 
   /**
-   * Puts a cat into the jar, ignoring the queue and the cooldown. The current stage must hold its
-   * tier (its first to its last tier).
+   * Puts a ball into the jar, ignoring the queue and the cooldown: a cat (golden if asked) or a
+   * boulder. The current stage must hold its tier (its first to its last tier).
    */
-  spawnBall(tier: number, x: number, y?: number): BallView {
+  spawnBall(tier: number, x: number, y?: number, options: SpawnOptions = {}): BallView {
     if (!stageHoldsTier(this.world.stage, tier)) {
       throw new RangeError(`Stage ${this.world.stage} can't hold tier ${tier}`);
     }
     const geo = this.world.geometry;
     const at = clampDropX(x, this.radiusOf(tier), geo);
-    return this.world.addBall({ tier, x: at, y: y ?? geo.dropY });
+    return this.world.addBall({ ...options, tier, x: at, y: y ?? geo.dropY });
+  }
+
+  /**
+   * Puts a magnet, a boulder (with the current trials' size and hits) or a golden cat (of the
+   * stage's smallest tier) in the dropper instead of its ball.
+   */
+  giveSpecial(kind: 'magnet' | 'boulder' | 'golden'): void {
+    if (this.runState === 'over') return;
+    const first = stageInfo(this.world.stage).firstTier;
+    const odds = this.odds();
+    this.queue.replaceCurrent(
+      kind === 'magnet'
+        ? { kind, tier: first + MAGNET_SIZE - 1, golden: false, hits: 0 }
+        : kind === 'boulder'
+          ? { kind, tier: first + odds.boulderSize - 1, golden: false, hits: odds.boulderHits }
+          : { kind: 'cat', tier: first, golden: true, hits: 0 },
+    );
+    this.dropAnnounced = false;
+    this.announceDropIfReady();
+  }
+
+  /** Sets a trial's or blessing's level (clamped to 0…max); it applies to the balls queued next. */
+  setPickLevel(id: PickId, level: number): void {
+    if (!Number.isFinite(level)) return;
+    this.levels[id] = Math.max(0, Math.min(PICKS[id].maxLevel, Math.round(level)));
+    this.queue.setOdds(this.odds());
+  }
+
+  /** Opens a stage clear's picks now, as at the last stage: play goes on after them. */
+  offerPicks(): void {
+    if (this.runState !== 'playing') return;
+    this.beginPicks();
   }
 
   /** Sets the run score (it only counts for records). */
@@ -309,8 +466,8 @@ export class RunController {
   }
 
   /**
-   * Clears the current stage as if its last cat had just been made. Each expansion then plays in
-   * turn, one stage at a time, until the run reaches `stage`.
+   * Clears the current stage as if its last cat had just been made, skipping the picks. Each
+   * expansion then plays in turn, one stage at a time, until the run reaches `stage`.
    */
   jumpToStage(stage: number): void {
     if (!Number.isInteger(stage) || stage <= this.world.stage || stage > STAGE_COUNT) return;
@@ -337,11 +494,18 @@ export class RunController {
     h.number(this.economy.score).number(this.economy.coins).number(this.economy.combo);
     h.number(this.economy.merges).number(this.economy.jackpots).number(this.economy.highestTier);
     for (const value of this.rng.state()) h.number(value);
-    h.number(this.queue.current.tier).number(this.queue.next.tier);
+    for (const value of this.specialRng.state()) h.number(value);
+    for (const value of this.pickRng.state()) h.number(value);
+    for (const item of [this.queue.current, this.queue.next]) {
+      h.string(item.kind).number(item.tier).bool(item.golden).number(item.hits);
+    }
+    for (const value of Object.values(this.levels)) h.number(value);
+    h.string(this.offer ? `${this.offer.kind}:${this.offer.options.join(',')}` : '');
+    h.string(this.pickQueue.join(','));
     h.number(this.dropAllowedAt).number(this.savesLeft).number(this.debugTargetStage);
     h.number(this.danger.remainingMs).bool(this.danger.inGrace);
     const e = this.expansionState;
-    if (e) h.number(e.from).number(e.to).number(e.elapsedSteps).string(e.phase);
+    if (e) h.number(e.from).number(e.to).bool(e.picks).number(e.elapsedSteps).string(e.phase);
     this.world.hashInto(h);
     return h.digest();
   }
@@ -360,15 +524,15 @@ export class RunController {
     for (const o of outcomes) {
       const at = { x: o.x, y: o.y };
       if (o.kind === 'merge') {
-        const p = this.economy.merge(o.tier, now);
+        const p = this.economy.merge(o.tier, now, o.newTier);
         this.bankCoins(p.coins);
         if (o.ball && o.ball.tier === last) cleared ??= o.ball;
         this.events.emit('merged', {
           id: o.ball?.id ?? -1,
           tier: o.tier,
-          newTier: o.tier + 1,
-          newSize: o.ball?.size ?? world.sizeOf(o.tier + 1),
-          golden: false,
+          newTier: o.newTier,
+          newSize: o.ball?.size ?? world.sizeOf(o.newTier),
+          golden: o.golden,
           at,
           ...p,
         });
@@ -382,6 +546,7 @@ export class RunController {
       this.events.emit('scoreChanged', { score: this.economy.score });
       this.events.emit('runCoinsChanged', { coins: this.economy.coins });
     }
+    this.hitBoulders(this.merges.hits);
     const combo = this.economy.comboAt(now);
     if (combo !== this.shownCombo) {
       this.shownCombo = combo;
@@ -396,31 +561,56 @@ export class RunController {
   }
 
   private announceDropIfReady(): void {
-    if (this.dropAnnounced || !this.canDrop) return;
+    if (this.dropAnnounced || !this.ready) return;
     this.dropAnnounced = true;
-    this.events.emit('dropReady', { tier: this.queue.current.tier });
+    const { kind, tier } = this.queue.current;
+    this.events.emit('dropReady', { kind, tier });
   }
 
   /**
-   * The stage's last cat exists (GAME_DESIGN §7): every other cat pops into its value, oldest
-   * first. Then the jar grows into the next stage; at the last stage play goes on with the last
-   * cat in the jar.
+   * Each boulder a merge hit loses a band (GAME_DESIGN §15.3); at its last hit it crumbles, paying
+   * nothing. `hits` lists a boulder once per merge that hit it.
    */
-  private clearStage(last: Ball): void {
+  private hitBoulders(hits: readonly Ball[]): void {
+    for (const boulder of hits) {
+      if (boulder.removed) continue;
+      boulder.hitsLeft--;
+      const at = { x: boulder.x, y: boulder.y };
+      if (boulder.hitsLeft > 0) {
+        this.events.emit('boulderHit', { id: boulder.id, hitsLeft: boulder.hitsLeft, at });
+        continue;
+      }
+      this.world.removeBall(boulder);
+      this.events.emit('boulderBroken', { id: boulder.id, tier: boulder.tier, at, reason: 'hits' });
+    }
+  }
+
+  /** What the queue rolls now: the stage and the picks so far. */
+  private odds(): DropOdds {
+    return dropOdds(this.levels, this.world.stage, this.stats.bigCatchLevel);
+  }
+
+  /**
+   * The stage's last cat exists (GAME_DESIGN §7): every other ball pops into its value (boulders
+   * crumble), oldest first. Then the jar grows into the next stage, with the picks before its
+   * zoom; at the last stage the picks come at once and play goes on with the last cat in the jar.
+   */
+  private clearStage(last: Ball, picks = true): void {
     const stage = this.world.stage;
     this.pop(
-      this.world.balls.filter((cat) => cat !== last),
+      this.world.balls.filter((ball) => ball !== last),
       'cashOut',
     );
     const next = nextStage(stage);
     this.events.emit('stageCleared', { stage, tier: last.tier, next: next.kind });
-    if (next.kind === 'expand') this.startExpansion(next.stage);
+    if (next.kind === 'expand') this.startExpansion(next.stage, picks);
+    else if (picks) this.beginPicks();
   }
 
-  /** Debug: puts the stage's last cat on the floor and clears the stage with it. */
+  /** Debug: puts the stage's last cat on the floor and clears the stage with it, without picks. */
   private debugClear(): void {
     const tier = stageInfo(this.world.stage).lastTier;
-    this.clearStage(this.spawnBall(tier, 0, -this.radiusOf(tier)) as Ball);
+    this.clearStage(this.spawnBall(tier, 0, -this.radiusOf(tier)) as Ball, false);
   }
 
   private updateDanger(now: number): void {
@@ -455,6 +645,7 @@ export class RunController {
   private gameOver(): void {
     this.runState = 'over';
     this.expansionState = null;
+    this.offer = null;
     this.world.pause();
     this.events.emit('gameOver', {
       score: this.economy.score,
@@ -464,17 +655,24 @@ export class RunController {
     });
   }
 
-  /** Pops cats into their value in coins (stage clear, Lucky Save): no score, no combo. */
-  private pop(cats: readonly Ball[], reason: 'cashOut' | 'luckySave'): void {
-    if (cats.length === 0) return;
-    for (const cat of cats) {
-      const at = { x: cat.x, y: cat.y };
-      this.world.removeBall(cat);
-      const { coins } = this.economy.pop(cat.tier);
+  /**
+   * Pops cats into their value in coins (stage clear, Lucky Save): no score, no combo. Boulders
+   * crumble and pay nothing.
+   */
+  private pop(balls: readonly Ball[], reason: 'cashOut' | 'luckySave'): void {
+    if (balls.length === 0) return;
+    for (const ball of balls) {
+      const at = { x: ball.x, y: ball.y };
+      this.world.removeBall(ball);
+      if (ball.kind === 'boulder') {
+        this.events.emit('boulderBroken', { id: ball.id, tier: ball.tier, at, reason });
+        continue;
+      }
+      const { coins } = this.economy.pop(ball.tier);
       this.bankCoins(coins);
       this.events.emit('catPopped', {
-        id: cat.id,
-        tier: cat.tier,
+        id: ball.id,
+        tier: ball.tier,
         at,
         coins,
         reason,
@@ -483,9 +681,49 @@ export class RunController {
     this.events.emit('runCoinsChanged', { coins: this.economy.coins });
   }
 
+  // ── Trials and blessings (GAME_DESIGN §15.5) ───────────────────────────────
+
+  /** Starts a stage clear's picks. Returns false when every option is maxed (nothing to pick). */
+  private beginPicks(): boolean {
+    this.pickQueue = [...PICK_ORDER];
+    return this.offerNextPick();
+  }
+
+  /** Offers the next pick that has options; the run waits in `choosing`. False when none is left. */
+  private offerNextPick(): boolean {
+    for (let kind = this.pickQueue.shift(); kind; kind = this.pickQueue.shift()) {
+      const options = drawOffer(kind, this.levels, this.stats.bigCatchLevel, this.pickRng);
+      if (options.length === 0) continue;
+      this.offer = { kind, options };
+      this.runState = 'choosing';
+      this.world.pause();
+      this.events.emit('pickOffered', { kind, options });
+      return true;
+    }
+    this.offer = null;
+    return false;
+  }
+
+  /** The picks are done: the expansion's zoom starts, or play goes on at the last stage. */
+  private afterPicks(): void {
+    const e = this.expansionState;
+    if (e) {
+      this.runState = 'expanding';
+      this.startZoom(e);
+      if (this.instant) this.runExpansionToEnd();
+      return;
+    }
+    this.runState = 'playing';
+    this.world.resume();
+    this.danger.reset();
+    this.showDanger();
+    this.dropAnnounced = false;
+    this.announceDropIfReady();
+  }
+
   // ── Expansion timeline (GAME_DESIGN §7.1) ─────────────────────────────────
 
-  private startExpansion(to: number): void {
+  private startExpansion(to: number, picks: boolean): void {
     const from = this.world.stage;
     this.runState = 'expanding';
     this.danger.reset();
@@ -493,16 +731,20 @@ export class RunController {
     this.expansionState = {
       from,
       to,
+      picks,
       elapsedSteps: 0,
       elapsedMs: 0,
       progress: 0,
       zoomProgress: 0,
       phase: 'clear',
     };
-    if (this.instant) {
-      const running = this.expansionState;
-      while (this.expansionState === running) this.expansionTick();
-    }
+    if (this.instant) this.runExpansionToEnd();
+  }
+
+  /** Instant expansions (tests): the rest of the sequence in one go, up to a pick if one comes. */
+  private runExpansionToEnd(): void {
+    const running = this.expansionState;
+    while (this.expansionState === running && this.runState === 'expanding') this.expansionTick();
   }
 
   private expansionTick(): void {
@@ -516,15 +758,23 @@ export class RunController {
       // Only the last cat is left: it finishes growing and settles while the jar holds still.
       this.world.step();
       if (e.elapsedSteps >= CLEAR_STEPS) {
-        e.phase = 'zoom';
+        // The picks come first (time stands still); `choose` starts the zoom after the last one.
         this.world.pause();
-        this.events.emit('expansionStarted', { from: e.from, to: e.to });
+        if (e.picks && this.beginPicks()) return;
+        this.startZoom(e);
       }
     } else if (e.phase === 'zoom' && e.elapsedSteps >= CLEAR_STEPS + ZOOM_STEPS) {
       e.phase = 'reveal';
       this.reveal(e);
     }
     if (e.elapsedSteps >= EXPANSION_STEPS) this.finishExpansion(e);
+  }
+
+  /** Time stops and the camera starts zooming out. */
+  private startZoom(e: Expansion): void {
+    e.phase = 'zoom';
+    this.world.pause();
+    this.events.emit('expansionStarted', { from: e.from, to: e.to });
   }
 
   /**
@@ -534,11 +784,13 @@ export class RunController {
   private reveal(e: Expansion): void {
     // Only the last cat should be left; anything else (a debug spawn) pops.
     this.pop(
-      this.world.balls.filter((cat) => !stageHoldsTier(e.to, cat.tier)),
+      this.world.balls.filter((ball) => ball.kind !== 'cat' || !stageHoldsTier(e.to, ball.tier)),
       'cashOut',
     );
     this.world.setStage(e.to);
     this.queue.setStage(e.to);
+    // Boulders come from stage 2 on (GAME_DESIGN §15.1).
+    this.queue.setOdds(this.odds());
     this.events.emit('expansionRevealed', { stage: e.to, newTiers: newTiers(e.from, e.to) });
   }
 
