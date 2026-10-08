@@ -129,7 +129,7 @@ Values are rounded only when paid (§5). Implement the formulas. Unit tests asse
 - **The last cat.** Two size-9 cats merge into the stage's last cat (size 10). That clears the stage (§7): every other cat in the jar pops into its value, and the jar grows into the next stage (at stage 5, the last, it stays).
 - **Jackpot.** Two of a stage's last cat don't merge upward: both vanish with a big celebration, paying score `2 × S(last)` and coins `5 × C(last)` before multipliers. In play this needs two last cats in the jar at once, which a clear prevents (it pops the older one), so in practice only the debug tools make one.
 - **Combo.** A merge within 1.0 s of the previous merge raises the combo counter; otherwise the counter resets to 1. "Combo ×N" shows from N = 2. Combos pay extra coins only with the Combo Charm upgrade. Jackpots count as merges for the combo; pops (stage clears, Lucky Save) neither raise it nor get a combo bonus.
-- **Golden merges.** Every merge (and Jackpot) has a chance to be golden: it pays ×3 coins, with a bigger "+coins", gold sparks, a bell and three coins flying to the counter. The chance comes from Golden Merge, 3% per level, 0% without it. Cats themselves are never golden (until v0.12 dropped cats could be, from Golden Touch), so pops pay their plain value.
+- **Golden merges.** Every merge (and Jackpot) has a chance to be golden: it pays ×3 coins, with a bigger "+coins", gold sparks, a bell and three coins flying to the counter. The chance comes from Golden Merge, 3% per level, 0% without it. Cats themselves are never golden (until v0.12 dropped cats could be, from Golden Touch), so pops pay their plain value. (Planned: golden cats, which skip a tier when they merge, §15.4.)
 - **Coin payout** for any merge, Jackpot or pop: `round(base × coinMultiplier × (1 + comboBonus) × (golden ? 3 : 1))`, minimum 1. The base is C(t) for a merge, 5 × C(last) for a Jackpot and the cat's value C(t)/2 for a pop. Halves round up (57.5 → 58), ignoring floating-point noise. So two popping 4s pay what merging them would (C(5) = 8 → 4 + 4); an odd C(t) can pay one coin more.
 - Coins go into the persistent wallet immediately. Quitting or a crash never loses earned coins.
 
@@ -164,6 +164,8 @@ Every stage plays the same way: the same 600 × 870 jar (aspect 1 : 1.45), the s
 3. **Zoom** (about 1.2 s): time stops (physics, the drop cooldown and the combo window freeze), with a whoosh and gold sparks along the rim. The camera zooms out by about 4.8, at an even rate on screen (ease in-out), while the walls slide outward and the rim rises. The camera leads a little, so the jar visibly widens into the new frame; both arrive together. The floor stays put.
 4. **Reveal** (0.4 s): the world is now the next stage's. The last cat is size 1 of the new stage, the dropper's cats move to the new stage's pool (§8), and a "New cats unlocked!" banner shows the new goal (the new stage's last cat).
 5. Physics resumes, the dropper returns, and input is enabled again.
+
+Planned (§15.5): the trial and blessing picks come between steps 2 and 3.
 
 ### 7.2 The last stage
 
@@ -313,8 +315,115 @@ These were written for score thresholds. With stage clears (§7), clearing stage
 - A run that reaches stage 4 or 5 lasts 12–20 minutes.
 - Every upgrade changes runs noticeably, and none is a mandatory first pick.
 
-## 15. Not in v1 (ideas for later)
+## 15. Special balls, trials and blessings (planned)
 
-- Random in-run perks at each expansion ("choose 1 of 3 blessings")
+> **Planned, not built yet** (the owner's design, 2026-10-08). Until it is built, the code doesn't follow this section. Its numbers are starting values: balance and the economy come later.
+
+Later stages get harder and every run gets its own build. Every stage clear asks the player to pick a **trial**, which makes the coming stages harder, and then a **blessing**, which helps. Picks stack by level for the rest of the run, like Vampire Survivors' level-ups: the same pick again raises its level. Trials work through **boulders**. Blessings work through **magnets**, bigger drops and **golden cats**.
+
+### 15.1 The queue
+
+The dropper hands out three kinds of ball: cats, magnets and boulders. Every item rolls its kind when it is queued:
+
+| Kind    | Chance per queued item                                               |
+| ------- | -------------------------------------------------------------------- |
+| Magnet  | 2% + 3% per More Magnets level                                       |
+| Boulder | 0% at stage 1; from stage 2, 3% + 3% per More Boulders level         |
+| Cat     | the rest; a cat is golden with 4% per Golden Cats level (0% without) |
+
+- The first two drops of a run are always cats of the pool's smallest tier (§8).
+- Magnets and boulders are never golden.
+- The NEXT bubble shows the item as it is: a cat (golden ones with their glow), the magnet, or the boulder at its size with its bands.
+- A level picked at a stage clear applies to items queued after the pick. The two items already queued (in the paw and in NEXT) stay as they are. At an expansion, queued cats change tier as in §8, and queued boulders keep their size and bands.
+- Determinism: kind and golden roll on their own generator, seeded from the run's seed. Every queued item rolls its kind, its golden and its tier every time, whatever the chances, so a seed gives the same tiers at any level (as golden merges do, §8).
+
+### 15.2 Magnet
+
+The magnet takes one ball out of the jar and puts it in the paw, to be dropped again.
+
+- When the magnet reaches the paw, the paw holds the magnet instead of a cat and the aim guide hides. A touch on the jar now selects a ball instead of aiming.
+- **Select:** tap a ball. Any ball in the jar that has landed (§6) can be selected, cat or boulder; a ball still falling from the dropper can't. The selected ball gets a pulsing gold ring that follows it, and a **Take** button appears just above it (kept on screen).
+- Tap another ball to move the selection; tap anywhere else to clear it. The selection also clears if the selected ball merges, breaks or pops, or a stage clear starts.
+- **Confirm:** Take. The button ignores taps in its first 0.3 s, so a quick double tap can't take a ball by mistake.
+- The taken ball leaves the jar and flies up into the paw (0.25 s, input ignored). It keeps its tier and golden glow, or, for a boulder, its size and the hits it still needs. The player aims and drops it like any cat (§3); the usual cooldown follows, then the next item.
+- The magnet is used up. Taking doesn't move the queue: the taken ball replaces the magnet and NEXT stays.
+- There's no skip: the magnet stays in the paw until it takes a ball. Physics, the danger timer and the combo window keep running while the player chooses, as while aiming a cat. Pause works as usual.
+- **Big balls in the paw:** the band above the rim holds a size-4 cat, the biggest drop. A held ball bigger than size 4 is drawn in the paw at size 4's radius. When released, it takes its true radius with its bottom edge where a size-4 cat's bottom edge would be, and falls. The aim ghost shows its true size, and the aim clamp uses its true radius.
+- The first magnet of a profile shows a first-run hint: "Tap a cat, then Take".
+
+### 15.3 Boulder
+
+A boulder is a stone ball that only takes up room.
+
+- It never merges, with cats or with other boulders.
+- It uses the same physics as a cat of its size, and counts for the danger line and game over like a cat (§6).
+- **Size:** size 2 (radius 40), one size bigger per Big Boulders level. The size is fixed when the boulder is queued.
+- **Hits:** a boulder takes a hit from every merge in which at least one of the two merging cats touches it when the merge resolves (a Jackpot counts as a merge). One merge hits every boulder its two cats touch, once each.
+- **Breaking:** a boulder needs 1 hit, plus 1 per Iron Bands level at the time it was queued. The last hit breaks it.
+- **Look:** grey stone with an ink outline like the cats. Every extra hit it needs is one iron band (a metal plate) round it.
+  - Each hit knocks one band off, with a clang and a few sparks.
+  - The bare stone breaks on the next hit, with a crunch and stone chips.
+  - So the bands show at a glance how many merges are left.
+  - With `?skin=placeholder`, a boulder is a grey circle showing the hits left as a number.
+- Breaking pays no score or coins for now and doesn't count for the combo.
+- **Stage clear:** every boulder in the jar crumbles along with the pops (§7.1), paying nothing.
+- **Lucky Save:** boulders over the line crumble; boulders don't count among the 6 smallest cats.
+- The magnet can take a boulder (§15.2).
+
+### 15.4 Golden cats
+
+- A golden cat is a normal cat of its tier with a gold glow and sparkles. It must stay easy to tell apart from Kin (size 9), whose body is gold.
+- Golden cats only come from the dropper, so they are always sizes 1–4. A merge never makes a golden cat.
+- **Merging:** it merges with a cat of its tier, golden or not. When at least one of the two is golden, the new cat is **two tiers** higher instead of one: two 3s make a 5. The new cat is never above the stage's last cat. Drops can't reach that cap, but the debug tools can.
+- The new cat isn't golden. It is born and grows as in §5 (over about 120 ms from the old size to its new one), so it pushes its neighbours harder but never launches them.
+- The merge pays score and coins like a normal merge of the two cats' tier, and counts once for the combo (economy later). A golden cat that pops (stage clear, Lucky Save) pays its plain value.
+- Feedback: the bell and gold sparks of a golden merge, and a bigger pop.
+- Golden cats aren't golden _merges_ (§5, from the Golden Merge upgrade), which only pay ×3 coins. Both can happen to the same merge.
+
+### 15.5 Stage-clear picks
+
+At every stage clear, including the repeated clears of the last stage, two picks come after the last cat settles alone (§7.1 step 2) and before the zoom:
+
+1. **Choose a trial:** 3 cards; the player picks one.
+2. **Choose a blessing:** 3 cards; the player picks one.
+
+Then the zoom follows (§7.1 step 3). At the last stage, play resumes.
+
+- **Options:** each pick shows up to 3 different options, drawn at random from those not at their max level, with the run's seeded RNG. Today there are exactly 3 of each kind, so a pick shows all of them in random order. With fewer than 3 left it shows fewer cards; with none left the pick is skipped.
+- The player must pick exactly one: no skip, no reroll, no rarities.
+- **Levels:** a pick raises that option's level by 1. Levels last for the run, and every run starts at 0. They aren't saved, because a run in progress isn't saved (§11).
+- **Card:** an icon, the name, a one-line effect, the level as pips with "Lv 1 → 2", and the value it changes (current → next), like a shop card (§2.2).
+- **Choosing:** tap a card to select it (it lifts and glows), then tap **Choose** to confirm. Taps are ignored for the panel's first 0.4 s, because a clear often comes right after a drop and a tap still in flight mustn't pick.
+- **Time:** time stays stopped while the panel is up (physics, the drop cooldown, the combo window, the danger timer). The pause button, the back button (→ pause) and backgrounding work as in play; resuming returns to the pick.
+
+**Trials**
+
+| ID             | Name          | Effect per level                      | Max | Level 0 → max                 |
+| -------------- | ------------- | ------------------------------------- | --: | ----------------------------- |
+| `moreBoulders` | More Boulders | +3% boulder chance (from stage 2)     |   5 | 3% → 18%                      |
+| `ironBands`    | Iron Bands    | Boulders need one more merge to break |   3 | 1 → 4 merges                  |
+| `bigBoulders`  | Big Boulders  | Boulders one size bigger              |   4 | size 2 (r 40) → size 6 (r 81) |
+
+**Blessings**
+
+| ID            | Name         | Effect per level                    | Max | Level 0 → max |
+| ------------- | ------------ | ----------------------------------- | --: | ------------- |
+| `moreMagnets` | More Magnets | +3% magnet chance                   |   5 | 2% → 17%      |
+| `bigDrops`    | Big Drops    | +2 Big Catch levels in §8's formula |   5 | see below     |
+| `goldenCats`  | Golden Cats  | +4% golden cat chance               |   5 | 0% → 20%      |
+
+- **Big Drops:** the drop weights use `L = Big Catch level + 2 × Big Drops level`, at most 10, in §8's formula `share_i = base_i + L × (2i − 3)` %.
+  - L = 6 gives 22/24/26/28%; L = 8 gives 16/22/28/34%; L = 10 gives 10/20/30/40%.
+  - Big Drops counts as maxed (not offered) once L reaches 10.
+
+### 15.6 Notes for building it
+
+- The rules (kinds, chances, hits, golden merges, the picks and their levels) live in the headless layers with unit tests. `game/` and `ui/` only draw and send intents (select, Take, the card pick). Every number goes in `src/config/`.
+- Debug panel (`?debug=1`): set trial and blessing levels, put a magnet, a boulder or a golden cat in the paw, and open the stage-clear picks. `window.__game` gets matching hooks for Playwright.
+- The visuals are code-drawn first; the owner's raster art follows through docs/ART_ASSETS.md.
+- Procedural sounds (§12): the magnet's take, a boulder hit (clang), a boulder break (crunch), the golden two-tier merge.
+
+## 16. Not in v1 (ideas for later)
+
 - Daily seeded challenge, achievements, skins, leaderboards
 - Saving a run in progress, cloud save, localization
