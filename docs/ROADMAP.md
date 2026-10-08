@@ -284,17 +284,19 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
 
 **Effort:** high. **Plan mode:** yes. **Goal:** the owner's lucky-cat designs replace the placeholders.
 
-**Note (v0.11):** the cats, jar and menu art from the owner's design canvas are already in (`CatSkin`, GAME_DESIGN §13.1). **Note (v0.16):** the owner now generates raster art with an AI tool, phase by phase (docs/ART_ASSETS.md); the cats are in (v0.16), the jar, the paw and the background too (v0.17), the HUD and menu art follow. Cats are never golden since v0.12, so there is no golden overlay.
+**Note (v0.11):** the cats, jar and menu art from the owner's design canvas are already in (`CatSkin`, GAME_DESIGN §13.1). **Note (v0.16):** the owner now generates raster art with an AI tool, phase by phase (docs/ART_ASSETS.md); the cats are in (v0.16), the jar, the paw and the background too (v0.17), the HUD (v0.19) and the main menu (v0.20); the shop, settings and app icon follow. Cats are never golden since v0.12, so there is no golden overlay.
 
 - [x] Source files in `art-source/` (GAME_DESIGN §13.3), checked and reported on before processing (cats)
 - [x] `tools/build-art.ts` pipeline (TECH_SPEC §14) (cats)
 - [x] `ArtSkin` as the default; numbers hidden (the owner's call)
 - [ ] Art-based extras:
   - app icons and iOS splash screens
-  - title/logo
+  - [x] title/logo (v0.20)
   - [x] jar, paw and background (v0.17)
-  - menu illustration and music if provided (+ music toggle)
-  - HUD kit, upgrade and settings icons, banner (docs/ART_ASSETS.md phases 3–4)
+  - [x] main menu from the owner's mockup (v0.20)
+  - music if provided (+ music toggle)
+  - [x] HUD pieces (v0.19)
+  - upgrade and settings icons, shop and settings panels, banner (docs/ART_ASSETS.md phase 4)
 - [ ] A screenshot of every tier at stage 1 and stage 5; a performance re-check (texture memory on iOS)
 
 **Acceptance:** all 15 tiers look right at every zoom; hitboxes match the visuals; no fps regression.

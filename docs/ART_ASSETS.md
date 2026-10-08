@@ -73,6 +73,7 @@ narrower than their canvas: Claude crops the empty space.
 | 9   | 4 menu  | `menu/hero.png`                    | Big golden maneki-neko on a pink cushion                  | 1:1, 1024×1024    |
 | 9b  | 4 menu  | `menu/buttons.png`                 | Sheet: blank PLAY, UPGRADES, record card, gear, coin pill | 3:2, 1536×1024    |
 | 9c  | 4 menu  | `menu/menu-icons.png`              | Sheet: torii, paw badge, arrow, coin, sparkles, petals    | 1:1, 1024×1024    |
+| 9d  | 4 menu  | `menu/record-card.png`             | One empty record card with its sunken well                | 3:2, 1536×1024    |
 | 10  | 4 menu  | `menu/ui-kit.png`                  | Sheet: PLAY, secondary button, panel, card, close, gear   | 3:2, 1536×1024    |
 | 11  | 4 menu  | `menu/upgrade-icons.png`           | Sheet: 5 upgrade icons                                    | 3:2, 1536×1024    |
 | 12  | 4 menu  | `menu/settings-icons.png`          | Sheet: sound, haptics, reduce motion, how to play         | 1:1, 1024×1024    |
@@ -428,6 +429,29 @@ No text, no letters, no numbers anywhere. Landscape 3:2 (1536×1024).
 ```
 
 If a shape comes out with the wrong proportions, it is built in CSS instead (like the HUD cards).
+
+**Record card** (`menu/record-card.png`): the buttons sheet's card came out as one big well, so the
+card was asked for on its own:
+
+```text
+Only ONE empty record card from the mockup (the BEST SCORE card), on its own, with everything
+inside it removed: no words, no numbers, no paw badge, no torii. Keep exactly:
+- the cream card with rounded corners, the thick dark-brown outline and the slightly darker tan
+  bottom edge;
+- the empty top part of the card where the title was: plain cream, about 40% of the card height;
+- below it the sunken well: one long rounded pill in a darker tan, with NO outline and a soft
+  inner shadow at its top, about 45% of the card height and almost the full card width, with an
+  even cream margin under it and beside it.
+The card is about 1.9 times as wide as it is tall, centered, about 80% of the canvas width.
+Landscape 3:2 (1536×1024).
+```
+
+**Done (2026-10-08):** the main menu is in the game (v0.20), placed in mockup pixels. What the tool
+fixed instead of a regeneration: the logo's rim was a little darker than the mockup's (lifted), the
+hero's cushion came out peach (turned pink), the buttons came out ~10% flatter than the mockup's
+(they stretch, so it doesn't show), the coins pill ran off the sheet (its left end is mirrored), the
+icons sheet drew a pink gear instead of the paw badge (the HUD's badge is used) and a line under the
+arrow (dropped). The glow and the sparkles' twinkle are code; the sheets' petals are unused.
 
 **Small icons** (`menu/menu-icons.png`):
 

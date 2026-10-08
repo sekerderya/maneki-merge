@@ -17,17 +17,19 @@ There are exactly two screens. Everything else is a panel or overlay on top of t
 
 ### 2.1 Main menu
 
-A shrine garden in the art of §13, top to bottom:
+The owner's mockup (v0.20, `art-source/menu/mockup.jpg`, §13.1), top to bottom:
 
-- Top bar: the **settings** button (a gear) on the left opens the settings panel (§2.4); the coin balance on the right.
-- The title "Maneki Merge".
-- The hero: the golden lucky cat (Kin, look 9 of the cat art; the calico look 6 with `?skin=vector`) sitting on a pink cushion in front of a sakura garden with a little shrine and a torii, with a few coins floating around it. It takes whatever height is left, so short screens get a smaller cat.
-- Best score and best stage as two labelled chips.
-- **PLAY**: a big round coral button, the only coral thing on the screen.
-- **UPGRADES**: below PLAY. Shows a red dot when any upgrade is affordable and opens the shop panel.
-- Install hint, shown only when the game runs in a browser tab. On iOS: "Tap Share, then Add to Home Screen". On Android Chrome: an "Install" button.
+- Top bar: the **settings** button (a round cream button with a brown gear) on the left opens the settings panel (§2.4); the coin balance on the right, in a cream pill with a gold paw coin (the pill grows to the left for long numbers).
+- The logo "Maneki Merge": chunky coral letters on a cream rim, a gold bell on the "M" of "Merge", a few sakura petals.
+- The hero: the golden lucky cat (raised paw with pink pads, red collar, gold bell) on a pink cushion with gold tassels, with a warm glow behind it and gold sparkles twinkling around it, in front of the painted shrine garden (sakura branches, a torii, a shrine, stone lanterns, a stone path, a wooden deck and a mat).
+- Two record cards: BEST SCORE with a pink paw badge and BEST STAGE with a small red torii, each number in a sunken tan well (long numbers shrink to fit).
+- **PLAY**: a big glossy coral pill, the only coral thing on the screen.
+- **UPGRADES**: a cream pill with an up arrow, below PLAY. Shows a red dot when any upgrade is affordable and opens the shop panel.
+- Install hint, shown only when the game runs in a browser tab. On iOS: "Tap Share, then Add to Home Screen". On Android Chrome: an "Install" button. It and the update badge sit small in the top bar, between the gear and the coins.
 - An "Update ready — tap to restart" badge when a new version is waiting.
 - The version and build hash live in the settings panel.
+
+Layout: everything sits where it is in the mockup, on a stage of the mockup's size (768 × 1376) scaled to fit the screen and standing on its bottom edge, lifted clear of the home indicator. The garden spans the screen's width; a taller screen shows more sky above it, and the logo moves up into it by 40% of the extra height (about halfway between the top bar and the cat). The top bar stays at the top of the screen, below the safe area. Every word and number is live text (Fredoka). With `?skin=vector` the menu is the code-drawn garden of v0.14: a round coral PLAY, the calico cat (look 6) on its cushion with floating coins, taking whatever height is left.
 
 ### 2.2 Shop panel (over the main menu)
 
@@ -260,7 +262,7 @@ If a save can't be read, or some of its fields are invalid, a copy is kept (TECH
 
 ### 13.1 The lucky cats (the cat art, the default since v0.16)
 
-The owner chose the scene in a design canvas (v0.14): a cream shrine garden, ink outlines, soft pastels. Since v0.16 the cats, and since v0.17 the jar, the paw and the background, are raster art the owner generated with an AI image tool from a reference image (docs/ART_ASSETS.md); the HUD and the menu are still drawn in code until their art arrives. With `?skin=vector` (or if the art can't load) the game uses the code-drawn art of v0.11–v0.15.
+The owner chose the scene in a design canvas (v0.14): a cream shrine garden, ink outlines, soft pastels. Since v0.16 the cats, and since v0.17 the jar, the paw and the background, are raster art the owner generated with an AI image tool from a reference image (docs/ART_ASSETS.md); so are the HUD's pieces since v0.19 and the main menu since v0.20. The shop, settings and overlays are still drawn in code until their art arrives. With `?skin=vector` (or if the art can't load) the game uses the code-drawn art of v0.11–v0.15.
 
 - **Cats** (`public/assets/cats/`, `src/config/catSprites.ts`): round maneki-neko balls in the reference image's style, one look per size. Every cat is a perfect circle with only its ears above it, raises one paw (on the viewer's right, palm and pink pads forward) and wears a collar with a gold bell. Each look is one solid body colour with a lighter belly, so the nine look clearly different at a glance (the owner rejected multi-colour coats as hard to tell apart). Size 10 (a stage's last cat) wears look 1, because it becomes the next stage's size 1.
 
@@ -286,6 +288,7 @@ The owner chose the scene in a design canvas (v0.14): a cream shrine garden, ink
 - **Dropper** (v0.17 art): a calico paw (white with orange and dark spots, pink pads) hanging from the top of the screen; a plain row of its arm is stretched up to the screen's top.
 - **Background** (v0.17 art): a painted sakura shrine garden: sakura branches and clouds on a cream sky, a torii and a shrine seen through the glass, stone lanterns either side, and a rug on the wooden floor where the jar stands. It moves and scales with the jar so the feet stay on the rug; it always spans the screen's width, its top fades into the sky colour, and the floor colour fills the screen below it. The separate rug image is unused: the background has its own.
 - **HUD** (v0.19 art, v0.19.2 cards after the owner's reference image): both cards are CSS in the reference's style: cream with a thin dark outline, rounded corners and a tan bottom edge. The score card (138 × 66 px) has "SCORE:" centred on top and the score in a rounded tan well, with the art's pink paw badge over its left edge. The coins card comes out of the screen's right edge (rounded on the left only) with "COINS:" centred over the art's small gold coin and the run's coins, evenly spaced. Both numbers are white with a thin brown edge. The next cat sits in a round pale blue glass bubble with a cream "NEXT" tag; the pause button is the art's glossy pink square, its outline recoloured to the reference's rose brown. Flying coins land on the coin. The vector HUD of v0.14 stays for `?skin=vector`.
+- **Main menu** (v0.20 art, §2.1): the owner first generated a whole-screen mockup, then every piece as an edit of it, so they keep its look: the garden without the interface (it added a stone path, kept by the owner's call), the logo, the cat on its cushion (its cushion turned from the generated peach back to the mockup's pink by the tool), the buttons and a record card, and the small icons (torii, coin, arrow, sparkles). PLAY, UPGRADES, the coins pill and the cards' wells stretch as three-slice strips and the cards as nine-slice frames, so they take any width; the paw badge is the HUD's. The glow and the twinkling sparkles are drawn in code.
 - **Palette**: cream ground, paper plates, ink outlines and text, cocoa for labels; coral only for the primary button of a screen (PLAY, Resume, Play Again), gold for coins, rewards and progress, red for danger and badges, mint for secondary buttons and "on". One font: Fredoka (700 for titles, numbers and buttons; 500–600 for labels).
 
 ### 13.2 Placeholder (`?skin=placeholder`)

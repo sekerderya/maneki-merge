@@ -2,6 +2,21 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.20.0] - 2026-10-08
+
+The main menu in the owner's art, laid out on the owner's mockup (M13, docs/ART_ASSETS.md phase 4).
+
+### Added
+
+- The main menu is the owner's mockup: the painted shrine garden, the "Maneki Merge" logo, the golden cat on its pink cushion with a warm glow and twinkling sparkles, two record cards (BEST SCORE with the paw badge, BEST STAGE with a torii), a glossy coral PLAY pill, a cream UPGRADES pill with an arrow and its red dot, the gear button and the coins pill. Every piece sits where it is in the mockup, on a stage scaled to the screen; taller screens show more sky and the logo moves up into it. Labels and numbers are live text; long numbers shrink to fit their wells and the coins pill grows.
+- `tools/buildMenu.ts` (`npm run art`) cuts the menu pieces from the owner's images: three-slice strips for the pills and wells, a nine-slice record card, the cushion recoloured to the mockup's pink, the logo's rim lightened, drop shadows cleared.
+- Boot preloads the menu art with the cat art, so the menu shows up whole.
+
+### Changed
+
+- The install hint and the update badge sit small in the top bar, between the gear and the coins.
+- The code-drawn menu of v0.14 stays for `?skin=vector`.
+
 ## [0.19.5] - 2026-10-08
 
 Cats roll on the jar's floor, from the owner's playtest of the soft landing.
