@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test';
 // The main menu in the owner's art (GAME_DESIGN §2.1): every control on screen, apart, and easy
 // to tap, on short and tall phones.
 for (const [width, height] of [
+  [320, 568],
   [375, 667],
   [390, 844],
   [430, 932],
@@ -34,18 +35,11 @@ for (const [width, height] of [
           if (overlap(ra, rb)) found.push(`${a} overlaps ${b}`);
         }
       }
-      // Touch targets: 48 px, UPGRADES through its larger touch area.
-      for (const id of ['settings', 'play']) {
+      // Touch targets: 48 px.
+      for (const id of ['settings', 'play', 'upgrades']) {
         const r = boxes.find(([name]) => name === id)![1];
-        if (r.width < 47.5 || r.height < 47.5) found.push(`${id} small target`);
+        if (r.width < 48 || r.height < 48) found.push(`${id} small target`);
       }
-      const upgrades = boxes.find(([name]) => name === 'upgrades')![1];
-      const x = upgrades.left + upgrades.width / 2;
-      for (const y of [upgrades.top - 2, upgrades.bottom + 2]) {
-        const hit = document.elementFromPoint(x, y)?.closest('[data-testid=upgrades]');
-        if (!hit) found.push(`upgrades misses a tap at ${Math.round(y)}`);
-      }
-      if (upgrades.height + 8 < 47.5) found.push('upgrades small target');
       return found;
     });
     expect(issues).toEqual([]);

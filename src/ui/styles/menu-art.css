@@ -255,35 +255,46 @@
   text-shadow: 0 calc(5 * var(--u)) 0 #4e2416;
 }
 
+/*
+ * UPGRADES: the mockup's pill is under 48 px tall on a phone, so the button's box is at least
+ * 48 px tall (the touch target) and the pill is drawn in its middle at the mockup's height.
+ */
 .menu-upgrades {
+  --pill: calc(88 * var(--u));
+  --box: max(var(--pill), 48px);
   left: calc(210 * var(--u));
-  top: calc(1240 * var(--u));
+  top: calc(1240 * var(--u) - (var(--box) - var(--pill)) / 2);
   width: calc(347 * var(--u));
-  height: calc(88 * var(--u));
+  height: var(--box);
   padding: 0 0 calc(7 * var(--u)) calc(62 * var(--u));
-  border-image: var(--menu-upgrades-art) 0 var(--menu-upgrades-slice) fill / 0
-    calc(88 * var(--u) * var(--menu-upgrades-cap)) stretch;
+  isolation: isolate;
   color: #5b3324;
   font-size: calc(42 * var(--u));
   letter-spacing: 0.02em;
   text-transform: uppercase;
 }
 
-/* UPGRADES is a little under 48 px tall on a phone: a larger touch area. */
 .menu-upgrades::before {
   content: '';
   position: absolute;
-  inset: -4px -2px;
+  z-index: -1;
+  left: 0;
+  right: 0;
+  top: calc(50% - var(--pill) / 2);
+  height: var(--pill);
+  border: 0 solid transparent;
+  border-image: var(--menu-upgrades-art) 0 var(--menu-upgrades-slice) fill / 0
+    calc(88 * var(--u) * var(--menu-upgrades-cap)) stretch;
 }
 
 .menu-stage .menu-upgrades-arrow {
   left: calc(36 * var(--u));
-  top: calc(17 * var(--u));
+  top: calc(50% - var(--pill) / 2 + 17 * var(--u));
   width: calc(47 * var(--u));
 }
 
 .menu-upgrades .notify-dot {
-  top: calc(-18 * var(--u));
+  top: calc(50% - var(--pill) / 2 - 18 * var(--u));
   right: calc(-8 * var(--u));
   width: calc(44 * var(--u));
   height: calc(44 * var(--u));
@@ -301,12 +312,13 @@
   transform: translateX(-50%);
 }
 
+/* The gear: at least 48 px (the touch target), even on the shortest screens. */
 .menu-gear {
   position: absolute;
   left: calc(32 * var(--u));
   top: 0;
-  width: calc(100 * var(--u));
-  height: calc(100 * var(--u));
+  width: max(calc(100 * var(--u)), 48px);
+  height: max(calc(100 * var(--u)), 48px);
   padding: 0;
   border: 0;
   background: none;

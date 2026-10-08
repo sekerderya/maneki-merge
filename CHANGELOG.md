@@ -15,6 +15,7 @@ The main menu in the owner's art, laid out on the owner's mockup (M13, docs/ART_
 ### Changed
 
 - The install hint and the update badge sit small in the top bar, between the gear and the coins.
+- UPGRADES and the gear keep a 48 px touch target on every screen: on short screens their box is taller than the mockup's pill, which is drawn in its middle at the mockup's size.
 - The code-drawn menu of v0.14 stays for `?skin=vector`.
 
 ## [0.19.5] - 2026-10-08
