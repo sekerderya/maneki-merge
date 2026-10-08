@@ -187,7 +187,7 @@ At stage 5 there is no next stage: the clear still happens (every other cat pops
   Until v0.12 it was `base_i × (1 + 0.12 × L × i)`, normalized (10% → 17.5% at L = 5): every level now adds about twice as much.
 
 - The first two drops of a run are always the pool's smallest tier.
-- The queue comes from the seeded RNG. The next cat is visible. Every queued cat rolls its tier (the roll happens even for the two fixed opening drops). Golden merges roll on a second generator seeded from the same seed, once per merge whatever the Golden Merge level, so a seed gives the same drops at every level.
+- The queue comes from the seeded RNG. The next cat is visible. Every queued cat rolls its tier (the roll happens even for the two fixed opening drops). Magnets, boulders and golden cats roll on a second generator seeded from the same seed (§15.1), so a seed gives the same drops at every pick level.
 - After an expansion, queued cats keep their size: each takes the tier at the same place in the new pool (a queued 3 becomes a 12), so the preview the player saw still holds. No new rolls.
 
 ## 9. Score, coins, records
@@ -336,7 +336,7 @@ The dropper hands out three kinds of ball: cats, magnets and boulders. Every ite
 - Debug jumps (`?debug=1`, "Jump to stage") skip the stage-clear picks.
 - The NEXT bubble shows the item as it is: a cat (golden ones with their glow), the magnet, or the boulder at its size with its bands.
 - A level picked at a stage clear applies to items queued after the pick. The two items already queued (in the paw and in NEXT) stay as they are. At an expansion, queued cats change tier as in §8, and queued boulders keep their size and bands.
-- Determinism: kind and golden roll on their own generator, seeded from the run's seed. Every queued item rolls its kind, its golden and its tier every time, whatever the chances, so a seed gives the same tiers at any level (as golden merges do, §8).
+- Determinism: kind and golden roll on their own generator, seeded from the run's seed. Every queued item rolls its kind, its golden and its tier every time, whatever the chances, so a seed gives the same tiers at any level.
 
 ### 15.2 Magnet
 
@@ -379,7 +379,7 @@ A boulder is a stone ball that only takes up room.
 - The new cat isn't golden. It is born and grows as in §5 (over about 120 ms from the old size to its new one), so it pushes its neighbours harder but never launches them.
 - The merge pays score and coins like a normal merge of the two cats' tier, and counts once for the combo (economy later). A golden cat that pops (stage clear, Lucky Save) pays its plain value.
 - Feedback: the bell and gold sparks of a golden merge, and a bigger pop.
-- Golden cats aren't golden _merges_ (§5, from the Golden Merge upgrade), which only pay ×3 coins. Both can happen to the same merge.
+- Golden cats replaced the Golden Merge upgrade (a merge's chance to pay ×3 coins), removed in v0.21.
 
 ### 15.5 Stage-clear picks
 

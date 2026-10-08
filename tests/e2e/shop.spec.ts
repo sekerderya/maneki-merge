@@ -35,7 +35,7 @@ test('buying with debug coins: prices, states, feedback and persistence', async 
   await page.getByTestId('upgrades').click();
   const shop = page.getByTestId('shop');
   await expect(shop).toBeVisible();
-  await expect(shop.locator('.shop-card')).toHaveCount(5);
+  await expect(shop.locator('.shop-card')).toHaveCount(4);
   await expect(page.getByTestId('shop-balance')).toHaveText('600');
 
   // Lucky Paw 0 → 1 for 50.

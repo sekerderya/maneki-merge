@@ -23,7 +23,7 @@ const RING_KEY = 'fx-ring';
 /** Big enough that the ring of the biggest cat's Jackpot is not upscaled on a phone. */
 const RING_PX = 512;
 
-/** What paid: a plain merge or pop, a golden merge (×3 coins) or a Jackpot. */
+/** What paid: a plain merge or pop, a golden cat's merge or a Jackpot. */
 export type PayoutKind = 'plain' | 'golden' | 'jackpot';
 
 /** A payout appeared at a world point. */

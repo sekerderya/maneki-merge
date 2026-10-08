@@ -129,17 +129,17 @@ export const COIN_FLY_MS = 620;
 export const COIN_FLY_STAGGER_MS = 50;
 export const COIN_FLY_POOL = 24;
 export const JACKPOT_COIN_FLIGHTS = 8;
-/** A golden merge pays ×3 coins, so three coins fly. */
+/** A golden cat's merge (GAME_DESIGN §15.4) sends three coins. */
 export const GOLDEN_COIN_FLIGHTS = 3;
 /** A Jackpot's coins burst out to a ring this many CSS pixels wide before they fly. */
 export const COIN_SHOWER_SPREAD = 34;
 /** How high the flight arcs above the straight line, as a fraction of its length. */
 export const COIN_FLY_ARC = 0.22;
 
-/** A Jackpot's floating "+coins" is this much bigger than a merge's, a golden merge's this much. */
+/** A Jackpot's floating "+coins" is this much bigger than a merge's, a golden cat's merge this much. */
 export const JACKPOT_TEXT_SCALE = 1.7;
 export const GOLDEN_TEXT_SCALE = 1.35;
-/** Spark bursts (world units): golden merges and Jackpots. */
+/** Spark bursts (world units): golden cats' merges and Jackpots. */
 export const BURST_SPARKS = {
   golden: 12,
   jackpot: 40,
