@@ -90,16 +90,20 @@ async function boot(): Promise<void> {
     menu.setInstallHint(installHintFor(installContext, available));
   });
 
-  const menu = createMenuScreen(byId('menu-screen'), {
-    onPlay: () => {
-      screens?.showGame();
-      session.startRun();
+  const menu = createMenuScreen(
+    byId('menu-screen'),
+    {
+      onPlay: () => {
+        screens?.showGame();
+        session.startRun();
+      },
+      onUpgrades: () => openShop(),
+      onSettings: () => openSettings(),
+      onApplyUpdate: () => void gate.apply(),
+      onInstall: () => void installPrompt.prompt(),
     },
-    onUpgrades: () => openShop(),
-    onSettings: () => openSettings(),
-    onApplyUpdate: () => void gate.apply(),
-    onInstall: () => void installPrompt.prompt(),
-  });
+    skin === 'art',
+  );
 
   menu.setInstallHint(installHintFor(installContext, installPrompt.available));
 

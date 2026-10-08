@@ -1,0 +1,410 @@
+/*
+ * The main menu in the owner's art (GAME_DESIGN §2.1, docs/ART_ASSETS.md phase 4), laid out on
+ * the owner's mockup (art-source/menu/mockup.jpg, 768×1376): every number in this file is mockup
+ * pixels, scaled by --u (CSS px per mockup px) so the stage fits the screen. The stage stands on
+ * the screen's bottom edge (lifted clear of the home indicator); a taller screen shows more sky
+ * above it and the logo moves up into it, to about halfway between the top bar and the cat. The top bar stays at the top of the screen.
+ */
+.menu-screen.is-art {
+  --u: min(100vw / 768, 100vh / 1376);
+  padding: 0;
+  background: var(--menu-sky);
+  container-type: size;
+}
+
+@supports (width: 1cqw) {
+  .menu-screen.is-art {
+    --u: min(100cqw / 768, 100cqh / 1376);
+  }
+}
+
+.menu-screen.is-art > * {
+  /* Lifted so UPGRADES clears the home indicator; the free height above the stage. */
+  --lift: max(0px, var(--safe-bottom) + 6px - 48 * var(--u));
+  --extra: max(0px, 100cqh - 1376 * var(--u) - var(--lift));
+}
+
+/* The garden: as wide as the screen (up to a little wider than the stage), on its bottom edge. */
+.menu-bg {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: clamp(768 * var(--u), 100%, 900 * var(--u));
+  height: auto;
+  transform: translateX(-50%);
+  pointer-events: none;
+  user-select: none;
+}
+
+.menu-stage {
+  position: absolute;
+  left: 50%;
+  bottom: var(--lift);
+  width: calc(768 * var(--u));
+  height: calc(1376 * var(--u));
+  transform: translateX(-50%);
+}
+
+.menu-stage img {
+  position: absolute;
+  display: block;
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* The warm light behind the cat, and the sparkles around it. */
+.menu-glow {
+  position: absolute;
+  left: calc(85 * var(--u));
+  top: calc(300 * var(--u));
+  width: calc(600 * var(--u));
+  height: calc(600 * var(--u));
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    rgba(255, 246, 196, 1) 0%,
+    rgba(255, 232, 150, 0.95) 42%,
+    rgba(255, 220, 150, 0.5) 72%,
+    rgba(255, 222, 160, 0) 100%
+  );
+  animation: menu-glow 4s ease-in-out infinite;
+}
+
+.menu-sparkle {
+  animation: menu-twinkle 2.4s ease-in-out infinite;
+}
+
+.menu-sparkle-1 {
+  left: calc(213 * var(--u));
+  top: calc(465 * var(--u));
+  width: calc(50 * var(--u));
+}
+
+.menu-sparkle-2 {
+  left: calc(181 * var(--u));
+  top: calc(523 * var(--u));
+  width: calc(31 * var(--u));
+  animation-delay: -0.6s;
+}
+
+.menu-sparkle-3 {
+  left: calc(505 * var(--u));
+  top: calc(478 * var(--u));
+  width: calc(50 * var(--u));
+  animation-delay: -1.2s;
+}
+
+.menu-sparkle-4 {
+  left: calc(545 * var(--u));
+  top: calc(551 * var(--u));
+  width: calc(31 * var(--u));
+  animation-delay: -1.8s;
+}
+
+.menu-sparkle-5 {
+  left: calc(190 * var(--u));
+  top: calc(672 * var(--u));
+  width: calc(33 * var(--u));
+  animation-delay: -0.3s;
+}
+
+.menu-hero-art {
+  left: calc(135 * var(--u));
+  top: calc(481 * var(--u));
+  width: calc(497 * var(--u));
+  transform-origin: 50% 92%;
+  animation: menu-breathe 3.6s ease-in-out infinite;
+}
+
+.menu-logo {
+  position: absolute;
+  left: calc(101 * var(--u));
+  top: calc(141 * var(--u));
+  width: calc(555 * var(--u));
+  margin: 0;
+  translate: 0 calc(-0.4 * var(--extra));
+  animation: idle-bob 3.6s ease-in-out infinite;
+}
+
+.menu-logo .menu-logo-art {
+  position: static;
+  width: 100%;
+}
+
+/* The record cards: the frame (nine-slice), the title, the well (three-slice), an icon, a number. */
+.menu-card {
+  position: absolute;
+  top: calc(934 * var(--u));
+  width: calc(242 * var(--u));
+  height: calc(127 * var(--u));
+  margin: 0;
+  border: 0 solid transparent;
+  border-image: var(--menu-card-art) var(--menu-card-slice) fill /
+    calc(127 * var(--u) * var(--menu-card-cap)) stretch;
+}
+
+.menu-card:first-child {
+  left: calc(130 * var(--u));
+}
+
+.menu-card:last-child {
+  left: calc(396 * var(--u));
+}
+
+.menu-card-label {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(13 * var(--u));
+  color: #5b3324;
+  font-size: calc(31 * var(--u));
+  font-weight: var(--weight-bold);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.menu-card-well {
+  position: absolute;
+  left: calc(22 * var(--u));
+  top: calc(50 * var(--u));
+  width: calc(200 * var(--u));
+  height: calc(55 * var(--u));
+  border: 0 solid transparent;
+  border-image: var(--menu-well-art) 0 var(--menu-well-slice) fill / 0
+    calc(55 * var(--u) * var(--menu-well-cap)) stretch;
+}
+
+.menu-stage .menu-card-icon.is-badge {
+  left: calc(20 * var(--u));
+  top: calc(48 * var(--u));
+  width: calc(60 * var(--u));
+}
+
+.menu-stage .menu-card-icon.is-torii {
+  left: calc(20 * var(--u));
+  top: calc(50 * var(--u));
+  width: calc(64 * var(--u));
+}
+
+/* White numbers with a dark-brown edge, like the mockup's. */
+.menu-screen.is-art .record-value,
+.menu-screen.is-art .coin-value {
+  color: #fff;
+  font-weight: var(--weight-bold);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  -webkit-text-stroke: calc(6 * var(--u)) #4e2416;
+  paint-order: stroke fill;
+  text-shadow: 0 calc(3 * var(--u)) 0 #4e2416;
+}
+
+/* The number centred in the well beside the icon; long numbers shrink to fit (--chars). */
+.menu-screen.is-art .record-value {
+  position: absolute;
+  left: calc(82 * var(--u));
+  right: calc(20 * var(--u));
+  top: calc(50 * var(--u));
+  height: calc(55 * var(--u));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(var(--u) * min(44, 260 / var(--chars, 6)));
+}
+
+/* PLAY and UPGRADES: three-slice pills that sink a little when pressed. */
+.menu-play,
+.menu-upgrades {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0 solid transparent;
+  background: none;
+  font-weight: var(--weight-bold);
+  line-height: 1;
+  transition:
+    transform 70ms ease-out,
+    filter 70ms ease-out;
+}
+
+.menu-play:active,
+.menu-upgrades:active {
+  transform: translateY(calc(4 * var(--u))) scale(0.98);
+  filter: brightness(0.96);
+}
+
+.menu-play {
+  left: calc(192 * var(--u));
+  top: calc(1090 * var(--u));
+  width: calc(385 * var(--u));
+  height: calc(126 * var(--u));
+  padding-bottom: calc(10 * var(--u));
+  border-image: var(--menu-play-art) 0 var(--menu-play-slice) fill / 0
+    calc(126 * var(--u) * var(--menu-play-cap)) stretch;
+  color: #fff;
+  font-size: calc(72 * var(--u));
+  letter-spacing: 0.03em;
+  -webkit-text-stroke: calc(8 * var(--u)) #4e2416;
+  paint-order: stroke fill;
+  text-shadow: 0 calc(5 * var(--u)) 0 #4e2416;
+}
+
+.menu-upgrades {
+  left: calc(210 * var(--u));
+  top: calc(1240 * var(--u));
+  width: calc(347 * var(--u));
+  height: calc(88 * var(--u));
+  padding: 0 0 calc(7 * var(--u)) calc(62 * var(--u));
+  border-image: var(--menu-upgrades-art) 0 var(--menu-upgrades-slice) fill / 0
+    calc(88 * var(--u) * var(--menu-upgrades-cap)) stretch;
+  color: #5b3324;
+  font-size: calc(42 * var(--u));
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+/* UPGRADES is a little under 48 px tall on a phone: a larger touch area. */
+.menu-upgrades::before {
+  content: '';
+  position: absolute;
+  inset: -4px -2px;
+}
+
+.menu-stage .menu-upgrades-arrow {
+  left: calc(36 * var(--u));
+  top: calc(17 * var(--u));
+  width: calc(47 * var(--u));
+}
+
+.menu-upgrades .notify-dot {
+  top: calc(-18 * var(--u));
+  right: calc(-8 * var(--u));
+  width: calc(44 * var(--u));
+  height: calc(44 * var(--u));
+  border: calc(4 * var(--u)) solid #7a1f1c;
+  background: radial-gradient(circle at 35% 32%, #ff6b6b 0%, #e8333b 55%, #c9232c 100%);
+}
+
+/* The top bar: the gear on the left, the coins on the right, at the top of the screen. */
+.menu-art-top {
+  position: absolute;
+  left: 50%;
+  top: max(calc(32 * var(--u)), calc(var(--safe-top) + 8px));
+  width: calc(768 * var(--u));
+  height: calc(100 * var(--u));
+  transform: translateX(-50%);
+}
+
+.menu-gear {
+  position: absolute;
+  left: calc(32 * var(--u));
+  top: 0;
+  width: calc(100 * var(--u));
+  height: calc(100 * var(--u));
+  padding: 0;
+  border: 0;
+  background: none;
+  transition: transform 70ms ease-out;
+}
+
+.menu-gear:active {
+  transform: translateY(calc(3 * var(--u))) scale(0.96);
+}
+
+.menu-gear-art {
+  display: block;
+  width: 100%;
+  height: auto;
+  pointer-events: none;
+}
+
+/* The coins pill grows to the left for long numbers. */
+.menu-coins {
+  position: absolute;
+  right: calc(6 * var(--u));
+  top: calc(3 * var(--u));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: calc(244 * var(--u));
+  height: calc(95 * var(--u));
+  padding: 0 calc(34 * var(--u)) calc(6 * var(--u)) calc(96 * var(--u));
+  border: 0 solid transparent;
+  border-image: var(--menu-coins-art) 0 var(--menu-coins-slice) fill / 0
+    calc(95 * var(--u) * var(--menu-coins-cap)) stretch;
+}
+
+.menu-coins-coin {
+  position: absolute;
+  left: calc(26 * var(--u));
+  top: calc(14 * var(--u));
+  width: calc(62 * var(--u));
+  height: auto;
+  pointer-events: none;
+}
+
+.menu-coins .coin-value {
+  font-size: calc(50 * var(--u));
+}
+
+/* The update badge and the install hint, small, between the gear and the coins. */
+.menu-art-top .menu-bottom {
+  position: absolute;
+  left: calc(148 * var(--u));
+  right: calc(270 * var(--u));
+  top: 0;
+  min-height: calc(100 * var(--u));
+  justify-content: center;
+  gap: 4px;
+}
+
+.menu-art-top .install-hint,
+.menu-art-top .update-badge,
+.menu-art-top .install-btn {
+  padding: 4px 8px;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.menu-art-top .update-badge,
+.menu-art-top .install-btn {
+  min-height: 40px;
+}
+
+.menu-art-top .install-hint svg {
+  width: 16px;
+  height: 16px;
+}
+
+@keyframes menu-glow {
+  50% {
+    opacity: 0.8;
+    transform: scale(0.96);
+  }
+}
+
+@keyframes menu-twinkle {
+  50% {
+    opacity: 0.55;
+    transform: scale(0.75) rotate(12deg);
+  }
+}
+
+@keyframes menu-breathe {
+  50% {
+    transform: scale(1.008, 1.016);
+  }
+}
+
+.reduce-motion .menu-glow,
+.reduce-motion .menu-sparkle,
+.reduce-motion .menu-hero-art,
+.reduce-motion .menu-logo {
+  animation: none;
+}
