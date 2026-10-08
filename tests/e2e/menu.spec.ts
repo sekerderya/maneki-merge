@@ -6,6 +6,7 @@ for (const [width, height] of [
   [320, 568],
   [375, 667],
   [390, 844],
+  [412, 915],
   [430, 932],
 ] as const) {
   test(`the art menu fits ${width}×${height}`, async ({ page }) => {
@@ -22,10 +23,15 @@ for (const [width, height] of [
         return [id, node!.getBoundingClientRect()] as const;
       });
       for (const [id, r] of boxes) {
-        if (r.left < 0 || r.top < 0 || r.right > innerWidth || r.bottom > innerHeight) {
+        // The coins pill comes out of the right edge: only its right end may lie past it.
+        const right = id === 'coin-balance' ? r.left + r.width / 2 : r.right;
+        if (r.left < 0 || r.top < 0 || right > innerWidth || r.bottom > innerHeight) {
           found.push(`${id} off screen`);
         }
       }
+      const coins = boxes.find(([name]) => name === 'coin-balance')![1];
+      if (coins.right <= innerWidth) found.push('coins pill short of the right edge');
+      if (document.documentElement.scrollWidth > innerWidth) found.push('page overflow');
       const overlap = (a: DOMRect, b: DOMRect): boolean =>
         a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
       for (let i = 0; i < boxes.length; i++) {

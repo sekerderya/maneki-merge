@@ -2,8 +2,10 @@
  * The main menu in the owner's art (GAME_DESIGN §2.1, docs/ART_ASSETS.md phase 4), laid out on
  * the owner's mockup (art-source/menu/mockup.jpg, 768×1376): every number in this file is mockup
  * pixels, scaled by --u (CSS px per mockup px) so the stage fits the screen. The stage stands on
- * the screen's bottom edge (lifted clear of the home indicator); a taller screen shows more sky
- * above it and the logo moves up into it, to about halfway between the top bar and the cat. The top bar stays at the top of the screen.
+ * the screen's bottom edge (lifted clear of the home indicator). A taller screen has free height
+ * above the stage (--extra): the stage moves up by a fifth of it and the logo by three fifths, and
+ * the cat stays centred between the logo and the record cards (the owner's call, v0.20.1). The top
+ * bar stays at the top of the screen.
  */
 .menu-screen.is-art {
   --u: min(100vw / 768, 100vh / 1376);
@@ -22,6 +24,12 @@
   /* Lifted so UPGRADES clears the home indicator; the free height above the stage. */
   --lift: max(0px, var(--safe-bottom) + 6px - 48 * var(--u));
   --extra: max(0px, 100cqh - 1376 * var(--u) - var(--lift));
+  /*
+   * The cat, its glow and sparkles, centred between the logo's bottom (431) and the cards' top
+   * (934): the cat (481–915) moves up by half the difference of the gaps above and below it,
+   * plus half the logo's own move.
+   */
+  --hero-shift: calc(-15.5 * var(--u) - 0.2 * var(--extra));
 }
 
 /* The garden: as wide as the screen (up to a little wider than the stage), on its bottom edge. */
@@ -39,7 +47,7 @@
 .menu-stage {
   position: absolute;
   left: 50%;
-  bottom: var(--lift);
+  bottom: calc(var(--lift) + 0.2 * var(--extra));
   width: calc(768 * var(--u));
   height: calc(1376 * var(--u));
   transform: translateX(-50%);
@@ -68,10 +76,12 @@
     rgba(255, 220, 150, 0.5) 72%,
     rgba(255, 222, 160, 0) 100%
   );
+  translate: 0 var(--hero-shift);
   animation: menu-glow 4s ease-in-out infinite;
 }
 
 .menu-sparkle {
+  translate: 0 var(--hero-shift);
   animation: menu-twinkle 2.4s ease-in-out infinite;
 }
 
@@ -114,6 +124,7 @@
   top: calc(481 * var(--u));
   width: calc(497 * var(--u));
   transform-origin: 50% 92%;
+  translate: 0 var(--hero-shift);
   animation: menu-breathe 3.6s ease-in-out infinite;
 }
 
@@ -124,6 +135,7 @@
   width: calc(555 * var(--u));
   margin: 0;
   translate: 0 calc(-0.4 * var(--extra));
+  /* (on top of the stage's own move: three fifths of the free height in all) */
   animation: idle-bob 3.6s ease-in-out infinite;
 }
 
@@ -337,16 +349,21 @@
 }
 
 /* The coins pill grows to the left for long numbers. */
+/*
+ * The coins pill comes out of the screen's right edge, like the HUD's coins card: its right end
+ * (--hidden, a little more than the round cap) lies past the edge.
+ */
 .menu-coins {
+  --hidden: calc(56 * var(--u));
   position: absolute;
-  right: calc(6 * var(--u));
+  right: calc((768 * var(--u) - 100cqw) / 2 - var(--hidden));
   top: calc(3 * var(--u));
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: calc(244 * var(--u));
+  min-width: calc(220 * var(--u) + var(--hidden));
   height: calc(95 * var(--u));
-  padding: 0 calc(34 * var(--u)) calc(6 * var(--u)) calc(96 * var(--u));
+  padding: 0 calc(26 * var(--u) + var(--hidden)) calc(6 * var(--u)) calc(96 * var(--u));
   border: 0 solid transparent;
   border-image: var(--menu-coins-art) 0 var(--menu-coins-slice) fill / 0
     calc(95 * var(--u) * var(--menu-coins-cap)) stretch;
