@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.20.1] - 2026-10-08
+
+The main menu's layout after the owner's first look on a phone.
+
+### Changed
+
+- The coins pill comes out of the screen's right edge, like the HUD's coins card.
+- On taller screens the logo, the cat, the record cards, PLAY and UPGRADES move up together into the free height (a fifth of it; the logo three fifths), so the logo sits closer to the top bar.
+- The cat, its glow and its sparkles are centred between the logo and the record cards.
+
 ## [0.20.0] - 2026-10-08
 
 The main menu in the owner's art, laid out on the owner's mockup (M13, docs/ART_ASSETS.md phase 4).

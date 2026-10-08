@@ -19,7 +19,7 @@ There are exactly two screens. Everything else is a panel or overlay on top of t
 
 The owner's mockup (v0.20, `art-source/menu/mockup.jpg`, §13.1), top to bottom:
 
-- Top bar: the **settings** button (a round cream button with a brown gear) on the left opens the settings panel (§2.4); the coin balance on the right, in a cream pill with a gold paw coin (the pill grows to the left for long numbers).
+- Top bar: the **settings** button (a round cream button with a brown gear) on the left opens the settings panel (§2.4); the coin balance on the right, in a cream pill with a gold paw coin that comes out of the screen's right edge like the HUD's coins card (v0.20.1; it grows to the left for long numbers).
 - The logo "Maneki Merge": chunky coral letters on a cream rim, a gold bell on the "M" of "Merge", a few sakura petals.
 - The hero: the golden lucky cat (raised paw with pink pads, red collar, gold bell) on a pink cushion with gold tassels, with a warm glow behind it and gold sparkles twinkling around it, in front of the painted shrine garden (sakura branches, a torii, a shrine, stone lanterns, a stone path, a wooden deck and a mat).
 - Two record cards: BEST SCORE with a pink paw badge and BEST STAGE with a small red torii, each number in a sunken tan well (long numbers shrink to fit).
@@ -29,7 +29,7 @@ The owner's mockup (v0.20, `art-source/menu/mockup.jpg`, §13.1), top to bottom:
 - An "Update ready — tap to restart" badge when a new version is waiting.
 - The version and build hash live in the settings panel.
 
-Layout: everything sits where it is in the mockup, on a stage of the mockup's size (768 × 1376) scaled to fit the screen and standing on its bottom edge, lifted clear of the home indicator. The garden spans the screen's width; a taller screen shows more sky above it, and the logo moves up into it by 40% of the extra height (about halfway between the top bar and the cat). The top bar stays at the top of the screen, below the safe area. Every word and number is live text (Fredoka). With `?skin=vector` the menu is the code-drawn garden of v0.14: a round coral PLAY, the calico cat (look 6) on its cushion with floating coins, taking whatever height is left.
+Layout: everything sits where it is in the mockup, on a stage of the mockup's size (768 × 1376) scaled to fit the screen and standing on its bottom edge, lifted clear of the home indicator. The garden spans the screen's width and stands on its bottom edge. A taller screen has free height above the stage: the stage moves up by a fifth of it and the logo by three fifths in all, and the cat (with its glow and sparkles) stays centred between the logo and the record cards (v0.20.1, the owner's call; v0.20.0 kept the stage on the bottom edge and moved only the logo). The top bar stays at the top of the screen, below the safe area. Every word and number is live text (Fredoka). With `?skin=vector` the menu is the code-drawn garden of v0.14: a round coral PLAY, the calico cat (look 6) on its cushion with floating coins, taking whatever height is left.
 
 ### 2.2 Shop panel (over the main menu)
 
