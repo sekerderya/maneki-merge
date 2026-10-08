@@ -203,12 +203,11 @@ describe('upgrades (GAME_DESIGN §10)', () => {
   const TABLE: readonly [string, string, number, number[]][] = [
     ['luckyPaw', 'Lucky Paw', 10, [50, 80, 125, 200, 320, 500, 800, 1250, 2000, 3200]],
     ['bigCatch', 'Big Catch', 5, [100, 250, 600, 1500, 3500]],
-    ['goldenMerge', 'Golden Merge', 5, [120, 240, 480, 960, 1900]],
     ['comboCharm', 'Combo Charm', 5, [80, 160, 320, 640, 1280]],
     ['secondChance', 'Second Chance', 2, [500, 4000]],
   ];
 
-  it('lists the 5 upgrades in shop order', () => {
+  it('lists the 4 upgrades in shop order', () => {
     expect([...UPGRADE_IDS]).toEqual(TABLE.map(([id]) => id));
   });
 
@@ -225,7 +224,6 @@ describe('upgrades (GAME_DESIGN §10)', () => {
   it('has per-level effects matching the table', () => {
     expect(UPGRADES.luckyPaw.perLevel).toBe(0.15);
     expect(UPGRADES.bigCatch.perLevel).toBe(0.03);
-    expect(UPGRADES.goldenMerge.perLevel).toBe(0.03);
     expect(UPGRADES.comboCharm.perLevel).toBe(0.08);
     expect(UPGRADES.secondChance.perLevel).toBe(1);
   });

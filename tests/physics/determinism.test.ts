@@ -10,7 +10,7 @@ interface DropInput {
   readonly x: number | 'clear';
 }
 
-const LEVELS = upgrades({ bigCatch: 2, goldenMerge: 3, secondChance: 1 });
+const LEVELS = upgrades({ bigCatch: 2, comboCharm: 3, secondChance: 1 });
 const TICKS = 25 * STEPS_PER_SECOND;
 
 function newRun(seed: number): RunController {

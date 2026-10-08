@@ -79,7 +79,7 @@ export interface GameEvents {
     readonly newTier: number;
     /** The new cat's size at the current stage (1–10), for effects that grow with the cat. */
     readonly newSize: number;
-    /** A golden merge (Golden Merge upgrade): it paid ×3 coins. */
+    /** A golden cat merged (GAME_DESIGN §15.4): the new cat skipped a tier. */
     readonly golden: boolean;
     readonly at: WorldPoint;
     readonly score: number;
@@ -89,8 +89,6 @@ export interface GameEvents {
   /** Two of a stage's last cat met (only at the last stage): both vanished. */
   jackpot: {
     readonly tier: number;
-    /** A golden Jackpot (Golden Merge upgrade): it paid ×3 coins. */
-    readonly golden: boolean;
     readonly at: WorldPoint;
     readonly score: number;
     readonly coins: number;

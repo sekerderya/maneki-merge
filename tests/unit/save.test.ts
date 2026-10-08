@@ -7,6 +7,8 @@ import {
   MemoryStorage,
   migrate,
   FORTUNE_TELLER_PRICES,
+  GOLDEN_MERGE_PRICES,
+  retireGoldenMerge,
   retireUpgrades,
   QUICK_GROWTH_PRICES,
   sanitize,
@@ -25,7 +27,7 @@ const sampleSave = (): SaveData => {
   const s = defaultSave();
   s.wallet.coins = 1234;
   s.upgrades.luckyPaw = 3;
-  s.upgrades.goldenMerge = 1;
+  s.upgrades.comboCharm = 1;
   s.records = { bestScore: 5678, bestStage: 3, highestTier: 9 };
   s.stats = { runsPlayed: 4, totalMerges: 321, totalCoinsEarned: 2000, jackpots: 1 };
   s.settings = { sound: false, haptics: true, reduceMotion: true };
@@ -167,7 +169,7 @@ describe('sanitize', () => {
   it('repairs invalid fields and reports each one', () => {
     const result = sanitize({
       wallet: { coins: -5 },
-      upgrades: { luckyPaw: 99, bigCatch: 2.7, goldenMerge: null, secondChance: 'max' },
+      upgrades: { luckyPaw: 99, bigCatch: 2.7, comboCharm: null, secondChance: 'max' },
       records: { bestScore: Number.NaN, bestStage: 0, highestTier: 99 },
       stats: 'lots',
       settings: { sound: 'yes', haptics: false },
@@ -177,7 +179,7 @@ describe('sanitize', () => {
       'wallet.coins',
       'upgrades.luckyPaw',
       'upgrades.bigCatch',
-      'upgrades.goldenMerge',
+      'upgrades.comboCharm',
       'upgrades.secondChance',
       'records.bestScore',
       'records.bestStage',
@@ -190,7 +192,7 @@ describe('sanitize', () => {
     expect(d.wallet.coins).toBe(0);
     expect(d.upgrades.luckyPaw).toBe(10); // clamped to max
     expect(d.upgrades.bigCatch).toBe(2); // floored
-    expect(d.upgrades.goldenMerge).toBe(0);
+    expect(d.upgrades.comboCharm).toBe(0);
     expect(d.upgrades.secondChance).toBe(0);
     expect(d.records).toEqual({ bestScore: 0, bestStage: 1, highestTier: 46 });
     expect(d.stats).toEqual(defaultSave().stats);
@@ -225,7 +227,7 @@ describe('v1 → v2: Quick Growth refund (v0.10)', () => {
     version: 1,
     data: {
       wallet: { coins },
-      upgrades: { luckyPaw: 2, quickGrowth, goldenTouch: 1 },
+      upgrades: { luckyPaw: 2, quickGrowth },
       records: { bestScore: 900, bestStage: 2, highestTier: 7 },
     },
   });
@@ -240,12 +242,7 @@ describe('v1 → v2: Quick Growth refund (v0.10)', () => {
     expect(result.status).toBe('migrated');
     expect(result.issues).toEqual([]);
     expect(result.data.wallet.coins).toBe(100 + refund);
-    // v2 → v3 then turns Golden Touch into Golden Merge.
-    expect(result.data.upgrades).toEqual({
-      ...defaultSave().upgrades,
-      luckyPaw: 2,
-      goldenMerge: 1,
-    });
+    expect(result.data.upgrades).toEqual({ ...defaultSave().upgrades, luckyPaw: 2 });
     expect(result.data.upgrades).not.toHaveProperty('quickGrowth');
     expect(result.data.records).toEqual({ bestScore: 900, bestStage: 2, highestTier: 7 });
   });
@@ -304,16 +301,15 @@ describe('v2 → v3: Shrine Expansion and Fortune Teller refunds, Golden Merge (
     expect(both.data.upgrades).not.toHaveProperty('fortuneTeller');
   });
 
-  it('carries Golden Touch levels over to Golden Merge', () => {
+  it('carries Golden Touch levels over to Golden Merge, which v4 → v5 refunds', () => {
+    const moved = retireUpgrades(v2({ goldenTouch: 4, bigCatch: 1 }).data) as {
+      upgrades: Record<string, unknown>;
+    };
+    expect(moved.upgrades).toEqual({ luckyPaw: 2, bigCatch: 1, goldenMerge: 4 });
     const result = migrate(v2({ goldenTouch: 4, bigCatch: 1 }));
     expect(result.status).toBe('migrated');
-    expect(result.data.wallet.coins).toBe(100);
-    expect(result.data.upgrades).toEqual({
-      ...defaultSave().upgrades,
-      luckyPaw: 2,
-      bigCatch: 1,
-      goldenMerge: 4,
-    });
+    expect(result.data.wallet.coins).toBe(100 + 120 + 240 + 480 + 960);
+    expect(result.data.upgrades).toEqual({ ...defaultSave().upgrades, luckyPaw: 2, bigCatch: 1 });
     expect(result.data.upgrades).not.toHaveProperty('goldenTouch');
   });
 
@@ -352,10 +348,6 @@ describe('v3 → v4: 10 cats per stage (v0.15)', () => {
     },
   });
 
-  it('is the current version', () => {
-    expect(SAVE_VERSION).toBe(4);
-  });
-
   it.each([
     [51, 46],
     [47, 46],
@@ -380,6 +372,48 @@ describe('v3 → v4: 10 cats per stage (v0.15)', () => {
     const broken = migrate(v3(99));
     expect(broken.status).toBe('repaired');
     expect(broken.issues).toEqual(['records.highestTier']);
+  });
+});
+
+describe('v4 → v5: Golden Merge refund (v0.21)', () => {
+  const v4 = (goldenMerge: unknown, coins: unknown = 100) => ({
+    version: 4,
+    data: {
+      wallet: { coins },
+      upgrades: { luckyPaw: 2, goldenMerge },
+      records: { bestScore: 900, bestStage: 4, highestTier: 30 },
+    },
+  });
+
+  it('is the current version', () => {
+    expect(SAVE_VERSION).toBe(5);
+  });
+
+  it.each([
+    [0, 0],
+    [1, 120],
+    [3, 840],
+    [5, 3700],
+  ])('gives back the coins spent on %i levels (%i)', (level, refund) => {
+    const result = migrate(v4(level));
+    expect(result.status).toBe('migrated');
+    expect(result.issues).toEqual([]);
+    expect(result.data.wallet.coins).toBe(100 + refund);
+    expect(result.data.upgrades).toEqual({ ...defaultSave().upgrades, luckyPaw: 2 });
+    expect(result.data.upgrades).not.toHaveProperty('goldenMerge');
+    expect(result.data.records).toEqual({ bestScore: 900, bestStage: 4, highestTier: 30 });
+  });
+
+  it('refunds at most the five levels there were, and nothing for a broken level', () => {
+    const all = GOLDEN_MERGE_PRICES.reduce((a, b) => a + b, 0);
+    expect(migrate(v4(8)).data.wallet.coins).toBe(100 + all);
+    expect(migrate(v4('max')).data.wallet.coins).toBe(100);
+    expect(retireGoldenMerge(null)).toBeNull();
+    expect(retireGoldenMerge({ upgrades: 'none' })).toEqual({ upgrades: 'none' });
+    // A broken wallet stays broken for the repair to report.
+    const broken = migrate(v4(2, 'lots'));
+    expect(broken.status).toBe('repaired');
+    expect(broken.issues).toEqual(['wallet.coins']);
   });
 });
 

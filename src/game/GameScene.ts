@@ -219,7 +219,6 @@ export class GameScene extends Phaser.Scene {
       const { x, y } = e.at;
       this.fx.payout(this.nowMs, x, y, e.tier, run.radiusOf(e.tier), e.coins, 'jackpot');
       this.sparks.burst(x, y, this.particles(BURST_SPARKS.jackpot));
-      if (e.golden) this.sparks.burst(x, y, this.particles(BURST_SPARKS.golden));
       this.addShake(SHAKE.jackpot, SHAKE.jackpotMs);
     });
     on('comboChanged', (e) => {

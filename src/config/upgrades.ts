@@ -1,12 +1,6 @@
 /** Permanent upgrades bought in the shop (GAME_DESIGN §10). Derived stats: core/upgrades.ts. */
 
-export const UPGRADE_IDS = [
-  'luckyPaw',
-  'bigCatch',
-  'goldenMerge',
-  'comboCharm',
-  'secondChance',
-] as const;
+export const UPGRADE_IDS = ['luckyPaw', 'bigCatch', 'comboCharm', 'secondChance'] as const;
 
 export type UpgradeId = (typeof UPGRADE_IDS)[number];
 
@@ -43,15 +37,6 @@ export const UPGRADES: Readonly<Record<UpgradeId, UpgradeDef>> = {
     prices: [100, 250, 600, 1500, 3500],
     // The biggest drop's share grows by this much per level, and the smallest's shrinks by as
     // much; the sizes in between move a third of it (core/dropQueue.ts).
-    perLevel: 0.03,
-  },
-  goldenMerge: {
-    id: 'goldenMerge',
-    name: 'Golden Merge',
-    description: '+3% chance that a merge pays ×3 coins',
-    statLabel: 'Golden merges',
-    maxLevel: 5,
-    prices: [120, 240, 480, 960, 1900],
     perLevel: 0.03,
   },
   comboCharm: {

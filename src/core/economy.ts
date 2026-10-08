@@ -1,6 +1,5 @@
 /** Score, coin payouts, combo, Jackpot and pops (GAME_DESIGN §5, §7.1, §9). */
 import {
-  GOLDEN_COIN_MULTIPLIER,
   JACKPOT_COIN_MULTIPLIER,
   JACKPOT_SCORE_MULTIPLIER,
   MIN_COIN_PAYOUT,
@@ -13,17 +12,11 @@ import { comboBonus } from './upgrades';
 import type { DerivedStats } from './upgrades';
 
 /**
- * round(base × coinMultiplier × (1 + comboBonus) × (golden ? 3 : 1)), at least 1.
- * The one payout rule for every merge, Jackpot and pop; only merges and Jackpots can be golden.
+ * round(base × coinMultiplier × (1 + comboBonus)), at least 1. The one payout rule for every
+ * merge, Jackpot and pop.
  */
-export function coinPayout(
-  base: number,
-  coinMultiplier: number,
-  bonus: number,
-  golden: boolean,
-): number {
-  const raw = base * coinMultiplier * (1 + bonus) * (golden ? GOLDEN_COIN_MULTIPLIER : 1);
-  return Math.max(MIN_COIN_PAYOUT, roundStable(raw));
+export function coinPayout(base: number, coinMultiplier: number, bonus: number): number {
+  return Math.max(MIN_COIN_PAYOUT, roundStable(base * coinMultiplier * (1 + bonus)));
 }
 
 /** Score for merging two tier-t cats: S(t). */
@@ -46,7 +39,7 @@ export function jackpotBaseCoins(capTier: number): number {
  * Lucky Paw and no combo. Two cats that pop pay as much as their (plain) merge would.
  */
 export function popCoins(tier: number, coinMultiplier: number): number {
-  return coinPayout(tierCoins(tier) * POP_VALUE_SHARE, coinMultiplier, 0, false);
+  return coinPayout(tierCoins(tier) * POP_VALUE_SHARE, coinMultiplier, 0);
 }
 
 /**
@@ -137,17 +130,20 @@ export class RunEconomy {
     return this.highest;
   }
 
-  /** Two tier-t cats merged into one tier t+1 cat; a golden merge pays ×3 coins. */
-  merge(tier: number, golden: boolean, timeMs: number): Payout {
+  /**
+   * Two tier-t cats merged into one cat of `newTier`: t + 1, or t + 2 when a golden cat merged
+   * (GAME_DESIGN §15.4). Either way it pays like a merge of two tier-t cats.
+   */
+  merge(tier: number, timeMs: number, newTier = tier + 1): Payout {
     this.mergeCount++;
-    this.highest = Math.max(this.highest, tier + 1);
-    return this.pay(mergeScore(tier), tierCoins(tier), golden, timeMs);
+    this.highest = Math.max(this.highest, newTier);
+    return this.pay(mergeScore(tier), tierCoins(tier), timeMs);
   }
 
   /** Two of a stage's last cat vanished in a Jackpot. */
-  jackpot(capTier: number, golden: boolean, timeMs: number): Payout {
+  jackpot(capTier: number, timeMs: number): Payout {
     this.jackpotCount++;
-    return this.pay(jackpotScore(capTier), jackpotBaseCoins(capTier), golden, timeMs);
+    return this.pay(jackpotScore(capTier), jackpotBaseCoins(capTier), timeMs);
   }
 
   /** Debug and test hook (`?debug=1`, TECH_SPEC §11): sets the run score directly. */
@@ -163,10 +159,10 @@ export class RunEconomy {
     return { score: 0, coins, combo: 0 };
   }
 
-  private pay(score: number, baseCoins: number, golden: boolean, timeMs: number): Payout {
+  private pay(score: number, baseCoins: number, timeMs: number): Payout {
     const combo = this.comboCounter.register(timeMs);
     const bonus = comboBonus(this.stats.comboCharmLevel, combo);
-    const coins = coinPayout(baseCoins, this.stats.coinMultiplier, bonus, golden);
+    const coins = coinPayout(baseCoins, this.stats.coinMultiplier, bonus);
     this.scoreTotal += score;
     this.coinsTotal += coins;
     return { score, coins, combo };

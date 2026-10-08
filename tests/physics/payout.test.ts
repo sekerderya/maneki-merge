@@ -64,27 +64,6 @@ describe('payout pipeline (GAME_DESIGN §5, §9)', () => {
     expect(profile.records).toEqual({ bestScore: 32, bestStage: 1, highestTier: 5 });
   });
 
-  it('banks a golden merge at ×3 coins', () => {
-    // Golden Merge 5: 15% of merges are golden. Find the first seed whose first merge is.
-    for (let seed = 0; seed < 100; seed++) {
-      const { run, profile, coins } = setup({ luckyPaw: 4, goldenMerge: 5 }, false, seed);
-      const golden: boolean[] = [];
-      run.events.on('merged', (e) => golden.push(e.golden));
-      spawnPair(run, 3, 0);
-      run.tick();
-      if (!golden[0]) {
-        expect(coins).toEqual([5]); // 3 × 1.6 = 4.8 → 5
-        continue;
-      }
-      // 3 × 1.6 × 3 = 14.4 → 14
-      expect(coins).toEqual([14]);
-      expect(profile.coins).toBe(14);
-      expect(profile.stats.totalCoinsEarned).toBe(14);
-      return;
-    }
-    throw new Error('No golden merge in 100 seeds');
-  });
-
   it('pays a Jackpot of two last cats: 5 × C(last) with multipliers', () => {
     const { run, profile, coins } = setup({ luckyPaw: 1 });
     const last = stageInfo(1).lastTier;

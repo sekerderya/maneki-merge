@@ -21,7 +21,6 @@ const SCENARIOS: readonly Scenario[] = [
     name: 'stage clears and expansions under a live pile, with strong upgrades',
     seed: 11,
     levels: upgrades({
-      goldenMerge: 5,
       luckyPaw: 3,
       comboCharm: 5,
     }),

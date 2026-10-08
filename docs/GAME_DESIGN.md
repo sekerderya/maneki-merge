@@ -41,7 +41,6 @@ Layout: everything sits where it is in the mockup, on a stage of the mockup's si
   | ------------- | -------------------------------------------------------------- | ----------- | ------ |
   | Lucky Paw     | Coins                                                          | +0% → +15%  | +150%  |
   | Big Catch     | Biggest drop: the share of a stage's largest drop (size 4, §8) | 10% → 13%   | 25%    |
-  | Golden Merge  | Golden merges: the chance that a merge pays ×3 coins (§5)      | 0% → 3%     | 15%    |
   | Combo Charm   | Per combo step                                                 | +0% → +8%   | +40%   |
   | Second Chance | Lucky Saves                                                    | 0 → 1       | 2      |
 
@@ -129,8 +128,8 @@ Values are rounded only when paid (§5). Implement the formulas. Unit tests asse
 - **The last cat.** Two size-9 cats merge into the stage's last cat (size 10). That clears the stage (§7): every other cat in the jar pops into its value, and the jar grows into the next stage (at stage 5, the last, it stays).
 - **Jackpot.** Two of a stage's last cat don't merge upward: both vanish with a big celebration, paying score `2 × S(last)` and coins `5 × C(last)` before multipliers. In play this needs two last cats in the jar at once, which a clear prevents (it pops the older one), so in practice only the debug tools make one.
 - **Combo.** A merge within 1.0 s of the previous merge raises the combo counter; otherwise the counter resets to 1. "Combo ×N" shows from N = 2. Combos pay extra coins only with the Combo Charm upgrade. Jackpots count as merges for the combo; pops (stage clears, Lucky Save) neither raise it nor get a combo bonus.
-- **Golden merges.** Every merge (and Jackpot) has a chance to be golden: it pays ×3 coins, with a bigger "+coins", gold sparks, a bell and three coins flying to the counter. The chance comes from Golden Merge, 3% per level, 0% without it. Cats themselves are never golden (until v0.12 dropped cats could be, from Golden Touch), so pops pay their plain value. (Planned: golden cats, which skip a tier when they merge, §15.4.)
-- **Coin payout** for any merge, Jackpot or pop: `round(base × coinMultiplier × (1 + comboBonus) × (golden ? 3 : 1))`, minimum 1. The base is C(t) for a merge, 5 × C(last) for a Jackpot and the cat's value C(t)/2 for a pop. Halves round up (57.5 → 58), ignoring floating-point noise. So two popping 4s pay what merging them would (C(5) = 8 → 4 + 4); an odd C(t) can pay one coin more.
+- **Golden cats** (§15.4) skip a tier when they merge. Until v0.21 the Golden Merge upgrade gave every merge a chance to pay ×3 coins; it is gone (§10).
+- **Coin payout** for any merge, Jackpot or pop: `round(base × coinMultiplier × (1 + comboBonus))`, minimum 1. The base is C(t) for a merge, 5 × C(last) for a Jackpot and the cat's value C(t)/2 for a pop. Halves round up (57.5 → 58), ignoring floating-point noise. So two popping 4s pay what merging them would (C(5) = 8 → 4 + 4); an odd C(t) can pay one coin more.
 - Coins go into the persistent wallet immediately. Quitting or a crash never loses earned coins.
 
 ## 6. Jar, danger line, game over
@@ -203,7 +202,6 @@ At stage 5 there is no next stage: the clear still happens (every other cat pops
 | -------------- | ------------- | -------------------------------------------------- | --: | ------------------------------------------------- |
 | `luckyPaw`     | Lucky Paw     | +15% coins from everything                         |  10 | 50, 80, 125, 200, 320, 500, 800, 1250, 2000, 3200 |
 | `bigCatch`     | Big Catch     | Bigger cats come more often: +3% biggest drop (§8) |   5 | 100, 250, 600, 1500, 3500                         |
-| `goldenMerge`  | Golden Merge  | +3% chance that a merge pays ×3 coins (§5)         |   5 | 120, 240, 480, 960, 1900                          |
 | `comboCharm`   | Combo Charm   | +8% coins per combo step (up to 5 steps)           |   5 | 80, 160, 320, 640, 1280                           |
 | `secondChance` | Second Chance | +1 Lucky Save per run                              |   2 | 500, 4000                                         |
 
@@ -211,7 +209,6 @@ Derived values, where each name means that upgrade's current level:
 
 - `coinMultiplier = 1 + 0.15 × luckyPaw`
 - `comboBonus = 0.08 × comboCharm × min(combo − 1, 5)`
-- `goldenChance = 0.03 × goldenMerge`
 - `luckySaves = secondChance`
 
 Upgrade definitions are data in `src/config/upgrades.ts`: id, name, description, max level, prices and effect.
@@ -221,7 +218,9 @@ Removed upgrades give back every coin spent on them when an older save loads (§
 - Quick Growth (−6% expansion thresholds), in v0.10, when stage clears replaced the score thresholds.
 - Shrine Expansion (unlocked stages 3, 4 and 5) and Fortune Teller (showed the next 2 cats), in v0.12: every stage is open, and the HUD shows one next cat.
 
-Golden Touch (golden dropped cats) became Golden Merge in v0.12; its level carries over.
+- Golden Merge (+3% per level that a merge pays ×3 coins; 120, 240, 480, 960 and 1900), in v0.21: golden cats skip a tier instead (§15.4).
+
+Golden Touch (golden dropped cats) became Golden Merge in v0.12; its level carried over.
 
 ## 11. Saved data
 
@@ -235,11 +234,12 @@ Everything is stored locally, with a version number:
 
 A run in progress isn't saved. Closing the app ends it, but its coins are already banked.
 
-The save format is at version 4:
+The save format is at version 5:
 
 - v1 → v2 (v0.10) removed Quick Growth and returns the coins spent on its levels to the wallet (150, 300, 600, 1200 and 2400 for levels 1–5).
 - v2 → v3 (v0.12) removed Shrine Expansion (1500, 10000 and 60000 back) and Fortune Teller (400 back), moves the Golden Touch level to Golden Merge, and caps a record tier above 51 (stages had 12 cats, up to tier 56) at 51.
 - v3 → v4 (v0.15) caps a record tier above 46 (stages had 11 cats, up to tier 51) at 46.
+- v4 → v5 (v0.21) removed Golden Merge and returns the coins spent on its levels.
 
 If a save can't be read, or some of its fields are invalid, a copy is kept (TECH_SPEC §8) and the game continues with the valid fields and defaults for the rest.
 

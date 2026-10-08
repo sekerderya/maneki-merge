@@ -27,7 +27,6 @@ describe('deriveStats (GAME_DESIGN §10)', () => {
       coinMultiplier: 1,
       bigCatchLevel: 0,
       comboCharmLevel: 0,
-      goldenChance: 0,
       luckySaves: 0,
     });
   });
@@ -37,7 +36,6 @@ describe('deriveStats (GAME_DESIGN §10)', () => {
     expect(s.coinMultiplier).toBeCloseTo(2.5, 10); // 1 + 0.15 × 10
     expect(s.bigCatchLevel).toBe(5);
     expect(s.comboCharmLevel).toBe(5);
-    expect(s.goldenChance).toBeCloseTo(0.15, 10); // 0.03 × 5
     expect(s.luckySaves).toBe(2);
   });
 
@@ -48,15 +46,6 @@ describe('deriveStats (GAME_DESIGN §10)', () => {
     [10, 2.5],
   ])('Lucky Paw %i gives a ×%f coin multiplier', (level, multiplier) => {
     expect(deriveStats(levels({ luckyPaw: level })).coinMultiplier).toBeCloseTo(multiplier, 10);
-  });
-
-  it.each([
-    [0, 0],
-    [1, 0.03],
-    [3, 0.09],
-    [5, 0.15],
-  ])('Golden Merge %i makes a merge golden with chance %f', (level, chance) => {
-    expect(deriveStats(levels({ goldenMerge: level })).goldenChance).toBeCloseTo(chance, 10);
   });
 });
 
@@ -81,7 +70,7 @@ describe('prices and purchases', () => {
       expect(nextPrice(id, def.maxLevel + 3)).toBeNull();
     }
     expect(nextPrice('luckyPaw', 0)).toBe(50);
-    expect(nextPrice('goldenMerge', 4)).toBe(1900);
+    expect(nextPrice('comboCharm', 4)).toBe(1280);
   });
 
   it('checks affordability and the max level', () => {

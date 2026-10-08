@@ -177,11 +177,11 @@ describe('Profile: wallet, records and stats (GAME_DESIGN §5, §11)', () => {
     profile.setUpgrade('secondChance', 5);
     profile.setUpgrade('luckyPaw', -2);
     profile.setUpgrade('bigCatch', 2.6);
-    profile.setUpgrade('goldenMerge', Number.NaN);
+    profile.setUpgrade('comboCharm', Number.NaN);
     expect(profile.upgrades.secondChance).toBe(2);
     expect(profile.upgrades.luckyPaw).toBe(0);
     expect(profile.upgrades.bigCatch).toBe(3);
-    expect(profile.upgrades.goldenMerge).toBe(0);
+    expect(profile.upgrades.comboCharm).toBe(0);
   });
 
   it('keeps settings and hint flags', () => {

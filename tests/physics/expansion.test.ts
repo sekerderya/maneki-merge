@@ -211,7 +211,7 @@ describe('stage clear payouts (GAME_DESIGN §7)', () => {
         doomed.map((c) => [c.id, c.tier, 'cashOut']),
       );
       const pops = doomed.reduce((sum, c) => sum + popCoins(c.tier, multiplier), 0);
-      const merge = coinPayout(tierCoins(stageInfo(stage).lastTier - 1), multiplier, 0, false);
+      const merge = coinPayout(tierCoins(stageInfo(stage).lastTier - 1), multiplier, 0);
       expect(these.reduce((sum, p) => sum + p.coins, 0)).toBe(pops);
       expect(run.coins - coinsBefore).toBe(merge + pops);
       expect(banked() - bankedBefore).toBe(merge + pops);
@@ -286,7 +286,7 @@ describe('every stage: Jackpots and drop pools (GAME_DESIGN §5, §7, §8)', () 
       expect.objectContaining({
         tier: lastTier,
         score: 2 * tierScore(lastTier),
-        coins: coinPayout(5 * tierCoins(lastTier), multiplier, 0, false),
+        coins: coinPayout(5 * tierCoins(lastTier), multiplier, 0),
       }),
     ]);
     expect(run.balls.some((b) => b.tier === lastTier)).toBe(false);
@@ -337,7 +337,7 @@ describe('determinism through every expansion', () => {
   }
 
   function record(seed: number): { inputs: Input[]; hashes: string[] } {
-    const run = new RunController({ seed, upgrades: upgrades({ goldenMerge: 3 }) });
+    const run = new RunController({ seed, upgrades: upgrades({ comboCharm: 3 }) });
     const frames = new Rng(seed * 7 + 1);
     const aim = new Rng(seed + 5);
     const inputs: Input[] = [];
@@ -367,7 +367,7 @@ describe('determinism through every expansion', () => {
   it('replays a jump to stage 5 tick by tick with matching hashes', () => {
     const recorded = record(8);
     const checks = recorded.hashes.map((h) => Number(h.split(':')[0]));
-    const run = new RunController({ seed: 8, upgrades: upgrades({ goldenMerge: 3 }) });
+    const run = new RunController({ seed: 8, upgrades: upgrades({ comboCharm: 3 }) });
     const hashes: string[] = [];
     let i = 0;
     while (run.ticks < Math.max(...checks)) {

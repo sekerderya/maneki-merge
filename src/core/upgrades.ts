@@ -13,8 +13,6 @@ export interface DerivedStats {
   readonly bigCatchLevel: number;
   /** Combo Charm level, used by comboBonus(). */
   readonly comboCharmLevel: number;
-  /** 0.03 × goldenMerge: the chance that a merge pays ×3 coins. */
-  readonly goldenChance: number;
   /** Lucky Saves per run. */
   readonly luckySaves: number;
 }
@@ -35,7 +33,6 @@ export function deriveStats(levels: UpgradeLevels): DerivedStats {
     coinMultiplier: 1 + perLevel('luckyPaw'),
     bigCatchLevel: levels.bigCatch,
     comboCharmLevel: levels.comboCharm,
-    goldenChance: perLevel('goldenMerge'),
     luckySaves: perLevel('secondChance'),
   };
 }

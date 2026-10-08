@@ -27,7 +27,7 @@ describe('run feedback wiring (GAME_DESIGN §12)', () => {
     });
     events.emit('comboChanged', { combo: 1 });
     events.emit('comboChanged', { combo: 3 });
-    events.emit('jackpot', { tier: 7, golden: false, at, score: 1, coins: 1, combo: 1 });
+    events.emit('jackpot', { tier: 7, at, score: 1, coins: 1, combo: 1 });
     events.emit('catPopped', { id: 2, tier: 1, at, coins: 1, reason: 'cashOut' });
     events.emit('stageCleared', { stage: 1, tier: 11, next: 'expand' });
     events.emit('expansionStarted', { from: 1, to: 2 });
@@ -60,7 +60,7 @@ describe('run feedback wiring (GAME_DESIGN §12)', () => {
     expect(log).toHaveLength(17);
   });
 
-  it('rings a bell for golden merges and Jackpots (×3 coins)', () => {
+  it('rings a bell when a golden cat merges', () => {
     const events = new EventBus<GameEvents>();
     const log: string[] = [];
     connectRunFeedback(events, {
@@ -70,15 +70,7 @@ describe('run feedback wiring (GAME_DESIGN §12)', () => {
     const at = { x: 0, y: 0 };
     const merge = { id: 1, tier: 3, newTier: 4, newSize: 4, at, score: 1, coins: 3, combo: 1 };
     events.emit('merged', { ...merge, golden: true });
-    events.emit('jackpot', { tier: 51, golden: true, at, score: 1, coins: 1, combo: 1 });
-    expect(log).toEqual([
-      'merge',
-      'coin',
-      'chime',
-      'buzz:tick',
-      'jackpot',
-      'chime',
-      'buzz:jackpot',
-    ]);
+    events.emit('jackpot', { tier: 46, at, score: 1, coins: 1, combo: 1 });
+    expect(log).toEqual(['merge', 'coin', 'chime', 'buzz:tick', 'jackpot', 'buzz:jackpot']);
   });
 });

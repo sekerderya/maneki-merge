@@ -1,6 +1,6 @@
 /**
  * One run, headless (TECH_SPEC §3–§5): dropping cats, the cooldown and queue, merges and their
- * payouts (golden merges included), the combo timer, stage clears and the expansion timeline, the
+ * payouts, the combo timer, stage clears and the expansion timeline, the
  * danger line, Lucky Saves and game over. The game scene renders it and forwards input; the HUD,
  * FX, audio and save listen to its events.
  *
@@ -84,11 +84,6 @@ const COOLDOWN_STEPS = stepsFor(DROP_COOLDOWN_MS);
 const CLEAR_STEPS = stepsFor(EXPANSION_CLEAR_MS);
 const ZOOM_STEPS = stepsFor(EXPANSION_ZOOM_MS);
 const EXPANSION_STEPS = stepsFor(EXPANSION_DURATION_MS);
-/**
- * Golden merges roll on their own generator, seeded from the run seed with this salt, so the drop
- * queue's sequence doesn't depend on how often cats merge.
- */
-const GOLDEN_MERGE_SEED_SALT = 0x9e3779b9;
 
 export class RunController {
   readonly events: EventBus<GameEvents>;
@@ -97,8 +92,6 @@ export class RunController {
 
   private readonly world: PhysicsWorld;
   private readonly rng: Rng;
-  /** Rolls every merge for Golden Merge (always one draw, whatever the chance). */
-  private readonly goldenRng: Rng;
   private readonly queue: DropQueue;
   private readonly economy: RunEconomy;
   private readonly merges = new MergeResolver();
@@ -134,7 +127,6 @@ export class RunController {
     this.savesLeft = this.stats.luckySaves;
     this.world = new PhysicsWorld();
     this.rng = new Rng(options.seed);
-    this.goldenRng = new Rng((Math.trunc(options.seed) ^ GOLDEN_MERGE_SEED_SALT) >>> 0);
     this.queue = new DropQueue({
       rng: this.rng,
       stage: this.world.stage,
@@ -345,7 +337,6 @@ export class RunController {
     h.number(this.economy.score).number(this.economy.coins).number(this.economy.combo);
     h.number(this.economy.merges).number(this.economy.jackpots).number(this.economy.highestTier);
     for (const value of this.rng.state()) h.number(value);
-    for (const value of this.goldenRng.state()) h.number(value);
     h.number(this.queue.current.tier).number(this.queue.next.tier);
     h.number(this.dropAllowedAt).number(this.savesLeft).number(this.debugTargetStage);
     h.number(this.danger.remainingMs).bool(this.danger.inGrace);
@@ -368,9 +359,8 @@ export class RunController {
     let cleared: Ball | null = null;
     for (const o of outcomes) {
       const at = { x: o.x, y: o.y };
-      const golden = this.goldenRng.chance(this.stats.goldenChance);
       if (o.kind === 'merge') {
-        const p = this.economy.merge(o.tier, golden, now);
+        const p = this.economy.merge(o.tier, now);
         this.bankCoins(p.coins);
         if (o.ball && o.ball.tier === last) cleared ??= o.ball;
         this.events.emit('merged', {
@@ -378,14 +368,14 @@ export class RunController {
           tier: o.tier,
           newTier: o.tier + 1,
           newSize: o.ball?.size ?? world.sizeOf(o.tier + 1),
-          golden,
+          golden: false,
           at,
           ...p,
         });
       } else {
-        const p = this.economy.jackpot(last, golden, now);
+        const p = this.economy.jackpot(last, now);
         this.bankCoins(p.coins);
-        this.events.emit('jackpot', { tier: o.tier, golden, at, ...p });
+        this.events.emit('jackpot', { tier: o.tier, at, ...p });
       }
     }
     if (outcomes.length > 0) {

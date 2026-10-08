@@ -99,9 +99,9 @@ describe('starting a run', () => {
   });
 
   it('applies the upgrades', () => {
-    const { run } = setup({ upgrades: upgrades({ goldenMerge: 3, secondChance: 2 }) });
+    const { run } = setup({ upgrades: upgrades({ comboCharm: 3, secondChance: 2 }) });
     expect(run.luckySavesLeft).toBe(2);
-    expect(run.stats.goldenChance).toBeCloseTo(0.09, 10);
+    expect(run.stats.comboCharmLevel).toBe(3);
   });
 
   it('works without a bus or a bank and rejects a bad seed', () => {
@@ -181,41 +181,6 @@ describe('merges and payouts (GAME_DESIGN §5, §9)', () => {
     expect(run.highestTier).toBe(4);
   });
 
-  it('makes about 3% of merges per Golden Merge level golden, paying ×3', () => {
-    const goldenShare = (level: number): number => {
-      let golden = 0;
-      for (let seed = 0; seed < 400; seed++) {
-        const run = new RunController({ seed, upgrades: upgrades({ goldenMerge: level }) });
-        const merges: GameEvents['merged'][] = [];
-        run.events.on('merged', (e) => merges.push(e));
-        spawnPair(run, 3);
-        run.tick();
-        const [merge] = merges;
-        expect(merge!.coins).toBe(merge!.golden ? 9 : 3); // C(3) = 3
-        if (merge!.golden) golden++;
-      }
-      return golden / 400;
-    };
-    expect(goldenShare(0)).toBe(0);
-    expect(goldenShare(5)).toBeGreaterThan(0.1);
-    expect(goldenShare(5)).toBeLessThan(0.2);
-  });
-
-  it('rolls every merge, so Golden Merge never changes the drops of a seed', () => {
-    const drops = (level: number): number[] => {
-      const run = new RunController({ seed: 3, upgrades: upgrades({ goldenMerge: level }) });
-      const tiers: number[] = [];
-      for (let i = 0; i < 40; i++) {
-        spawnPair(run, 1, (i % 2) * 200 - 100);
-        tiers.push(run.current.tier);
-        run.drop(0);
-        ticks(run, COOLDOWN_STEPS);
-      }
-      return tiers;
-    };
-    expect(drops(5)).toEqual(drops(0));
-  });
-
   it('applies Lucky Paw', () => {
     const lucky = setup({ upgrades: upgrades({ luckyPaw: 2 }) });
     spawnPair(lucky.run, 3);
@@ -248,7 +213,7 @@ describe('merges and payouts (GAME_DESIGN §5, §9)', () => {
     run.spawnBall(last, 0, -3 * r + 2);
     run.tick();
     expect(of('jackpot')).toEqual([
-      expect.objectContaining({ tier: last, golden: false, score: 2048, coins: 595, combo: 1 }),
+      expect.objectContaining({ tier: last, score: 2048, coins: 595, combo: 1 }),
     ]);
     expect(run.balls).toHaveLength(0);
     expect(run.score).toBe(2048);

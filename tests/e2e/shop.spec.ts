@@ -48,20 +48,20 @@ test('buying with debug coins: prices, states, feedback and persistence', async 
   await expect(page.getByTestId('shop-balance')).toHaveText('550'); // after the count-down
   await expect(page.getByTestId('shop-card-luckyPaw').locator('.shop-pip.is-on')).toHaveCount(1);
 
-  // Big Catch and Golden Merge show what a level adds.
+  // Big Catch and Combo Charm show what a level adds.
   await expect(page.getByTestId('shop-value-bigCatch')).toHaveText('Biggest drop10%→13%');
-  await expect(page.getByTestId('shop-value-goldenMerge')).toHaveText('Golden merges0%→3%');
+  await expect(page.getByTestId('shop-value-comboCharm')).toHaveText('Per combo step+0%→+8%');
 
   // Second Chance 0 → 1 for 500; level 2 costs 4,000.
   await buy(page, 'secondChance');
   await expect(page.getByTestId('shop-level-secondChance')).toHaveText('1/2');
   await expect(page.getByTestId('shop-balance')).toHaveText('50');
 
-  // Not enough coins: Golden Merge (120) is disabled and clicking does nothing.
-  const golden = page.getByTestId('shop-buy-goldenMerge');
-  await expect(golden).toBeDisabled();
-  await expect(golden).toHaveAttribute('data-state', 'insufficient');
-  await expect(page.getByTestId('shop-need-goldenMerge')).toHaveText('Need 70 more');
+  // Not enough coins: Big Catch (100) is disabled and clicking does nothing.
+  const bigCatch = page.getByTestId('shop-buy-bigCatch');
+  await expect(bigCatch).toBeDisabled();
+  await expect(bigCatch).toHaveAttribute('data-state', 'insufficient');
+  await expect(page.getByTestId('shop-need-bigCatch')).toHaveText('Need 50 more');
 
   // Saved at once, outside any write throttle.
   const saved = await page.evaluate(
@@ -105,7 +105,7 @@ test('the back button closes the shop and stays on the menu', async ({ page }) =
   expect(await page.evaluate(() => history.length)).toBeLessThanOrEqual(length + 1);
 });
 
-test('an old save gets its Shrine Expansion and Fortune Teller coins back', async ({ page }) => {
+test('an old save gets its removed upgrades’ coins back', async ({ page }) => {
   const errors = watchConsole(page);
   await page.goto('./?debug=1');
   await expect(page.getByTestId('play')).toBeVisible();
@@ -120,22 +120,20 @@ test('an old save gets its Shrine Expansion and Fortune Teller coins back', asyn
     localStorage.setItem(key, JSON.stringify({ version: 2, data }));
   }, SAVE_KEY);
   await page.reload();
-  // 100 + 1,500 + 400
-  await expect(page.getByTestId('coin-balance')).toHaveText('2,000');
+  // 100 + 1,500 + 400, and Golden Touch 2 became Golden Merge 2, refunded in v0.21: 120 + 240.
+  await expect(page.getByTestId('coin-balance')).toHaveText('2,360');
   await page.getByTestId('upgrades').click();
-  await expect(page.getByTestId('shop-level-goldenMerge')).toHaveText('2/5');
   await expect(page.getByTestId('shop-level-luckyPaw')).toHaveText('1/10');
   const saved = await page.evaluate(
     (key) => JSON.parse(localStorage.getItem(key) ?? '{}'),
     SAVE_KEY,
   );
-  expect(saved.version).toBe(4);
+  expect(saved.version).toBe(5);
   // Capped at today's last tier (v3 → v4).
   expect(saved.data.records.highestTier).toBe(46);
   expect(Object.keys(saved.data.upgrades)).toEqual([
     'luckyPaw',
     'bigCatch',
-    'goldenMerge',
     'comboCharm',
     'secondChance',
   ]);

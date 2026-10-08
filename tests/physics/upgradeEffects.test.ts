@@ -5,7 +5,6 @@
 import { describe, expect, it } from 'vitest';
 import { stepsFor } from '../../src/config/physics';
 import { DROP_COOLDOWN_MS } from '../../src/config/timings';
-import { tierCoins } from '../../src/config/tiers';
 import { UPGRADES } from '../../src/config/upgrades';
 import type { UpgradeId } from '../../src/config/upgrades';
 import type { Drop } from '../../src/core/dropQueue';
@@ -64,19 +63,6 @@ describe('upgrade effects in runs (GAME_DESIGN §10)', () => {
     // Same random rolls: every cat is at least as big, and some are bigger.
     plain!.forEach((drop, i) => expect(lucky![i]!.tier).toBeGreaterThanOrEqual(drop.tier));
     expect(sum(lucky!)).toBeGreaterThan(sum(plain!));
-  });
-
-  it('Golden Merge: some merges pay ×3 coins', () => {
-    const golden = [0, 5].map((level) => {
-      const run = runAfterBuying('goldenMerge', level);
-      const merges: { golden: boolean; coins: number; tier: number }[] = [];
-      run.events.on('merged', (e) => merges.push(e));
-      for (let i = 0; i < 40; i++) mergePair(run, 1, ((i % 5) - 2) * 110);
-      for (const m of merges) expect(m.coins).toBe(tierCoins(m.tier) * (m.golden ? 3 : 1));
-      return merges.filter((m) => m.golden).length;
-    });
-    expect(golden[0]).toBe(0);
-    expect(golden[1]).toBeGreaterThan(0);
   });
 
   it('Combo Charm: a combo pays extra', () => {

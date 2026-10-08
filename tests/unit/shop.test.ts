@@ -38,8 +38,8 @@ describe('shop cards (GAME_DESIGN §2.2)', () => {
   });
 
   it('disables the price when coins are short', () => {
-    const card = shopCard('goldenMerge', levels(), 119);
-    expect(card).toMatchObject({ price: 120, state: 'insufficient', current: '0%', next: '3%' });
+    const card = shopCard('bigCatch', levels(), 99);
+    expect(card).toMatchObject({ price: 100, state: 'insufficient', current: '10%', next: '13%' });
     // "Need 1 more" under the price.
     expect(card.shortfall).toBe(1);
   });
@@ -60,9 +60,6 @@ describe('shop cards (GAME_DESIGN §2.2)', () => {
     ['bigCatch', 3, '19%'],
     ['bigCatch', 4, '22%'],
     ['bigCatch', 5, '25%'],
-    ['goldenMerge', 1, '3%'],
-    ['goldenMerge', 3, '9%'],
-    ['goldenMerge', 5, '15%'],
     ['comboCharm', 2, '+16%'],
     ['secondChance', 2, '2'],
   ])('%s at level %i shows %s', (id, level, text) => {

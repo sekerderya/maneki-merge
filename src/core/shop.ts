@@ -63,8 +63,6 @@ export function upgradeValue(id: UpgradeId, level: number): string {
       const weights = dropWeights(stats.bigCatchLevel);
       return percent(weights[weights.length - 1] ?? 0);
     }
-    case 'goldenMerge':
-      return percent(stats.goldenChance);
     case 'comboCharm':
       return `+${percent(UPGRADES.comboCharm.perLevel * stats.comboCharmLevel)}`;
     case 'secondChance':

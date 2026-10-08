@@ -11,7 +11,7 @@ import { UPGRADE_IDS, UPGRADES } from '../config/upgrades';
 import type { UpgradeId } from '../config/upgrades';
 
 /** Bump when the shape changes, and add MIGRATIONS[old] that converts old data to the new one. */
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 
 export interface SaveData {
   wallet: { coins: number };
@@ -113,6 +113,22 @@ export function shrinkStages(data: unknown): unknown {
   return isRecord(data) ? capRecordTier(data, V3_TIER_COUNT, TIER_COUNT) : data;
 }
 
+/**
+ * Prices of the levels of Golden Merge, the upgrade v0.21 removed (golden cats skip a tier
+ * instead, GAME_DESIGN §15.4). Frozen here: the config no longer knows it.
+ */
+export const GOLDEN_MERGE_PRICES: readonly number[] = [120, 240, 480, 960, 1900];
+
+/**
+ * v4 → v5 (v0.21): Golden Merge is gone. The coins spent on its levels go back into the wallet,
+ * and its level is dropped. Anything malformed is left for `sanitize` to repair.
+ */
+export function retireGoldenMerge(data: unknown): unknown {
+  if (!isRecord(data) || !isRecord(data['upgrades'])) return data;
+  const { goldenMerge, ...upgrades } = data['upgrades'];
+  return withRefund({ ...data, upgrades }, spent(GOLDEN_MERGE_PRICES, goldenMerge));
+}
+
 /** Lowers a record tier in (`max`, `oldMax`] to `max`: the stages shrank from `oldMax` to `max`. */
 function capRecordTier(
   data: Record<string, unknown>,
@@ -150,6 +166,7 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
   1: refundQuickGrowth,
   2: retireUpgrades,
   3: shrinkStages,
+  4: retireGoldenMerge,
 };
 
 export type LoadStatus =
