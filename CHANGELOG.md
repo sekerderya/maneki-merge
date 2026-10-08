@@ -2,6 +2,28 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.21.0] - 2026-10-08
+
+Special balls, trials and blessings (GAME_DESIGN §15): later stages get harder and every run gets its own build.
+
+### Added
+
+- **Magnet**: a special ball from the dropper (2% of drops). Tap a landed cat or boulder to select it (a pulsing gold ring), then **Take**: it flies up into the paw and is dropped like any cat. The Take button ignores taps in its first 0.3 s. A ball bigger than the biggest drop is shown at size 4 in the paw and drops at its true size. First-run hint: "Tap a cat, then Take".
+- **Boulder**: from stage 2 (3% of drops), a grey stone that never merges. A merge whose cat is within 15 world units of it knocks off an iron band; the bare stone breaks on the next one, paying nothing. Stage clears and Lucky Saves crumble boulders too.
+- **Golden cats**: a golden cat merging with a cat of its tier makes a cat two tiers up (never past the stage's last cat). It glows gold, in the jar, in the paw and in NEXT.
+- **Stage-clear picks**: after the last cat settles, a trial (More Boulders, Iron Bands, Big Boulders) and then a blessing (More Magnets, Big Drops, Golden Cats), 1 of 3 each, stacking by level for the run; no rarities, no reroll. At the last stage the picks come at once. A debug jump skips them.
+- The NEXT bubble shows magnets and boulders; sounds for the magnet's catch, a band coming off and a boulder crumbling.
+- Debug: give a magnet, boulder or golden cat, open the picks, set a pick level; hooks for e2e (`take`, `choose`, `ballPoint`, …).
+
+### Removed
+
+- **Golden Merge** (a merge's chance to pay ×3 coins). Save v5 gives back the coins spent on it.
+
+### Notes
+
+- The special balls are drawn in code and kept simple until the owner's art. With `?skin=placeholder` a boulder shows the merges it still needs as a number (it turns with the stone).
+- All numbers are starting values; balance and the economy come later (the owner's call).
+
 ## [0.20.1] - 2026-10-08
 
 The main menu's layout after the owner's first look on a phone.

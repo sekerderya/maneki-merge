@@ -6,8 +6,9 @@ import {
   HUD_SPRITE_DIR,
 } from '../../config/hudSprites';
 import type { HudSprite } from '../../config/hudSprites';
+import type { Drop } from '../../core/dropQueue';
 import { formatNumber } from '../../core/format';
-import { catIcon, paintCatIcon } from '../catIcon';
+import { catIcon, paintDropIcon } from '../catIcon';
 import { button, el } from '../dom';
 import { ICON_COIN, ICON_PAUSE, NEXT_BUBBLE_BACK, NEXT_BUBBLE_SHINE } from '../icons';
 
@@ -18,8 +19,8 @@ export interface HudActions {
 export interface HudView {
   setScore(score: number): void;
   setCoins(coins: number): void;
-  /** The cat after the one in the dropper. */
-  setNext(tier: number): void;
+  /** The ball after the one in the dropper: a cat, the magnet or a boulder. */
+  setNext(drop: Drop): void;
   /** A coin landed on the counter. */
   pulseCoins(): void;
   /** Where flying coins land. */
@@ -128,8 +129,8 @@ export function createHud(root: HTMLElement, actions: HudActions, art = false): 
     setCoins(value) {
       coinValue.textContent = formatNumber(value);
     },
-    setNext(tier) {
-      paintCatIcon(nextCat, tier);
+    setNext(drop) {
+      paintDropIcon(nextCat, drop);
     },
     pulseCoins() {
       restartAnimation(coinsCard, 'is-pulsing');

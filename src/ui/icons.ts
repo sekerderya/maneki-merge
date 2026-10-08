@@ -1,4 +1,5 @@
 /** Inline SVG icons (no icon font, no network). They inherit `currentColor`. */
+import type { PickId } from '../config/picks';
 import type { UpgradeId } from '../config/upgrades';
 
 const svg = (body: string, viewBox = '0 0 24 24'): string =>
@@ -118,5 +119,78 @@ export const UPGRADE_ICONS: Readonly<Record<UpgradeId, string>> = {
   comboCharm: svg('<path d="M13.5 2L5 13.5h5.5L9.5 22 19 9.5h-5.8z" fill="currentColor"/>'),
   secondChance: svg(
     '<path d="M12 20.5S3.5 15.2 3.5 9.2A4.4 4.4 0 0 1 12 7a4.4 4.4 0 0 1 8.5 2.2c0 6-8.5 11.3-8.5 11.3z" fill="currentColor"/>',
+  ),
+};
+
+/**
+ * The special balls as DOM icons (the NEXT bubble, GAME_DESIGN §15), like the canvas ones: the
+ * magnet is a cream disc with a red horseshoe magnet; a boulder is grey stone with one iron band
+ * per extra merge it needs. Box 100 × 100, the ball fills it.
+ */
+export const MAGNET_SVG = svg(
+  '<circle cx="50" cy="50" r="46" fill="#fff4e2" stroke="#3b2620" stroke-width="5"/>' +
+    '<path d="M31 74V48a19 19 0 0 1 38 0v26" fill="none" stroke="#3b2620" stroke-width="22"/>' +
+    '<path d="M31 74V48a19 19 0 0 1 38 0v26" fill="none" stroke="#d9483b" stroke-width="15"/>' +
+    '<rect x="20" y="70" width="22" height="14" fill="#3b2620"/>' +
+    '<rect x="58" y="70" width="22" height="14" fill="#3b2620"/>' +
+    '<rect x="23.5" y="73" width="15" height="8" fill="#d5dbe0"/>' +
+    '<rect x="61.5" y="73" width="15" height="8" fill="#d5dbe0"/>',
+  '0 0 100 100',
+);
+
+const boulderSvgs = new Map<number, string>();
+
+/** A boulder with `bands` iron bands (the merges it needs, minus one). */
+export function boulderSvg(bands: number): string {
+  let markup = boulderSvgs.get(bands);
+  if (markup) return markup;
+  const rows = Array.from({ length: bands }, (_, i) => {
+    const y = 50 + ((i + 1) / (bands + 1) - 0.5) * 69 - 4.5;
+    return (
+      `<rect x="0" y="${y - 1.5}" width="100" height="12" fill="#3b2620"/>` +
+      `<rect x="0" y="${y}" width="100" height="9" fill="#56606b"/>` +
+      `<circle cx="29" cy="${y + 4.5}" r="1.8" fill="#e6eaee"/>` +
+      `<circle cx="71" cy="${y + 4.5}" r="1.8" fill="#e6eaee"/>`
+    );
+  }).join('');
+  markup = svg(
+    '<defs><clipPath id="boulder-clip"><circle cx="50" cy="50" r="44"/></clipPath></defs>' +
+      '<circle cx="50" cy="50" r="46" fill="#9d968d"/>' +
+      `<g clip-path="url(#boulder-clip)">` +
+      '<circle cx="34" cy="64" r="4" fill="#746d65"/><circle cx="64" cy="32" r="3" fill="#746d65"/>' +
+      '<circle cx="70" cy="62" r="2.6" fill="#746d65"/>' +
+      `${rows}</g>` +
+      '<circle cx="50" cy="50" r="46" fill="none" stroke="#3b2620" stroke-width="5"/>',
+    '0 0 100 100',
+  );
+  boulderSvgs.set(bands, markup);
+  return markup;
+}
+
+/** One glyph per trial and blessing for the pick cards (GAME_DESIGN §15.5). */
+export const PICK_ICONS: Readonly<Record<PickId, string>> = {
+  moreBoulders: svg(
+    '<circle cx="8.5" cy="15" r="5.5" fill="currentColor"/>' +
+      '<circle cx="16.5" cy="10" r="5" fill="currentColor"/>' +
+      '<circle cx="17" cy="18.5" r="3" fill="currentColor"/>',
+  ),
+  ironBands: svg(
+    '<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.2"/>' +
+      '<path d="M3.6 9h16.8M3.6 15h16.8" stroke="currentColor" stroke-width="3"/>',
+  ),
+  bigBoulders: svg(
+    '<circle cx="13" cy="12" r="9" fill="currentColor"/>' +
+      '<path d="M9 7l3 4-2 3 4 3" fill="none" stroke="#fff8ee" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>',
+  ),
+  moreMagnets: svg(
+    '<path d="M6.5 20V11a5.5 5.5 0 0 1 11 0v9" fill="none" stroke="currentColor" stroke-width="4.5"/>' +
+      '<path d="M4.2 17.5h4.6M15.2 17.5h4.6" stroke="#fff8ee" stroke-width="2"/>',
+  ),
+  bigDrops: svg(
+    '<circle cx="6.5" cy="16.5" r="3.5" fill="none" stroke="currentColor" stroke-width="2"/>' +
+      '<circle cx="15" cy="11" r="7" fill="currentColor"/>',
+  ),
+  goldenCats: svg(
+    '<path d="M12 2.5l2.2 7.3 7.3 2.2-7.3 2.2L12 21.5l-2.2-7.3L2.5 12l7.3-2.2z" fill="currentColor"/>',
   ),
 };

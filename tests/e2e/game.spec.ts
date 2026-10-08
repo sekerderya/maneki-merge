@@ -15,7 +15,14 @@ async function state(page: Page): Promise<GameStateSnapshot> {
 
 /** Waits for the cooldown, then drops at world x through the hook. */
 async function dropAt(page: Page, x: number): Promise<void> {
-  await expect.poll(async () => (await state(page)).canDrop, WAIT).toBe(true);
+  await expect
+    .poll(async () => (await state(page)).canDrop || (await state(page)).canTake, WAIT)
+    .toBe(true);
+  // A magnet (GAME_DESIGN §15.2) takes the oldest ball, which is then dropped at x.
+  if ((await state(page)).canTake) {
+    expect(await page.evaluate(() => window.__game?.take())).toBe(true);
+    await expect.poll(async () => (await state(page)).canDrop, WAIT).toBe(true);
+  }
   expect(await page.evaluate((at) => window.__game?.dropAt(at), x)).toBe(true);
 }
 

@@ -72,9 +72,7 @@ export function inJar(cat: BallView, halfWidth: number): boolean {
 
 /** A player's input: drop at x, take a ball with the magnet, or choose a pick's option. */
 export type PlayInput =
-  | { readonly drop: number }
-  | { readonly take: number }
-  | { readonly choose: PickId };
+  { readonly drop: number } | { readonly take: number } | { readonly choose: PickId };
 
 /**
  * A bot's move with the dropper's ball: a cat or boulder drops at `x`; a magnet takes the takeable

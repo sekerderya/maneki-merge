@@ -3,7 +3,9 @@ import { CAT_SPRITE_DIR, catSprite } from '../config/catSprites';
 import type { ArtShape, CatLook } from '../config/catArt';
 import { OUTLINE_DARKEN, tierColor } from '../config/skin';
 import { darken } from '../core/color';
+import type { Drop } from '../core/dropQueue';
 import { el } from './dom';
+import { boulderSvg, MAGNET_SVG } from './icons';
 
 /** Which art DOM icons use; `?skin=` switches them along with the game. */
 export type IconSkin = 'art' | 'vector' | 'placeholder';
@@ -56,6 +58,27 @@ export function catIcon(tier: number): HTMLElement {
   const icon = el('span', 'cat-icon');
   paintCatIcon(icon, tier);
   return icon;
+}
+
+/**
+ * A ball from the dropper's queue as a DOM icon (the HUD's NEXT, GAME_DESIGN §15.1): a cat (a
+ * golden one glows), the magnet, or a boulder with its bands.
+ */
+export function paintDropIcon(icon: HTMLElement, drop: Drop): void {
+  icon.classList.toggle('is-golden', drop.golden);
+  icon.dataset['kind'] = drop.kind;
+  if (drop.kind === 'cat') {
+    paintCatIcon(icon, drop.tier);
+    return;
+  }
+  const painted = drop.kind === 'magnet' ? 'magnet' : `boulder:${drop.hits}`;
+  if (icon.dataset['painted'] === painted) return;
+  icon.dataset['painted'] = painted;
+  delete icon.dataset['tier'];
+  icon.classList.remove('is-placeholder', 'is-two-digits');
+  icon.style.removeProperty('--cat-color');
+  icon.style.removeProperty('--cat-outline');
+  icon.innerHTML = drop.kind === 'magnet' ? MAGNET_SVG : boulderSvg(Math.max(0, drop.hits - 1));
 }
 
 export function paintCatIcon(icon: HTMLElement, tier: number): void {

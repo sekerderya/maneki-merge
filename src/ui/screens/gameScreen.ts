@@ -2,7 +2,7 @@ import { createBanners } from '../banners/banner';
 import type { BannerView } from '../banners/banner';
 import { createHint } from '../banners/hint';
 import type { HintView } from '../banners/hint';
-import { el } from '../dom';
+import { button, el } from '../dom';
 import { createCoinFly } from '../fx/coinFly';
 import type { CoinFlyView } from '../fx/coinFly';
 import { createHud } from '../hud/hud';
@@ -10,7 +10,20 @@ import type { HudActions, HudView } from '../hud/hud';
 import { JAR_GLASS } from '../../config/jarArt';
 import { JAR_CORNER_RADIUS, JAR_WIDTH } from '../../config/stages';
 import { BACKGROUND_ART, BACKGROUND_JAR, SCENE_SPRITE_DIR } from '../../config/sceneSprites';
+import { TAKE_ARM_MS, TAKE_BUTTON_GAP } from '../../config/view';
 import { SCENERY_JAR, SCENERY_VIEW, sceneryMarkup } from '../scenery';
+
+export interface GameScreenActions extends HudActions {
+  /** The magnet's Take button (GAME_DESIGN §15.2). */
+  onTake(): void;
+}
+
+/** Where the Take button goes: above the selected ball `id`, in CSS pixels of the play area. */
+export type ScreenTakePrompt = {
+  readonly id: number;
+  readonly x: number;
+  readonly y: number;
+} | null;
 
 /** The jar's inside on screen, in CSS pixels of the play area. */
 export interface ScreenJarBox {
@@ -37,6 +50,11 @@ export interface GameScreenView {
    * draws the glass, so the DOM glass hides.
    */
   setJarBox(box: ScreenJarBox, growing: boolean): void;
+  /**
+   * Shows the magnet's Take button above the selected ball, or hides it (null). A new selection
+   * ignores taps for TAKE_ARM_MS, so a quick double tap can't take a ball by mistake.
+   */
+  setTakePrompt(prompt: ScreenTakePrompt): void;
 }
 
 /**
@@ -46,7 +64,7 @@ export interface GameScreenView {
  */
 export function createGameScreen(
   root: HTMLElement,
-  actions: HudActions,
+  actions: GameScreenActions,
   sceneArt = false,
 ): GameScreenView {
   root.replaceChildren();
@@ -74,6 +92,17 @@ export function createGameScreen(
   playArea.append(glass);
   const hint = createHint(playArea);
   const banners = createBanners(playArea);
+  // The magnet's Take button floats over the play area, above the selected ball.
+  const take = button('btn take-btn', 'Take');
+  take.dataset['testid'] = 'take';
+  take.hidden = true;
+  playArea.append(take);
+  let takeId: number | null = null;
+  let takeArmedAt = 0;
+  take.addEventListener('click', () => {
+    if (performance.now() < takeArmedAt) return;
+    actions.onTake();
+  });
 
   const hudRoot = el('header');
   const hud = createHud(hudRoot, actions, sceneArt);
@@ -121,6 +150,24 @@ export function createGameScreen(
       g.setProperty('--glass-inset', `${JAR_GLASS.lineInset * unit}px`);
       g.setProperty('--glass-line', `${JAR_GLASS.lineWidth * unit}px`);
       glass.classList.toggle('is-hidden', growing);
+    },
+    setTakePrompt(prompt) {
+      if (!prompt) {
+        take.hidden = true;
+        takeId = null;
+        return;
+      }
+      if (prompt.id !== takeId) {
+        takeId = prompt.id;
+        takeArmedAt = performance.now() + TAKE_ARM_MS;
+      }
+      take.hidden = false;
+      // Centred over the ball, its bottom TAKE_BUTTON_GAP above the ring, kept inside the area.
+      const half = take.offsetWidth / 2;
+      const x = Math.min(Math.max(prompt.x, half + 8), playArea.clientWidth - half - 8);
+      const y = Math.max(prompt.y - TAKE_BUTTON_GAP, take.offsetHeight + 8);
+      take.style.left = `${x}px`;
+      take.style.top = `${y}px`;
     },
   };
 }

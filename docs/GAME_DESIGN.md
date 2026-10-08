@@ -164,7 +164,7 @@ Every stage plays the same way: the same 600 × 870 jar (aspect 1 : 1.45), the s
 4. **Reveal** (0.4 s): the world is now the next stage's. The last cat is size 1 of the new stage, the dropper's cats move to the new stage's pool (§8), and a "New cats unlocked!" banner shows the new goal (the new stage's last cat).
 5. Physics resumes, the dropper returns, and input is enabled again.
 
-Planned (§15.5): the trial and blessing picks come between steps 2 and 3.
+The trial and blessing picks (§15.5) come between steps 2 and 3.
 
 ### 7.2 The last stage
 
@@ -245,7 +245,7 @@ If a save can't be read, or some of its fields are invalid, a copy is kept (TECH
 
 ## 12. Feedback and juice
 
-- Merge: a pop scale, a particle burst in the cat's colour, a floating "+coins", and a coin icon that flies to the HUD counter. A golden merge shows a bigger "+coins", bursts gold sparks, rings a bell and sends three coins; a Jackpot shows an even bigger "+coins", a gold spark burst and a shower of coins.
+- Merge: a pop scale, a particle burst in the cat's colour, a floating "+coins", and a coin icon that flies to the HUD counter. A golden cat's merge (§15.4) shows a bigger "+coins", bursts gold sparks, rings a bell and sends three coins; a Jackpot shows an even bigger "+coins", a gold spark burst and a shower of coins.
 - Merges also bump the new cat (a short scale pop on top of its growth) and burst particles in its colour, more for bigger cats.
 - Combo: "Combo ×N" over the jar, with the Combo Charm bonus ("+16%") when it has one. The label heats up (bigger, brighter) at ×4 and ×7.
 - Danger: the countdown number pulses on each new second, with a tick that rises in pitch (3, 2, 1).
@@ -315,9 +315,9 @@ These were written for score thresholds. With stage clears (§7), clearing stage
 - A run that reaches stage 4 or 5 lasts 12–20 minutes.
 - Every upgrade changes runs noticeably, and none is a mandatory first pick.
 
-## 15. Special balls, trials and blessings (planned)
+## 15. Special balls, trials and blessings
 
-> **Planned, not built yet** (the owner's design, 2026-10-08). Until it is built, the code doesn't follow this section. Its numbers are starting values: balance and the economy come later.
+> The owner's design (2026-10-08), built in v0.21. Its numbers are starting values: balance and the economy come later.
 
 Later stages get harder and every run gets its own build. Every stage clear asks the player to pick a **trial**, which makes the coming stages harder, and then a **blessing**, which helps. Picks stack by level for the rest of the run, like Vampire Survivors' level-ups: the same pick again raises its level. Trials work through **boulders**. Blessings work through **magnets**, bigger drops and **golden cats**.
 
@@ -333,6 +333,7 @@ The dropper hands out three kinds of ball: cats, magnets and boulders. Every ite
 
 - The first two drops of a run are always cats of the pool's smallest tier (§8).
 - Magnets and boulders are never golden.
+- Debug jumps (`?debug=1`, "Jump to stage") skip the stage-clear picks.
 - The NEXT bubble shows the item as it is: a cat (golden ones with their glow), the magnet, or the boulder at its size with its bands.
 - A level picked at a stage clear applies to items queued after the pick. The two items already queued (in the paw and in NEXT) stay as they are. At an expansion, queued cats change tier as in §8, and queued boulders keep their size and bands.
 - Determinism: kind and golden roll on their own generator, seeded from the run's seed. Every queued item rolls its kind, its golden and its tier every time, whatever the chances, so a seed gives the same tiers at any level (as golden merges do, §8).
@@ -358,7 +359,7 @@ A boulder is a stone ball that only takes up room.
 - It never merges, with cats or with other boulders.
 - It uses the same physics as a cat of its size, and counts for the danger line and game over like a cat (§6).
 - **Size:** size 2 (radius 40), one size bigger per Big Boulders level. The size is fixed when the boulder is queued.
-- **Hits:** a boulder takes a hit from every merge in which at least one of the two merging cats touches it when the merge resolves (a Jackpot counts as a merge). One merge hits every boulder its two cats touch, once each.
+- **Hits:** a boulder takes a hit from every merge in which at least one of the two merging cats is within 15 world units of it, edge to edge, when the merge resolves: touching, or so close the gap doesn't show (v0.21: cats resting side by side on the floor often leave a gap of a few units). A Jackpot counts as a merge. One merge hits each boulder it reaches once.
 - **Breaking:** a boulder needs 1 hit, plus 1 per Iron Bands level at the time it was queued. The last hit breaks it.
 - **Look:** grey stone with an ink outline like the cats. Every extra hit it needs is one iron band (a metal plate) round it.
   - Each hit knocks one band off, with a clang and a few sparks.
@@ -387,7 +388,7 @@ At every stage clear, including the repeated clears of the last stage, two picks
 1. **Choose a trial:** 3 cards; the player picks one.
 2. **Choose a blessing:** 3 cards; the player picks one.
 
-Then the zoom follows (§7.1 step 3). At the last stage, play resumes.
+Then the zoom follows (§7.1 step 3). At the last stage there is no settling: the picks come right after the pops, and play resumes after them.
 
 - **Options:** each pick shows up to 3 different options, drawn at random from those not at their max level, with the run's seeded RNG. Today there are exactly 3 of each kind, so a pick shows all of them in random order. With fewer than 3 left it shows fewer cards; with none left the pick is skipped.
 - The player must pick exactly one: no skip, no reroll, no rarities.

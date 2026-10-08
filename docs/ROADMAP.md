@@ -280,6 +280,12 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
   - [x] sizes 1–10 keep their radius; the Kuro look and the white placeholder colour left with size 11
   - [x] save format v4 caps a record tier above 46
 
+- [x] Batch 7 (v0.21.0), special balls, trials and blessings (GAME_DESIGN §15):
+  - [x] magnet: select a landed ball, confirm with Take, drop it again
+  - [x] boulder: never merges, breaks after the merges beside it; iron bands per extra merge
+  - [x] golden cats skip a tier when they merge; Golden Merge removed and refunded (save v5)
+  - [x] at every stage clear a trial, then a blessing, 1 of 3, stacking by level for the run
+
 ## M13: Final art integration
 
 **Effort:** high. **Plan mode:** yes. **Goal:** the owner's lucky-cat designs replace the placeholders.

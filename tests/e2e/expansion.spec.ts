@@ -33,6 +33,28 @@ async function startRun(page: Page, seed: number): Promise<void> {
   }
 }
 
+/** Picks the first card of the trial, then of the blessing, through the panel (GAME_DESIGN §15.5). */
+async function chooseThroughPanel(page: Page): Promise<void> {
+  const overlay = page.getByTestId('pick-overlay');
+  for (const kind of ['trial', 'blessing']) {
+    await expect(overlay).toHaveAttribute('data-kind', kind, WAIT);
+    await expect(overlay).toBeVisible();
+    // The cards ignore taps for their first 0.4 s.
+    await page.waitForTimeout(500);
+    await overlay.locator('.pick-card').first().click();
+    await page.getByTestId('pick-choose').click();
+  }
+  await expect(overlay).toBeHidden();
+}
+
+/** Takes the first option of both picks through the hooks. */
+async function choosePicks(page: Page, wait: { timeout: number }): Promise<void> {
+  for (let i = 0; i < 2; i++) {
+    await expect.poll(async () => (await state(page)).runState, wait).toBe('choosing');
+    await page.evaluate(() => window.__game?.choose());
+  }
+}
+
 /**
  * Makes the stage's last cat the way a player does: two cats one tier below it meet (here both
  * spawn at the dropper, on top of each other) and merge into it.
@@ -64,6 +86,10 @@ test('making the last cat (two 9s) clears stage 1 and grows the jar', async ({ p
   expect(clearing.expansion?.to).toBe(2);
   expect(clearing.runCoins).toBeGreaterThan(70);
   expect(await page.evaluate(() => window.__game?.dropAt(0))).toBe(false);
+  // The picks: a trial, then a blessing, before the jar grows.
+  await chooseThroughPanel(page);
+  const levels = (await state(page)).pickLevels ?? {};
+  expect(Object.values(levels).reduce((a, b) => a + b, 0)).toBe(2);
 
   // The reveal: the 10 is stage 2's smallest cat, and 19 is the next goal.
   // One wait for the banner and its cat: it only shows for 2 s, and a slow software renderer
@@ -95,6 +121,7 @@ test('with no upgrades, clearing stage 2 grows the jar into stage 3', async ({ p
   const long = { timeout: 120_000 };
   for (const stage of [2, 3]) {
     await makeLastCat(page);
+    await choosePicks(page, long);
     await expect.poll(async () => (await state(page)).stage, long).toBe(stage);
     await expect.poll(async () => (await state(page)).runState, long).toBe('playing');
   }

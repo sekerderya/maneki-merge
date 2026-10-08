@@ -123,11 +123,6 @@ export class PhysicsWorld {
    * Boulders never merge, so they are never in it.
    */
   readonly sameTierContacts: Ball[] = [];
-  /**
-   * Cats touching boulders during the last step, as a flat list: pair i is the cat [2i] and the
-   * boulder [2i + 1] (a merge of that cat hits the boulder, GAME_DESIGN §15.3).
-   */
-  readonly boulderContacts: Ball[] = [];
 
   private readonly engine: Matter.Engine;
   private readonly list: Ball[] = [];
@@ -349,8 +344,7 @@ export class PhysicsWorld {
     const now = this.timeMs;
     const contacts = this.sameTierContacts;
     contacts.length = 0;
-    const boulders = this.boulderContacts;
-    boulders.length = 0;
+
     for (const ball of this.list) {
       ball.touchesCat = false;
       ball.touchesFloor = false;
@@ -368,13 +362,7 @@ export class PhysicsWorld {
       }
       a.touchesCat = true;
       b.touchesCat = true;
-      if (a.kind === 'cat' && b.kind === 'cat') {
-        if (a.tier === b.tier) contacts.push(a, b);
-      } else if (a.kind === 'cat') {
-        boulders.push(a, b);
-      } else if (b.kind === 'cat') {
-        boulders.push(b, a);
-      }
+      if (a.kind === 'cat' && b.kind === 'cat' && a.tier === b.tier) contacts.push(a, b);
       if (a.growing) b.touchesGrowth = true;
       if (b.growing) a.touchesGrowth = true;
     }

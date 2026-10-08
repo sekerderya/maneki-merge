@@ -14,6 +14,12 @@ export const BOULDER_FIRST_STAGE = 2;
 export const BOULDER_BASE_SIZE = 2;
 export const BOULDER_BASE_HITS = 1;
 
+/**
+ * A merge hits every boulder whose edge is within this many world units of one of its two cats'
+ * edges (GAME_DESIGN §15.3): touching, or so close the gap doesn't show.
+ */
+export const BOULDER_HIT_REACH = 15;
+
 /** The magnet is drawn at this size's radius in the paw and the NEXT bubble. */
 export const MAGNET_SIZE = 3;
 

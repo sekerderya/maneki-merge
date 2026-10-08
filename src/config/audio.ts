@@ -14,7 +14,10 @@ export type SoundName =
   | 'dangerTick'
   | 'gameOver'
   | 'click'
-  | 'purchase';
+  | 'purchase'
+  | 'take'
+  | 'clang'
+  | 'crunch';
 
 /** Everything goes through one master gain and a limiter, so stacked sounds never clip. */
 export const MASTER_VOLUME = 0.8;
@@ -53,6 +56,10 @@ export const SOUNDS: Readonly<Record<SoundName, SoundSpec>> = {
   gameOver: { volume: 0.32, durationMs: 1300, minIntervalMs: 1000, maxVoices: 1 },
   click: { volume: 0.22, durationMs: 60, minIntervalMs: 40, maxVoices: 2 },
   purchase: { volume: 0.26, durationMs: 450, minIntervalMs: 120, maxVoices: 2 },
+  // The special balls (GAME_DESIGN §15): the magnet's catch, a boulder's band, a boulder crumbling.
+  take: { volume: 0.34, durationMs: 300, minIntervalMs: 120, maxVoices: 1 },
+  clang: { volume: 0.22, durationMs: 380, minIntervalMs: 60, maxVoices: 2 },
+  crunch: { volume: 0.4, durationMs: 320, minIntervalMs: 60, maxVoices: 2 },
 };
 
 /**

@@ -198,3 +198,25 @@ export const COUNTDOWN_PULSE_SCALE = 0.35;
 
 /** "Combo ×N" heats up (bigger, hotter colour) at these combo levels. */
 export const COMBO_HEAT_LEVELS = [4, 7] as const;
+
+/**
+ * Special balls (GAME_DESIGN §15). A golden cat's glow is GOLDEN_GLOW_SCALE times its radius and
+ * pulses between the two alphas over GOLDEN_GLOW_PERIOD_MS. The magnet's selection ring sits
+ * SELECT_RING_GAP world units outside the ball, SELECT_RING_WIDTH wide, pulsing over
+ * SELECT_RING_PERIOD_MS.
+ */
+export const GOLDEN_GLOW_SCALE = 1.45;
+export const GOLDEN_GLOW_ALPHA = { min: 0.55, max: 0.95 } as const;
+export const GOLDEN_GLOW_PERIOD_MS = 1200;
+export const SELECT_RING_GAP = 6;
+export const SELECT_RING_WIDTH = 7;
+export const SELECT_RING_PERIOD_MS = 700;
+/** Particles when a boulder loses a band or crumbles. */
+export const BOULDER_HIT_SPARKS = 7;
+export const BOULDER_BREAK_CHIPS = 16;
+/** The Take button ignores taps this long after it appears (GAME_DESIGN §15.2). */
+export const TAKE_ARM_MS = 300;
+/** A pick's cards ignore taps this long after the panel appears (GAME_DESIGN §15.5). */
+export const PICK_ARM_MS = 400;
+/** The Take button floats this many CSS pixels above the selected ball. */
+export const TAKE_BUTTON_GAP = 10;

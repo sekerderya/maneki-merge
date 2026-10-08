@@ -15,7 +15,7 @@ export const SAVE_BACKUP_PREFIX = `${STORAGE_PREFIX}save:corrupt:`;
 export const SAVE_BACKUP_LIMIT = 3;
 
 /** First-run hints (GAME_DESIGN §2.3); the save remembers which ones were seen. */
-export const HINT_IDS = ['aim', 'merge'] as const;
+export const HINT_IDS = ['aim', 'merge', 'magnet'] as const;
 export type HintId = (typeof HINT_IDS)[number];
 
 /** Browser chrome and splash colors (manifest, theme-color meta). Match --color-bg in CSS. */

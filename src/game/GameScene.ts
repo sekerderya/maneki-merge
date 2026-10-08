@@ -1,37 +1,62 @@
 /**
  * The game scene (TECH_SPEC §3, §4, §6): renders a RunController and forwards pointer input to
- * it. It owns no rules: everything it shows is read from the run each frame, and the only thing
- * it sends back is `drop(x)`.
+ * it. It owns no rules: everything it shows is read from the run each frame, and the only things
+ * it sends back are `drop(x)` and, with a magnet in the paw, `take(id)` for the ball the player
+ * selected and confirmed (GAME_DESIGN §15.2).
  *
  * Expansions (GAME_DESIGN §7.1) are drawn from the run's timeline every frame: the stage clear as
  * staggered pops, then camera, walls and rim from `expansionFrames`, with the next stage's
  * textures prepared during the zoom and switched in at the reveal.
  */
 import Phaser from 'phaser';
-import { AIM_LINE_ALPHA, AIM_LINE_COLOR, COUNTDOWN_FILL, COUNTDOWN_STROKE } from '../config/skin';
-import { FIRST_STAGE, JAR_WIDTH } from '../config/stages';
+import {
+  AIM_LINE_ALPHA,
+  AIM_LINE_COLOR,
+  BOULDER_CHIPS,
+  BOULDER_SPARKS,
+  COUNTDOWN_FILL,
+  COUNTDOWN_STROKE,
+  SELECT_RING,
+} from '../config/skin';
+import { FIRST_STAGE, JAR_WIDTH, tierSize } from '../config/stages';
 import { PAW_GRIP } from '../config/pawArt';
+import { MAGNET_TAKE_MS } from '../config/timings';
 import {
   AIM_DOT_RADIUS,
   AIM_DOT_SPACING,
   AIM_GHOST_ALPHA,
   AIM_LINE_WIDTH,
+  BOULDER_BREAK_CHIPS,
+  BOULDER_HIT_SPARKS,
   BURST_SPARKS,
   COUNTDOWN_PULSE_MS,
   COUNTDOWN_PULSE_SCALE,
   DANGER_FLASH_PERIOD_MS,
   DROPPER_POP_IN_MS,
+  GOLDEN_GLOW_SCALE,
   REDUCED_MOTION_PARTICLES,
+  SELECT_RING_GAP,
+  SELECT_RING_PERIOD_MS,
+  SELECT_RING_WIDTH,
   SHAKE,
   SKIN_PREPARE_BUDGET_MS,
 } from '../config/view';
 import { hexToNumber } from '../core/color';
+import type { Drop } from '../core/dropQueue';
 import type { GameEvents } from '../core/events';
-import { clampDropX, floorRestY, jarGeometry } from '../physics/geometry';
+import type { BallView } from '../physics/balls';
+import {
+  clampDropX,
+  dropStartY,
+  floorRestY,
+  jarGeometry,
+  MAX_DROP_RADIUS,
+} from '../physics/geometry';
 import { reducedMotion } from '../platform/motion';
 import type { RunController } from '../run/RunController';
 import { landingY } from './aim';
-import { BallRenderer } from './BallRenderer';
+import { BallRenderer, glowAlpha } from './BallRenderer';
+import type { CatSprite } from './BallRenderer';
 import { fitCamera, worldToView } from './cameraFit';
 import type { CameraFit, JarFrame } from './cameraFit';
 import { expansionFrames } from './expansionView';
@@ -43,11 +68,12 @@ import { SparkFx } from './fx/SparkFx';
 import { JarView } from './JarView';
 import { PawView, pawLift } from './PawView';
 import { comboShake, mergeParticleCount, mergeShake, Shake } from './shake';
-import type { BallSkin } from './skins/BallSkin';
+import type { BallSkin, SkinFrame } from './skins/BallSkin';
 import type { ArtImages } from './artImages';
 import { ArtSkin } from './skins/ArtSkin';
 import { CatSkin } from './skins/CatSkin';
 import { PlaceholderSkin } from './skins/PlaceholderSkin';
+import { SpecialSkin } from './skins/SpecialSkin';
 
 /**
  * Which cat art the scene draws: the raster cats, the earlier vector cats (`?skin=vector`) or flat
@@ -60,6 +86,12 @@ export const GAME_SCENE_KEY = 'game';
 /** A payout showed up on screen at (x, y) in canvas pixels. */
 export type ScreenCoinsListener = (x: number, y: number, kind: PayoutKind) => void;
 
+/**
+ * Where the magnet's Take button goes (GAME_DESIGN §15.2): just above the selected ball `id`, at
+ * (x, y) in canvas pixels (the top of its ring), or null when nothing is selected.
+ */
+export type TakePrompt = { readonly id: number; readonly x: number; readonly y: number } | null;
+
 /** The current stage's jar on screen, in canvas pixels: its inner walls, rim and floor. */
 export interface JarBox {
   readonly left: number;
@@ -68,22 +100,37 @@ export interface JarBox {
   readonly bottom: number;
 }
 
+/** A ball the magnet took, flying from the jar up into the paw. */
+interface Flight {
+  readonly sprite: CatSprite;
+  readonly fromX: number;
+  readonly fromY: number;
+  readonly fromScale: number;
+  readonly fromRotation: number;
+  readonly startMs: number;
+}
+
 export class GameScene extends Phaser.Scene {
   private run: RunController | null = null;
   private unsubscribe: (() => void)[] = [];
   private skin!: BallSkin;
+  private special!: SpecialSkin;
   private balls!: BallRenderer;
   private jar!: JarView;
   private fx!: MergeFx;
   private pops!: PopFx;
   private sparks!: SparkFx;
   private aimLine!: Phaser.GameObjects.Graphics;
+  private selectRing!: Phaser.GameObjects.Graphics;
+  private dropperGlow!: Phaser.GameObjects.Image;
   private dropperBody!: Phaser.GameObjects.Image;
   private dropperNumber!: Phaser.GameObjects.Image;
   private paw!: PawView;
   private countdown!: Phaser.GameObjects.Text;
   private coinsListener: ScreenCoinsListener | null = null;
   private jarBoxListener: ((box: JarBox, growing: boolean) => void) | null = null;
+  private takePromptListener: ((prompt: TakePrompt) => void) | null = null;
+  private shownPrompt: TakePrompt = null;
   private shownBox: JarBox | null = null;
   private shownGrowing = false;
   /** Canvas pixels at the top covered by the HUD; the jar and the dropper fit below them. */
@@ -95,11 +142,16 @@ export class GameScene extends Phaser.Scene {
   /** Where the player aims, in world x (clamped per cat when shown or dropped). */
   private aimX = 0;
   private aiming = false;
+  /** The ball the magnet will take once the player confirms (GAME_DESIGN §15.2), or null. */
+  private selectedId: number | null = null;
+  /** A touch that started with a magnet in the paw: its release selects a ball. */
+  private selecting = false;
+  private readonly flights: Flight[] = [];
   private popInFromMs = -Infinity;
   private nowMs = 0;
   private fit: CameraFit = { zoom: 1, centerX: 0, centerY: 0 };
   private readonly point = new Phaser.Math.Vector2();
-  /** Cats popped during this frame's ticks; they pop on screen together, staggered. */
+  /** Balls popped during this frame's ticks; they pop on screen together, staggered. */
   private readonly popped: PopRequest[] = [];
   private readonly shake = new Shake();
   private readonly shakeOffset = { x: 0, y: 0 };
@@ -124,10 +176,12 @@ export class GameScene extends Phaser.Scene {
           ? new ArtSkin(this.textures, this.art.cats)
           : new CatSkin(this.textures);
     this.skin.prepare(FIRST_STAGE, Infinity);
+    this.special = new SpecialSkin(this.textures, this.skinId === 'placeholder');
 
     const layer = (): Phaser.GameObjects.Layer => this.add.layer();
     const jarBack = layer();
     const aim = layer();
+    const glows = layer();
     const bodies = layer();
     const numbers = layer();
     const jarFront = layer();
@@ -139,12 +193,13 @@ export class GameScene extends Phaser.Scene {
 
     this.aimLine = this.add.graphics();
     aim.add(this.aimLine);
-    this.balls = new BallRenderer(this, this.skin, bodies, numbers);
+    this.balls = new BallRenderer(this, this.skin, this.special, glows, bodies, numbers);
 
     const first = this.skin.body(1).key;
+    this.dropperGlow = this.add.image(0, 0, this.special.glow().key).setVisible(false);
     this.dropperBody = this.add.image(0, 0, first).setVisible(false);
     this.dropperNumber = this.add.image(0, 0, first).setVisible(false);
-    dropper.add([this.dropperBody, this.dropperNumber]);
+    dropper.add([this.dropperGlow, this.dropperBody, this.dropperNumber]);
     // The paw holds the cat by the head, so it is drawn over it.
     this.paw = new PawView(this, dropper, art);
 
@@ -156,6 +211,8 @@ export class GameScene extends Phaser.Scene {
     );
     this.pops = new PopFx(this.balls, this.fx);
     this.sparks = new SparkFx(this, fx);
+    this.selectRing = this.add.graphics();
+    fx.add(this.selectRing);
     this.countdown = this.add
       .text(0, 0, '', {
         fontFamily: 'Fredoka, system-ui, sans-serif',
@@ -175,6 +232,7 @@ export class GameScene extends Phaser.Scene {
     this.input.on(Phaser.Input.Events.POINTER_UP_OUTSIDE, this.onPointerUp, this);
     this.renderer.on(Phaser.Renderer.Events.RESTORE_WEBGL, () => {
       this.skin.restore();
+      this.special.restore();
       this.jar.restore();
       this.paw.restore();
     });
@@ -203,7 +261,7 @@ export class GameScene extends Phaser.Scene {
       this.liftFromMs = this.nowMs;
     });
     // Merge juice (GAME_DESIGN §12): pop ring, "+coins", the new cat's bump, particles in its
-    // colour, gold sparks for golden merges, and a shake for big cats.
+    // colour, gold sparks when a golden cat skipped a tier, and a shake for big cats.
     on('merged', (e) => {
       const reduced = reducedMotion();
       const { x, y } = e.at;
@@ -232,6 +290,34 @@ export class GameScene extends Phaser.Scene {
       const radius = run.radiusOf(e.tier);
       this.popped.push({ id: e.id, tier: e.tier, radius, x, y, coins: e.coins });
     });
+    // Boulders (GAME_DESIGN §15.3): a band knocked off throws steel sparks; a crumbling boulder
+    // pops like a cat, without a payout, in a shower of stone chips.
+    on('boulderHit', (e) => {
+      this.sparks.mergeBurst(e.at.x, e.at.y, this.particles(BOULDER_HIT_SPARKS), BOULDER_SPARKS);
+    });
+    on('boulderBroken', (e) => {
+      const { x, y } = e.at;
+      this.popped.push({ id: e.id, tier: e.tier, radius: run.radiusOf(e.tier), x, y, coins: null });
+      this.sparks.mergeBurst(x, y, this.particles(BOULDER_BREAK_CHIPS), BOULDER_CHIPS);
+    });
+    // The magnet took a ball: it flies up into the paw.
+    on('ballTaken', (e) => {
+      this.clearSelection();
+      const sprite = this.balls.detach(e.id);
+      if (!sprite) return;
+      this.flights.push({
+        sprite,
+        fromX: e.at.x,
+        fromY: e.at.y,
+        fromScale: sprite.body.scaleX,
+        fromRotation: sprite.body.rotation,
+        startMs: this.nowMs,
+      });
+    });
+    on('pickOffered', () => {
+      this.aiming = false;
+      this.clearSelection();
+    });
     on('expansionStarted', (e) => {
       // The zoom starts: the rim sparkles, and the next stage's textures get drawn meanwhile.
       this.preparing = e.to;
@@ -247,6 +333,7 @@ export class GameScene extends Phaser.Scene {
     });
     on('paused', () => {
       this.aiming = false;
+      this.selecting = false;
       this.shake.clear();
       this.sparks.pause();
     });
@@ -267,6 +354,25 @@ export class GameScene extends Phaser.Scene {
   /** Where payouts appear on screen, for the coin flights to the HUD. */
   setCoinsListener(listener: ScreenCoinsListener | null): void {
     this.coinsListener = listener;
+  }
+
+  /** Where the magnet's Take button goes, whenever it changes (GAME_DESIGN §15.2). */
+  setTakePromptListener(listener: ((prompt: TakePrompt) => void) | null): void {
+    this.takePromptListener = listener;
+    this.shownPrompt = null;
+  }
+
+  /**
+   * The player confirmed the selection (the Take button): the magnet takes the selected ball.
+   * Returns whether it did.
+   */
+  confirmTake(): boolean {
+    const id = this.selectedId;
+    const run = this.run;
+    if (id === null || !run) return false;
+    const taken = run.take(id);
+    this.clearSelection();
+    return taken;
   }
 
   private reportCoins(x: number, y: number, kind: PayoutKind): void {
@@ -313,8 +419,10 @@ export class GameScene extends Phaser.Scene {
     this.preparing = 0;
     this.shake.clear();
     this.countdownPulseMs = -Infinity;
+    this.clearSelection();
     this.paw?.hide();
     this.pops?.clear();
+    this.endFlights();
     this.balls?.clear();
     this.fx?.clear();
     this.sparks?.clear();
@@ -354,16 +462,29 @@ export class GameScene extends Phaser.Scene {
     this.jar.draw(frames.jar.width, flash, run.expansion !== null);
     this.balls.sync(run.balls, this.nowMs);
     this.renderDropper(run);
+    this.renderSelection(run);
+    this.renderFlights(run);
     this.renderCountdown(run, frames.jar);
     this.pops.update(this.nowMs);
     this.fx.update(this.nowMs);
   }
 
+  /** The texture of the dropper's ball: a cat, a boulder or the magnet. */
+  private dropFrame(item: Drop, stage: number): SkinFrame {
+    if (item.kind === 'magnet') return this.special.magnet();
+    if (item.kind === 'boulder') return this.special.boulder(tierSize(item.tier, stage), item.hits);
+    return this.skin.body(item.tier);
+  }
+
   private renderDropper(run: RunController): void {
     const geo = run.geometry;
-    const cat = run.current;
-    const radius = run.radiusOf(cat.tier);
-    if (run.state === 'playing') this.pawX = clampDropX(this.aimX, radius, geo);
+    const item = run.current;
+    const radius = run.radiusOf(item.tier);
+    // A ball bigger than the biggest drop (a magnet's catch) is shown at the biggest drop's size.
+    const shown = Math.min(radius, MAX_DROP_RADIUS);
+    // The magnet hangs in the middle; it isn't aimed.
+    if (item.kind === 'magnet') this.pawX = 0;
+    else if (run.state === 'playing') this.pawX = clampDropX(this.aimX, radius, geo);
     const x = this.pawX;
     this.aimLine.clear();
 
@@ -373,24 +494,34 @@ export class GameScene extends Phaser.Scene {
       this.paw.hide();
     } else {
       const top = this.fit.centerY - this.cameras.main.height / this.fit.zoom / 2;
-      const y = geo.dropY - PAW_GRIP * radius - pawLift(this.nowMs - this.liftFromMs);
+      const y = geo.dropY - PAW_GRIP * shown - pawLift(this.nowMs - this.liftFromMs);
       this.paw.show(x, y, top - AIM_DOT_SPACING);
     }
 
-    const show = run.state === 'playing' && run.canDrop;
+    const show = run.state === 'playing' && (run.canDrop || run.canTake);
     this.dropperBody.setVisible(show);
-    this.dropperNumber.setVisible(show);
-    if (!show) return;
+    this.dropperGlow.setVisible(show && item.golden);
+    if (!show) {
+      this.dropperNumber.setVisible(false);
+      return;
+    }
 
     const t = Math.min(1, (this.nowMs - this.popInFromMs) / DROPPER_POP_IN_MS);
-    const pop = backOut(t);
-    const body = this.skin.body(cat.tier);
+    const pop = backOut(t) * (shown / radius);
+    const body = this.dropFrame(item, run.stage);
     this.dropperBody
       .setTexture(body.key)
       .setPosition(x, geo.dropY)
       .setRotation(0)
       .setScale(body.unitsPerPixel * pop);
-    const number = this.skin.number(cat.tier);
+    if (item.golden) {
+      const glow = this.special.glow();
+      this.dropperGlow
+        .setPosition(x, geo.dropY)
+        .setScale(glow.unitsPerPixel * radius * GOLDEN_GLOW_SCALE * pop)
+        .setAlpha(glowAlpha(this.nowMs));
+    }
+    const number = item.kind === 'cat' ? this.skin.number(item.tier) : null;
     this.dropperNumber.setVisible(number !== null);
     if (number) {
       this.dropperNumber
@@ -398,17 +529,105 @@ export class GameScene extends Phaser.Scene {
         .setPosition(x, geo.dropY + number.offset * radius * pop)
         .setScale(number.unitsPerPixel * pop);
     }
+    // The magnet is used on a ball in the jar, not dropped: no aim guide.
+    if (item.kind === 'magnet') return;
 
-    // Aim guide: a dotted line from the cat down to where it first touches something, and a
-    // faint ghost of the cat there.
-    const land = landingY(x, radius, geo.dropY, run.balls, floorRestY(x, radius, geo));
+    // Aim guide: a dotted line from the ball down to where it first touches something, and a
+    // faint ghost of the ball there, at its true size.
+    const fromY = dropStartY(radius, geo);
+    const land = landingY(x, radius, fromY, run.balls, floorRestY(x, radius, geo));
     const g = this.aimLine;
     g.fillStyle(AIM_LINE_COLOR, AIM_LINE_ALPHA);
-    for (let y = geo.dropY + radius + AIM_DOT_SPACING; y < land + radius; y += AIM_DOT_SPACING) {
+    for (let y = geo.dropY + shown + AIM_DOT_SPACING; y < land + radius; y += AIM_DOT_SPACING) {
       g.fillCircle(x, y, AIM_DOT_RADIUS);
     }
     g.lineStyle(AIM_LINE_WIDTH, AIM_LINE_COLOR, AIM_LINE_ALPHA * AIM_GHOST_ALPHA);
     g.strokeCircle(x, land, radius);
+  }
+
+  /**
+   * The magnet's selection (GAME_DESIGN §15.2): a pulsing gold ring round the selected ball, and
+   * the Take button's place above it. The selection ends when the ball leaves the jar, the magnet
+   * leaves the paw, or a stage clear starts.
+   */
+  private renderSelection(run: RunController): void {
+    const g = this.selectRing.clear();
+    const id = this.selectedId;
+    if (id === null) return;
+    const ball = this.findBall(run, id);
+    const stillMagnet =
+      run.current.kind === 'magnet' && (run.state === 'playing' || run.state === 'paused');
+    if (!ball || !stillMagnet) {
+      this.clearSelection();
+      return;
+    }
+    const phase = (this.nowMs % SELECT_RING_PERIOD_MS) / SELECT_RING_PERIOD_MS;
+    const alpha = 0.7 + 0.3 * Math.sin(phase * 2 * Math.PI);
+    const ring = ball.radius + SELECT_RING_GAP;
+    g.lineStyle(SELECT_RING_WIDTH, SELECT_RING, alpha);
+    g.strokeCircle(ball.x, ball.y, ring);
+    if (run.state !== 'playing') {
+      this.reportPrompt(null);
+      return;
+    }
+    const cam = this.cameras.main;
+    const top = worldToView(this.fit, cam.width, cam.height, ball.x, ball.y - ring);
+    this.reportPrompt({ id, x: Math.round(top.x), y: Math.round(top.y) });
+  }
+
+  /** Taken balls fly up into the paw over MAGNET_TAKE_MS, shrinking to the dropper's size. */
+  private renderFlights(run: RunController): void {
+    if (this.flights.length === 0) return;
+    const geo = run.geometry;
+    const radius = run.radiusOf(run.current.tier);
+    const shrink = Math.min(radius, MAX_DROP_RADIUS) / radius;
+    for (let i = this.flights.length - 1; i >= 0; i--) {
+      const f = this.flights[i] as Flight;
+      const t = Math.min(1, (this.nowMs - f.startMs) / MAGNET_TAKE_MS);
+      if (t >= 1 || run.state === 'over') {
+        this.balls.recycle(f.sprite);
+        this.flights.splice(i, 1);
+        continue;
+      }
+      const ease = 1 - (1 - t) * (1 - t);
+      const scale = f.fromScale * (1 + (shrink - 1) * ease);
+      f.sprite.body
+        .setPosition(f.fromX + (this.pawX - f.fromX) * ease, f.fromY + (geo.dropY - f.fromY) * ease)
+        .setRotation(f.fromRotation * (1 - ease))
+        .setScale(scale);
+      f.sprite.number.setVisible(false);
+    }
+  }
+
+  private endFlights(): void {
+    for (const f of this.flights) this.balls?.recycle(f.sprite);
+    this.flights.length = 0;
+  }
+
+  private findBall(run: RunController, id: number): BallView | null {
+    for (const ball of run.balls) if (ball.id === id) return ball;
+    return null;
+  }
+
+  private clearSelection(): void {
+    this.selectedId = null;
+    this.selecting = false;
+    this.selectRing?.clear();
+    this.reportPrompt(null);
+  }
+
+  private reportPrompt(prompt: TakePrompt): void {
+    const old = this.shownPrompt;
+    const same =
+      old === prompt ||
+      (old !== null &&
+        prompt !== null &&
+        old.id === prompt.id &&
+        old.x === prompt.x &&
+        old.y === prompt.y);
+    if (same) return;
+    this.shownPrompt = prompt;
+    this.takePromptListener?.(prompt);
   }
 
   /** Tells the listener when the stage jar's box on screen moved, or the jar starts or stops growing. */
@@ -446,33 +665,69 @@ export class GameScene extends Phaser.Scene {
       .setPosition(0, -frame.height * 0.82);
   }
 
-  // ── Input (GAME_DESIGN §3) ─────────────────────────────────────────────────
+  // ── Input (GAME_DESIGN §3, §15.2) ──────────────────────────────────────────
 
-  private worldX(pointer: Phaser.Input.Pointer): number {
-    return this.cameras.main.getWorldPoint(pointer.x, pointer.y, this.point).x;
+  private worldPoint(pointer: Phaser.Input.Pointer): Phaser.Math.Vector2 {
+    return this.cameras.main.getWorldPoint(pointer.x, pointer.y, this.point);
+  }
+
+  /** With a magnet in the paw, a touch selects a ball instead of aiming. */
+  private get magnetMode(): boolean {
+    return this.run?.state === 'playing' && this.run.current.kind === 'magnet';
   }
 
   private onPointerDown(pointer: Phaser.Input.Pointer): void {
     if (this.run?.state !== 'playing') return;
+    if (this.magnetMode) {
+      this.selecting = true;
+      return;
+    }
     this.aiming = true;
-    this.aimX = this.clampAim(this.worldX(pointer));
+    this.aimX = this.clampAim(this.worldPoint(pointer).x);
   }
 
   /** Drag to aim; a mouse aims by moving without a button too. */
   private onPointerMove(pointer: Phaser.Input.Pointer): void {
-    if (this.run?.state !== 'playing') return;
+    if (this.run?.state !== 'playing' || this.magnetMode) return;
     if (!this.aiming && pointer.wasTouch) return;
-    this.aimX = this.clampAim(this.worldX(pointer));
+    this.aimX = this.clampAim(this.worldPoint(pointer).x);
   }
 
-  /** Release drops (ignored during the cooldown); a tap drops at the tapped x. */
+  /**
+   * Release drops (ignored during the cooldown); a tap drops at the tapped x. With a magnet, a tap
+   * on a landed ball selects it and a tap anywhere else clears the selection.
+   */
   private onPointerUp(pointer: Phaser.Input.Pointer): void {
+    const run = this.run;
+    if (this.selecting) {
+      this.selecting = false;
+      if (!run || !this.magnetMode || !run.canTake) return;
+      const { x, y } = this.worldPoint(pointer);
+      const ball = this.ballAt(run, x, y);
+      if (ball) this.selectedId = ball.id;
+      else this.clearSelection();
+      return;
+    }
     if (!this.aiming) return;
     this.aiming = false;
-    const run = this.run;
     if (run?.state !== 'playing') return;
-    this.aimX = this.clampAim(this.worldX(pointer));
+    this.aimX = this.clampAim(this.worldPoint(pointer).x);
     run.drop(this.aimX);
+  }
+
+  /** The takeable ball under a world point: the one whose centre is nearest, relative to its size. */
+  private ballAt(run: RunController, x: number, y: number): BallView | null {
+    let best: BallView | null = null;
+    let bestScore = 1;
+    for (const ball of run.balls) {
+      if (!run.takeable(ball)) continue;
+      const score = Math.hypot(ball.x - x, ball.y - y) / ball.radius;
+      if (score <= bestScore) {
+        best = ball;
+        bestScore = score;
+      }
+    }
+    return best;
   }
 
   private clampAim(x: number): number {

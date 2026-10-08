@@ -186,3 +186,167 @@
 .reduce-motion .rotate-overlay svg {
   animation: none;
 }
+
+/* A stage clear's pick (GAME_DESIGN §15.5): a trial, then a blessing. Under the pause overlay. */
+.pick-overlay {
+  z-index: 150;
+}
+
+.pick-panel {
+  width: min(92vw, 380px);
+  gap: 10px;
+}
+
+.pick-panel.is-new {
+  animation: panel-pop 240ms cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+
+.pick-title {
+  margin: 0;
+  font-size: 1.7rem;
+}
+
+.pick-overlay[data-kind='trial'] .pick-title {
+  text-shadow: 0 3px 0 #c9c3ba;
+}
+
+.pick-overlay[data-kind='blessing'] .pick-title {
+  text-shadow: 0 3px 0 var(--color-gold);
+}
+
+.pick-detail {
+  margin: -4px 0 2px;
+  color: var(--color-muted);
+  font-size: 0.95rem;
+}
+
+.pick-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.pick-card {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 72px;
+  padding: 10px 12px;
+  border: 2.5px solid var(--color-ink);
+  border-radius: 18px;
+  background: var(--color-card);
+  box-shadow: 0 4px 0 #e8d2b8;
+  color: var(--color-ink);
+  text-align: left;
+  transition:
+    transform 90ms ease-out,
+    box-shadow 90ms ease-out,
+    background 90ms ease-out;
+}
+
+.pick-card.is-selected {
+  border-width: 3.5px;
+  background: var(--color-gold-light);
+  box-shadow: 0 4px 0 var(--color-ink);
+  transform: translateY(-2px);
+}
+
+.pick-card.is-trial.is-selected {
+  background: #ece7e0;
+}
+
+.pick-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border: 2.5px solid var(--color-ink);
+  border-radius: 50%;
+  background: var(--color-gold-light);
+  color: var(--color-ink);
+}
+
+.pick-card.is-trial .pick-icon {
+  background: #ddd8d0;
+}
+
+.pick-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.pick-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pick-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pick-name {
+  font-size: 1.05rem;
+  font-weight: var(--weight-bold);
+  line-height: 1.2;
+}
+
+.pick-level {
+  flex: none;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.pick-desc {
+  color: var(--color-muted);
+  font-size: 0.84rem;
+  line-height: 1.25;
+}
+
+.pick-value {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 6px;
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.pick-stat {
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pick-current,
+.pick-next {
+  font-weight: var(--weight-bold);
+}
+
+.pick-arrow {
+  color: var(--color-muted);
+}
+
+.pick-choose:disabled {
+  background: var(--color-greige);
+  color: var(--color-muted);
+  text-shadow: none;
+  box-shadow: 0 4px 0 var(--color-line);
+  border-color: var(--color-line);
+}
+
+.reduce-motion .pick-panel.is-new {
+  animation: none;
+}

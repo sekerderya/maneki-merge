@@ -13,11 +13,13 @@ import {
   GOLDEN_COIN_FLIGHTS,
   JACKPOT_COIN_FLIGHTS,
 } from './config/view';
+import type { PickId } from './config/picks';
 import type { UpgradeId } from './config/upgrades';
 import { EventBus } from './core/events';
 import type { GameEvents } from './core/events';
 import { connectRunFeedback } from './feedback';
 import type { FeedbackOutputs } from './feedback';
+import { pickCard } from './core/picks';
 import { newRecords } from './core/profile';
 import type { Profile, Records, Settings } from './core/profile';
 import { comboBonus } from './core/upgrades';
@@ -30,6 +32,7 @@ import type { CoinFlyView } from './ui/fx/coinFly';
 import type { HudView } from './ui/hud/hud';
 import type { GameOverView } from './ui/overlays/gameOverOverlay';
 import type { PauseView } from './ui/overlays/pauseOverlay';
+import type { PickView } from './ui/overlays/pickOverlay';
 import type { GameBackResult } from './ui/screenManager';
 
 export interface SessionParts {
@@ -41,6 +44,8 @@ export interface SessionParts {
   readonly coins: CoinFlyView;
   readonly pause: PauseView;
   readonly gameOver: GameOverView;
+  /** A stage clear's trial and blessing cards (GAME_DESIGN §15.5). */
+  readonly picks: PickView;
   /** Sound effects and haptics for the run's events. */
   readonly feedback: FeedbackOutputs;
   /** A fixed seed (`?seed=`) for every run, or null for a fresh one each time. */
@@ -100,6 +105,16 @@ export class GameSession {
     this.parts.profile.resetHints();
   }
 
+  /** The pick panel's Choose: the waiting pick takes `id`. */
+  choosePick(id: PickId): void {
+    this.current?.choose(id);
+  }
+
+  /** The magnet's Take button: it takes the selected ball (GAME_DESIGN §15.2). */
+  take(): void {
+    this.parts.game.confirmTake();
+  }
+
   /** Writes everything pending (backgrounding, page hide, leaving a run). */
   save(): boolean {
     return this.parts.profile.flush();
@@ -107,9 +122,10 @@ export class GameSession {
 
   /** Starts a new run (PLAY, Play Again). */
   startRun(): void {
-    const { game, hud, hint, banners, coins, pause, gameOver, profile } = this.parts;
+    const { game, hud, hint, banners, coins, pause, gameOver, picks, profile } = this.parts;
     pause.hide();
     gameOver.hide();
+    picks.hide();
     hint.hide();
     banners.clear();
     coins.clear();
@@ -124,7 +140,7 @@ export class GameSession {
     this.current = run;
     connectRunFeedback(events, this.parts.feedback);
 
-    const showPreview = (): void => hud.setNext(run.next.tier);
+    const showPreview = (): void => hud.setNext(run.next);
     hud.setScore(run.score);
     hud.setCoins(run.coins);
     showPreview();
@@ -180,6 +196,17 @@ export class GameSession {
       });
     });
     events.on('expansionFinished', showPreview);
+
+    // A stage clear's picks (GAME_DESIGN §15.5): a trial, then a blessing.
+    events.on('pickOffered', (e) => {
+      banners.combo(0, 0);
+      const levels = run.pickLevels;
+      picks.show(
+        e.kind,
+        e.options.map((id) => pickCard(id, levels, run.stats.bigCatchLevel)),
+      );
+    });
+    events.on('pickChosen', () => picks.hide());
     events.on('paused', () => banners.setPaused(true));
     events.on('resumed', () => banners.setPaused(false));
     events.on('gameOver', (e) => this.onGameOver(e));
@@ -205,6 +232,15 @@ export class GameSession {
       window.clearTimeout(this.hintTimer);
       hint.hide();
     });
+    // The first magnet (GAME_DESIGN §15.2): how to use it, until it has taken a ball.
+    events.on('dropReady', (e) => {
+      if (e.kind === 'magnet' && !profile.hintSeen('magnet')) hint.show('Tap a cat, then Take');
+    });
+    events.on('ballTaken', () => {
+      if (profile.hintSeen('magnet')) return;
+      profile.markHintSeen('magnet');
+      hint.hide();
+    });
     this.hintTimer = 0;
 
     game.show(run);
@@ -227,6 +263,7 @@ export class GameSession {
     window.clearTimeout(this.hintTimer);
     this.parts.pause.hide();
     this.parts.gameOver.hide();
+    this.parts.picks.hide();
     this.parts.hint.hide();
     this.parts.banners.clear();
     this.parts.coins.clear();
@@ -243,10 +280,10 @@ export class GameSession {
     return 'stay';
   }
 
-  /** Backgrounding or a sideways phone pauses a run in progress. */
+  /** Backgrounding or a sideways phone pauses a run in progress (a pick waits under the pause). */
   autoPause(): void {
     const state = this.current?.state;
-    if (state === 'playing' || state === 'expanding') this.pauseRun();
+    if (state === 'playing' || state === 'expanding' || state === 'choosing') this.pauseRun();
   }
 
   private onGameOver(e: GameEvents['gameOver']): void {
@@ -254,6 +291,7 @@ export class GameSession {
     this.parts.hint.hide();
     this.parts.banners.clear();
     this.parts.pause.hide();
+    this.parts.picks.hide();
     const records = newRecords(this.recordsBefore, e);
     this.parts.gameOver.show({
       score: e.score,

@@ -1,3 +1,5 @@
+import { PICK_IDS, PICKS } from '../config/picks';
+import type { PickId } from '../config/picks';
 import { STAGE_COUNT, stageHoldsTier, stageInfo } from '../config/stages';
 import { SIZE_COUNT } from '../config/tiers';
 import { AudioEngine } from '../audio';
@@ -34,6 +36,15 @@ export interface GameStateSnapshot {
   readonly stage: number;
   readonly balls: number;
   readonly canDrop: boolean;
+  /** The dropper holds a ready magnet (GAME_DESIGN §15.2). */
+  readonly canTake: boolean;
+  /** What the dropper holds and what comes next: 'cat', 'magnet' or 'boulder'. */
+  readonly current: string | null;
+  readonly next: string | null;
+  /** The pick waiting for a choice (GAME_DESIGN §15.5), or null. */
+  readonly pick: { readonly kind: string; readonly options: readonly string[] } | null;
+  /** The trials' and blessings' levels this run. */
+  readonly pickLevels: Readonly<Record<string, number>> | null;
   /** The danger countdown is running (a cat is over the line). */
   readonly danger: boolean;
   /** The stage's smallest and last cat (making the last one clears the stage). */
@@ -60,6 +71,22 @@ export interface GameHooks {
   ballXs(): number[];
   /** Drops the dropper's cat at world x (0 is the jar's centre). False during the cooldown. */
   dropAt(x: number): boolean;
+  /** Ids of the balls a magnet could take (landed), oldest first. */
+  takeableIds(): number[];
+  /** Where the ball `id` is on the page, in CSS pixels (to tap it), or null. */
+  ballPoint(id: number): { readonly x: number; readonly y: number } | null;
+  /** The magnet in the dropper takes the ball `id` (the oldest takeable one by default). */
+  take(id?: number): boolean;
+  /** Chooses an option of the waiting pick (its first by default). */
+  choose(id?: PickId): boolean;
+  /** Puts a magnet, a boulder or a golden cat in the dropper. */
+  give(kind: 'magnet' | 'boulder' | 'golden'): void;
+  /** Sets a trial's or blessing's level for this run. */
+  setPickLevel(id: PickId, level: number): void;
+  /** Opens a stage clear's picks now. */
+  offerPicks(): void;
+  /** Puts a boulder of the stage's `size` needing `hits` merges into the jar at world x. */
+  spawnBoulder(x?: number, size?: number, hits?: number): void;
   addCoins(coins: number): void;
   /** Applies from the next run. */
   setUpgrade(id: UpgradeId, level: number): void;
@@ -114,6 +141,13 @@ export function installDebugHooks(ctx: DebugContext): GameHooks {
         stage: run?.stage ?? 1,
         balls: run?.balls.length ?? 0,
         canDrop: run?.canDrop ?? false,
+        canTake: run?.canTake ?? false,
+        current: run?.current.kind ?? null,
+        next: run?.next.kind ?? null,
+        pick: run?.pickOffer
+          ? { kind: run.pickOffer.kind, options: [...run.pickOffer.options] }
+          : null,
+        pickLevels: run?.pickLevels ?? null,
         danger: run?.dangerActive ?? false,
         firstTier: stageInfo(run?.stage ?? 1).firstTier,
         lastTier: stageInfo(run?.stage ?? 1).lastTier,
@@ -129,6 +163,48 @@ export function installDebugHooks(ctx: DebugContext): GameHooks {
     },
     dropAt(x) {
       return session.run?.drop(x) ?? false;
+    },
+    takeableIds() {
+      const run = session.run;
+      return run ? run.balls.filter((ball) => run.takeable(ball)).map((ball) => ball.id) : [];
+    },
+    ballPoint(id) {
+      const run = session.run;
+      const ball = run?.balls.find((b) => b.id === id);
+      const box = ctx.game.jarBox();
+      const canvas = document.querySelector('#game-screen canvas');
+      if (!run || !ball || !box || !canvas) return null;
+      const area = canvas.getBoundingClientRect();
+      const unit = (box.right - box.left) / run.geometry.width;
+      return {
+        x: area.left + (box.left + box.right) / 2 + ball.x * unit,
+        y: area.top + box.bottom + ball.y * unit,
+      };
+    },
+    take(id) {
+      const target = id ?? hooks.takeableIds()[0];
+      return target === undefined ? false : (session.run?.take(target) ?? false);
+    },
+    choose(id) {
+      const offer = session.run?.pickOffer;
+      const target = id ?? offer?.options[0];
+      return target === undefined ? false : (session.run?.choose(target) ?? false);
+    },
+    give(kind) {
+      session.run?.giveSpecial(kind);
+    },
+    setPickLevel(id, level) {
+      session.run?.setPickLevel(id, level);
+    },
+    offerPicks() {
+      session.run?.offerPicks();
+    },
+    spawnBoulder(x = 0, size = 2, hits = 1) {
+      const run = session.run;
+      if (!run) return;
+      const tier = stageInfo(run.stage).firstTier + size - 1;
+      if (!stageHoldsTier(run.stage, tier)) return;
+      run.spawnBall(tier, x, undefined, { kind: 'boulder', hits: Math.max(1, Math.round(hits)) });
     },
     addCoins(coins) {
       session.addCoins(Math.max(0, Math.round(coins)));
@@ -249,6 +325,13 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
   };
   upgrade.addEventListener('change', syncLevelRange);
   syncLevelRange();
+  // Trials and blessings (GAME_DESIGN §15.5): this run only.
+  const pick = el('select', 'debug-input');
+  for (const id of PICK_IDS) pick.append(new Option(PICKS[id].name, id));
+  const pickLevel = el('input', 'debug-input');
+  pickLevel.type = 'number';
+  pickLevel.min = '0';
+  pickLevel.value = '1';
 
   body.append(
     stats,
@@ -269,6 +352,17 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
       upgrade,
       level,
       action('Set', () => hooks.setUpgrade(upgrade.value as UpgradeId, Number(level.value))),
+    ),
+    row(
+      action('Magnet', () => hooks.give('magnet')),
+      action('Boulder', () => hooks.give('boulder')),
+      action('Golden', () => hooks.give('golden')),
+      action('Picks', () => hooks.offerPicks()),
+    ),
+    row(
+      pick,
+      pickLevel,
+      action('Set run', () => hooks.setPickLevel(pick.value as PickId, Number(pickLevel.value))),
     ),
     row(
       action('+1000 coins', () => hooks.addCoins(1000)),

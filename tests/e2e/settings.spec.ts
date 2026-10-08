@@ -64,7 +64,7 @@ test('settings: switches persist, reduce motion marks the page, tips come back',
   await expect(page.locator('html')).toHaveClass(/reduce-motion/);
   const data = await savedData(page);
   expect(data['settings']).toEqual({ sound: false, haptics: true, reduceMotion: true });
-  expect(data['flags']).toEqual({ hintsSeen: { aim: false, merge: false } });
+  expect(data['flags']).toEqual({ hintsSeen: { aim: false, merge: false, magnet: false } });
   await page.getByTestId('settings').click();
   await expect(page.getByTestId('setting-sound')).toHaveAttribute('aria-checked', 'false');
   await page.getByTestId('settings-close').click();

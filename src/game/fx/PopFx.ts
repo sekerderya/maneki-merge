@@ -1,7 +1,7 @@
 /**
- * Cats popping into coins (stage clear, Lucky Save; GAME_DESIGN §7.1). The run removes them at once;
- * here each cat's own sprite stays where it was, then grows and fades in turn while its ring and
- * "+coins" go off. Pops of one tick are staggered (POP_STAGGER_MS apart, POP_STAGGER_MAX_MS in
+ * Cats popping into coins (stage clear, Lucky Save; GAME_DESIGN §7.1) and boulders crumbling
+ * (§15.3). The run removes them at once; here each ball's own sprite stays where it was, then grows
+ * and fades in turn while a cat's ring and "+coins" go off (a boulder pays nothing). Pops of one tick are staggered (POP_STAGGER_MS apart, POP_STAGGER_MAX_MS in
  * all), so a stage clear ripples through the jar and ends before the zoom starts.
  */
 import { POP_MS, POP_SCALE, POP_STAGGER_MAX_MS, POP_STAGGER_MS } from '../../config/view';
@@ -15,7 +15,8 @@ export interface PopRequest {
   readonly radius: number;
   readonly x: number;
   readonly y: number;
-  readonly coins: number;
+  /** What the cat paid, or null for a crumbling boulder (no ring, no "+coins"). */
+  readonly coins: number | null;
 }
 
 interface Popping {
@@ -24,7 +25,7 @@ interface Popping {
   radius: number;
   x: number;
   y: number;
-  coins: number;
+  coins: number | null;
   startMs: number;
   started: boolean;
   bodyScale: number;
@@ -71,7 +72,9 @@ export class PopFx {
       if (nowMs < item.startMs) continue;
       if (!item.started) {
         item.started = true;
-        this.fx.payout(nowMs, item.x, item.y, item.tier, item.radius, item.coins);
+        if (item.coins !== null) {
+          this.fx.payout(nowMs, item.x, item.y, item.tier, item.radius, item.coins);
+        }
       }
       const t = (nowMs - item.startMs) / POP_MS;
       const sprite = item.sprite;

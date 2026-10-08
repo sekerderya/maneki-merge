@@ -801,3 +801,45 @@
 .reduce-motion .hud-coins-card.is-pulsing {
   animation: none;
 }
+
+/* The magnet's Take button (GAME_DESIGN §15.2): it floats just above the selected ball. */
+.take-btn {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  top: 0;
+  min-width: 96px;
+  padding: 0 22px;
+  background: var(--color-gold);
+  color: var(--color-ink);
+  font-size: 1.15rem;
+  transform: translate(-50%, -100%);
+  animation: take-pop 180ms cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+
+.take-btn:active:not(:disabled) {
+  transform: translate(-50%, calc(-100% + 3px)) scale(0.97);
+}
+
+@keyframes take-pop {
+  from {
+    transform: translate(-50%, -100%) scale(0.6);
+  }
+}
+
+.reduce-motion .take-btn {
+  animation: none;
+}
+
+/* Golden cats (GAME_DESIGN §15.4) glow; the magnet and boulders fill their icon. */
+.cat-icon.is-golden > img,
+.cat-icon.is-golden > svg {
+  filter: drop-shadow(1px 0 0 #3b2620) drop-shadow(-1px 0 0 #3b2620) drop-shadow(0 1px 0 #3b2620)
+    drop-shadow(0 -1px 0 #3b2620) drop-shadow(0 0 3px #ffd34d) drop-shadow(0 0 3px #ffd34d);
+}
+
+.cat-icon.is-golden.is-placeholder {
+  box-shadow:
+    0 0 0 2px #ffd34d,
+    0 0 8px 2px #ffd34d;
+}

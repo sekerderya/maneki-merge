@@ -11,13 +11,14 @@
  *    the old size into its own over MERGE_GROW_MS. When one of them is golden (GAME_DESIGN §15.4)
  *    the new cat is two tiers up, never above the cap. It is never golden itself.
  * 4. The new cat starts to turn, as if another cat had clipped it (`mergeSpinDirection`).
- * 5. Every boulder that one of a merge's two cats touched takes a hit, once per merge
+ * 5. Every boulder within BOULDER_HIT_REACH of one of a merge's two cats takes a hit, once per merge
  *    (GAME_DESIGN §15.3); a Jackpot counts as a merge. The caller applies the hits.
  *
  * New cats aren't in this step's contacts, so a chain continues on the next step at the earliest.
  * Scores, coins, events and the hits' effect are the caller's job (RunController).
  */
 import { MERGE_SPIN_MIN_SLIDE, MERGE_SPIN_RIM_SPEED } from '../config/physics';
+import { BOULDER_HIT_REACH } from '../config/picks';
 import { sizeRadius } from '../config/tiers';
 import type { Ball } from './balls';
 import type { PhysicsWorld } from './PhysicsWorld';
@@ -125,22 +126,24 @@ export class MergeResolver {
       outcomes.push({ kind: 'merge', tier: a.tier, newTier: tier, golden, x, y, ball });
     }
     used.clear();
-    this.collectHits(world.boulderContacts);
+    this.collectHits(world.balls);
     this.mergeOf.clear();
     return outcomes;
   }
 
-  /** The boulders this step's merges hit: once per (boulder, merge). */
-  private collectHits(boulderContacts: readonly Ball[]): void {
-    if (boulderContacts.length === 0 || this.mergeOf.size === 0) return;
-    const hits: [Ball, number][] = [];
-    for (let i = 0; i < boulderContacts.length; i += 2) {
-      const merge = this.mergeOf.get(boulderContacts[i] as Ball);
-      if (merge === undefined) continue;
-      const boulder = boulderContacts[i + 1] as Ball;
-      if (!hits.some(([b, m]) => b === boulder && m === merge)) hits.push([boulder, merge]);
+  /** The boulders this step's merges hit: once per (boulder, merge), boulders in id order. */
+  private collectHits(balls: readonly Ball[]): void {
+    if (this.mergeOf.size === 0) return;
+    for (const boulder of balls) {
+      if (boulder.kind !== 'boulder') continue;
+      let last = -1;
+      for (const [cat, merge] of this.mergeOf) {
+        if (merge === last) continue;
+        const gap = Math.hypot(cat.x - boulder.x, cat.y - boulder.y) - cat.radius - boulder.radius;
+        if (gap > BOULDER_HIT_REACH) continue;
+        this.hitList.push(boulder);
+        last = merge;
+      }
     }
-    hits.sort((p, q) => p[0].id - q[0].id || p[1] - q[1]);
-    for (const [boulder] of hits) this.hitList.push(boulder);
   }
 }

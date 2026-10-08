@@ -322,7 +322,11 @@ describe('stage clears (GAME_DESIGN §7)', () => {
     // The picks (GAME_DESIGN §15.5): a trial, then a blessing, while time stands still.
     expect(run.state).toBe('choosing');
     expect(of('pickOffered')).toEqual([{ kind: 'trial', options: expect.any(Array) }]);
-    expect([...run.pickOffer!.options].sort()).toEqual(['bigBoulders', 'ironBands', 'moreBoulders']);
+    expect([...run.pickOffer!.options].sort()).toEqual([
+      'bigBoulders',
+      'ironBands',
+      'moreBoulders',
+    ]);
     const settled = run.playTimeMs;
     ticks(run, 100);
     run.update(1000);

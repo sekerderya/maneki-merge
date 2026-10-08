@@ -46,3 +46,27 @@ export const COUNTDOWN_STROKE = '#fff8ee';
 /** Floating "+coins" over the jar. */
 export const COINS_TEXT_FILL = '#f2b83b';
 export const COINS_TEXT_STROKE = '#4a2e25';
+
+/**
+ * The special balls (GAME_DESIGN §15), drawn in code and kept simple until the owner's art: the
+ * magnet is a cream disc with a red horseshoe magnet, a boulder is grey stone with one iron band
+ * per extra merge it needs, and a golden cat has a gold glow behind it. Outlines follow the cats'
+ * (CAT_OUTLINE_RATIO of the radius, at least CAT_OUTLINE_MIN).
+ */
+export const SPECIAL_INK = '#3b2620';
+export const MAGNET_DISC = '#fff4e2';
+export const MAGNET_RED = '#d9483b';
+export const MAGNET_RED_DARK = '#a63c2c';
+export const MAGNET_STEEL = '#d5dbe0';
+export const BOULDER_STONE = '#9d968d';
+export const BOULDER_LIGHT = '#bdb6ab';
+export const BOULDER_DARK = '#746d65';
+export const BOULDER_BAND = '#56606b';
+export const BOULDER_BAND_LIGHT = '#8b97a3';
+export const BOULDER_RIVET = '#e6eaee';
+/** Chips and sparks: a boulder's colour, and a band's when one is knocked off. */
+export const BOULDER_CHIPS = 0x8a837a;
+export const BOULDER_SPARKS = 0xcfd8e0;
+export const GOLDEN_GLOW = '#ffd34d';
+/** The magnet's selection ring round the chosen ball. */
+export const SELECT_RING = 0xf2b83b;

@@ -9,7 +9,7 @@ import Phaser from 'phaser';
 import { MAX_RENDER_RESOLUTION } from '../config/view';
 import type { RunController } from '../run/RunController';
 import { GAME_SCENE_KEY, GameScene } from './GameScene';
-import type { JarBox, SceneSkin } from './GameScene';
+import type { JarBox, SceneSkin, TakePrompt } from './GameScene';
 import type { ArtImages } from './artImages';
 import type { PayoutKind } from './fx/MergeFx';
 
@@ -35,6 +35,14 @@ export interface GameView {
    * CSS pixels from the play area's top-left corner, and what paid.
    */
   onCoins(listener: (x: number, y: number, kind: PayoutKind) => void): void;
+  /**
+   * Called with where the magnet's Take button goes (the top of the selected ball's ring, in CSS
+   * pixels of the play area) whenever it moves, and with null when nothing is selected
+   * (GAME_DESIGN §15.2).
+   */
+  onTakePrompt(listener: (prompt: TakePrompt) => void): void;
+  /** The Take button: the magnet takes the selected ball. Returns whether it did. */
+  confirmTake(): boolean;
   /** Frames per second actually rendered, for the debug panel. */
   readonly fps: number;
 }
@@ -58,6 +66,7 @@ export function createGame(
   let looping = false;
   let coinsListener: ((x: number, y: number, kind: PayoutKind) => void) | null = null;
   let jarBoxListener: ((box: JarBox, growing: boolean) => void) | null = null;
+  let takePromptListener: ((prompt: TakePrompt) => void) | null = null;
   const forwardCoins = (x: number, y: number, kind: PayoutKind): void =>
     coinsListener?.(x / resolution, y / resolution, kind);
   const toCss = (box: JarBox): JarBox => ({
@@ -83,6 +92,11 @@ export function createGame(
         scene = booted.scene.getScene(GAME_SCENE_KEY) as GameScene;
         scene.setCoinsListener(forwardCoins);
         scene.setJarBoxListener((box, growing) => jarBoxListener?.(toCss(box), growing));
+        scene.setTakePromptListener((prompt) =>
+          takePromptListener?.(
+            prompt && { id: prompt.id, x: prompt.x / resolution, y: prompt.y / resolution },
+          ),
+        );
         // The loop starts right after postBoot; put it to sleep until a run is shown.
         booted.events.once(Phaser.Core.Events.POST_RENDER, () => {
           looping = true;
@@ -146,6 +160,12 @@ export function createGame(
     },
     onJarBox(listener) {
       jarBoxListener = listener;
+    },
+    onTakePrompt(listener) {
+      takePromptListener = listener;
+    },
+    confirmTake() {
+      return scene?.confirmTake() ?? false;
     },
     get fps() {
       return game.loop?.actualFps ?? 0;

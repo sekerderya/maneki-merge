@@ -32,6 +32,19 @@ export function connectRunFeedback(events: EventBus<GameEvents>, out: FeedbackOu
       out.vibrate('jackpot');
     }),
     events.on('catPopped', () => out.play('coin')),
+    // The special balls (GAME_DESIGN §15).
+    events.on('ballTaken', () => out.play('take')),
+    events.on('boulderHit', () => {
+      out.play('clang');
+      out.vibrate('tick');
+    }),
+    events.on('boulderBroken', () => {
+      out.play('crunch');
+      out.vibrate('tick');
+    }),
+    // A stage clear's picks: a bell when the cards come, a ching when one is chosen.
+    events.on('pickOffered', () => out.play('chime')),
+    events.on('pickChosen', () => out.play('purchase')),
     // The stage's last cat: the big fanfare, whether or not the jar grows.
     events.on('stageCleared', () => {
       out.play('jackpot');

@@ -154,6 +154,31 @@ export const RECIPES: Readonly<Record<SoundName, Recipe>> = {
   click(v) {
     tone(v, { from: 1500, to: 900, glide: 0.03, decay: 0.04 });
   },
+  // The magnet catches a ball: a quick rising zip and a click.
+  take(v) {
+    tone(v, { type: 'triangle', from: 330, to: 1320, glide: 0.16, decay: 0.2, gain: 0.8 });
+    noise(v, {
+      filter: 'bandpass',
+      from: 1800,
+      to: 4200,
+      q: 2,
+      attack: 0.02,
+      decay: 0.12,
+      gain: 0.3,
+    });
+    tone(v, { from: 1760, delay: 0.17, decay: 0.05, gain: 0.5 });
+  },
+  // A boulder loses an iron band: a short metallic ring.
+  clang(v) {
+    tone(v, { type: 'square', from: 820, decay: 0.08, gain: 0.35 });
+    tone(v, { from: 1236, decay: 0.3, gain: 0.5 });
+    tone(v, { from: 1907, decay: 0.22, gain: 0.3 });
+  },
+  // A boulder crumbles: low filtered noise and a dull thud.
+  crunch(v) {
+    noise(v, { filter: 'lowpass', from: 1400, to: 300, attack: 0.004, decay: 0.22, gain: 0.9 });
+    tone(v, { from: 140, to: 70, glide: 0.18, decay: 0.2, gain: 0.6 });
+  },
   // Two rising notes and a ching.
   purchase(v) {
     const hz = 659.25;

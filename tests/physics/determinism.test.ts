@@ -56,7 +56,7 @@ function playWithFrames(
       inputs.push({ tick: run.ticks, input: 'picks' });
     }
     // Picks may follow each other before time moves on.
-    for (let move = botMove(run, (aim.next() * 2 - 1) * 300, aim.next()); move; ) {
+    for (let move = botMove(run, (aim.next() * 2 - 1) * 300, aim.next()); move;) {
       inputs.push({ tick: run.ticks, input: move });
       move = run.state === 'choosing' ? botMove(run, 0) : null;
     }

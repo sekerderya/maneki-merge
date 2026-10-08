@@ -31,6 +31,7 @@ import { createGameOverOverlay } from './ui/overlays/gameOverOverlay';
 import { createSettingsPanel } from './ui/panels/settingsPanel';
 import { createShopPanel } from './ui/panels/shopPanel';
 import { createPauseOverlay } from './ui/overlays/pauseOverlay';
+import { createPickOverlay } from './ui/overlays/pickOverlay';
 import { createRotateOverlay } from './ui/overlays/rotateOverlay';
 import { ScreenManager } from './ui/screenManager';
 import { createGameScreen } from './ui/screens/gameScreen';
@@ -161,10 +162,12 @@ async function boot(): Promise<void> {
 
   const gameScreen = createGameScreen(
     byId('game-screen'),
-    { onPause: () => session.pauseRun() },
+    { onPause: () => session.pauseRun(), onTake: () => session.take() },
     skin === 'art',
   );
   const overlays = byId('overlays');
+  // A stage clear's picks sit under the pause overlay, so a pause can cover them.
+  const picks = createPickOverlay(overlays, { onChoose: (id) => session.choosePick(id) });
   const pause = createPauseOverlay(overlays, {
     onResume: () => session.resumeRun(),
     onToggleSound: () => toggleSound(),
@@ -184,6 +187,7 @@ async function boot(): Promise<void> {
   const game = createGame(gameScreen.playArea, skin, () => gameScreen.hudBottom(), art);
   gameScreen.onHudResize(() => game.refit());
   game.onJarBox((box, growing) => gameScreen.setJarBox(box, growing));
+  game.onTakePrompt((prompt) => gameScreen.setTakePrompt(prompt));
   // The menu and the pause overlay show what the profile holds.
   const showProfile = (): void => {
     const { bestScore, bestStage } = profile.records;
@@ -208,6 +212,7 @@ async function boot(): Promise<void> {
     coins: gameScreen.coins,
     pause,
     gameOver,
+    picks,
     feedback: {
       play: (name, value) => audio.play(name, value),
       vibrate: (name) => haptics.play(name),

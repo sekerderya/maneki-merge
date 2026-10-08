@@ -73,4 +73,20 @@ describe('run feedback wiring (GAME_DESIGN §12)', () => {
     events.emit('jackpot', { tier: 46, at, score: 1, coins: 1, combo: 1 });
     expect(log).toEqual(['merge', 'coin', 'chime', 'buzz:tick', 'jackpot', 'buzz:jackpot']);
   });
+
+  it('plays the special balls and the picks (GAME_DESIGN §15)', () => {
+    const events = new EventBus<GameEvents>();
+    const log: string[] = [];
+    connectRunFeedback(events, {
+      play: (name) => log.push(name),
+      vibrate: (name) => log.push('buzz:' + name),
+    });
+    const at = { x: 0, y: 0 };
+    events.emit('ballTaken', { id: 1, kind: 'cat', tier: 3, golden: false, at });
+    events.emit('boulderHit', { id: 2, hitsLeft: 1, at });
+    events.emit('boulderBroken', { id: 2, tier: 2, at, reason: 'hits' });
+    events.emit('pickOffered', { kind: 'trial', options: ['ironBands'] });
+    events.emit('pickChosen', { kind: 'trial', id: 'ironBands', level: 1 });
+    expect(log).toEqual(['take', 'clang', 'buzz:tick', 'crunch', 'buzz:tick', 'chime', 'purchase']);
+  });
 });
