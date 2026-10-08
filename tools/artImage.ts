@@ -264,3 +264,96 @@ export function kasa(points: readonly (readonly [number, number])[]): Circle {
   const c = m[2]?.[3] ?? 0;
   return { cx, cy, r: Math.sqrt(c + cx * cx + cy * cy) };
 }
+
+/** A connected group of opaque pixels: its bounding box and pixel count. */
+export interface Component extends Rect {
+  readonly area: number;
+  /** One of its pixels (index into the image). */
+  readonly seed: number;
+}
+
+/** The 4-connected groups of pixels with alpha above 128, largest first. */
+export function components(image: Rgba): Component[] {
+  const { data, width, height } = image;
+  const n = width * height;
+  const seen = new Uint8Array(n);
+  const queue = new Int32Array(n);
+  const found: Component[] = [];
+  for (let start = 0; start < n; start++) {
+    if (seen[start] || (data[4 * start + 3] ?? 0) <= 128) continue;
+    let head = 0;
+    let tail = 0;
+    let minX = width;
+    let minY = height;
+    let maxX = 0;
+    let maxY = 0;
+    seen[start] = 1;
+    queue[tail++] = start;
+    while (head < tail) {
+      const i = queue[head++] ?? 0;
+      const x = i % width;
+      const y = (i - x) / width;
+      minX = Math.min(minX, x);
+      maxX = Math.max(maxX, x);
+      minY = Math.min(minY, y);
+      maxY = Math.max(maxY, y);
+      for (const j of [x > 0 ? i - 1 : -1, x < width - 1 ? i + 1 : -1, i - width, i + width]) {
+        if (j >= 0 && j < n && !seen[j] && (data[4 * j + 3] ?? 0) > 128) {
+          seen[j] = 1;
+          queue[tail++] = j;
+        }
+      }
+    }
+    found.push({
+      x: minX,
+      y: minY,
+      w: maxX - minX + 1,
+      h: maxY - minY + 1,
+      area: tail,
+      seed: start,
+    });
+  }
+  return found.sort((a, b) => b.area - a.area);
+}
+
+/**
+ * The component alone, cropped with `margin` px around it: pixels of other pieces inside its box are
+ * cleared. Its soft edge (pixels with alpha up to 128) within 2 px of it is kept.
+ */
+export function isolate(image: Rgba, component: Component, margin: number): Rgba {
+  const { data, width, height } = image;
+  const inside = new Uint8Array(width * height);
+  const queue = [component.seed];
+  inside[component.seed] = 1;
+  while (queue.length > 0) {
+    const i = queue.pop() ?? 0;
+    const x = i % width;
+    for (const j of [x > 0 ? i - 1 : -1, x < width - 1 ? i + 1 : -1, i - width, i + width]) {
+      if (j >= 0 && j < width * height && !inside[j] && (data[4 * j + 3] ?? 0) > 128) {
+        inside[j] = 1;
+        queue.push(j);
+      }
+    }
+  }
+  const box = {
+    x: component.x - margin,
+    y: component.y - margin,
+    w: component.w + 2 * margin,
+    h: component.h + 2 * margin,
+  };
+  const out = crop(image, box);
+  for (let y = 0; y < box.h; y++) {
+    for (let x = 0; x < box.w; x++) {
+      let near = false;
+      for (let dy = -2; dy <= 2 && !near; dy++) {
+        for (let dx = -2; dx <= 2 && !near; dx++) {
+          const sx = x + box.x + dx;
+          const sy = y + box.y + dy;
+          near = sx >= 0 && sy >= 0 && sx < width && sy < height && inside[sy * width + sx] === 1;
+        }
+      }
+      if (!near) out.data[4 * (y * box.w + x) + 3] = 0;
+    }
+  }
+  return out;
+}
