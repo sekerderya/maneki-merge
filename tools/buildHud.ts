@@ -1,12 +1,16 @@
 /**
  * The HUD part of the art pipeline (TECH_SPEC §14): pieces of the owner's HUD images from
  * `art-source/hud/`, written to `public/assets/hud/` with their measurements in
- * `src/config/hudSpriteData.ts`. The score and coins cards themselves are CSS (v0.19.2), drawn
- * after the owner's reference image; the generator couldn't draw them in its proportions.
+ * `src/config/hudSpriteData.ts`. The coins card is CSS (v0.19.2), drawn after the owner's reference
+ * image.
  *
  * - Coin: the gold coin (with its outline) cut out of the `coins` card.
- * - Paw badge: the pink paw disc (with its outline) cut out of `score`.
- * - Next bubble: the circle and the tag on its rim are measured (the cat and "NEXT" go there).
+ * - Paw badge: the pink paw disc (with its outline) cut out of `score` (the menu's record cards).
+ * - Score card (v0.22, `score-card`): cut and cropped; its caramel well is measured (the score goes
+ *   there, "SCORE:" above it), and the columns that may stretch: between the paw's arm and the
+ *   well's round right end.
+ * - Next bubble (v0.22, `next-bubble`): cut and cropped; the top of its outline is measured
+ *   ("NEXT" sits on it).
  * - Pause button: cut and cropped, its dark-brown outline recoloured to the reference's rose
  *   brown.
  */
@@ -46,6 +50,20 @@ interface BubbleData extends Sprite {
   tagY: number;
 }
 
+interface ScoreCardData extends Sprite {
+  /** Widths of the fixed left (paw) and right (round end) slices, px. */
+  sliceLeft: number;
+  sliceRight: number;
+  /** The card's outline: its top and bottom rows. */
+  top: number;
+  bottom: number;
+  /** The caramel well: its rows, its left edge beside the arm (middle row) and its right end. */
+  wellTop: number;
+  wellBottom: number;
+  wellLeft: number;
+  wellRight: number;
+}
+
 export async function buildHud(): Promise<void> {
   await mkdir(OUT_DIR, { recursive: true });
   const coins = await cutAndCrop(await findSource(SOURCE_DIR, 'coins'));
@@ -57,24 +75,19 @@ export async function buildHud(): Promise<void> {
   await saveWebp(badge, join(OUT_DIR, 'paw-badge.webp'));
   const badgeData: Sprite = { file: 'paw-badge.webp', width: badge.width, height: badge.height };
 
-  const bubble = await cutAndCrop(await findSource(SOURCE_DIR, 'next'));
+  const bubble = await cutAndCrop(await findSource(SOURCE_DIR, 'next-bubble'));
   await saveWebp(bubble, join(OUT_DIR, 'next.webp'));
   const box = opaqueRows(bubble);
   const r = bubble.width / 2;
   const cy = box.bottom - r;
-  // The tag: the first run of rows from the top that are largely cream (not the bubble's blue).
-  const creamRow = (y: number): boolean => {
-    let n = 0;
-    for (let x = 0; x < bubble.width; x++) {
-      const [red = 0, , blue = 0] = pixel(bubble, x, y);
-      if (alphaAt(bubble, x, y) > 128 && red > 235 && red - blue > 12) n++;
-    }
-    return n > bubble.width * 0.1;
-  };
+  // "NEXT" sits on the middle of the outline's top, down the centre column.
+  const cx = Math.round(bubble.width / 2);
+  const ink = (y: number): boolean =>
+    alphaAt(bubble, cx, y) > 128 && (pixel(bubble, cx, y)[0] ?? 255) < INK_MAX_RED;
   let tagTop = 0;
-  while (tagTop < bubble.height / 3 && !creamRow(tagTop)) tagTop++;
+  while (tagTop < bubble.height / 4 && !ink(tagTop)) tagTop++;
   let tagBottom = tagTop;
-  while (tagBottom < bubble.height / 3 && creamRow(tagBottom)) tagBottom++;
+  while (tagBottom < bubble.height / 4 && ink(tagBottom)) tagBottom++;
   const bubbleData: BubbleData = {
     file: 'next.webp',
     width: bubble.width,
@@ -90,11 +103,73 @@ export async function buildHud(): Promise<void> {
   await saveWebp(pause, join(OUT_DIR, 'pause.webp'));
   const pauseData: Sprite = { file: 'pause.webp', width: pause.width, height: pause.height };
 
-  await writeFile(DATA_FILE, dataModule(coinData, badgeData, bubbleData, pauseData));
+  const card = await cutAndCrop(await findSource(SOURCE_DIR, 'score-card'));
+  await saveWebp(card, join(OUT_DIR, 'score-card.webp'));
+  const cardData = scoreCard(card);
+
+  await writeFile(DATA_FILE, dataModule(coinData, badgeData, bubbleData, pauseData, cardData));
   console.log(
     `HUD: coin ${coin.width}px, badge ${badge.width}px, ` +
-      `bubble ${bubble.width}×${bubble.height}, pause ${pause.width}×${pause.height}; wrote ${DATA_FILE}`,
+      `bubble ${bubble.width}×${bubble.height}, pause ${pause.width}×${pause.height}, ` +
+      `score card ${card.width}×${card.height} (well ${cardData.wellLeft}–${cardData.wellRight} × ` +
+      `${cardData.wellTop}–${cardData.wellBottom}, slices ${cardData.sliceLeft} | ` +
+      `${cardData.sliceRight}); wrote ${DATA_FILE}`,
   );
+}
+
+const isCaramel = ([r = 0, g = 0, b = 0]: number[]): boolean =>
+  r > 185 && r < 230 && g > 125 && g < 170 && b > 80 && b < 130 && r - b > 70;
+
+/** The score card's outline, its well and the columns that may stretch. */
+function scoreCard(card: Rgba): ScoreCardData {
+  const { width, height } = card;
+  const caramelIn = (y: number): number[] => {
+    const xs: number[] = [];
+    for (let x = 0; x < width; x++) {
+      if (alphaAt(card, x, y) > 128 && isCaramel(pixel(card, x, y))) xs.push(x);
+    }
+    return xs;
+  };
+  const rows: number[] = [];
+  for (let y = 0; y < height; y++) if (caramelIn(y).length > width * 0.3) rows.push(y);
+  const wellTop = rows[0] ?? 0;
+  const wellBottom = (rows[rows.length - 1] ?? 0) + 1;
+  // Beside the arm, which leans right going down: where each row's caramel run through the card's
+  // middle starts (the paw's pink pads have caramel-ish edges further left, the well's round end
+  // a highlight).
+  const firsts = rows.map((y) => {
+    const xs = caramelIn(y);
+    let i = xs.findIndex((x) => x >= width / 2);
+    while (i > 0 && (xs[i] ?? 0) - (xs[i - 1] ?? 0) <= 4) i--;
+    return xs[Math.max(0, i)] ?? 0;
+  });
+  const wellLeft = firsts[Math.floor(firsts.length / 2)] ?? 0;
+  const wellRight = Math.max(...rows.map((y) => (caramelIn(y).at(-1) ?? 0) + 1));
+  const mid = Math.round((wellLeft + wellRight) / 2);
+  const ink = (y: number): boolean =>
+    alphaAt(card, mid, y) > 128 && (pixel(card, mid, y)[0] ?? 255) < INK_MAX_RED;
+  let top = 0;
+  while (top < wellTop && !ink(top)) top++;
+  let bottom = height - 1;
+  while (bottom > wellBottom && !ink(bottom)) bottom--;
+  // The stretch starts right of the arm (its edge on the well's inner rows: the top and bottom
+  // rows are its shaded rim) and ends where the well's right end starts to round.
+  const inner = firsts.slice(Math.round(firsts.length * 0.1), Math.round(firsts.length * 0.9));
+  const left = Math.max(...inner) + 6;
+  const right = wellRight - Math.round((wellBottom - wellTop) / 2) - 6;
+  return {
+    file: 'score-card.webp',
+    width,
+    height,
+    sliceLeft: left,
+    sliceRight: width - right,
+    top,
+    bottom: bottom + 1,
+    wellTop,
+    wellBottom,
+    wellLeft,
+    wellRight,
+  };
 }
 
 async function cutAndCrop(path: string): Promise<Rgba> {
@@ -244,7 +319,13 @@ function recolour(image: Rgba, from: readonly number[], to: readonly number[]): 
   }
 }
 
-function dataModule(coin: Sprite, badge: Sprite, bubble: BubbleData, pause: Sprite): string {
+function dataModule(
+  coin: Sprite,
+  badge: Sprite,
+  bubble: BubbleData,
+  pause: Sprite,
+  card: ScoreCardData,
+): string {
   const obj = (o: object): string =>
     '{ ' +
     Object.entries(o)
@@ -255,11 +336,12 @@ function dataModule(coin: Sprite, badge: Sprite, bubble: BubbleData, pause: Spri
  * Generated by tools/build-art.ts (\`npm run art\`) from art-source/hud/: do not edit by hand.
  * The HUD sprites in public/assets/hud/ (see hudSprites.ts for each field).
  */
-import type { HudBubbleSprite, HudSprite } from './hudSprites';
+import type { HudBubbleSprite, HudScoreCardSprite, HudSprite } from './hudSprites';
 
 export const HUD_COIN_SPRITE: HudSprite = ${obj(coin)};
 export const HUD_BADGE_SPRITE: HudSprite = ${obj(badge)};
 export const HUD_NEXT_SPRITE: HudBubbleSprite = ${obj(bubble)};
 export const HUD_PAUSE_SPRITE: HudSprite = ${obj(pause)};
+export const HUD_SCORE_CARD_SPRITE: HudScoreCardSprite = ${obj(card)};
 `;
 }
