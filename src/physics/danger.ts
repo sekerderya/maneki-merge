@@ -7,6 +7,7 @@
 import { LUCKY_SAVE_SMALLEST_POPS } from '../config/economy';
 import { PHYSICS_STEP_MS, stepsFor } from '../config/physics';
 import { DANGER_TIMEOUT_MS, LANDING_GRACE_MS } from '../config/timings';
+import type { DangerSnapshot } from '../core/runSave';
 import type { BallView } from './balls';
 
 export function isOverLine(cat: BallView, rimY: number): boolean {
@@ -64,6 +65,17 @@ export class DangerMonitor {
     }
     this.overSteps++;
     return this.overSteps >= this.timeoutSteps ? 'timeout' : 'danger';
+  }
+
+  /** The timer as it stands, for a saved run. */
+  snapshot(): DangerSnapshot {
+    return { overSteps: this.overSteps, graceSteps: this.graceSteps };
+  }
+
+  /** Continues a saved run's timer. */
+  restore(saved: DangerSnapshot): void {
+    this.overSteps = Math.min(saved.overSteps, this.timeoutSteps - 1);
+    this.graceSteps = saved.graceSteps;
   }
 
   /** Clears the timer and turns the check off for `graceMs` (a Lucky Save, an expansion). */

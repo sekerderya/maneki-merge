@@ -8,6 +8,7 @@ import {
 import { DROP_WEIGHTS, FIRST_DROPS_SMALLEST_COUNT, stageInfo } from '../config/stages';
 import { UPGRADES } from '../config/upgrades';
 import type { Rng } from './rng';
+import type { QueueSnapshot } from './runSave';
 
 /** A cat, a magnet (takes a ball out of the jar, GAME_DESIGN §15.2) or a boulder (§15.3). */
 export type DropKind = 'cat' | 'magnet' | 'boulder';
@@ -156,6 +157,25 @@ export class DropQueue {
     this.stageDrops = 0;
     this.dropper = this.withoutMagnet(this.dropper);
     this.upcoming = this.withoutMagnet(this.upcoming);
+  }
+
+  /** The queue as it stands, for a saved run. */
+  snapshot(): QueueSnapshot {
+    return {
+      current: this.dropper,
+      next: this.upcoming,
+      generated: this.generated,
+      stageDrops: this.stageDrops,
+    };
+  }
+
+  /** Continues a saved run's queue at `stage` (its odds come with `setOdds`). */
+  restore(saved: QueueSnapshot, stage: number): void {
+    this.usePool(stage);
+    this.dropper = { ...saved.current };
+    this.upcoming = { ...saved.next };
+    this.generated = saved.generated;
+    this.stageDrops = saved.stageDrops;
   }
 
   private withoutMagnet(drop: Drop): Drop {

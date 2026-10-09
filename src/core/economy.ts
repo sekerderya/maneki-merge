@@ -8,6 +8,7 @@ import {
 import { tierCoins, tierScore } from '../config/tiers';
 import { COMBO_WINDOW_MS } from '../config/timings';
 import { roundStable } from './math';
+import type { EconomySnapshot } from './runSave';
 import { comboBonus } from './upgrades';
 import type { DerivedStats } from './upgrades';
 
@@ -72,6 +73,17 @@ export class ComboCounter {
   reset(): void {
     this.count = 0;
     this.lastMs = Number.NEGATIVE_INFINITY;
+  }
+
+  /** The play time of the last merge, or null before the first one. */
+  get lastMergeMs(): number | null {
+    return Number.isFinite(this.lastMs) ? this.lastMs : null;
+  }
+
+  /** Continues a saved run's combo. */
+  restore(count: number, lastMs: number | null): void {
+    this.count = count;
+    this.lastMs = lastMs ?? Number.NEGATIVE_INFINITY;
   }
 }
 
@@ -150,6 +162,29 @@ export class RunEconomy {
   setScore(score: number): void {
     if (!Number.isInteger(score) || score < 0) throw new RangeError(`Invalid score: ${score}`);
     this.scoreTotal = score;
+  }
+
+  /** The run's bookkeeping, for a saved run. */
+  snapshot(): EconomySnapshot {
+    return {
+      score: this.scoreTotal,
+      coins: this.coinsTotal,
+      merges: this.mergeCount,
+      jackpots: this.jackpotCount,
+      highestTier: this.highest,
+      combo: this.comboCounter.combo,
+      comboAtMs: this.comboCounter.lastMergeMs,
+    };
+  }
+
+  /** Continues a saved run's bookkeeping. */
+  restore(saved: EconomySnapshot): void {
+    this.scoreTotal = saved.score;
+    this.coinsTotal = saved.coins;
+    this.mergeCount = saved.merges;
+    this.jackpotCount = saved.jackpots;
+    this.highest = saved.highestTier;
+    this.comboCounter.restore(saved.combo, saved.comboAtMs);
   }
 
   /** A single cat popped into coins (stage clear or Lucky Save). */

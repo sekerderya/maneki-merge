@@ -140,6 +140,17 @@ export class Ball implements BallView, CircleShape {
     return this.radius < this.targetRadius;
   }
 
+  /** Where the growth after a merge started and how far it has come (a saved run). */
+  get growth(): { readonly from: number; readonly ageMs: number } {
+    return { from: this.growFrom, ageMs: this.growAgeMs };
+  }
+
+  /** Continues a saved ball's growth. */
+  restoreGrowth(from: number, ageMs: number): void {
+    this.growFrom = Math.min(from, this.radius);
+    this.growAgeMs = Math.max(0, ageMs);
+  }
+
   /** Grows linearly from the start radius to the size's radius over MERGE_GROW_MS. */
   grow(dtMs: number): void {
     if (!this.growing) return;

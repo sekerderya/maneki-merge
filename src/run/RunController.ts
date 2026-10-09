@@ -14,7 +14,7 @@
  * the stage's last cat saves the jar even on the step the danger timer would run out.
  */
 import { PHYSICS_STEP_MS, stepsFor } from '../config/physics';
-import { MAGNET_SIZE, PICK_ORDER, PICKS } from '../config/picks';
+import { MAGNET_SIZE, PICK_IDS, PICK_ORDER, PICKS } from '../config/picks';
 import type { PickId, PickKind } from '../config/picks';
 import { catRadius, STAGE_COUNT, stageHoldsTier, stageInfo } from '../config/stages';
 import {
@@ -36,6 +36,7 @@ import type { PickLevels } from '../core/picks';
 import { nextStage, stageProgress } from '../core/progression';
 import type { StageProgress } from '../core/progression';
 import { Rng } from '../core/rng';
+import type { ExpansionSnapshot, RunSnapshot } from '../core/runSave';
 import { defaultUpgradeLevels, deriveStats } from '../core/upgrades';
 import type { DerivedStats, UpgradeLevels } from '../core/upgrades';
 import type { Ball, BallKind, BallView } from '../physics/balls';
@@ -124,6 +125,8 @@ export class RunController {
   readonly events: EventBus<GameEvents>;
   readonly seed: number;
   readonly stats: DerivedStats;
+  /** The upgrade levels the run started with. */
+  readonly upgrades: UpgradeLevels;
 
   private readonly world: PhysicsWorld;
   private readonly rng: Rng;
@@ -161,10 +164,15 @@ export class RunController {
   private offer: PickOffer | null = null;
   private pickQueue: PickKind[] = [];
 
-  constructor(options: RunOptions) {
+  /**
+   * Starts a run, or continues the saved one (`RunController.restore` passes it): it comes back
+   * paused, without `runStarted`.
+   */
+  constructor(options: RunOptions, saved?: RunSnapshot) {
     if (!Number.isFinite(options.seed)) throw new RangeError(`Invalid seed: ${options.seed}`);
     this.seed = options.seed;
-    this.stats = deriveStats(options.upgrades ?? defaultUpgradeLevels());
+    this.upgrades = { ...(options.upgrades ?? defaultUpgradeLevels()) };
+    this.stats = deriveStats(this.upgrades);
     this.events = options.events ?? new EventBus<GameEvents>();
     this.bankCoins = options.bank ?? (() => {});
     this.instant = options.instantExpansion ?? false;
@@ -180,8 +188,24 @@ export class RunController {
       odds: this.odds(),
     });
     this.economy = new RunEconomy(this.stats);
+    if (saved) {
+      this.load(saved);
+      return;
+    }
     this.events.emit('runStarted', { seed: this.seed, stage: this.world.stage });
     this.announceDropIfReady();
+  }
+
+  /**
+   * Continues a saved run (GAME_DESIGN §11) with its seed and upgrades, paused: `resume` goes on
+   * where it was (playing, in the expansion or at the pick). Throws a RangeError for a snapshot
+   * this version's rules can't hold (a tier the stage doesn't have, a pick without an offer, …).
+   */
+  static restore(
+    saved: RunSnapshot,
+    options: Omit<RunOptions, 'seed' | 'upgrades'> = {},
+  ): RunController {
+    return new RunController({ ...options, seed: saved.seed, upgrades: saved.upgrades }, saved);
   }
 
   // ── State ──────────────────────────────────────────────────────────────────
@@ -489,6 +513,42 @@ export class RunController {
     else this.gameOver();
   }
 
+  /**
+   * Everything needed to continue the run later (GAME_DESIGN §11), or null after game over. Take
+   * it between ticks. It comes back paused, so a pause is saved as the state it would resume to.
+   */
+  snapshot(): RunSnapshot | null {
+    if (this.runState === 'over') return null;
+    const state = this.runState === 'paused' ? this.resumeTo : this.runState;
+    if (state === 'paused' || state === 'over') return null;
+    const e = this.expansionState;
+    return {
+      seed: this.seed,
+      upgrades: { ...this.upgrades },
+      state,
+      ticks: this.tickCount,
+      dropAllowedAt: this.dropAllowedAt,
+      savesLeft: this.savesLeft,
+      levels: { ...this.levels },
+      offer: this.offer && { kind: this.offer.kind, options: [...this.offer.options] },
+      pickQueue: [...this.pickQueue],
+      expansion: e && {
+        from: e.from,
+        to: e.to,
+        picks: e.picks,
+        elapsedSteps: e.elapsedSteps,
+        phase: e.phase,
+      },
+      rng: this.rng.state(),
+      specialRng: this.specialRng.state(),
+      pickRng: this.pickRng.state(),
+      queue: this.queue.snapshot(),
+      economy: this.economy.snapshot(),
+      danger: this.danger.snapshot(),
+      world: this.world.snapshot(),
+    };
+  }
+
   /** A digest of everything that decides the rest of the run; equal digests replay equally. */
   stateHash(): string {
     const h = this.hasher.reset();
@@ -511,6 +571,50 @@ export class RunController {
     if (e) h.number(e.from).number(e.to).bool(e.picks).number(e.elapsedSteps).string(e.phase);
     this.world.hashInto(h);
     return h.digest();
+  }
+
+  /** Puts a saved run back in place (the constructor's second half), paused. */
+  private load(saved: RunSnapshot): void {
+    this.world.restore(saved.world);
+    const stage = this.world.stage;
+    this.rng.setState(saved.rng);
+    this.specialRng.setState(saved.specialRng);
+    this.pickRng.setState(saved.pickRng);
+    for (const id of PICK_IDS) this.levels[id] = Math.min(PICKS[id].maxLevel, saved.levels[id]);
+    this.queue.restore(saved.queue, stage);
+    this.queue.setOdds(this.odds());
+    for (const item of [this.queue.current, this.queue.next]) {
+      if (!stageHoldsTier(stage, item.tier) || (item.kind === 'boulder' && item.hits < 1)) {
+        throw new RangeError(`Stage ${stage} can't queue ${item.kind} ${item.tier}`);
+      }
+    }
+    this.economy.restore(saved.economy);
+    this.danger.restore(saved.danger);
+    this.tickCount = saved.ticks;
+    this.dropAllowedAt = saved.dropAllowedAt;
+    this.savesLeft = Math.min(saved.savesLeft, this.stats.luckySaves);
+
+    const offer = saved.offer;
+    if ((saved.state === 'choosing') !== (offer !== null) || offer?.options.length === 0) {
+      throw new RangeError('A saved pick needs its offer');
+    }
+    this.offer = offer && { kind: offer.kind, options: [...offer.options] };
+    this.pickQueue = [...saved.pickQueue];
+    if (
+      (saved.state === 'expanding' && !saved.expansion) ||
+      (saved.state === 'playing' && saved.expansion)
+    ) {
+      throw new RangeError('Only an expansion or its pick has a timeline');
+    }
+    this.expansionState = saved.expansion && restoreExpansion(saved.expansion, stage);
+
+    this.shownCombo = this.economy.comboAt(this.world.timeMs);
+    this.dangerShown = this.danger.active;
+    this.dangerSecond = this.dangerShown
+      ? Math.max(1, Math.ceil(this.danger.remainingMs / 1000))
+      : 0;
+    this.resumeTo = saved.state;
+    this.runState = 'paused';
   }
 
   // ── Tick pipeline ──────────────────────────────────────────────────────────
@@ -755,9 +859,7 @@ export class RunController {
     const e = this.expansionState;
     if (!e) return;
     e.elapsedSteps++;
-    e.elapsedMs = (e.elapsedSteps / EXPANSION_STEPS) * EXPANSION_DURATION_MS;
-    e.progress = e.elapsedSteps / EXPANSION_STEPS;
-    e.zoomProgress = Math.min(1, Math.max(0, (e.elapsedSteps - CLEAR_STEPS) / ZOOM_STEPS));
+    timeExpansion(e);
     if (e.phase === 'clear') {
       // Only the last cat is left: it finishes growing and settles while the jar holds still.
       this.world.step();
@@ -815,6 +917,26 @@ export class RunController {
     this.announceDropIfReady();
     if (this.world.stage < this.debugTargetStage) this.debugClear();
   }
+}
+
+/** Sets an expansion's times from its elapsed steps. */
+function timeExpansion(e: Expansion): void {
+  e.elapsedMs = (e.elapsedSteps / EXPANSION_STEPS) * EXPANSION_DURATION_MS;
+  e.progress = e.elapsedSteps / EXPANSION_STEPS;
+  e.zoomProgress = Math.min(1, Math.max(0, (e.elapsedSteps - CLEAR_STEPS) / ZOOM_STEPS));
+}
+
+/** A saved expansion at a world of `stage`: before the reveal it is the old stage, then the new. */
+function restoreExpansion(saved: ExpansionSnapshot, stage: number): Expansion {
+  const { from, to, phase } = saved;
+  const growing = to === from + 1 && to <= STAGE_COUNT;
+  if ((!growing && to !== from) || stage !== (phase === 'reveal' ? to : from)) {
+    throw new RangeError(`Invalid saved expansion ${from} → ${to} at stage ${stage}`);
+  }
+  // Any time is safe: the next tick moves an overdue phase on.
+  const e: Expansion = { ...saved, elapsedMs: 0, progress: 0, zoomProgress: 0 };
+  timeExpansion(e);
+  return e;
 }
 
 /** The tiers a stage adds ("New cats unlocked!"), up to its last cat; none at the last stage. */

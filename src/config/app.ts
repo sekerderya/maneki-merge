@@ -14,6 +14,9 @@ export const SAVE_BACKUP_PREFIX = `${STORAGE_PREFIX}save:corrupt:`;
 /** Only the newest backups are kept, so a save that keeps breaking can't fill the storage. */
 export const SAVE_BACKUP_LIMIT = 3;
 
+/** The run in progress (GAME_DESIGN §11), apart from the profile so a broken one is just dropped. */
+export const RUN_SAVE_KEY = `${STORAGE_PREFIX}run`;
+
 /** First-run hints (GAME_DESIGN §2.3); the save remembers which ones were seen. */
 export const HINT_IDS = ['aim', 'merge', 'magnet'] as const;
 export type HintId = (typeof HINT_IDS)[number];

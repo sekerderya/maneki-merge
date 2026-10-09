@@ -35,15 +35,20 @@ export class Rng {
 
   /** Recreates a generator from `state()`. */
   static fromState(state: RngState): Rng {
+    const rng = new Rng(0);
+    rng.setState(state);
+    return rng;
+  }
+
+  /** Continues from `state()` (a saved run). */
+  setState(state: RngState): void {
     if (
       state.length !== 4 ||
       !state.every((v) => Number.isInteger(v) && v >= 0 && v < UINT32_RANGE)
     ) {
       throw new TypeError('Invalid RNG state');
     }
-    const rng = new Rng(0);
-    [rng.a, rng.b, rng.c, rng.d] = state;
-    return rng;
+    [this.a, this.b, this.c, this.d] = state;
   }
 
   state(): RngState {

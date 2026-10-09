@@ -22,6 +22,7 @@ import {
 } from '../config/physics';
 import { FIRST_STAGE, tierSize } from '../config/stages';
 import type { StateHasher } from '../core/hash';
+import type { SavedBall, WorldSnapshot } from '../core/runSave';
 import { ballOf, createBall, MATTER_TICKS_PER_SECOND } from './balls';
 import type { Ball, BallSpec } from './balls';
 
@@ -43,6 +44,17 @@ interface PairList {
 interface VerletBody {
   readonly positionPrev: Matter.Vector;
   readonly anglePrev: number;
+}
+/** The integrator's and solver's state a saved run writes back into a body. */
+interface BodyState {
+  positionPrev: Matter.Vector;
+  anglePrev: number;
+  velocity: Matter.Vector;
+  angularVelocity: number;
+  speed: number;
+  angularSpeed: number;
+  deltaTime: number;
+  positionImpulse: Matter.Vector;
 }
 
 /**
@@ -264,6 +276,71 @@ export class PhysicsWorld {
     return true;
   }
 
+  /**
+   * The world between two steps, for a saved run: every ball with its body's integrator state.
+   * matter-js's contact cache isn't kept, so a restored world's first steps re-solve the contacts
+   * (the pile doesn't visibly move).
+   */
+  snapshot(): WorldSnapshot {
+    return {
+      stage: this.geo.stage,
+      steps: this.stepCount,
+      nextId: this.nextId,
+      paused: this.isPaused,
+      balls: this.list.map(saveBall),
+    };
+  }
+
+  /** Rebuilds a saved world. Only a new world (never stepped, empty) can be restored. */
+  restore(saved: WorldSnapshot): void {
+    if (this.list.length > 0 || this.stepCount > 0) {
+      throw new Error('Only a new world can be restored');
+    }
+    this.geo = jarGeometry(saved.stage);
+    this.stepCount = saved.steps;
+    this.isPaused = saved.paused;
+    const ids = new Set<number>();
+    let lastId = 0;
+    for (const ball of saved.balls) {
+      if (ids.has(ball.id) || ball.id < 1) throw new RangeError(`Invalid ball id ${ball.id}`);
+      ids.add(ball.id);
+      lastId = Math.max(lastId, ball.id);
+      this.restoreBall(ball);
+    }
+    this.nextId = Math.max(saved.nextId, lastId + 1);
+  }
+
+  private restoreBall(saved: SavedBall): void {
+    const ball = createBall(saved.id, {
+      kind: saved.kind,
+      tier: saved.tier,
+      golden: saved.golden,
+      hits: saved.hitsLeft,
+      size: this.sizeOf(saved.tier),
+      x: saved.x,
+      y: saved.y,
+      startRadius: saved.radius,
+      landedMs: saved.landedMs,
+    });
+    ball.restoreGrowth(saved.growFrom, saved.growMs);
+    const body = ball.body;
+    Matter.Body.setAngle(body, saved.angle);
+    const state = body as unknown as BodyState;
+    state.positionPrev.x = saved.prevX;
+    state.positionPrev.y = saved.prevY;
+    state.anglePrev = saved.anglePrev;
+    state.velocity.x = saved.vx;
+    state.velocity.y = saved.vy;
+    state.speed = Math.hypot(saved.vx, saved.vy);
+    state.angularVelocity = saved.spin;
+    state.angularSpeed = Math.abs(saved.spin);
+    if (saved.deltaTime > 0) state.deltaTime = saved.deltaTime;
+    state.positionImpulse.x = saved.impulseX;
+    state.positionImpulse.y = saved.impulseY;
+    this.list.push(ball);
+    Matter.Composite.add(this.engine.world, body);
+  }
+
   /** Feeds everything that decides the future of the world into `hasher`. */
   hashInto(hasher: StateHasher): void {
     hasher.number(this.stepCount).number(this.geo.stage).bool(this.isPaused);
@@ -311,4 +388,32 @@ export class PhysicsWorld {
     this.scratch.y = y * k;
     Matter.Body.setVelocity(body, this.scratch);
   }
+}
+
+function saveBall(ball: Ball): SavedBall {
+  const state = ball.body as unknown as BodyState;
+  const { from, ageMs } = ball.growth;
+  return {
+    id: ball.id,
+    kind: ball.kind,
+    tier: ball.tier,
+    golden: ball.golden,
+    hitsLeft: ball.hitsLeft,
+    x: ball.body.position.x,
+    y: ball.body.position.y,
+    prevX: state.positionPrev.x,
+    prevY: state.positionPrev.y,
+    angle: ball.body.angle,
+    anglePrev: state.anglePrev,
+    vx: state.velocity.x,
+    vy: state.velocity.y,
+    spin: state.angularVelocity,
+    deltaTime: state.deltaTime,
+    impulseX: state.positionImpulse.x,
+    impulseY: state.positionImpulse.y,
+    radius: ball.radius,
+    growFrom: from,
+    growMs: ageMs,
+    landedMs: ball.landedMs,
+  };
 }
