@@ -299,6 +299,10 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
 - [x] Batch 10 (v0.26.0), back to stage-clear blessings (GAME_DESIGN §2.3, §15.5):
   - [x] XP and levels removed (the owner's call); every stage clear offers a trial, then a blessing
   - [x] the score card level with the coins card; the stage words, the floating paw and no noren stay
+- [x] Batch 11 (v0.27.0), autosave (GAME_DESIGN §11, TECH_SPEC §8):
+  - [x] the run in progress is saved: stage, every ball where it lies, score, coins, queue, picks, Lucky Saves, a waiting pick or a growing jar
+  - [x] closing the app and opening it again goes straight back into the run, paused, with Resume
+  - [x] Quit to Menu and game over end the run; a snapshot a new version can't read is dropped
 
 ## M13: Final art integration
 

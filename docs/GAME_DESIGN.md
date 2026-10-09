@@ -231,7 +231,7 @@ Everything is stored locally, with a version number:
 - settings: sound, haptics, reduce motion
 - flags: which first-run hints have been seen
 
-A run in progress isn't saved. Closing the app ends it, but its coins are already banked.
+The run in progress is saved too (v0.27, the owner's call; until then closing the app ended it): the stage, every cat and boulder in the jar where it lies, the score and the run's coins, the dropper and NEXT, the trials and blessings, the Lucky Saves left, a stage clear's waiting pick or a growing jar. It is written whenever the wallet is (at most once a second while coins come in) and when the app goes to the background or closes. The next launch opens the game screen straight away, paused where the run stopped, with Resume (a waiting pick shows under the pause). Quit to Menu and game over end the run, and the next launch opens the menu. Cats that were still falling or rolling go on a little differently than they would have; a settled pile doesn't move. A saved run that a new version can't read is dropped (the profile is never lost).
 
 The save format is at version 6:
 
@@ -396,7 +396,7 @@ Then the zoom follows (§7.1 step 3). At the last stage there is no zoom: play r
 
 - **Options:** each pick shows up to 3 different options, drawn at random from those not at their max level, with the run's seeded RNG. Today there are exactly 3 of each kind, so a pick shows all of them in random order. With fewer than 3 left it shows fewer cards; with none left the pick is skipped.
 - The player must pick exactly one: no skip, no reroll, no rarities.
-- **Levels:** a pick raises that option's level by 1. Levels last for the run, and every run starts at 0. They aren't saved, because a run in progress isn't saved (§11).
+- **Levels:** a pick raises that option's level by 1. Levels last for the run, and every run starts at 0. They are saved with the run in progress (§11).
 - **Card:** an icon, the name, a one-line effect, the level as pips with "Lv 1 → 2", and the value it changes (current → next), like a shop card (§2.2).
 - **Choosing:** tap a card to select it (it lifts and glows), then tap **Choose** to confirm. Taps are ignored for the panel's first 0.4 s, because a clear often comes right after a drop and a tap still in flight mustn't pick.
 - **Time:** time stays stopped while the panel is up (physics, the drop cooldown, the combo window, the danger timer). The pause button, the back button (→ pause) and backgrounding work as in play; resuming returns to the pick.
@@ -431,4 +431,4 @@ Then the zoom follows (§7.1 step 3). At the last stage there is no zoom: play r
 ## 16. Not in v1 (ideas for later)
 
 - Daily seeded challenge, achievements, skins, leaderboards
-- Saving a run in progress, cloud save, localization
+- Cloud save, localization

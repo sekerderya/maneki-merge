@@ -2,6 +2,24 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.27.0] - 2026-10-10
+
+### Added
+
+- Autosave (the owner's request, GAME_DESIGN §11): the run in progress is saved, so closing the app no longer ends it. The stage, every cat and boulder where it lies, the score, the run's coins, the dropper and NEXT, the trials and blessings, the Lucky Saves left, a waiting pick and a growing jar all come back.
+- Opening the app again goes straight to the game screen, paused where the run stopped; Resume plays on. A stage clear's pick waits under the pause.
+- The run is written with every wallet write (at most once a second while coins come in) and whenever the app goes to the background or closes, under its own key (`maneki-merge:run`).
+
+### Changed
+
+- Quit to Menu ends the run for good, as before; so does game over. The next launch then opens the menu.
+- Debug "Reset save" also forgets the saved run.
+
+### Known issues
+
+- Cats that were still falling or rolling when the app closed go on a little differently than they would have (matter-js's contact cache isn't saved); a settled pile doesn't move.
+- A saved run is dropped when a later version changes the snapshot format (`RUN_SAVE_VERSION`); the coins it earned stay in the wallet.
+
 ## [0.26.0] - 2026-10-10
 
 ### Removed
