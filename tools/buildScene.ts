@@ -37,6 +37,11 @@ const DATA_FILE = 'src/config/sceneSpriteData.ts';
 
 /** The bamboo's ink outline: red channel below this. */
 const INK_MAX_RED = 150;
+/**
+ * The jar's opening is measured from the bamboo's outline, which is darker than this: the pale
+ * glass edge inside it has a thin line of its own (red about 145) that must not count.
+ */
+const JAR_OUTLINE_MAX_RED = 120;
 /** A wall's inner edge counts as straight down to the floor while it stays this close, px. */
 const CORNER_TOLERANCE = 2;
 /** Piece finding: rows are scanned in bands this tall; gaps this wide split a band's pieces. */
@@ -107,7 +112,7 @@ async function buildJar(path: string): Promise<JarData> {
   clearRegion(image, width / 2, height / 2);
 
   const ink = (x: number, y: number): boolean =>
-    alphaAt(image, x, y) > 128 && (pixel(image, x, y)[0] ?? 255) < INK_MAX_RED;
+    alphaAt(image, x, y) > 128 && (pixel(image, x, y)[0] ?? 255) < JAR_OUTLINE_MAX_RED;
   const cx = Math.round(width / 2);
   const scan = (from: number, to: number, at: (i: number) => boolean): number => {
     const step = to > from ? 1 : -1;
