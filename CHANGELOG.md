@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+- Faster deploys: the E2E suite runs beside the build in four parallel jobs (iPhone and Pixel profiles, two shards each) instead of after it, and pushes that only change docs, Markdown or art sources don't run the Deploy workflow at all.
+
 ## [0.23.1] - 2026-10-09
 
 ### Fixed
