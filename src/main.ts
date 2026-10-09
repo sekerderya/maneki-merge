@@ -83,8 +83,14 @@ async function boot(): Promise<void> {
   const gate = new UpdateGate({
     activate: () => sw.activate(),
     reload: () => window.location.reload(),
+    schedule: (run, delayMs) => window.setTimeout(run, delayMs),
     onReadyChange: (ready) => menu.setUpdateReady(ready),
   });
+  // A waiting update installs itself only while the menu is up with no panel over it.
+  const syncUpdateGate = (): void => {
+    const onMenu = (screens?.screen ?? 'menu') === 'menu';
+    gate.setMenuActive(onMenu && !shop.visible && !settingsPanel.visible);
+  };
 
   const installContext = detectInstallContext(readInstallEnvironment());
   const installPrompt = new InstallPrompt((available) => {
@@ -123,15 +129,18 @@ async function boot(): Promise<void> {
     if (shop.visible) return;
     showProfile();
     shop.show();
+    syncUpdateGate();
     shopLayer = back.push(() => {
       shopLayer = null;
       shop.hide();
+      syncUpdateGate();
     });
   };
   const closeShop = (): void => {
     if (shopLayer !== null) back.release(shopLayer);
     shopLayer = null;
     shop.hide();
+    syncUpdateGate();
   };
 
   // Settings panel (GAME_DESIGN §2.4) over the menu, with its own back layer.
@@ -149,15 +158,18 @@ async function boot(): Promise<void> {
     if (settingsPanel.visible) return;
     showProfile();
     settingsPanel.show();
+    syncUpdateGate();
     settingsLayer = back.push(() => {
       settingsLayer = null;
       settingsPanel.hide();
+      syncUpdateGate();
     });
   };
   const closeSettings = (): void => {
     if (settingsLayer !== null) back.release(settingsLayer);
     settingsLayer = null;
     settingsPanel.hide();
+    syncUpdateGate();
   };
 
   const gameScreen = createGameScreen(
@@ -228,8 +240,9 @@ async function boot(): Promise<void> {
     { menu: byId('menu-screen'), game: byId('game-screen') },
     back,
     (screen) => {
-      gate.setMenuActive(screen === 'menu');
+      // End (and save) the run first: back on the menu, a waiting update reloads the app soon.
       if (screen === 'menu') session.endRun();
+      gate.setMenuActive(screen === 'menu' && !shop.visible && !settingsPanel.visible);
     },
     () => session.onBack(),
   );

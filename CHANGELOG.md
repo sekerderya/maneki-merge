@@ -2,10 +2,11 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.23.3] - 2026-10-09
 
 ### Changed
 
+- Updates install themselves. When a new version is waiting and the menu has been up for a second (no shop or settings panel open), the app restarts into it on its own, with a brief "Updating…" badge; no more "Update ready — tap to restart". A version that arrives during a run still waits until the player is back on the menu.
 - Faster deploys: the E2E suite moved to its own workflow that runs beside the deploy without blocking it, in four parallel jobs (iPhone and Pixel profiles, two shards each). A failure is reported, not gated. Pushes that only change docs, Markdown or art sources run neither workflow.
 
 ## [0.23.2] - 2026-10-09

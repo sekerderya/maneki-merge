@@ -13,6 +13,13 @@ export const PHONE_LANDSCAPE_MAX_HEIGHT_PX = 540;
 export const UPDATE_CHECK_INTERVAL_MS = 60 * 60 * 1000;
 
 /**
+ * How long the menu must stay idle before a waiting update is applied. Leaving a run calls
+ * `history.back()`; Chromium never activates a worker told to skip waiting while that traversal
+ * is pending, so the update would hang until the next launch.
+ */
+export const UPDATE_APPLY_DELAY_MS = 1000;
+
+/**
  * Haptics (Android only, GAME_DESIGN §12): vibration patterns in milliseconds (on, off, on, …).
  * A light tick per merge, at most one every HAPTIC_TICK_INTERVAL_MS; a stronger pattern for
  * Jackpots, expansions and Lucky Saves.

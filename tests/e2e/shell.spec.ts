@@ -49,7 +49,7 @@ test.describe('screens and back button', () => {
 });
 
 test.describe('update badge', () => {
-  test('appears only on the menu, never during a run', async ({ page }) => {
+  test('waits for the menu, never shows during a run', async ({ page }) => {
     await page.goto('./?debug=1');
     await page.getByTestId('play').click();
     await page.evaluate(() => window.__game?.simulateUpdateReady());
@@ -58,7 +58,7 @@ test.describe('update badge', () => {
     await page.getByTestId('pause').click();
     await page.getByTestId('quit').click();
     await expect(page.getByTestId('update-badge')).toBeVisible();
-    await expect(page.getByTestId('update-badge')).toHaveText('Update ready — tap to restart');
+    await expect(page.getByTestId('update-badge')).toHaveText('Updating…');
   });
 });
 

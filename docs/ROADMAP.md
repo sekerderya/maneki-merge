@@ -22,7 +22,7 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
 
 ## Phone test checklist (owner, after every milestone)
 
-1. Open the installed app (or the live URL). If the menu shows "Update ready", tap it.
+1. Open the installed app (or the live URL). On the menu, a new version installs itself and the app restarts once ("Updating…" shows for a moment).
 2. Check that the version on the menu matches Claude's report.
 3. Try the milestone's **Owner check** items below.
 4. Quick regression: start a run, drop about 10 cats, pause and resume, go back to the menu.

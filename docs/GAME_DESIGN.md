@@ -26,7 +26,7 @@ The owner's mockup (v0.20, `art-source/menu/mockup.jpg`, §13.1), top to bottom:
 - **PLAY**: a big glossy coral pill, the only coral thing on the screen.
 - **UPGRADES**: a cream pill with an up arrow, below PLAY. Shows a red dot when any upgrade is affordable and opens the shop panel.
 - Install hint, shown only when the game runs in a browser tab. On iOS: "Tap Share, then Add to Home Screen". On Android Chrome: an "Install" button. It and the update badge sit small in the top bar, between the gear and the coins.
-- An "Update ready — tap to restart" badge when a new version is waiting.
+- An "Updating…" badge while a new version installs. It installs itself and restarts the app after a second on the menu with no panel open; one that arrives during a run waits for the menu. Tapping the badge retries a stalled update.
 - The version and build hash live in the settings panel.
 
 Layout: everything sits where it is in the mockup, on a stage of the mockup's size (768 × 1376) scaled to fit the screen and standing on its bottom edge, lifted clear of the home indicator. The garden spans the screen's width and stands on its bottom edge. A taller screen has free height above the stage: the stage moves up by a fifth of it and the logo by three fifths in all, and the cat (with its glow and sparkles) stays centred between the logo and the record cards (v0.20.1, the owner's call; v0.20.0 kept the stage on the bottom edge and moved only the logo). The top bar stays at the top of the screen, below the safe area. Every word and number is live text (Fredoka). With `?skin=vector` the menu is the code-drawn garden of v0.14: a round coral PLAY, the calico cat (look 6) on its cushion with floating coins, taking whatever height is left.

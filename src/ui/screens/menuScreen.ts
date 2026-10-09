@@ -164,12 +164,15 @@ function recordValue(testid: string): HTMLElement {
   return value;
 }
 
-/** The update badge and the install hint, shown only when they apply. */
+/**
+ * The "Updating…" badge (a tap retries a stalled update) and the install hint, shown only when
+ * they apply.
+ */
 function footer(
   actions: MenuActions,
 ): Pick<MenuControls, 'bottom' | 'update' | 'iosHint' | 'install'> {
   const bottom = el('footer', 'menu-bottom');
-  const update = button('update-badge', 'Update ready — tap to restart');
+  const update = button('update-badge', 'Updating…');
   update.dataset['testid'] = 'update-badge';
   update.hidden = true;
   update.addEventListener('click', actions.onApplyUpdate);
