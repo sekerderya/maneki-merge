@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.23.1] - 2026-10-09
+
+### Fixed
+
+- Replaced art now reaches installed apps. The service worker cached every image under `assets/` without a revision, as if its name held a content hash (only Vite's own output does), so an image replaced under the same name (v0.23's NEXT bubble, and earlier art updates) stayed old after an update. Each art file now has a revision; a unit test checks them all.
+
 ## [0.23.0] - 2026-10-09
 
 The score card and the NEXT bubble, copied from the owner's references.
