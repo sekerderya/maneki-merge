@@ -22,5 +22,13 @@ export type HintId = (typeof HINT_IDS)[number];
 export const THEME_COLOR = '#fcefdf';
 export const BACKGROUND_COLOR = '#fcefdf';
 
+/**
+ * Precache URLs named by their content (TECH_SPEC §9): only Vite's own output,
+ * `assets/<name>-<8-char hash>.<ext>`, which the service worker never needs to re-check. Everything
+ * else, the art under `assets/<kind>/` included, gets a revision, so a replaced image reaches
+ * installed apps (until v0.23.1 all of `assets/` was skipped and replaced art never arrived).
+ */
+export const PRECACHE_HASHED_URL = /^assets\/[^/]+-[\w-]{8}\.\w+$/;
+
 /** Coin and record changes are written to storage at most once per this interval (TECH_SPEC §8). */
 export const SAVE_THROTTLE_MS = 1000;

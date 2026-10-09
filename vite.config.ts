@@ -7,6 +7,7 @@ import {
   APP_NAME,
   APP_SHORT_NAME,
   BACKGROUND_COLOR,
+  PRECACHE_HASHED_URL,
   THEME_COLOR,
 } from './src/config/app.ts';
 
@@ -77,6 +78,8 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,webp,ico,woff2}'],
         navigateFallback: 'index.html',
         cleanupOutdatedCaches: true,
+        // Only Vite's own output is named by its content; the art gets revisions (v0.23.1).
+        dontCacheBustURLsMatching: PRECACHE_HASHED_URL,
         // Phaser alone is larger than Workbox's 2 MiB default.
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
       },
