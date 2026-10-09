@@ -74,8 +74,16 @@ export class PawView {
   show(x: number, y: number, topY: number): void {
     this.paw.setVisible(true).setPosition(x, y);
     if (this.artArm) {
+      // Under the noren the arm ends at `topY`, inside the image: rows above it are cropped off.
+      const imageTop = y - PAW_ART.bottom * ART_SCALE;
+      if (topY > imageTop) {
+        const rows = Math.min(PAW_ART.height - 1, Math.floor((topY - imageTop) / ART_SCALE));
+        this.paw.setCrop(0, rows, PAW_ART.width, PAW_ART.height - rows);
+      } else {
+        this.paw.setCrop();
+      }
       // The image's arm ends at its top edge; the stretched row overlaps it by a unit.
-      const from = y - PAW_ART.bottom * ART_SCALE + 1;
+      const from = imageTop + 1;
       this.artArm
         .setVisible(topY < from)
         .setPosition(x, from)

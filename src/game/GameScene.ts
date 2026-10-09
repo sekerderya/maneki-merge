@@ -20,6 +20,7 @@ import {
 } from '../config/skin';
 import { FIRST_STAGE, JAR_WIDTH, tierSize } from '../config/stages';
 import { PAW_GRIP } from '../config/pawArt';
+import { NOREN_ARM_OVERLAP, NOREN_HEM } from '../config/sceneSprites';
 import { MAGNET_TAKE_MS } from '../config/timings';
 import {
   AIM_DOT_RADIUS,
@@ -489,13 +490,15 @@ export class GameScene extends Phaser.Scene {
     this.aimLine.clear();
 
     // The paw hangs over the jar whenever the jar is not growing; it keeps its place while the
-    // next cat comes, and lifts a little when it lets go of one.
+    // next cat comes, and lifts a little when it lets go of one. With the raster art the arm
+    // ends behind the noren (ui/noren.ts); otherwise it reaches up off the screen.
     if (run.expansion) {
       this.paw.hide();
     } else {
       const top = this.fit.centerY - this.cameras.main.height / this.fit.zoom / 2;
       const y = geo.dropY - PAW_GRIP * shown - pawLift(this.nowMs - this.liftFromMs);
-      this.paw.show(x, y, top - AIM_DOT_SPACING);
+      const end = this.art ? geo.rimY - NOREN_HEM - NOREN_ARM_OVERLAP : -Infinity;
+      this.paw.show(x, y, Math.max(top - AIM_DOT_SPACING, end));
     }
 
     const show = run.state === 'playing' && (run.canDrop || run.canTake);

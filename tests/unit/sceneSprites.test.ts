@@ -7,6 +7,7 @@ import {
   JAR_ART_SCALE_X,
   JAR_ART_SCALE_Y,
   jarArtToWorld,
+  NOREN_ART,
   PAW_ART,
   SCENE_SPRITE_DIR,
 } from '../../src/config/sceneSprites';
@@ -21,7 +22,13 @@ const inside = (r: PxRect, w: number, h: number): boolean =>
 
 describe('scene art sprites (GAME_DESIGN §13.1)', () => {
   it('ships every image', () => {
-    for (const file of [JAR_ART.back, JAR_ART.front, PAW_ART.file, BACKGROUND_ART.file]) {
+    for (const file of [
+      JAR_ART.back,
+      JAR_ART.front,
+      PAW_ART.file,
+      BACKGROUND_ART.file,
+      NOREN_ART.file,
+    ]) {
       expect(existsSync(`public/${SCENE_SPRITE_DIR}${file}`), file).toBe(true);
     }
   });

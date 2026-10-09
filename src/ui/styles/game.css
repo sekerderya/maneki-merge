@@ -537,6 +537,23 @@
   touch-action: none;
 }
 
+/* The noren over the jar (ui/noren.ts): in front of the canvas, so the paw reaches out from under
+   it, and behind the hints, banners and HUD. Its plain middle stretches (a vertical 3-slice). */
+.noren {
+  position: absolute;
+  z-index: 1;
+  box-sizing: border-box;
+  border-style: solid;
+  border-color: transparent;
+  border-width: 0;
+  border-image-repeat: stretch;
+  pointer-events: none;
+}
+
+.noren[hidden] {
+  display: none;
+}
+
 /* First-run hints: never in the way of a touch. */
 .hint-pill {
   position: absolute;

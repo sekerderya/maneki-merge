@@ -66,7 +66,7 @@ narrower than their canvas: Claude crops the empty space.
 | 4   | 2 scene | `scene/rug.png`                    | Mint rug the jar stands on                                | 3:2, 1536×1024    |
 | 5   | 2 scene | `scene/paw.png`                    | Calico dropper arm hanging from the top                   | 2:3, 1024×1536    |
 | 5a  | 2 scene | `scene/noren-mockup.webp`          | Game screen with the noren, design reference (done)       | –                 |
-| 5b  | 2 scene | `scene/noren.png`                  | Noren curtain over the jar; the paw reaches out under it  | 3:2, 1536×1024    |
+| 5b  | 2 scene | `scene/noren.jpg`                  | Noren curtain over the jar; the paw reaches out under it  | 3:2, 1536×1024    |
 | 6   | 3 HUD   | `hud/hud-kit.png`                  | Sheet: card, sunken well, pause button, NEXT bubble, …    | 1:1, 1024×1024    |
 | 7   | 3 HUD   | `hud/icons.png`                    | Sheet: coin, paw badge, sparkle, petals, puff             | 1:1, 1024×1024    |
 | 7b  | 4 menu  | `menu/mockup.jpg`                  | Whole main-menu screen, design reference (done)           | 2:3, 1024×1536    |
@@ -269,7 +269,8 @@ height, the arm is about a quarter of the canvas width and centered. Plain flat 
 no shadow. Portrait 2:3.
 ```
 
-**Noren** (`scene/noren.png`, v0.21.1 plan): on a tall phone the paw's arm filled the empty
+**Noren** (`scene/noren.png`, **done (2026-10-09), in the game in v0.22**; its rod came out tan and
+the art tool recolours it to the mockup's rose brown): on a tall phone the paw's arm filled the empty
 height between the HUD and the jar. The owner chose a noren (`scene/noren-mockup.webp`): a shop
 curtain across the top of the screen, its hem a fixed distance above the jar, the paw reaching out
 from under it. The game stretches the plain part of the fabric to the top of any screen (rod and
