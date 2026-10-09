@@ -45,6 +45,10 @@ export interface GameStateSnapshot {
   readonly pick: { readonly kind: string; readonly options: readonly string[] } | null;
   /** The trials' and blessings' levels this run. */
   readonly pickLevels: Readonly<Record<string, number>> | null;
+  /** The run's level, and the XP towards the next one (GAME_DESIGN §15.6). */
+  readonly level: number;
+  readonly xp: number;
+  readonly xpToNext: number;
   /** The danger countdown is running (a cat is over the line). */
   readonly danger: boolean;
   /** The stage's smallest and last cat (making the last one clears the stage). */
@@ -87,6 +91,8 @@ export interface GameHooks {
   setPickLevel(id: PickId, level: number): void;
   /** Opens a stage clear's picks now. */
   offerPicks(): void;
+  /** Adds XP to the run; a level up opens its blessing. */
+  addXp(amount: number): void;
   /** Puts a boulder of the stage's `size` needing `hits` merges into the jar at world x. */
   spawnBoulder(x?: number, size?: number, hits?: number): void;
   addCoins(coins: number): void;
@@ -150,6 +156,9 @@ export function installDebugHooks(ctx: DebugContext): GameHooks {
           ? { kind: run.pickOffer.kind, options: [...run.pickOffer.options] }
           : null,
         pickLevels: run?.pickLevels ?? null,
+        level: run?.level ?? 1,
+        xp: run?.xp ?? 0,
+        xpToNext: run?.xpToNext ?? 0,
         danger: run?.dangerActive ?? false,
         firstTier: stageInfo(run?.stage ?? 1).firstTier,
         lastTier: stageInfo(run?.stage ?? 1).lastTier,
@@ -201,6 +210,9 @@ export function installDebugHooks(ctx: DebugContext): GameHooks {
     },
     offerPicks() {
       session.run?.offerPicks();
+    },
+    addXp(amount) {
+      session.run?.addXp(amount);
     },
     spawnBoulder(x = 0, size = 2, hits = 1) {
       const run = session.run;
@@ -361,6 +373,13 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
       action('Boulder', () => hooks.give('boulder')),
       action('Golden', () => hooks.give('golden')),
       action('Picks', () => hooks.offerPicks()),
+    ),
+    row(
+      action('+25 XP', () => hooks.addXp(25)),
+      action('Level up', () => {
+        const s = hooks.state();
+        hooks.addXp(s.xpToNext - s.xp);
+      }),
     ),
     row(
       pick,

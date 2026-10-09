@@ -17,13 +17,14 @@ export interface PickView {
 
 const TITLES: Readonly<Record<PickKind, { title: string; detail: string }>> = {
   trial: { title: 'Choose a trial', detail: 'The coming stages get harder' },
-  blessing: { title: 'Choose a blessing', detail: 'It lasts for the whole run' },
+  blessing: { title: 'Level up!', detail: 'Choose a blessing for the whole run' },
 };
 
 /**
- * A stage clear's pick (GAME_DESIGN §15.5): up to three cards over the dimmed jar. A tap selects
- * a card, Choose confirms it; taps in the panel's first PICK_ARM_MS are ignored, so a tap still in
- * flight from the last drop can't pick. There is no skip and no reroll.
+ * A pick (GAME_DESIGN §15.5), a stage clear's trial or a level up's blessing: up to three cards
+ * over the dimmed jar. A tap selects a card, Choose confirms it; taps in the panel's first
+ * PICK_ARM_MS are ignored, so a tap still in flight from the last drop can't pick. There is no skip
+ * and no reroll.
  */
 export function createPickOverlay(root: HTMLElement, actions: PickActions): PickView {
   const overlay = el('div', 'overlay game-overlay pick-overlay');

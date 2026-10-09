@@ -161,8 +161,19 @@ export interface GameEvents {
   expansionFinished: { readonly stage: number; readonly newTiers: readonly number[] };
   luckySave: { readonly savesLeft: number };
   /**
-   * A stage clear's pick (GAME_DESIGN §15.5): the run waits (state `choosing`) until one of
-   * `options` is chosen. A trial comes first, then a blessing.
+   * Merges gave XP (GAME_DESIGN §15.6): `xp` of `toNext` towards the level after `level`.
+   * `levelsGained` is more than 0 when it was a level up.
+   */
+  xpChanged: {
+    readonly gained: number;
+    readonly xp: number;
+    readonly toNext: number;
+    readonly level: number;
+    readonly levelsGained: number;
+  };
+  /**
+   * A pick (GAME_DESIGN §15.5): the run waits (state `choosing`) until one of `options` is
+   * chosen. A stage clear offers a trial, a level up a blessing.
    */
   pickOffered: { readonly kind: PickKind; readonly options: readonly PickId[] };
   /** An option was chosen: its level for the rest of the run is now `level`. */

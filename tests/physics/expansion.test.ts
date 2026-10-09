@@ -57,7 +57,7 @@ function ticks(run: RunController, n: number): void {
   for (let i = 0; i < n; i++) run.tick();
 }
 
-/** One tick, or, while a stage clear's pick waits, its first option (GAME_DESIGN §15.5). */
+/** One tick, or, while a pick waits, its first option (GAME_DESIGN §15.5). */
 function step(run: RunController): void {
   const offer = run.pickOffer;
   if (run.state === 'choosing' && offer) run.choose(offer.options[0]!);
@@ -143,8 +143,8 @@ describe('clearing stages under a pile (GAME_DESIGN §7.1)', () => {
       }
       expect(run.balls).not.toContain(last);
       expect(run.balls).toHaveLength(0);
-      while (run.state === 'expanding') {
-        run.tick();
+      while (run.state === 'expanding' || run.state === 'choosing') {
+        step(run);
         expect(run.balls).toHaveLength(0);
       }
       addPile(12);
@@ -163,14 +163,14 @@ describe('clearing stages under a pile (GAME_DESIGN §7.1)', () => {
       }
     };
 
-    /** Plays `seconds` with the invariants checked on every tick. */
+    /** Plays `seconds` with the invariants checked on every tick (and level ups' picks taken). */
     const play = (seconds: number): void => {
       for (let t = 0; t < seconds * STEPS_PER_SECOND; t++) {
-        run.tick();
-        expect(run.state).not.toBe('over');
-        expect(run.state).toBe('playing');
+        step(run);
+        expect(['playing', 'choosing']).toContain(run.state);
         checkTick();
       }
+      while (run.state === 'choosing') step(run);
       expect(maxWallPenetration(run.balls, run.geometry.halfWidth)).toBeLessThan(0.15);
     };
 

@@ -1,8 +1,8 @@
 /**
  * The HUD art (GAME_DESIGN §2.3, §13.1, docs/ART_ASSETS.md phase 3): the score card (v0.22), the
- * coin on the coins card (which is CSS, after the owner's reference image), the next-cat bubble,
- * the pause button and the paw badge (the menu's record cards), made by tools/build-art.ts from the
- * owner's images. Pure data.
+ * XP card (v0.25), the coin on the coins card (which is CSS, after the owner's reference image),
+ * the next-cat bubble, the pause button and the paw badge (the menu's record cards), made by
+ * tools/build-art.ts from the owner's images. Pure data.
  */
 import {
   HUD_BADGE_SPRITE,
@@ -10,6 +10,7 @@ import {
   HUD_NEXT_SPRITE,
   HUD_PAUSE_SPRITE,
   HUD_SCORE_CARD_SPRITE,
+  HUD_XP_CARD_SPRITE,
 } from './hudSpriteData';
 
 export interface HudSprite {
@@ -47,6 +48,22 @@ export interface HudScoreCardSprite extends HudSprite {
   readonly wellRight: number;
 }
 
+/**
+ * The XP card (v0.25): two images of the same card, its well empty and full of gold; the game
+ * shows the full one over the empty one up to the run's XP. Image pixels.
+ */
+export interface HudXpCardSprite {
+  readonly empty: string;
+  readonly full: string;
+  readonly width: number;
+  readonly height: number;
+  readonly wellTop: number;
+  readonly wellBottom: number;
+  /** The well's left edge beside the paw's arm (at its middle row) and its right end. */
+  readonly wellLeft: number;
+  readonly wellRight: number;
+}
+
 /** Where the sprites live, relative to the app's base URL. */
 export const HUD_SPRITE_DIR = 'assets/hud/';
 
@@ -57,3 +74,4 @@ export const HUD_BADGE_ART: HudSprite = HUD_BADGE_SPRITE;
 export const HUD_NEXT_ART: HudBubbleSprite = HUD_NEXT_SPRITE;
 export const HUD_PAUSE_ART: HudSprite = HUD_PAUSE_SPRITE;
 export const HUD_SCORE_CARD_ART: HudScoreCardSprite = HUD_SCORE_CARD_SPRITE;
+export const HUD_XP_ART: HudXpCardSprite = HUD_XP_CARD_SPRITE;

@@ -50,12 +50,14 @@
   content: ':';
 }
 
+/* The score card and the XP card under it, below the stage's line. */
 .hud-left {
   flex: none;
   display: flex;
   flex-direction: column;
   gap: 6px;
   width: 116px;
+  margin-top: 30px;
 }
 
 /* The score card: "SCORE:" and the score in a sunken well. */
@@ -327,6 +329,96 @@
 }
 
 /*
+ * The XP card (GAME_DESIGN §15.6): the owner's empty bar, and the full one over it, cut at the XP
+ * (ui/hud/hud.ts); "Lv N" in the well. Without the art it is a plain well filling with gold.
+ */
+.hud-xp-card {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  height: 34px;
+  overflow: hidden;
+  border: 3px solid var(--hud-edge);
+  border-radius: 14px;
+  background: var(--hud-well);
+}
+
+.hud-xp-fill {
+  position: absolute;
+  inset: 0;
+  background: var(--color-gold);
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 300ms ease-out;
+}
+
+.game-hud.is-art .hud-xp-card {
+  width: var(--hud-score-min-width);
+  height: auto;
+  aspect-ratio: var(--hud-xp-ratio);
+  overflow: visible;
+  border: none;
+  border-radius: 0;
+  background: var(--hud-xp-empty) center / 100% 100% no-repeat;
+  filter: drop-shadow(0 2px 2px rgba(122, 78, 46, 0.2));
+}
+
+.game-hud.is-art .hud-xp-fill {
+  background: var(--hud-xp-full) center / 100% 100% no-repeat;
+}
+
+.hud-xp-level {
+  position: absolute;
+  top: var(--hud-xp-well-top, 0);
+  bottom: var(--hud-xp-well-bottom, 0);
+  left: var(--hud-xp-well-left, 0);
+  right: var(--hud-xp-well-right, 0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 22px;
+  font-weight: var(--weight-bold);
+  line-height: 1;
+  white-space: nowrap;
+  text-shadow:
+    1.5px 0 0 #5c2c18,
+    -1.5px 0 0 #5c2c18,
+    0 1.5px 0 #5c2c18,
+    0 -1.5px 0 #5c2c18,
+    1px 1px 0 #5c2c18,
+    -1px 1px 0 #5c2c18,
+    1px -1px 0 #5c2c18,
+    -1px -1px 0 #5c2c18,
+    0 2.5px 0 #5c2c18;
+}
+
+/* The stage: dark brown words with a cream edge (like "NEXT"), at the top in the middle; the
+   score card and the XP card start under its line. */
+.hud-stage {
+  position: absolute;
+  top: max(calc(var(--safe-top) + 4px), 14px);
+  left: 0;
+  right: 0;
+  color: #813c2d;
+  font-size: 22px;
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.04em;
+  line-height: 26px;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-shadow:
+    2px 0 0 #fff8e6,
+    -2px 0 0 #fff8e6,
+    0 2px 0 #fff8e6,
+    0 -2px 0 #fff8e6,
+    1.5px 1.5px 0 #fff8e6,
+    -1.5px 1.5px 0 #fff8e6,
+    1.5px -1.5px 0 #fff8e6,
+    -1.5px -1.5px 0 #fff8e6;
+}
+
+/*
  * The coins card comes out of the screen's right edge: rounded on the left only, only as wide as
  * its coins need (the owner's reference, v0.23.2: about 98 px on screen). The coin and the number
  * are centred, "COINS:" above them.
@@ -567,23 +659,6 @@
   touch-action: none;
 }
 
-/* The noren over the jar (ui/noren.ts): in front of the canvas, so the paw reaches out from under
-   it, and behind the hints, banners and HUD. Its plain middle stretches (a vertical 3-slice). */
-.noren {
-  position: absolute;
-  z-index: 1;
-  box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
-  border-width: 0;
-  border-image-repeat: stretch;
-  pointer-events: none;
-}
-
-.noren[hidden] {
-  display: none;
-}
-
 /* First-run hints: never in the way of a touch. */
 .hint-pill {
   position: absolute;
@@ -813,6 +888,28 @@
   }
 }
 
+/* The XP card bumps when XP comes in, and flashes on a level up (GAME_DESIGN §15.6). */
+.hud-xp-card.is-pulsing {
+  animation: xp-pulse 200ms ease-out;
+}
+
+.hud-xp-card.is-levelling {
+  animation: xp-level 600ms ease-out;
+}
+
+@keyframes xp-pulse {
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes xp-level {
+  20% {
+    transform: scale(1.14);
+    filter: brightness(1.35) drop-shadow(0 0 8px rgba(255, 214, 90, 0.9));
+  }
+}
+
 /* Coins flying to the HUD: above the HUD and the play area, below the overlays. */
 .coin-fly {
   position: absolute;
@@ -845,7 +942,9 @@
 
 .reduce-motion .hint-pill,
 .reduce-motion .combo.is-step,
-.reduce-motion .hud-coins-card.is-pulsing {
+.reduce-motion .hud-coins-card.is-pulsing,
+.reduce-motion .hud-xp-card.is-pulsing,
+.reduce-motion .hud-xp-card.is-levelling {
   animation: none;
 }
 

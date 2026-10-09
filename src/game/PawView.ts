@@ -70,24 +70,31 @@ export class PawView {
     this.hide();
   }
 
-  /** The paw with its bottom at (x, y) world units, its arm reaching up to `topY`. */
-  show(x: number, y: number, topY: number): void {
+  /**
+   * The paw with its bottom at (x, y) world units, its arm reaching up to `topY`. With the raster
+   * art the top `fade` units of the arm fade out, so the paw floats.
+   */
+  show(x: number, y: number, topY: number, fade = 0): void {
     this.paw.setVisible(true).setPosition(x, y);
     if (this.artArm) {
-      // Under the noren the arm ends at `topY`, inside the image: rows above it are cropped off.
+      // The image shows from `solidTop` down: rows above it are cropped off.
       const imageTop = y - PAW_ART.bottom * ART_SCALE;
-      if (topY > imageTop) {
-        const rows = Math.min(PAW_ART.height - 1, Math.floor((topY - imageTop) / ART_SCALE));
+      const solidTop = topY + fade;
+      if (solidTop > imageTop) {
+        const rows = Math.min(PAW_ART.height - 1, Math.floor((solidTop - imageTop) / ART_SCALE));
         this.paw.setCrop(0, rows, PAW_ART.width, PAW_ART.height - rows);
       } else {
         this.paw.setCrop();
       }
-      // The image's arm ends at its top edge; the stretched row overlaps it by a unit.
-      const from = imageTop + 1;
+      // Above it, a plain row of the arm stretched up to `topY` (fading out with `fade`); it
+      // overlaps the image by a unit.
+      const from = Math.max(imageTop, solidTop) + 1;
       this.artArm
         .setVisible(topY < from)
         .setPosition(x, from)
         .setScale(ART_SCALE, Math.max(0, from - topY));
+      if (fade > 0) this.artArm.setAlpha(0, 0, 1, 1);
+      else this.artArm.setAlpha(1);
       return;
     }
     const g = this.arm.clear().setVisible(true);

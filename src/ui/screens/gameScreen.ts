@@ -9,14 +9,8 @@ import { createHud } from '../hud/hud';
 import type { HudActions, HudView } from '../hud/hud';
 import { JAR_GLASS } from '../../config/jarArt';
 import { JAR_WIDTH } from '../../config/stages';
-import {
-  BACKGROUND_ART,
-  BACKGROUND_JAR,
-  NOREN_ART,
-  SCENE_SPRITE_DIR,
-} from '../../config/sceneSprites';
+import { BACKGROUND_ART, BACKGROUND_JAR, SCENE_SPRITE_DIR } from '../../config/sceneSprites';
 import { TAKE_ARM_MS, TAKE_BUTTON_GAP } from '../../config/view';
-import { norenLayout } from '../noren';
 import { SCENERY_JAR, SCENERY_VIEW, sceneryMarkup } from '../scenery';
 
 export interface GameScreenActions extends HudActions {
@@ -66,8 +60,7 @@ export interface GameScreenView {
 /**
  * Game screen (GAME_DESIGN §2.3): the play area fills the screen, with the shrine garden behind
  * the transparent canvas, and the DOM HUD floats over its top. The garden is the owner's painted
- * background with `sceneArt` (config/sceneSprites.ts), else the vector one (ui/scenery.ts). With
- * `sceneArt` a noren curtain hangs over the jar, in front of the canvas (ui/noren.ts).
+ * background with `sceneArt` (config/sceneSprites.ts), else the vector one (ui/scenery.ts).
  */
 export function createGameScreen(
   root: HTMLElement,
@@ -97,15 +90,6 @@ export function createGameScreen(
   // The jar's glass: it never moves on screen while playing, so the DOM draws it once.
   const glass = el('div', 'jar-glass');
   playArea.append(glass);
-  let noren: HTMLElement | null = null;
-  if (sceneArt) {
-    noren = el('div', 'noren');
-    const s = noren.style;
-    s.borderImageSource = `url("${import.meta.env.BASE_URL}${SCENE_SPRITE_DIR}${NOREN_ART.file}")`;
-    s.borderImageSlice = `${NOREN_ART.sliceTop} 0 ${NOREN_ART.height - NOREN_ART.sliceBottom} 0 fill`;
-    noren.hidden = true;
-    playArea.append(noren);
-  }
   const hint = createHint(playArea);
   const banners = createBanners(playArea);
   // The magnet's Take button floats over the play area, above the selected ball.
@@ -165,17 +149,6 @@ export function createGameScreen(
       g.setProperty('--glass-inset', `${JAR_GLASS.lineInset * unit}px`);
       g.setProperty('--glass-line', `${JAR_GLASS.lineWidth * unit}px`);
       glass.classList.toggle('is-hidden', growing);
-      if (noren) {
-        const n = norenLayout(box);
-        const s = noren.style;
-        s.left = `${n.left}px`;
-        s.top = `${n.top}px`;
-        s.width = `${n.width}px`;
-        s.height = `${n.height}px`;
-        s.borderTopWidth = `${n.sliceTop}px`;
-        s.borderBottomWidth = `${n.sliceBottom}px`;
-        noren.hidden = false;
-      }
     },
     setTakePrompt(prompt) {
       if (!prompt) {
