@@ -73,5 +73,5 @@ TypeScript (strict) · Vite · Phaser 4 (rendering only) · matter-js (standalon
 ## Debug and test hooks
 
 - `?debug=1` shows the debug panel: FPS, body count, add coins, set upgrade levels, jump to stage, set score, spawn tier, reset save. Allowed in production builds.
-- `?seed=<n>` makes a run deterministic. `?skin=placeholder` forces placeholder art.
+- `?seed=<n>` makes a run deterministic. `?skin=placeholder` forces placeholder art. `?res=<n>` fixes the canvas resolution (0.5–2.5) and turns the adaptive resolution off, to see what a slow phone gets.
 - In debug mode, `window.__game` exposes state and helpers for Playwright (TECH_SPEC §11).
