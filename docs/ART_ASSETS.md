@@ -65,6 +65,8 @@ narrower than their canvas: Claude crops the empty space.
 | 3   | 2 scene | `scene/jar.png`                    | Empty bamboo-framed glass jar, front view                 | 2:3, 1024×1536    |
 | 4   | 2 scene | `scene/rug.png`                    | Mint rug the jar stands on                                | 3:2, 1536×1024    |
 | 5   | 2 scene | `scene/paw.png`                    | Calico dropper arm hanging from the top                   | 2:3, 1024×1536    |
+| 5a  | 2 scene | `scene/noren-mockup.webp`          | Game screen with the noren, design reference (done)       | –                 |
+| 5b  | 2 scene | `scene/noren.png`                  | Noren curtain over the jar; the paw reaches out under it  | 3:2, 1536×1024    |
 | 6   | 3 HUD   | `hud/hud-kit.png`                  | Sheet: card, sunken well, pause button, NEXT bubble, …    | 1:1, 1024×1024    |
 | 7   | 3 HUD   | `hud/icons.png`                    | Sheet: coin, paw badge, sparkle, petals, puff             | 1:1, 1024×1024    |
 | 7b  | 4 menu  | `menu/mockup.jpg`                  | Whole main-menu screen, design reference (done)           | 2:3, 1024×1536    |
@@ -266,6 +268,33 @@ along its whole length and cut off cleanly at the top edge; the paw ends at abou
 height, the arm is about a quarter of the canvas width and centered. Plain flat solid white background,
 no shadow. Portrait 2:3.
 ```
+
+**Noren** (`scene/noren.png`, v0.21.1 plan): on a tall phone the paw's arm filled the empty
+height between the HUD and the jar. The owner chose a noren (`scene/noren-mockup.webp`): a shop
+curtain across the top of the screen, its hem a fixed distance above the jar, the paw reaching out
+from under it. The game stretches the plain part of the fabric to the top of any screen (rod and
+coin on top, the pink band at the bottom stay as drawn), and the HUD floats over it. Attach the
+mockup with the reference image and the lineup sheet. Style block, then:
+
+```text
+A Japanese noren shop-entrance curtain, game prop, strictly front orthographic view, perfectly
+left-right symmetric, flat with no perspective, like the curtain at the top of the attached game
+mockup. It hangs from a straight horizontal bamboo rod across the full width at the very top,
+through small cream fabric loops; the rod's two cut ends stick out a little at the sides. The
+curtain is split into four equal vertical panels by three thin straight slits that run from the
+bottom hem up to just below the rod. Fabric: soft warm cream, one flat even colour, with a wide
+sakura-pink band along the bottom hem (about one sixth of the curtain's height) and a thin darker
+pink line along the top of the band. The upper part of every panel is completely plain cream
+fabric: no pattern, no wrinkles, no folds, no shading change from top to bottom, because the game
+stretches it taller on long phone screens. On the centre slit, just below the rod, a round gold
+coin with a small embossed paw print (no text), like the coin in the mockup. The bottom hem is
+straight and even. The curtain spans the whole canvas width and about 60% of its height. Nothing
+behind or below it: no cat, no arm, no paw, no jar. Plain flat solid white background, no cast
+shadow. Landscape 3:2.
+```
+
+Checks for this one: the slits are straight and vertical, the cream between the coin and the pink
+band is flat (it will be stretched), and the bottom hem lies on one straight line.
 
 ### 4.4 Phase 3: HUD
 
