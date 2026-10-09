@@ -75,6 +75,7 @@ Layout: everything sits where it is in the mockup, on a stage of the mockup's si
 - Touch and drag anywhere in the play area. The dropper follows the finger horizontally, clamped so the cat stays inside the jar. Release to drop.
 - A tap without dragging drops the cat at the tapped x.
 - A dropped cat falls from the dropper to the empty jar floor in about 1 second (1.03–1.04 s since v0.21.1 raised the dropper; 1 s before), and lands without bouncing off the floor (cats still bounce a little off each other and the walls).
+- Cats roll over each other like balls instead of sliding like on ice (v0.23.7, the owner's report): a cat that lands on another's shoulder rolls down it, turning as it goes, and still shoves it aside as before.
 - After a drop, the next cat appears after a 0.45 s cooldown. Releases during the cooldown are ignored.
 - Mouse: move to aim, click to drop.
 - Android back button: game → pause, pause → menu, menu → system default.
@@ -135,7 +136,7 @@ Values are rounded only when paid (§5). Implement the formulas. Unit tests asse
 ## 6. Jar, danger line, game over
 
 - The jar is open at the top: straight walls, a flat floor and square bottom corners (v0.23.4, the owner's call, with the square bamboo frame). From v0.14 to v0.23.3 its bottom corners were quarter circles (radius 112, then 168 from v0.19.3), with a soft landing on the curves (v0.19.4); both are gone. Its rim is the danger line.
-- The floor is slippery, like the walls: a cat alone on it rolls on, slowed only by the air, and stops against a wall or another cat (v0.23.6, the owner's call). From v0.19.4 to v0.23.5 the floor slowed a lone cat like a rug and stopped it within half a second.
+- A cat alone on the floor rolls on, slowed only by the air, until a wall or another cat stops it (v0.23.6, the owner's call). From v0.19.4 to v0.23.5 the floor slowed a lone cat like a rug and stopped it within half a second.
 - A cat is _over the line_ when its top edge is above the rim. A cat is ignored until 0.5 s after it lands (first contact).
 - If at least one cat is over the line continuously for 2.5 s, the game is over. While that timer runs, the rim flashes red and a short countdown shows.
 - **Lucky Save** (from the Second Chance upgrade) replaces the game over: every cat over the line plus the 6 smallest other cats (smaller tier first, then older first) pop into their value, the timer resets, and a 2 s grace period follows. Only landed cats count, so a cat still falling from the dropper is left alone. You get one save per run per upgrade level.

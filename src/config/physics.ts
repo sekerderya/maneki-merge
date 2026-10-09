@@ -20,20 +20,21 @@ export function stepsFor(ms: number): number {
 export const POSITION_ITERATIONS = 10;
 export const VELOCITY_ITERATIONS = 8;
 
-/** Low friction: cats slide and roll past each other instead of gripping. */
-export const BALL_FRICTION = 0.05;
-export const BALL_FRICTION_STATIC = 0.2;
+/**
+ * Coulomb friction (physics/friction.ts, v0.23.7) between two cats: a cat that rests on another
+ * rolls over it instead of sliding like on ice. A contact never holds back more than this times
+ * the force pressing the two together, and an impact carries none, so a landing cat still shoves.
+ */
+export const CAT_FRICTION = 0.8;
+/**
+ * Coulomb friction between a cat and the jar's walls and floor: a pushed cat rolls within a tenth
+ * of a second, and a pile leaning on the walls settles as fast as before.
+ */
+export const JAR_FRICTION = 0.4;
 /** Cats bounce a little off each other and the walls (never off the floor, see below). */
 export const BALL_RESTITUTION = 0.25;
 export const BALL_FRICTION_AIR = 0.01;
 
-/**
- * The walls and the floor grip like cats do. matter-js gives a pair the lower friction and the
- * higher static friction of its two bodies, so with its defaults (0.1 / 0.5) the floor held cats
- * harder than the cats' own values said.
- */
-export const JAR_FRICTION = BALL_FRICTION;
-export const JAR_FRICTION_STATIC = BALL_FRICTION_STATIC;
 /** The floor never bounces: a cat that lands on it stops dead (physics/restitution.ts). */
 export const FLOOR_RESTITUTION = 0;
 
@@ -55,10 +56,10 @@ export const WALL_HEIGHT_FACTOR = 4;
 export const BALL_HULL_SIDES = 12;
 
 /**
- * matter-js turns bodies more slowly than real discs (it uses inertia × 4); cats use × 2, so they
- * roll aside easily when pushed.
+ * Cats turn like real discs (inertia ½ m r²), so they roll aside easily when pushed and keep
+ * their shove while rolling over each other. matter-js uses × 4; cats had × 2 until v0.23.6.
  */
-export const BALL_INERTIA_SCALE = 2;
+export const BALL_INERTIA_SCALE = 1;
 
 /**
  * Speed limits in world units per second (the world has the same scale at every stage).

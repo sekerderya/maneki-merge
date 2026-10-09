@@ -88,11 +88,11 @@ describe('PhysicsWorld', () => {
     const r = sizeRadius(2);
     const cat = world.addBall({ tier: 2, x: -100, y: -r, vx: 300, landedMs: 0 });
     run(world, 1);
-    // No rug: a second later it still rolls on at over a quarter of its speed, turning as fast as
-    // it moves (the floor's friction), and it has gone a fifth of the jar's width.
-    expect(cat.speed).toBeGreaterThan(60);
+    // No rug: a second later it still rolls on at over a third of its speed, turning as fast as
+    // it moves (the floor's friction), and it has gone a quarter of the jar's width.
+    expect(cat.speed).toBeGreaterThan(100);
     expect(cat.speed).toBeLessThan(150);
-    expect(cat.x + 100).toBeGreaterThan(110);
+    expect(cat.x + 100).toBeGreaterThan(140);
     expect(Math.abs(cat.spin * r - cat.vx)).toBeLessThan(0.1 * cat.speed);
   });
 

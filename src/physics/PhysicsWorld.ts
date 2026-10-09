@@ -11,8 +11,6 @@ import {
   FLOOR_RESTITUTION,
   GRAVITY_BASE,
   GROWTH_NEIGHBOUR_MAX_SPEED_BASE,
-  JAR_FRICTION,
-  JAR_FRICTION_STATIC,
   MAX_ANGULAR_SPEED,
   MAX_SPEED_BASE,
   PHYSICS_MAX_SUBSTEPS,
@@ -31,6 +29,7 @@ import type { Ball, BallSpec } from './balls';
 /** A cat to add: the world works out its size at the current stage. */
 export type NewBall = Omit<BallSpec, 'size'>;
 import { installCircleCollisions } from './circleCollision';
+import { installCoulombFriction } from './friction';
 import { jarGeometry } from './geometry';
 import type { JarGeometry } from './geometry';
 import { installRestitutionOverride } from './restitution';
@@ -118,6 +117,7 @@ export class PhysicsWorld {
   constructor(options: PhysicsWorldOptions = {}) {
     installCircleCollisions();
     installRestitutionOverride();
+    installCoulombFriction();
     this.geo = jarGeometry(options.stage ?? FIRST_STAGE);
     this.engine = Matter.Engine.create({
       positionIterations: POSITION_ITERATIONS,
@@ -135,8 +135,6 @@ export class PhysicsWorld {
       Matter.Bodies.rectangle(0, wallY, WALL_THICKNESS, wallHeight, {
         isStatic: true,
         label: 'wall',
-        friction: JAR_FRICTION,
-        frictionStatic: JAR_FRICTION_STATIC,
       });
     this.leftWall = wall();
     this.rightWall = wall();
@@ -148,8 +146,6 @@ export class PhysicsWorld {
       {
         isStatic: true,
         label: 'floor',
-        friction: JAR_FRICTION,
-        frictionStatic: JAR_FRICTION_STATIC,
         // A landing cat stops dead (restitution.ts).
         plugin: { restitution: FLOOR_RESTITUTION },
       },

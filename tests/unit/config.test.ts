@@ -1,17 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { HINT_IDS, SAVE_BACKUP_PREFIX, SAVE_KEY, STORAGE_PREFIX } from '../../src/config/app';
 import {
-  BALL_FRICTION,
-  BALL_FRICTION_STATIC,
   BALL_INERTIA_SCALE,
   BALL_RESTITUTION,
   BASE_DENSITY,
+  CAT_FRICTION,
   densityForSize,
   GROWTH_NEIGHBOUR_MAX_SPEED_BASE,
   FLOOR_RESTITUTION,
   GRAVITY_BASE,
   JAR_FRICTION,
-  JAR_FRICTION_STATIC,
   MAX_ANGULAR_SPEED,
   MAX_SPEED_BASE,
   MERGE_SPIN_RIM_SPEED,
@@ -285,13 +283,11 @@ describe('physics tunables (TECH_SPEC §5)', () => {
     expect(GRAVITY_BASE).toBe(2.15);
   });
 
-  it('makes cats slippery, bouncy against each other and dead on the floor (v0.13)', () => {
-    expect(BALL_FRICTION).toBe(0.05);
-    expect(BALL_FRICTION_STATIC).toBe(0.2);
+  it('lets cats roll over each other, bounce off each other and land dead on the floor', () => {
+    expect(CAT_FRICTION).toBe(0.8);
+    expect(JAR_FRICTION).toBe(0.4);
     expect(BALL_RESTITUTION).toBe(0.25);
-    expect(BALL_INERTIA_SCALE).toBe(2);
-    expect(JAR_FRICTION).toBe(BALL_FRICTION);
-    expect(JAR_FRICTION_STATIC).toBe(BALL_FRICTION_STATIC);
+    expect(BALL_INERTIA_SCALE).toBe(1);
     expect(FLOOR_RESTITUTION).toBe(0);
   });
 

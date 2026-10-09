@@ -8,9 +8,7 @@
  */
 import Matter from 'matter-js';
 import {
-  BALL_FRICTION,
   BALL_FRICTION_AIR,
-  BALL_FRICTION_STATIC,
   BALL_HULL_SIDES,
   BALL_INERTIA_SCALE,
   BALL_RESTITUTION,
@@ -203,8 +201,6 @@ export function createBall(id: number, spec: BallSpec): Ball {
     hull,
     {
       label: kind,
-      friction: BALL_FRICTION,
-      frictionStatic: BALL_FRICTION_STATIC,
       restitution: BALL_RESTITUTION,
       frictionAir: BALL_FRICTION_AIR,
     },
