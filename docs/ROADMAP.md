@@ -285,6 +285,12 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
   - [x] boulder: never merges, breaks after the merges beside it; iron bands per extra merge
   - [x] golden cats skip a tier when they merge; Golden Merge removed and refunded (save v5)
   - [x] at every stage clear a trial, then a blessing, 1 of 3, stacking by level for the run
+- [x] Batch 8 (v0.24.0), stages without the loop (GAME_DESIGN §4, §7, §15.1):
+  - [x] the goal is the 9th cat (two 8s): 9 cats per stage (tiers 1–45), half the cats a stage needed
+  - [x] the last cat is no longer the next stage's first: it settles, pops into its value, and every stage starts with an empty jar; the jar still grows on screen (4.8)
+  - [x] every cat 20% bigger (r(1) 41 to r(9) 165), so a stage is about as hard to clear as before
+  - [x] magnets: half the chance (1% + 1.5% per More Magnets level), none before a stage's 20th drop, a queued magnet becomes a small cat at a clear
+  - [x] save format v6 caps a record tier above 45
 
 ## M13: Final art integration
 

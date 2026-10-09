@@ -60,7 +60,7 @@ narrower than their canvas: Claude crops the empty space.
 | #   | Phase   | File (in `art-source/`)            | What                                                      | Generate          |
 | --- | ------- | ---------------------------------- | --------------------------------------------------------- | ----------------- |
 | 0   | 0 style | `style/lineup.png`                 | The 9 cats on one sheet (style lock, not used in game)    | 1:1, 1024×1024    |
-| 1   | 1 cats  | `cats/size-01.png` … `size-09.png` | One cat per size (size 10 reuses size 1, GAME_DESIGN §4)  | 1:1, 1024×1024    |
+| 1   | 1 cats  | `cats/size-01.png` … `size-09.png` | One cat per size (GAME_DESIGN §4)                         | 1:1, 1024×1024    |
 | 2   | 2 scene | `scene/background.png`             | Shrine garden behind and around the jar                   | 2:3, 1024×1536 ×2 |
 | 3   | 2 scene | `scene/jar.png`                    | Empty bamboo-framed glass jar, front view                 | 2:3, 1024×1536    |
 | 4   | 2 scene | `scene/rug.png`                    | Mint rug the jar stands on                                | 3:2, 1536×1024    |
@@ -213,7 +213,7 @@ position").
 | `size-08.png` | `bottom row, middle: Aka, the red cat with a gold collar and a gold koban charm`       |
 | `size-09.png` | `bottom row, right: Kin, the golden cat with a red bib and a sakura flower on its ear` |
 
-Size 1 is also drawn as each stage's biggest cat (size 10), so it must look good at 1024 px too.
+Every size is drawn up to about 900 px on a phone (size 9, a stage's last cat, is the biggest), so each must look good at 1024 px.
 
 ### 4.3 Phase 2: scene
 
