@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.26.0] - 2026-10-10
+
+### Removed
+
+- XP and levels (the owner's call): merges give no XP, there is no level and no XP card.
+
+### Changed
+
+- Blessings come at stage clears again: every clear offers a trial, then a blessing, as before v0.25.
+- The score card sits level with the coins card (their middles on one line), under the stage's line.
+
+The rest of v0.25 stays: the stage in words at the top, the floating paw and no noren.
+
 ## [0.25.0] - 2026-10-09
 
 ### Added

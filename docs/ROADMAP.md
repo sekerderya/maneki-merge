@@ -296,6 +296,9 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
   - [x] every level up offers a blessing at once; a stage clear offers only a trial
   - [x] the XP card under the score card (the owner's art), the stage in words at the top, the jar's size unchanged
   - [x] the noren is gone and the paw floats, its arm fading out above the wrist
+- [x] Batch 10 (v0.26.0), back to stage-clear blessings (GAME_DESIGN §2.3, §15.5):
+  - [x] XP and levels removed (the owner's call); every stage clear offers a trial, then a blessing
+  - [x] the score card level with the coins card; the stage words, the floating paw and no noren stay
 
 ## M13: Final art integration
 
