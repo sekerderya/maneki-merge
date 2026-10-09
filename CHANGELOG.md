@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.23.7] - 2026-10-09
+
+### Changed
+
+- Cats roll over each other instead of sliding like on ice (the owner's report). Friction between cats now grows with how hard they press together, the way real friction does: a cat going over another's shoulder rolls 99% of the way (63–77% before), and in play the cats that slide past each other dropped from about a third of the contacts to under a tenth. An impact carries no friction, so a landing cat still shoves as hard as before.
+- Cats turn like real discs (half the spin weight they had), so rolling costs them little of their push: a rolling cat moves a resting big one about twice as far, and a cat pushed along the floor rolls a little farther (about 155 units in a second instead of 120).
+- The jar's walls and floor use the same friction: a pushed cat starts rolling within a tenth of a second, and resting cats stay still.
+
+### Known issues
+
+- A test bot that drops as fast as it can at random spots loses a little sooner (median 108 s against 122 s): cats that no longer slide meet fewer neighbours to merge with. The owner's playtests decide whether the balance needs a change.
+
 ## [0.23.6] - 2026-10-09
 
 ### Changed
