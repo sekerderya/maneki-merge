@@ -54,6 +54,9 @@ interface ScoreCardData extends Sprite {
   /** Widths of the fixed left (paw) and right (round end) slices, px. */
   sliceLeft: number;
   sliceRight: number;
+  /** The card's body (the paw sticks out past its left edge): outer left and right edges. */
+  cardLeft: number;
+  cardRight: number;
   /** The card's outline: its top and bottom rows. */
   top: number;
   bottom: number;
@@ -157,12 +160,28 @@ function scoreCard(card: Rgba): ScoreCardData {
   const inner = firsts.slice(Math.round(firsts.length * 0.1), Math.round(firsts.length * 0.9));
   const left = Math.max(...inner) + 6;
   const right = wellRight - Math.round((wellBottom - wellTop) / 2) - 6;
+  // The card's body, without the paw sticking out: its right edge on the well's middle row; its
+  // left edge, hidden by the paw, mirrors the right one (the corners are the same), measured where
+  // the top outline's straight run starts and ends.
+  const midRow = Math.round((wellTop + wellBottom) / 2);
+  let cardRight = width;
+  while (cardRight > 0 && alphaAt(card, cardRight - 1, midRow) <= 128) cardRight--;
+  const outlineRow = top + 2;
+  const dark = (x: number): boolean =>
+    alphaAt(card, x, outlineRow) > 128 && (pixel(card, x, outlineRow)[0] ?? 255) < INK_MAX_RED;
+  let straightLeft = 0;
+  while (straightLeft < width && !dark(straightLeft)) straightLeft++;
+  let straightRight = width - 1;
+  while (straightRight > 0 && !dark(straightRight)) straightRight--;
+  const cardLeft = straightLeft - (cardRight - 1 - straightRight);
   return {
     file: 'score-card.webp',
     width,
     height,
     sliceLeft: left,
     sliceRight: width - right,
+    cardLeft,
+    cardRight,
     top,
     bottom: bottom + 1,
     wellTop,

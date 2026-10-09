@@ -34,6 +34,13 @@ describe('score card art (GAME_DESIGN §13.1, v0.22)', () => {
     expect(l.scoreMarginRight).toBeLessThan(0);
     expect(l.wellHeight).toBeGreaterThan(24);
     expect(l.labelHeight).toBeGreaterThan(16);
+    // "SCORE:" is centred on the card's body, which the paw sticks out of (v0.23.2).
+    expect(art.cardLeft).toBeGreaterThan(0);
+    expect(art.cardLeft).toBeLessThan(art.wellLeft);
+    expect(art.cardRight).toBeGreaterThan(art.wellRight);
+    expect(art.cardRight).toBeLessThanOrEqual(art.width);
+    const centre = (l.labelLeft + l.minWidth - l.labelRight) / 2;
+    expect(centre).toBeCloseTo(((art.cardLeft + art.cardRight) / 2) * s, 9);
   });
 
   it('has a round NEXT bubble with the label on the outline’s top', () => {

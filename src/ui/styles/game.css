@@ -243,9 +243,9 @@
 }
 
 .game-hud.is-art .hud-label {
-  /* The owner's reference cards' label colour (v0.22; #854f3b before). */
+  /* The owner's reference cards' label colour and size (v0.22, v0.23.2; #854f3b and 14 px before). */
   color: #7f3d2a;
-  font-size: 14px;
+  font-size: 17px;
   letter-spacing: 0.04em;
 }
 
@@ -273,7 +273,7 @@
 /*
  * The score card (v0.22) is the owner's image, a 3-slice (ui/hud/scoreCard.ts): the paw on the
  * left, the well's round end on the right, the plain middle stretching for a long score. "SCORE:"
- * sits over the well, the score in it.
+ * is centred on the card's body above the well, the score in the well.
  */
 .game-hud.is-art .hud-score-card {
   position: relative;
@@ -327,26 +327,30 @@
 }
 
 /*
- * The coins card comes out of the screen's right edge: rounded on the left only. "COINS:" and the
- * coin with the number are centred, evenly spaced.
+ * The coins card comes out of the screen's right edge: rounded on the left only, only as wide as
+ * its coins need (the owner's reference, v0.23.2: about 98 px on screen). The coin and the number
+ * are centred, "COINS:" above them.
  */
 .game-hud.is-art .hud-coins-card {
   right: calc(-12px - var(--safe-right));
-  top: 56px;
+  top: 64px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: space-evenly;
   gap: 0;
-  width: calc(110px + 12px + var(--safe-right));
-  height: 56px;
-  padding: 0 calc(12px + var(--safe-right)) 3px 0;
+  width: max-content;
+  min-width: calc(98px + 12px + var(--safe-right));
+  height: 54px;
+  padding: 0 calc(12px + var(--safe-right)) 3px 10px;
   border-right: none;
   border-radius: 20px 0 0 20px;
 }
 
+/* A little right of the card's middle, towards the number (half the coin's 20 px and gap's 4 px),
+   like the reference; over the number itself a short count left it far off centre. */
 .game-hud.is-art .hud-coins-card .hud-label {
-  font-size: 13px;
+  padding-left: 12px;
 }
 
 .game-hud.is-art .hud-coins {
@@ -361,8 +365,10 @@
   height: 20px;
 }
 
+/* 14 px under the coins card (8 px and 8 px higher before v0.23.2). It hangs below the HUD's box,
+   so the HUD's height, and with it the jar's place, stays the same. */
 .game-hud.is-art .hud-next {
-  top: 120px;
+  top: 132px;
   right: 8px;
   width: 70px;
   height: auto;

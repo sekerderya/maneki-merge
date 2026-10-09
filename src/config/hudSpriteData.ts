@@ -22,6 +22,8 @@ export const HUD_SCORE_CARD_SPRITE: HudScoreCardSprite = {
   height: 524,
   sliceLeft: 351,
   sliceRight: 139,
+  cardLeft: 58,
+  cardRight: 1117,
   top: 2,
   bottom: 522,
   wellTop: 227,

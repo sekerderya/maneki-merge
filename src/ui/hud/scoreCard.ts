@@ -18,7 +18,7 @@ export interface ScoreCardLayout {
   readonly minWidth: number;
   readonly sliceLeft: number;
   readonly sliceRight: number;
-  /** "SCORE:": from the card's top outline down to the well, across the well. */
+  /** "SCORE:": from the card's top outline down to the well, centred on the card's body. */
   readonly labelTop: number;
   readonly labelHeight: number;
   readonly labelLeft: number;
@@ -46,8 +46,9 @@ export function scoreCardLayout(
     sliceRight,
     labelTop: art.top * s,
     labelHeight: (art.wellTop - art.top) * s,
-    labelLeft: wellLeft,
-    labelRight: wellRight,
+    // Like the owner's reference (v0.23.2): over the card's body, not just the well.
+    labelLeft: art.cardLeft * s,
+    labelRight: (art.width - art.cardRight) * s,
     wellTop: art.wellTop * s,
     wellHeight: (art.wellBottom - art.wellTop) * s,
     scoreMarginLeft: wellLeft + SCORE_WELL_PADDING - sliceLeft,

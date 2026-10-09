@@ -34,6 +34,9 @@ export interface HudBubbleSprite extends HudSprite {
 export interface HudScoreCardSprite extends HudSprite {
   readonly sliceLeft: number;
   readonly sliceRight: number;
+  /** The card's body (the paw sticks out past its left edge): outer left and right edges. */
+  readonly cardLeft: number;
+  readonly cardRight: number;
   /** The card's outline: its top and bottom rows. */
   readonly top: number;
   readonly bottom: number;
