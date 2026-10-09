@@ -320,25 +320,27 @@ These were written for score thresholds. With stage clears (§7), clearing stage
 
 > The owner's design (2026-10-08), built in v0.21. Its numbers are starting values: balance and the economy come later.
 
-Later stages get harder and every run gets its own build. Every stage clear asks the player to pick a **trial**, which makes the coming stages harder, and then a **blessing**, which helps. Picks stack by level for the rest of the run, like Vampire Survivors' level-ups: the same pick again raises its level. Trials work through **boulders**. Blessings work through **magnets**, bigger drops and **golden cats**.
+Later stages get harder and every run gets its own build. Every stage clear asks the player to pick a **trial**, which makes the coming stages harder, and then a **blessing**, which helps. Picks stack by level for the rest of the run, like Vampire Survivors' level-ups: the same pick again raises its level. Trials work through **boulders**. Blessings work through **magnets**, bigger drops, **golden cats**, **hanabi** and **joker cats** (the last two since v0.28).
 
 ### 15.1 The queue
 
-The dropper hands out three kinds of ball: cats, magnets and boulders. Every item rolls its kind when it is queued:
+The dropper hands out five kinds of ball: cats, magnets, boulders, hanabi and joker cats. Every item rolls its kind when it is queued, with one roll checked in this order:
 
 | Kind    | Chance per queued item                                               |
 | ------- | -------------------------------------------------------------------- |
 | Magnet  | 1% + 1.5% per More Magnets level; none in a stage's first 20 drops   |
 | Boulder | 0% at stage 1; from stage 2, 3% + 3% per More Boulders level         |
+| Hanabi  | 1.5% per Hanabi level (0% without); none in a stage's first 20 drops |
+| Joker   | 1.5% per Joker Cat level (0% without)                                |
 | Cat     | the rest; a cat is golden with 4% per Golden Cats level (0% without) |
 
 - The first two drops of a run are always cats of the pool's smallest tier (§8).
-- **No magnet early in a stage** (v0.24, owner): only items queued after the player has dropped 20 balls in the stage can be magnets, so the first that can be one is the 22nd ball (NEXT after the 20th drop). Every stage starts with an empty jar, where a magnet would have nothing to take. The count starts again at every stage clear, the last stage's too. While magnets are held back the boulder chance stays the same.
-- **At a stage clear** a queued magnet (in the paw or in NEXT) becomes a cat of the pool's smallest tier; other queued items stay as they are.
+- **No magnet early in a stage** (v0.24, owner): only items queued after the player has dropped 20 balls in the stage can be magnets, so the first that can be one is the 22nd ball (NEXT after the 20th drop). Every stage starts with an empty jar, where a magnet would have nothing to take. The count starts again at every stage clear, the last stage's too. While magnets are held back the boulder chance stays the same. The same holds for hanabi (v0.28): an empty jar has nothing for one to pop.
+- **At a stage clear** a queued magnet or hanabi (in the paw or in NEXT) becomes a cat of the pool's smallest tier; other queued items stay as they are.
 - v0.24 (owner): the magnet chance was halved, 2% → 1% and +3% → +1.5% per More Magnets level.
-- Magnets and boulders are never golden.
+- Magnets, boulders, hanabi and jokers are never golden.
 - Debug jumps (`?debug=1`, "Jump to stage") skip the stage-clear picks.
-- The NEXT bubble shows the item as it is: a cat (golden ones with their glow), the magnet, or the boulder at its size with its bands.
+- The NEXT bubble shows the item as it is: a cat (golden ones with their glow), the magnet, the boulder at its size with its bands, the hanabi or the joker.
 - A level picked at a stage clear applies to items queued after the pick. The two items already queued (in the paw and in NEXT) stay as they are. At an expansion, queued cats change tier as in §8, and queued boulders keep their size and bands.
 - Determinism: kind and golden roll on their own generator, seeded from the run's seed. Every queued item rolls its kind, its golden and its tier every time, whatever the chances, so a seed gives the same tiers at any level.
 
@@ -347,7 +349,7 @@ The dropper hands out three kinds of ball: cats, magnets and boulders. Every ite
 The magnet takes one ball out of the jar and puts it in the paw, to be dropped again.
 
 - When the magnet reaches the paw, the paw holds the magnet instead of a cat and the aim guide hides. A touch on the jar now selects a ball instead of aiming.
-- **Select:** tap a ball. Any ball in the jar that has landed (§6) can be selected, cat or boulder; a ball still falling from the dropper can't. The selected ball gets a pulsing gold ring that follows it, and a **Take** button appears just above it (kept on screen).
+- **Select:** tap a ball. Any ball in the jar that has landed (§6) can be selected, cat, boulder, hanabi or joker; a ball still falling from the dropper can't. A taken hanabi's fuse goes out; it lights again when the dropped hanabi lands. The selected ball gets a pulsing gold ring that follows it, and a **Take** button appears just above it (kept on screen).
 - Tap another ball to move the selection; tap anywhere else to clear it. The selection also clears if the selected ball merges, breaks or pops, or a stage clear starts.
 - **Confirm:** Take. The button ignores taps in its first 0.3 s, so a quick double tap can't take a ball by mistake.
 - The taken ball leaves the jar and flies up into the paw (0.25 s, input ignored). It keeps its tier and golden glow, or, for a boulder, its size and the hits it still needs. The player aims and drops it like any cat (§3); the usual cooldown follows, then the next item.
@@ -394,7 +396,7 @@ At every stage clear, including the repeated clears of the last stage, two picks
 
 Then the zoom follows (§7.1 step 3). At the last stage there is no zoom: play resumes after the picks, in the empty jar.
 
-- **Options:** each pick shows up to 3 different options, drawn at random from those not at their max level, with the run's seeded RNG. Today there are exactly 3 of each kind, so a pick shows all of them in random order. With fewer than 3 left it shows fewer cards; with none left the pick is skipped.
+- **Options:** each pick shows up to 3 different options, drawn at random from those not at their max level, with the run's seeded RNG. Today there are 3 trials, so the trial pick shows all of them in random order, and 5 blessings (v0.28), so the blessing pick shows 3 of the 5. With fewer than 3 left it shows fewer cards; with none left the pick is skipped.
 - The player must pick exactly one: no skip, no reroll, no rarities.
 - **Levels:** a pick raises that option's level by 1. Levels last for the run, and every run starts at 0. They are saved with the run in progress (§11).
 - **Card:** an icon, the name, a one-line effect, the level as pips with "Lv 1 → 2", and the value it changes (current → next), like a shop card (§2.2).
@@ -416,17 +418,50 @@ Then the zoom follows (§7.1 step 3). At the last stage there is no zoom: play r
 | `moreMagnets` | More Magnets | +1.5% magnet chance                 |   5 | 1% → 8.5%     |
 | `bigDrops`    | Big Drops    | +2 Big Catch levels in §8's formula |   5 | see below     |
 | `goldenCats`  | Golden Cats  | +4% golden cat chance               |   5 | 0% → 20%      |
+| `hanabi`      | Hanabi       | +1.5% hanabi chance (§15.6)         |   5 | 0% → 7.5%     |
+| `joker`       | Joker Cat    | +1.5% joker chance (§15.7)          |   5 | 0% → 7.5%     |
 
 - **Big Drops:** the drop weights use `L = Big Catch level + 2 × Big Drops level`, at most 10, in §8's formula `share_i = base_i + L × (2i − 3)` %.
   - L = 6 gives 22/24/26/28%; L = 8 gives 16/22/28/34%; L = 10 gives 10/20/30/40%.
   - Big Drops counts as maxed (not offered) once L reaches 10.
 
-### 15.6 Notes for building it
+### 15.6 Hanabi
+
+> The owner's pick (2026-10-10), built in v0.28 with the numbers proposed in chat. Its look is a code-drawn placeholder: the owner's art comes later.
+
+A firework ball that clears space.
+
+- **Size 2** (radius 49). It never merges, and counts for the danger line like a cat (§6).
+- **Fuse:** it lights at its first contact (it glows and flickers) and goes off **1 s** later, with a boom, a burst of sparks and a small shake.
+- **Blast:** it reaches every ball whose edge is within **200** world units of the hanabi's centre (the jar is 600 wide):
+  - cats of **size 1–4** pop into their value (§5: coins, no score, no combo), as at a stage clear;
+  - boulders break, paying nothing;
+  - another hanabi goes off in the same tick;
+  - bigger cats and jokers aren't hurt: they get a push straight away from it (320 units/s, a gentle shove).
+- **Stage clear and Lucky Save:** a hanabi in the jar vanishes with the pops, paying nothing; a Lucky Save takes it when it is over the line.
+- The magnet can take it (§15.2).
+
+### 15.7 Joker cat
+
+> The owner's pick (2026-10-10), built in v0.28 with the rules proposed in chat. Its look is a code-drawn placeholder: the owner's art comes later.
+
+A wild cat that merges with any cat.
+
+- **Size 2** (radius 49), never golden.
+- **Merging:** it merges with the first cat it touches, whatever its tier. The cat becomes **one tier bigger where it is** (it grows from its own size, as in §5) and the joker vanishes. A golden cat goes two tiers up (§15.4). Two jokers, a joker and a hanabi, or a joker and a boulder never merge.
+  - When it touches two cats at once, the oldest cat goes first, as for every merge (§5).
+  - **Size 8 + joker makes the stage's last cat** and clears the stage (§7). The last cat itself doesn't merge with a joker.
+- **Payout:** like a merge of the cat's tier (score, coins, combo), with the golden merge's bell.
+- **Boulders:** a joker's merge hits the boulders near it like any merge (§15.3). A joker that touches a boulder hits it once too (once per boulder for the joker's life), and stays.
+- **Stage clear and Lucky Save:** a joker in the jar vanishes with the pops, paying nothing; a Lucky Save takes it when it is over the line.
+- The magnet can take it (§15.2).
+
+### 15.8 Notes for building it
 
 - The rules (kinds, chances, hits, golden merges, the picks and their levels) live in the headless layers with unit tests. `game/` and `ui/` only draw and send intents (select, Take, the card pick). Every number goes in `src/config/`.
-- Debug panel (`?debug=1`): set trial and blessing levels, put a magnet, a boulder or a golden cat in the paw, and open the stage-clear picks. `window.__game` gets matching hooks for Playwright.
+- Debug panel (`?debug=1`): set trial and blessing levels, put a magnet, a boulder, a hanabi, a joker or a golden cat in the paw, and open the stage-clear picks. `window.__game` gets matching hooks for Playwright.
 - The visuals are code-drawn first; the owner's raster art follows through docs/ART_ASSETS.md.
-- Procedural sounds (§12): the magnet's take, a boulder hit (clang), a boulder break (crunch), the golden two-tier merge.
+- Procedural sounds (§12): the magnet's take, a boulder hit (clang), a boulder break (crunch), the golden two-tier merge (also a joker's merge), the hanabi's boom.
 
 ## 16. Not in v1 (ideas for later)
 
