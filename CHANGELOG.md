@@ -2,6 +2,30 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.25.0] - 2026-10-09
+
+### Added
+
+- XP and levels (the owner's design, GAME_DESIGN §15.6). Every merge gives XP: the size of the cat it makes (two 3s make a 4: 4 XP), and a combo adds a quarter of that per step, up to double. Level 1 → 2 needs 100 XP, each later level 1.4 times more (140, 196, 274, …).
+- Every level up offers a blessing at once: "Level up!", 1 of 3 cards, while time stands still; play goes on where it stopped. Several level ups at once offer one blessing each.
+- The XP card under the score card: the owner's art, made as an edit of the score card (the same frame and paw around a thick well that fills with glossy gold), with "Lv N" in it. It bumps when XP comes in and flashes on a level up.
+- The stage in words ("STAGE 2") at the top in the middle of the screen.
+- Debug: "+25 XP" and "Level up" buttons, `addXp(n)`, and the level and XP in `window.__game.state()`.
+
+### Changed
+
+- A stage clear now offers only a trial; blessings come with levels. If the clear's last merge levelled up, its blessing follows the trial.
+- The paw floats over the jar: its arm fades out a little above the wrist, so a tall phone never shows a long bare arm.
+- The jar keeps its size: the new HUD pieces sit in space the HUD already took.
+
+### Removed
+
+- The noren curtain over the jar (the owner's call). Its art stays in `art-source/scene/`.
+
+### Known issues
+
+- The XP numbers are starting values. Two test bots (40 runs each) gained 2–4 levels in stage 1 and 1–2 in each later stage; the first level up came after about 12 s of a bot dropping every 0.45 s, about half a minute for a player. Only three blessings exist (15 levels in all), so a very long run can max them; the pick is then skipped.
+
 ## [0.24.0] - 2026-10-09
 
 ### Changed

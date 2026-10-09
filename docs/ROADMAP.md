@@ -291,6 +291,11 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
   - [x] every cat 20% bigger (r(1) 41 to r(9) 165), so a stage is about as hard to clear as before
   - [x] magnets: half the chance (1% + 1.5% per More Magnets level), none before a stage's 20th drop, a queued magnet becomes a small cat at a clear
   - [x] save format v6 caps a record tier above 45
+- [x] Batch 9 (v0.25.0), XP and levels, new top HUD (GAME_DESIGN §2.3, §15.5, §15.6):
+  - [x] merges give XP by the size they make, combos more; each level needs 1.4 times more XP
+  - [x] every level up offers a blessing at once; a stage clear offers only a trial
+  - [x] the XP card under the score card (the owner's art), the stage in words at the top, the jar's size unchanged
+  - [x] the noren is gone and the paw floats, its arm fading out above the wrist
 
 ## M13: Final art integration
 
