@@ -66,7 +66,20 @@ test.describe('URL flags', () => {
   test('are parsed from the query string', async ({ page }) => {
     await page.goto('./?debug=1&seed=1234&skin=placeholder');
     const flags = await page.evaluate(() => window.__game?.flags);
-    expect(flags).toEqual({ debug: true, seed: 1234, skin: 'placeholder' });
+    expect(flags).toEqual({ debug: true, seed: 1234, skin: 'placeholder', resolution: null });
+  });
+
+  test('?res= fixes the canvas resolution', async ({ page }) => {
+    await page.goto('./?debug=1&res=1.5');
+    await page.getByTestId('play').click();
+    expect(await page.evaluate(() => window.__game?.flags.resolution)).toBe(1.5);
+    await expect.poll(() => page.evaluate(() => window.__game?.state().resolution)).toBe(1.5);
+    const canvas = page.locator('.play-area canvas');
+    const { width, cssWidth } = await canvas.evaluate((c: HTMLCanvasElement) => ({
+      width: c.width,
+      cssWidth: c.clientWidth,
+    }));
+    expect(width).toBe(Math.round(cssWidth * 1.5));
   });
 
   test('test hooks are absent without ?debug=1', async ({ page }) => {
