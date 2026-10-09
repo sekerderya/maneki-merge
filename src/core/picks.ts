@@ -51,6 +51,8 @@ export function dropOdds(levels: PickLevels, stage: number, bigCatchLevel: numbe
     magnetChance: MAGNET_BASE_CHANCE + PICKS.moreMagnets.perLevel * levels.moreMagnets,
     boulderChance: boulderChance(levels, stage),
     goldenChance: PICKS.goldenCats.perLevel * levels.goldenCats,
+    hanabiChance: PICKS.hanabi.perLevel * levels.hanabi,
+    jokerChance: PICKS.joker.perLevel * levels.joker,
     boulderSize: BOULDER_BASE_SIZE + PICKS.bigBoulders.perLevel * levels.bigBoulders,
     boulderHits: BOULDER_BASE_HITS + PICKS.ironBands.perLevel * levels.ironBands,
   };
@@ -129,6 +131,10 @@ export function pickValue(id: PickId, levels: PickLevels, bigCatchLevel: number)
     }
     case 'goldenCats':
       return percent(odds.goldenChance);
+    case 'hanabi':
+      return percent(odds.hanabiChance);
+    case 'joker':
+      return percent(odds.jokerChance);
   }
 }
 

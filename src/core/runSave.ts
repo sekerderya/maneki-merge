@@ -6,7 +6,8 @@
  *
  * It lives under its own key, apart from the profile: a snapshot that can't be read, or one of
  * another RUN_SAVE_VERSION, is dropped (the run is lost, the profile never is). Migrations would
- * cost more than an unfinished run is worth.
+ * cost more than an unfinished run is worth. Additions that older snapshots can do without (a new
+ * trial or blessing, which starts at level 0) don't bump the version.
  */
 import { RUN_SAVE_KEY } from '../config/app';
 import { PICK_IDS } from '../config/picks';
@@ -59,10 +60,13 @@ export interface DangerSnapshot {
  */
 export interface SavedBall {
   readonly id: number;
-  readonly kind: 'cat' | 'boulder';
+  /** Any kind but the magnet, which never goes into the jar. */
+  readonly kind: Exclude<DropKind, 'magnet'>;
   readonly tier: number;
   readonly golden: boolean;
   readonly hitsLeft: number;
+  /** A joker's boulders hit so far (empty for other balls; missing before v0.28). */
+  readonly struck: readonly number[];
   readonly x: number;
   readonly y: number;
   readonly prevX: number;
@@ -173,7 +177,8 @@ function runSnapshot(value: unknown): RunSnapshot {
     ticks: count(r['ticks'], 'ticks'),
     dropAllowedAt: count(r['dropAllowedAt'], 'dropAllowedAt'),
     savesLeft: count(r['savesLeft'], 'savesLeft'),
-    levels: levelsOf(r['levels'], PICK_IDS, 'levels'),
+    // A trial or blessing added since the snapshot was written starts at level 0.
+    levels: levelsOf(r['levels'], PICK_IDS, 'levels', 0),
     offer: offer && {
       kind: oneOf(offer['kind'], PICK_KINDS, 'offer.kind'),
       options: list(offer['options'], 'offer.options').map((id) => oneOf(id, PICK_IDS, 'option')),
@@ -191,7 +196,8 @@ function runSnapshot(value: unknown): RunSnapshot {
 }
 
 const PICK_KINDS = ['trial', 'blessing'] as const;
-const DROP_KINDS = ['cat', 'magnet', 'boulder'] as const;
+const DROP_KINDS = ['cat', 'magnet', 'boulder', 'hanabi', 'joker'] as const;
+const BALL_KINDS = ['cat', 'boulder', 'hanabi', 'joker'] as const;
 
 function expansion(value: unknown): ExpansionSnapshot {
   const e = record(value, 'expansion');
@@ -261,7 +267,7 @@ function ball(value: unknown): SavedBall {
   const n = (key: string): number => finite(b[key], `ball.${key}`);
   return {
     id: count(b['id'], 'ball.id'),
-    kind: oneOf(b['kind'], ['cat', 'boulder'] as const, 'ball.kind'),
+    kind: oneOf(b['kind'], BALL_KINDS, 'ball.kind'),
     tier: int(b['tier'], 'ball.tier'),
     golden: bool(b['golden'], 'ball.golden'),
     hitsLeft: count(b['hitsLeft'], 'ball.hitsLeft'),
@@ -281,6 +287,10 @@ function ball(value: unknown): SavedBall {
     growFrom: n('growFrom'),
     growMs: n('growMs'),
     landedMs: n('landedMs'),
+    struck:
+      b['struck'] === undefined
+        ? []
+        : list(b['struck'], 'ball.struck').map((id) => count(id, 'ball.struck')),
   };
 }
 
@@ -293,14 +303,19 @@ function records(value: unknown): SaveData['records'] {
   };
 }
 
+/** Levels by id; with `missing`, an id the record lacks gets that level instead of failing. */
 function levelsOf<K extends string>(
   value: unknown,
   ids: readonly K[],
   path: string,
+  missing?: number,
 ): Record<K, number> {
   const r = record(value, path);
   const out = {} as Record<K, number>;
-  for (const id of ids) out[id] = count(r[id], `${path}.${id}`);
+  for (const id of ids) {
+    out[id] =
+      r[id] === undefined && missing !== undefined ? missing : count(r[id], `${path}.${id}`);
+  }
   return out;
 }
 

@@ -209,7 +209,7 @@ export const MERGE_BUMP_SCALE = 0.14;
 export const REDUCED_MOTION_PARTICLES = 0.35;
 
 /**
- * Camera shake (GAME_DESIGN §12): merges into size SHAKE.minSize and above, Jackpots, and combo
+ * Camera shake (GAME_DESIGN §12): merges into size SHAKE.minSize and above, Jackpots, hanabi, and combo
  * escalation from SHAKE.comboMin. Amplitudes are world units; a stronger shake replaces a weaker
  * one, and each fades out over its duration.
  */
@@ -220,6 +220,8 @@ export const SHAKE = {
   mergeMs: 260,
   jackpot: 15,
   jackpotMs: 450,
+  hanabi: 8,
+  hanabiMs: 260,
   comboMin: 5,
   comboStep: 1.2,
   comboMax: 7,
@@ -248,6 +250,11 @@ export const GOLDEN_GLOW_PERIOD_MS = 1200;
 export const SELECT_RING_GAP = 6;
 export const SELECT_RING_WIDTH = 7;
 export const SELECT_RING_PERIOD_MS = 700;
+/** A lit hanabi (GAME_DESIGN §15.6) flickers: its glow pulses this fast between these alphas. */
+export const HANABI_FUSE_FLICKER_MS = 180;
+export const HANABI_FUSE_ALPHA = { min: 0.35, max: 1 } as const;
+/** A hanabi's blast: a burst of this many sparks. */
+export const HANABI_BLAST_SPARKS = 36;
 /** Particles when a boulder loses a band or crumbles. */
 export const BOULDER_HIT_SPARKS = 7;
 export const BOULDER_BREAK_CHIPS = 16;

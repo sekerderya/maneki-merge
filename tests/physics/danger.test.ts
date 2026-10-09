@@ -31,6 +31,7 @@ function cat(tier: number, y: number, landedMs = 0, kind: BallView['kind'] = 'ca
     targetRadius: sizeRadius(tier),
     growing: false,
     landedMs,
+    struck: new Set(),
   };
 }
 

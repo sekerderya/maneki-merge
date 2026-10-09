@@ -13,6 +13,11 @@ export const BOULDER_BASE_CHANCE = 0.03;
  * where a magnet would have nothing to take.
  */
 export const MAGNET_FREE_DROPS = 20;
+/**
+ * No hanabi comes in a stage's first drops either (GAME_DESIGN §15.6): an empty jar has nothing
+ * for it to pop.
+ */
+export const HANABI_FREE_DROPS = 20;
 /** Boulders only come from this stage on. */
 export const BOULDER_FIRST_STAGE = 2;
 
@@ -30,6 +35,24 @@ export const BOULDER_HIT_REACH = 15;
 export const MAGNET_SIZE = 3;
 
 /**
+ * The hanabi (GAME_DESIGN §15.6): a ball of this size whose fuse lights at its first contact and
+ * goes off HANABI_FUSE_MS later. Every cat up to HANABI_MAX_POP_SIZE whose edge is within
+ * HANABI_REACH of the hanabi's centre pops into its value, and every boulder there breaks; bigger
+ * cats and jokers there get pushed away at HANABI_PUSH_SPEED (world units per second).
+ */
+export const HANABI_SIZE = 2;
+export const HANABI_FUSE_MS = 1000;
+export const HANABI_REACH = 200;
+export const HANABI_MAX_POP_SIZE = 4;
+export const HANABI_PUSH_SPEED = 320;
+
+/**
+ * The joker cat (GAME_DESIGN §15.7): a ball of this size that merges with the first cat it
+ * touches, whatever its tier, and raises that cat one tier (two for a golden cat).
+ */
+export const JOKER_SIZE = 2;
+
+/**
  * Big Drops adds this many Big Catch levels to the drop weights (GAME_DESIGN §8), up to
  * MAX_DROP_TILT_LEVEL in all: there every drop size has its own share (10, 20, 30, 40%).
  */
@@ -40,7 +63,7 @@ export const MAX_DROP_TILT_LEVEL = 10;
 export const PICK_OPTIONS = 3;
 
 export const TRIAL_IDS = ['moreBoulders', 'ironBands', 'bigBoulders'] as const;
-export const BLESSING_IDS = ['moreMagnets', 'bigDrops', 'goldenCats'] as const;
+export const BLESSING_IDS = ['moreMagnets', 'bigDrops', 'goldenCats', 'hanabi', 'joker'] as const;
 export const PICK_IDS = [...TRIAL_IDS, ...BLESSING_IDS] as const;
 
 export type TrialId = (typeof TRIAL_IDS)[number];
@@ -119,6 +142,24 @@ export const PICKS: Readonly<Record<PickId, PickDef>> = {
     statLabel: 'Golden cats',
     maxLevel: 5,
     perLevel: 0.04,
+  },
+  hanabi: {
+    id: 'hanabi',
+    kind: 'blessing',
+    name: 'Hanabi',
+    description: 'Fireworks that pop the small cats around them',
+    statLabel: 'Hanabi',
+    maxLevel: 5,
+    perLevel: 0.015,
+  },
+  joker: {
+    id: 'joker',
+    kind: 'blessing',
+    name: 'Joker Cat',
+    description: 'Merges with any cat and makes it one size bigger',
+    statLabel: 'Jokers',
+    maxLevel: 5,
+    perLevel: 0.015,
   },
 };
 

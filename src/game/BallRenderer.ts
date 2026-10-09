@@ -1,8 +1,9 @@
 /**
  * Draws the balls of a run: one pooled body image (rotating), one number image (upright, on the
- * cat's plate wherever the roll has carried it) and one glow image (behind golden cats) per ball,
- * matched by ball id each frame. Cats come from the cat skin, boulders from the special skin
- * (GAME_DESIGN §15.3; a boulder's texture changes as it loses bands). No allocations per frame once
+ * cat's plate wherever the roll has carried it) and one glow image (behind golden cats, and behind
+ * a hanabi while its fuse burns) per ball, matched by ball id each frame. Cats come from the cat
+ * skin; boulders, hanabi and jokers from the special skin (GAME_DESIGN §15; a boulder's texture
+ * changes as it loses bands). No allocations per frame once
  * the pool has warmed up.
  *
  * When the skin switches to another stage's textures, every live sprite takes its new texture on
@@ -14,6 +15,8 @@ import {
   GOLDEN_GLOW_ALPHA,
   GOLDEN_GLOW_PERIOD_MS,
   GOLDEN_GLOW_SCALE,
+  HANABI_FUSE_ALPHA,
+  HANABI_FUSE_FLICKER_MS,
   MERGE_BUMP_MS,
   MERGE_BUMP_SCALE,
 } from '../config/view';
@@ -41,6 +44,12 @@ export function glowAlpha(nowMs: number): number {
   return GOLDEN_GLOW_ALPHA.min + (GOLDEN_GLOW_ALPHA.max - GOLDEN_GLOW_ALPHA.min) * t;
 }
 
+/** How bright a lit hanabi's glow is at `nowMs`: a quick flicker. */
+export function fuseAlpha(nowMs: number): number {
+  const t = Math.abs(Math.sin((Math.PI * nowMs) / HANABI_FUSE_FLICKER_MS));
+  return HANABI_FUSE_ALPHA.min + (HANABI_FUSE_ALPHA.max - HANABI_FUSE_ALPHA.min) * t;
+}
+
 export class BallRenderer {
   private readonly live = new Map<number, CatSprite>();
   private readonly free: CatSprite[] = [];
@@ -64,11 +73,18 @@ export class BallRenderer {
     return this.live.size;
   }
 
-  /** The body frame of a ball: its cat look, or its boulder with the bands it has left. */
+  /** The body frame of a ball: its cat look, its boulder with the bands it has left, … */
   frameOf(ball: Pick<BallView, 'kind' | 'tier' | 'size' | 'hitsLeft'>): SkinFrame {
-    return ball.kind === 'boulder'
-      ? this.special.boulder(ball.size, ball.hitsLeft)
-      : this.skin.body(ball.tier);
+    switch (ball.kind) {
+      case 'boulder':
+        return this.special.boulder(ball.size, ball.hitsLeft);
+      case 'hanabi':
+        return this.special.hanabi(ball.size);
+      case 'joker':
+        return this.special.joker(ball.size);
+      case 'cat':
+        return this.skin.body(ball.tier);
+    }
   }
 
   /** Matches sprites to balls; `nowMs` drives the merge bumps and the golden glow's pulse. */
@@ -91,12 +107,15 @@ export class BallRenderer {
         .setPosition(ball.x, ball.y)
         .setRotation(ball.angle)
         .setScale(body.unitsPerPixel * grow);
-      if (ball.golden) {
+      // A hanabi glows while its fuse burns (from its first contact).
+      const lit = ball.kind === 'hanabi' && ball.landedMs >= 0;
+      if (ball.kind === 'hanabi') sprite.glow.setVisible(lit);
+      if (ball.golden || lit) {
         const glow = this.special.glow();
         sprite.glow
           .setPosition(ball.x, ball.y)
           .setScale(glow.unitsPerPixel * ball.targetRadius * GOLDEN_GLOW_SCALE * grow)
-          .setAlpha(pulse);
+          .setAlpha(lit ? fuseAlpha(nowMs) : pulse);
       }
       if (ball.kind !== 'cat') continue;
       const number = this.skin.number(ball.tier);
@@ -176,7 +195,7 @@ export class BallRenderer {
     sprite.number.setVisible(number !== null);
     if (number) sprite.number.setTexture(number.key);
     sprite.glow.setVisible(ball.golden);
-    if (ball.golden) sprite.glow.setTexture(this.special.glow().key);
+    if (ball.golden || ball.kind === 'hanabi') sprite.glow.setTexture(this.special.glow().key);
   }
 
   /** The skin changed stage: live balls take the new textures. */

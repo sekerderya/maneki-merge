@@ -49,7 +49,9 @@ export const COINS_TEXT_STROKE = '#4a2e25';
 /**
  * The special balls (GAME_DESIGN §15), drawn in code and kept simple until the owner's art: the
  * magnet is a cream disc with a red horseshoe magnet, a boulder is grey stone with one iron band
- * per extra merge it needs, and a golden cat has a gold glow behind it. Outlines follow the cats'
+ * per extra merge it needs, a golden cat has a gold glow behind it, a hanabi is a navy ball with a
+ * firework burst and a fuse, and a joker is a white ball with a rainbow ring and a gold star.
+ * Outlines follow the cats'
  * (CAT_OUTLINE_RATIO of the radius, at least CAT_OUTLINE_MIN).
  */
 export const SPECIAL_INK = '#3b2620';
@@ -67,5 +69,20 @@ export const BOULDER_RIVET = '#e6eaee';
 export const BOULDER_CHIPS = 0x8a837a;
 export const BOULDER_SPARKS = 0xcfd8e0;
 export const GOLDEN_GLOW = '#ffd34d';
+export const HANABI_BALL = '#2f3d72';
+export const HANABI_BURST = ['#ff5a4e', '#ffd34d', '#7fe0ff', '#ff9ad5'] as const;
+export const HANABI_FUSE = '#8a5a3b';
+/** A hanabi's blast: its sparks. */
+export const HANABI_SPARKS = 0xffb347;
+export const JOKER_BALL = '#fffaf2';
+export const JOKER_RAINBOW = [
+  '#ff5a4e',
+  '#ffa63d',
+  '#ffd34d',
+  '#6fcf6a',
+  '#58a8ff',
+  '#a77bff',
+] as const;
+export const JOKER_STAR = '#f2b83b';
 /** The magnet's selection ring round the chosen ball. */
 export const SELECT_RING = 0xf2b83b;

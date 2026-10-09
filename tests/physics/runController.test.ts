@@ -838,9 +838,11 @@ describe('trials and blessings (GAME_DESIGN §15.5)', () => {
     for (const id of ['moreBoulders', 'ironBands', 'bigBoulders'] as const) {
       run.setPickLevel(id, PICKS[id].maxLevel);
     }
-    run.setPickLevel('moreMagnets', PICKS.moreMagnets.maxLevel);
+    for (const id of ['moreMagnets', 'hanabi', 'joker'] as const) {
+      run.setPickLevel(id, PICKS[id].maxLevel);
+    }
     run.offerPicks();
-    // No trial left: straight to the blessings, without More Magnets.
+    // No trial left: straight to the blessings, without the maxed ones.
     expect(of('pickOffered')).toEqual([
       { kind: 'blessing', options: expect.arrayContaining(['bigDrops', 'goldenCats']) },
     ]);

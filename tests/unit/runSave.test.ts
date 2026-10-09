@@ -94,6 +94,20 @@ describe('decodeRunSave', () => {
     }
   });
 
+  it('reads a snapshot from before hanabi and jokers (v0.27): their levels start at 0', () => {
+    const save = sample();
+    const old = structuredClone(save) as unknown as {
+      run: { levels: Record<string, number>; world: { balls: Record<string, unknown>[] } };
+    };
+    delete old.run.levels['hanabi'];
+    delete old.run.levels['joker'];
+    for (const ball of old.run.world.balls) delete ball['struck'];
+    expect(decodeRunSave(text(old))).toEqual({ save });
+    expect(decodeRunSave(text(withField(save, 'run.world.balls.0.struck', [-1])))).toHaveProperty(
+      'error',
+    );
+  });
+
   it('accepts a waiting pick inside an expansion', () => {
     const save = sample();
     const picking = withField(

@@ -138,6 +138,32 @@ export const MAGNET_SVG = svg(
   '0 0 100 100',
 );
 
+/** The hanabi (GAME_DESIGN §15.6): a navy ball with a firework burst and a fuse. */
+export const HANABI_SVG = svg(
+  '<circle cx="50" cy="50" r="46" fill="#2f3d72" stroke="#3b2620" stroke-width="5"/>' +
+    '<g stroke-width="5" stroke-linecap="round">' +
+    '<path d="M50 40V22M50 60V78" stroke="#ff5a4e"/>' +
+    '<path d="M40 50H22M60 50H78" stroke="#ffd34d"/>' +
+    '<path d="M43 43L31 31M57 57L69 69" stroke="#7fe0ff"/>' +
+    '<path d="M57 43L69 31M43 57L31 69" stroke="#ff9ad5"/>' +
+    '</g>' +
+    '<path d="M50 15q6-4 3-9" fill="none" stroke="#8a5a3b" stroke-width="5" stroke-linecap="round"/>',
+  '0 0 100 100',
+);
+
+/** The joker cat (GAME_DESIGN §15.7): a white ball with a rainbow ring and a gold star. */
+export const JOKER_SVG = svg(
+  '<circle cx="50" cy="50" r="46" fill="#fffaf2" stroke="#3b2620" stroke-width="5"/>' +
+    '<circle cx="50" cy="50" r="30" fill="none" stroke-width="9" stroke="#ff5a4e" stroke-dasharray="31.4 157" stroke-dashoffset="0.0" transform="rotate(-90 50 50)"/>' +
+    '<circle cx="50" cy="50" r="30" fill="none" stroke-width="9" stroke="#ffa63d" stroke-dasharray="31.4 157" stroke-dashoffset="-31.4" transform="rotate(-90 50 50)"/>' +
+    '<circle cx="50" cy="50" r="30" fill="none" stroke-width="9" stroke="#ffd34d" stroke-dasharray="31.4 157" stroke-dashoffset="-62.8" transform="rotate(-90 50 50)"/>' +
+    '<circle cx="50" cy="50" r="30" fill="none" stroke-width="9" stroke="#6fcf6a" stroke-dasharray="31.4 157" stroke-dashoffset="-94.2" transform="rotate(-90 50 50)"/>' +
+    '<circle cx="50" cy="50" r="30" fill="none" stroke-width="9" stroke="#58a8ff" stroke-dasharray="31.4 157" stroke-dashoffset="-125.6" transform="rotate(-90 50 50)"/>' +
+    '<circle cx="50" cy="50" r="30" fill="none" stroke-width="9" stroke="#a77bff" stroke-dasharray="31.4 157" stroke-dashoffset="-157.0" transform="rotate(-90 50 50)"/>' +
+    '<path d="M50 31l5.3 11.6 12.7 1.4-9.4 8.6 2.6 12.5L50 58.8l-11.2 6.3 2.6-12.5-9.4-8.6 12.7-1.4z" fill="#f2b83b" stroke="#3b2620" stroke-width="2.5" stroke-linejoin="round"/>',
+  '0 0 100 100',
+);
+
 const boulderSvgs = new Map<number, string>();
 
 /** A boulder with `bands` iron bands (the merges it needs, minus one). */
@@ -192,5 +218,12 @@ export const PICK_ICONS: Readonly<Record<PickId, string>> = {
   ),
   goldenCats: svg(
     '<path d="M12 2.5l2.2 7.3 7.3 2.2-7.3 2.2L12 21.5l-2.2-7.3L2.5 12l7.3-2.2z" fill="currentColor"/>',
+  ),
+  hanabi: svg(
+    '<path d="M12 9V2.5M12 15v6.5M9 12H2.5M15 12h6.5M9.9 9.9L5.3 5.3M14.1 14.1l4.6 4.6M14.1 9.9l4.6-4.6M9.9 14.1l-4.6 4.6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
+  ),
+  joker: svg(
+    '<circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.4"/>' +
+      '<path d="M12 7.2l1.5 3.1 3.4.4-2.5 2.3.7 3.4-3.1-1.7-3.1 1.7.7-3.4-2.5-2.3 3.4-.4z" fill="currentColor"/>',
   ),
 };

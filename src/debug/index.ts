@@ -38,7 +38,7 @@ export interface GameStateSnapshot {
   readonly canDrop: boolean;
   /** The dropper holds a ready magnet (GAME_DESIGN §15.2). */
   readonly canTake: boolean;
-  /** What the dropper holds and what comes next: 'cat', 'magnet' or 'boulder'. */
+  /** What the dropper holds and what comes next: 'cat', 'magnet', 'boulder', 'hanabi' or 'joker'. */
   readonly current: string | null;
   readonly next: string | null;
   /** The pick waiting for a choice (GAME_DESIGN §15.5), or null. */
@@ -81,8 +81,8 @@ export interface GameHooks {
   take(id?: number): boolean;
   /** Chooses an option of the waiting pick (its first by default). */
   choose(id?: PickId): boolean;
-  /** Puts a magnet, a boulder or a golden cat in the dropper. */
-  give(kind: 'magnet' | 'boulder' | 'golden'): void;
+  /** Puts a magnet, a boulder, a hanabi, a joker or a golden cat in the dropper. */
+  give(kind: 'magnet' | 'boulder' | 'hanabi' | 'joker' | 'golden'): void;
   /** Sets a trial's or blessing's level for this run. */
   setPickLevel(id: PickId, level: number): void;
   /** Opens a stage clear's picks now. */
@@ -362,6 +362,8 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
       action('Magnet', () => hooks.give('magnet')),
       action('Boulder', () => hooks.give('boulder')),
       action('Golden', () => hooks.give('golden')),
+      action('Hanabi', () => hooks.give('hanabi')),
+      action('Joker', () => hooks.give('joker')),
       action('Picks', () => hooks.offerPicks()),
     ),
     row(

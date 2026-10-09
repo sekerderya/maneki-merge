@@ -1,6 +1,6 @@
 /**
  * Merge resolution (GAME_DESIGN §5, TECH_SPEC §5). It runs after a physics step, on the
- * same-tier contacts that step collected, so the world never changes in the middle of a step.
+ * contacts that step collected that can merge, so the world never changes in the middle of a step.
  *
  * 1. Candidate pairs are ordered by (older cat id, younger cat id): the oldest cats merge first.
  *    The order comes from our own ids, not from matter-js internals.
@@ -10,9 +10,12 @@
  *    vanish and a cat of the next tier is born at rest exactly at their midpoint, and grows from
  *    the old size into its own over MERGE_GROW_MS. When one of them is golden (GAME_DESIGN §15.4)
  *    the new cat is two tiers up, never above the cap. It is never golden itself.
+ *    A joker (GAME_DESIGN §15.7) and a cat merge too: the cat becomes one tier bigger where it is
+ *    (two for a golden cat, never above the cap; the cap's cat doesn't merge with a joker).
  * 4. The new cat starts to turn, as if another cat had clipped it (`mergeSpinDirection`).
- * 5. Every boulder within BOULDER_HIT_REACH of one of a merge's two cats takes a hit, once per merge
- *    (GAME_DESIGN §15.3); a Jackpot counts as a merge. The caller applies the hits.
+ * 5. Every boulder within BOULDER_HIT_REACH of one of a merge's two balls takes a hit, once per
+ *    merge (GAME_DESIGN §15.3); a Jackpot counts as a merge. A joker that touches a boulder hits it
+ *    too, once in its life. The caller applies the hits.
  *
  * New cats aren't in this step's contacts, so a chain continues on the next step at the earliest.
  * Scores, coins, events and the hits' effect are the caller's job (RunController).
@@ -31,6 +34,8 @@ export interface MergeOutcome {
   readonly newTier: number;
   /** One of the two cats was golden. */
   readonly golden: boolean;
+  /** A joker merged with a cat of `tier`. */
+  readonly joker: boolean;
   /** Their midpoint, in world units. */
   readonly x: number;
   readonly y: number;
@@ -84,8 +89,11 @@ export class MergeResolver {
     const outcomes = this.outcomes;
     outcomes.length = 0;
     this.hitList.length = 0;
-    const contacts = world.sameTierContacts;
-    if (contacts.length === 0) return outcomes;
+    const contacts = world.mergeContacts;
+    if (contacts.length === 0) {
+      this.collectJokerHits(world.jokerBoulderContacts);
+      return outcomes;
+    }
 
     const pairs = this.pairs;
     pairs.length = 0;
@@ -100,6 +108,10 @@ export class MergeResolver {
     used.clear();
     for (const [a, b] of pairs) {
       if (a.removed || b.removed || used.has(a) || used.has(b)) continue;
+      if (a.kind === 'joker' || b.kind === 'joker') {
+        this.mergeJoker(world, a.kind === 'joker' ? b : a, a.kind === 'joker' ? a : b, tierCap);
+        continue;
+      }
       used.add(a);
       used.add(b);
       this.mergeOf.set(a, outcomes.length);
@@ -110,7 +122,8 @@ export class MergeResolver {
       if (a.tier >= tierCap) {
         world.removeBall(a);
         world.removeBall(b);
-        outcomes.push({ kind: 'jackpot', tier: a.tier, newTier: a.tier, golden, x, y, ball: null });
+        const jackpot = { kind: 'jackpot', tier: a.tier, newTier: a.tier, golden, x, y } as const;
+        outcomes.push({ ...jackpot, joker: false, ball: null });
         continue;
       }
       const startRadius = Math.max(a.radius, b.radius);
@@ -123,12 +136,67 @@ export class MergeResolver {
       // so a pile that is over the line keeps counting.
       const landedMs = Math.min(a.landedMs, b.landedMs);
       const ball = world.addBall({ tier, x, y, spin, startRadius, landedMs });
-      outcomes.push({ kind: 'merge', tier: a.tier, newTier: tier, golden, x, y, ball });
+      outcomes.push({
+        kind: 'merge',
+        tier: a.tier,
+        newTier: tier,
+        golden,
+        x,
+        y,
+        joker: false,
+        ball,
+      });
     }
     used.clear();
     this.collectHits(world.balls);
     this.mergeOf.clear();
+    this.collectJokerHits(world.jokerBoulderContacts);
     return outcomes;
+  }
+
+  /**
+   * A joker and a cat merge (GAME_DESIGN §15.7): the cat grows one tier where it is, two for a
+   * golden cat, never above the cap. The cap's cat doesn't merge with a joker.
+   */
+  private mergeJoker(world: PhysicsWorld, cat: Ball, joker: Ball, tierCap: number): void {
+    if (cat.tier >= tierCap) return;
+    const used = this.used;
+    used.add(cat);
+    used.add(joker);
+    this.mergeOf.set(cat, this.outcomes.length);
+    this.mergeOf.set(joker, this.outcomes.length);
+    const { x, y, golden } = cat;
+    const tier = Math.min(cat.tier + (golden ? 2 : 1), tierCap);
+    const spin =
+      (mergeSpinDirection(cat, joker) * MERGE_SPIN_RIM_SPEED) / sizeRadius(world.sizeOf(tier));
+    world.removeBall(cat);
+    world.removeBall(joker);
+    const landedMs = Math.min(cat.landedMs, joker.landedMs);
+    const ball = world.addBall({ tier, x, y, spin, startRadius: cat.radius, landedMs });
+    this.outcomes.push({
+      kind: 'merge',
+      tier: cat.tier,
+      newTier: tier,
+      golden,
+      x,
+      y,
+      joker: true,
+      ball,
+    });
+  }
+
+  /**
+   * Jokers touching boulders: each boulder a joker touches takes one hit, once in the joker's life.
+   * A joker that merged this step has already hit what was near it.
+   */
+  private collectJokerHits(contacts: readonly Ball[]): void {
+    for (let i = 0; i < contacts.length; i += 2) {
+      const joker = contacts[i] as Ball;
+      const boulder = contacts[i + 1] as Ball;
+      if (joker.removed || boulder.removed || joker.struck.has(boulder.id)) continue;
+      joker.struck.add(boulder.id);
+      this.hitList.push(boulder);
+    }
   }
 
   /** The boulders this step's merges hit: once per (boulder, merge), boulders in id order. */

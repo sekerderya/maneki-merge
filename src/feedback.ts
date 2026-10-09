@@ -20,8 +20,8 @@ export function connectRunFeedback(events: EventBus<GameEvents>, out: FeedbackOu
       // Lower for bigger cats: every stage sounds the same.
       out.play('merge', e.newSize);
       out.play('coin');
-      // A golden cat's merge (it skips a tier) rings a bell too.
-      if (e.golden) out.play('chime');
+      // A golden cat's merge (it skips a tier) and a joker's ring a bell too.
+      if (e.golden || e.joker) out.play('chime');
       out.vibrate('tick');
     }),
     events.on('comboChanged', (e) => {
@@ -37,6 +37,10 @@ export function connectRunFeedback(events: EventBus<GameEvents>, out: FeedbackOu
     events.on('boulderHit', () => {
       out.play('clang');
       out.vibrate('tick');
+    }),
+    events.on('hanabiExploded', () => {
+      out.play('boom');
+      out.vibrate('jackpot');
     }),
     events.on('boulderBroken', () => {
       out.play('crunch');

@@ -13,6 +13,7 @@ import {
   BOULDER_CHIPS,
   BOULDER_SPARKS,
   COUNTDOWN_FILL,
+  HANABI_SPARKS,
   COUNTDOWN_STROKE,
   SELECT_RING,
 } from '../config/skin';
@@ -29,6 +30,7 @@ import {
   DANGER_FLASH_PERIOD_MS,
   DROPPER_POP_IN_MS,
   GOLDEN_GLOW_SCALE,
+  HANABI_BLAST_SPARKS,
   REDUCED_MOTION_PARTICLES,
   SELECT_RING_GAP,
   SELECT_RING_PERIOD_MS,
@@ -296,6 +298,18 @@ export class GameScene extends Phaser.Scene {
       this.popped.push({ id: e.id, tier: e.tier, radius: run.radiusOf(e.tier), x, y, coins: null });
       this.sparks.mergeBurst(x, y, this.particles(BOULDER_BREAK_CHIPS), BOULDER_CHIPS);
     });
+    // A hanabi goes off (GAME_DESIGN §15.6): a burst of sparks and a shake; the cats it pops
+    // come as `catPopped`. A hanabi or joker that just vanishes pops like a boulder.
+    on('hanabiExploded', (e) => {
+      const { x, y } = e.at;
+      this.sparks.mergeBurst(x, y, this.particles(HANABI_BLAST_SPARKS), HANABI_SPARKS);
+      this.sparks.burst(x, y, this.particles(BURST_SPARKS.golden));
+      this.addShake(SHAKE.hanabi, SHAKE.hanabiMs);
+    });
+    on('specialPopped', (e) => {
+      const { x, y } = e.at;
+      this.popped.push({ id: e.id, tier: e.tier, radius: run.radiusOf(e.tier), x, y, coins: null });
+    });
     // The magnet took a ball: it flies up into the paw.
     on('ballTaken', (e) => {
       this.clearSelection();
@@ -465,11 +479,12 @@ export class GameScene extends Phaser.Scene {
     this.fx.update(this.nowMs);
   }
 
-  /** The texture of the dropper's ball: a cat, a boulder or the magnet. */
+  /** The texture of the dropper's ball: a cat, a boulder, a hanabi, a joker or the magnet. */
   private dropFrame(item: Drop, stage: number): SkinFrame {
     if (item.kind === 'magnet') return this.special.magnet();
-    if (item.kind === 'boulder') return this.special.boulder(tierSize(item.tier, stage), item.hits);
-    return this.skin.body(item.tier);
+    if (item.kind === 'cat') return this.skin.body(item.tier);
+    const { kind, tier, hits } = item;
+    return this.balls.frameOf({ kind, tier, size: tierSize(tier, stage), hitsLeft: hits });
   }
 
   private renderDropper(run: RunController): void {

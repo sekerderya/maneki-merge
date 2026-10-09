@@ -37,9 +37,11 @@ describe('the trials and blessings (GAME_DESIGN §15.5)', () => {
     ['moreMagnets', 'blessing', 'More Magnets', 5, 0.015],
     ['bigDrops', 'blessing', 'Big Drops', 5, 2],
     ['goldenCats', 'blessing', 'Golden Cats', 5, 0.04],
+    ['hanabi', 'blessing', 'Hanabi', 5, 0.015],
+    ['joker', 'blessing', 'Joker Cat', 5, 0.015],
   ];
 
-  it('lists three trials, then three blessings, in card order', () => {
+  it('lists three trials, then five blessings, in card order', () => {
     expect([...PICK_IDS]).toEqual(TABLE.map(([id]) => id));
     expect(pickIds('trial')).toEqual(TRIAL_IDS);
     expect(pickIds('blessing')).toEqual(BLESSING_IDS);
@@ -60,12 +62,14 @@ describe('the trials and blessings (GAME_DESIGN §15.5)', () => {
 });
 
 describe('dropOdds (GAME_DESIGN §15.1)', () => {
-  it('starts with 1% magnets, 3% boulders from stage 2, no golden cats', () => {
+  it('starts with 1% magnets, 3% boulders from stage 2, no golden cats, hanabi or jokers', () => {
     expect(dropOdds(levels(), 1, 0)).toEqual({
       tiltLevel: 0,
       magnetChance: 0.01,
       boulderChance: 0,
       goldenChance: 0,
+      hanabiChance: 0,
+      jokerChance: 0,
       boulderSize: 2,
       boulderHits: 1,
     });
@@ -79,6 +83,8 @@ describe('dropOdds (GAME_DESIGN §15.1)', () => {
     expect(odds.magnetChance).toBeCloseTo(0.085, 12);
     expect(odds.boulderChance).toBeCloseTo(0.18, 12);
     expect(odds.goldenChance).toBeCloseTo(0.2, 12);
+    expect(odds.hanabiChance).toBeCloseTo(0.075, 12);
+    expect(odds.jokerChance).toBeCloseTo(0.075, 12);
     expect(odds.boulderSize).toBe(6);
     expect(odds.boulderHits).toBe(4);
     expect(odds.tiltLevel).toBe(10);
@@ -115,8 +121,19 @@ describe('the cards', () => {
     expect(seen.size).toBe(6);
   });
 
+  it('offers three of the five blessings, each of them at times', () => {
+    const seen = new Set<string>();
+    for (let seed = 0; seed < 60; seed++) {
+      const offer = drawOffer('blessing', levels(), 0, new Rng(seed));
+      expect(new Set(offer).size).toBe(3);
+      for (const id of offer) seen.add(id);
+    }
+    expect([...seen].sort()).toEqual([...BLESSING_IDS].sort());
+  });
+
   it('leaves maxed options out, and offers nothing when every one is maxed', () => {
-    const some = drawOffer('blessing', levels({ goldenCats: 5 }), 0, new Rng(1));
+    const maxed = { goldenCats: 5, hanabi: 5, joker: 5 };
+    const some = drawOffer('blessing', levels(maxed), 0, new Rng(1));
     expect([...some].sort()).toEqual(['bigDrops', 'moreMagnets']);
     const none = levels({ moreBoulders: 5, ironBands: 3, bigBoulders: 4 });
     expect(drawOffer('trial', none, 0, new Rng(1))).toEqual([]);
@@ -138,6 +155,8 @@ describe('the cards', () => {
     ['bigDrops', {}, 0, '10%', '16%'],
     ['bigDrops', {}, 3, '19%', '25%'],
     ['goldenCats', { goldenCats: 2 }, 0, '8%', '12%'],
+    ['hanabi', {}, 0, '0%', '1.5%'],
+    ['joker', { joker: 4 }, 0, '6%', '7.5%'],
   ])('%s with %j (Big Catch %i) shows %s → %s', (id, over, bigCatch, current, next) => {
     const card = pickCard(id, levels(over), bigCatch);
     expect(card).toMatchObject({ id, current, next, kind: PICKS[id].kind, name: PICKS[id].name });

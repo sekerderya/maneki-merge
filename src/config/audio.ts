@@ -13,6 +13,7 @@ export type SoundName =
   | 'chime'
   | 'dangerTick'
   | 'gameOver'
+  | 'boom'
   | 'click'
   | 'purchase'
   | 'take'
@@ -60,6 +61,8 @@ export const SOUNDS: Readonly<Record<SoundName, SoundSpec>> = {
   take: { volume: 0.34, durationMs: 300, minIntervalMs: 120, maxVoices: 1 },
   clang: { volume: 0.22, durationMs: 380, minIntervalMs: 60, maxVoices: 2 },
   crunch: { volume: 0.4, durationMs: 320, minIntervalMs: 60, maxVoices: 2 },
+  // A hanabi goes off (GAME_DESIGN §15.6).
+  boom: { volume: 0.45, durationMs: 700, minIntervalMs: 120, maxVoices: 2 },
 };
 
 /**

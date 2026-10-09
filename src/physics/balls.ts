@@ -1,7 +1,9 @@
 /**
  * Balls in the physics world: a matter-js body plus the game data the world tracks for it
- * (kind, tier, size, golden, growth after a merge, first contact). A ball is a cat or a boulder
- * (GAME_DESIGN §15.3), which never merges and breaks after `hitsLeft` merges next to it. The tier
+ * (kind, tier, size, golden, growth after a merge, first contact). A ball is a cat, a boulder
+ * (GAME_DESIGN §15.3), which never merges and breaks after `hitsLeft` merges next to it, a hanabi
+ * (§15.6), which goes off a moment after it lands, or a joker cat (§15.7), which merges with the
+ * first cat it touches. The tier
  * is the cat's number (a boulder's is the tier of its size); the size (its place in the current
  * stage, 1–10) sets its radius and density. Contacts use the exact circle (circleCollision.ts);
  * the body's polygon only feeds matter-js's broadphase bounds.
@@ -21,8 +23,8 @@ import type { CircleShape } from './circleCollision';
 /** matter-js velocities are per base tick of 1000/60 ms; config speeds are per second. */
 export const MATTER_TICKS_PER_SECOND = 60;
 
-/** A ball is a cat or a boulder. */
-export type BallKind = 'cat' | 'boulder';
+/** A ball is a cat, a boulder, a hanabi or a joker cat. */
+export type BallKind = 'cat' | 'boulder' | 'hanabi' | 'joker';
 
 /** What rendering and game rules may read about a ball. */
 export interface BallView {
@@ -50,6 +52,8 @@ export interface BallView {
   readonly growing: boolean;
   /** Play time of the cat's first contact with anything, or −1 while it is still falling. */
   readonly landedMs: number;
+  /** A joker's: the boulders it has hit by touching them (once each, GAME_DESIGN §15.7). */
+  readonly struck: ReadonlySet<number>;
 }
 
 export interface BallSpec {
@@ -72,6 +76,8 @@ export interface BallSpec {
   readonly startRadius?: number;
   /** Play time of the first contact, if the cat counts as landed already. */
   readonly landedMs?: number;
+  /** A joker's boulders hit so far (a saved run). */
+  readonly struck?: readonly number[];
 }
 
 export class Ball implements BallView, CircleShape {
@@ -85,6 +91,8 @@ export class Ball implements BallView, CircleShape {
   removed = false;
   /** Set by the world during a step when the cat touches a growing cat. */
   touchesGrowth = false;
+  /** A joker's: the ids of the boulders it has hit by touching them. */
+  readonly struck = new Set<number>();
   private growFrom: number;
   private growAgeMs = 0;
 
@@ -210,6 +218,7 @@ export function createBall(id: number, spec: BallSpec): Ball {
     golden,
     hits,
   );
+  if (kind === 'joker') for (const id of spec.struck ?? []) ball.struck.add(id);
   (body.plugin as { circle?: Ball }).circle = ball;
   setCircleMass(body, spec.size, radius);
   if (spec.vx || spec.vy) {

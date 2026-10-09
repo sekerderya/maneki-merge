@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAGNET_FREE_DROPS } from '../../src/config/picks';
+import { HANABI_FREE_DROPS, MAGNET_FREE_DROPS } from '../../src/config/picks';
 import { stageInfo } from '../../src/config/stages';
 import { DropQueue, dropWeights, PLAIN_ODDS } from '../../src/core/dropQueue';
 import type { Drop, DropOdds, DropQueueOptions } from '../../src/core/dropQueue';
@@ -280,5 +280,49 @@ describe('special balls in the queue (GAME_DESIGN §15.1)', () => {
     q.replaceCurrent({ kind: 'boulder', tier: 11, golden: false, hits: 2 });
     q.setStage(3);
     expect(q.current).toEqual({ kind: 'boulder', tier: 20, golden: false, hits: 2 });
+  });
+
+  it('rolls hanabi and jokers at their chances, at size 2, never golden', () => {
+    const n = 60_000;
+    const q = makeQueue({
+      stage: 3,
+      odds: odds({ hanabiChance: 0.05, jokerChance: 0.1, goldenChance: 0.5 }),
+    });
+    takeMany(q, HANABI_FREE_DROPS + 2);
+    const drops = takeMany(q, n);
+    const hanabi = drops.filter((d) => d.kind === 'hanabi');
+    const jokers = drops.filter((d) => d.kind === 'joker');
+    expect(hanabi.length / n).toBeCloseTo(0.05, 2);
+    expect(jokers.length / n).toBeCloseTo(0.1, 2);
+    const tier = stageInfo(3).firstTier + 1;
+    for (const d of [...hanabi, ...jokers])
+      expect(d).toMatchObject({ tier, golden: false, hits: 0 });
+  });
+
+  it('queues no hanabi before the stage’s 20th drop, and none into an empty jar', () => {
+    expect(HANABI_FREE_DROPS).toBe(20);
+    const q = makeQueue({ odds: odds({ hanabiChance: 1 }) });
+    expect(takeMany(q, HANABI_FREE_DROPS + 1).every((d) => d.kind === 'cat')).toBe(true);
+    expect([q.current.kind, q.next.kind]).toEqual(['hanabi', 'hanabi']);
+    q.newStage();
+    expect([q.current.kind, q.next.kind]).toEqual(['cat', 'cat']);
+  });
+
+  it('queues jokers from the start and keeps them at a new stage', () => {
+    const q = makeQueue({ odds: odds({ jokerChance: 1 }) });
+    takeMany(q, 2);
+    expect(q.take().kind).toBe('joker');
+    q.newStage();
+    expect([q.current.kind, q.next.kind]).toEqual(['joker', 'joker']);
+  });
+
+  it('rolls the kinds in order on one roll: magnet, boulder, hanabi, joker, cat', () => {
+    const shares = { magnetChance: 0.2, boulderChance: 0.2, hanabiChance: 0.2, jokerChance: 0.2 };
+    const q = makeQueue({ stage: 2, odds: odds(shares) });
+    takeMany(q, MAGNET_FREE_DROPS + 2);
+    const drops = takeMany(q, 20_000);
+    for (const kind of ['magnet', 'boulder', 'hanabi', 'joker', 'cat'] as const) {
+      expect(count(drops, (d) => d.kind === kind) / drops.length).toBeCloseTo(0.2, 1);
+    }
   });
 });

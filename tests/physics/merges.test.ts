@@ -137,7 +137,7 @@ describe('MergeResolver (GAME_DESIGN §5)', () => {
     const b = world.addBall({ tier: 2, x: r - 1, y: -r });
     const c = world.addBall({ tier: 2, x: 0, y: -r - Math.sqrt((2 * r) ** 2 - r ** 2) + 1 });
     world.step();
-    expect(world.sameTierContacts).toHaveLength(6);
+    expect(world.mergeContacts).toHaveLength(6);
     const outcomes = new MergeResolver().resolve(world, CAP_1);
     expect(outcomes).toHaveLength(1);
     expect(a.removed && b.removed).toBe(true);

@@ -2,7 +2,8 @@
  * One run, headless (TECH_SPEC §3–§5): dropping cats, the cooldown and queue, merges and their
  * payouts, the combo timer, stage clears and the expansion timeline, the danger line, Lucky Saves
  * and game over; and the special balls, trials and blessings of GAME_DESIGN §15 (magnets taking a
- * ball out of the jar, boulders breaking, golden cats, the picks at every stage clear). The game
+ * ball out of the jar, boulders breaking, golden cats, hanabi going off, joker cats merging with any
+ * cat, the picks at every stage clear). The game
  * scene renders it and forwards input; the HUD, FX, audio and save listen to its events.
  *
  * Time comes in fixed ticks of PHYSICS_STEP_MS. `update(frameMs)` only decides how many ticks a
@@ -10,11 +11,19 @@
  * tick at which each input arrives: the same inputs replay the same run at any frame rate.
  *
  * Tick pipeline while playing: physics step → merges (payouts and events, oldest first) → boulder
- * hits → combo expiry → stage clear → drop ready → danger. The stage clear goes first, so making
+ * hits → hanabi blasts → combo expiry → stage clear → drop ready → danger. The stage clear goes first, so making
  * the stage's last cat saves the jar even on the step the danger timer would run out.
  */
 import { PHYSICS_STEP_MS, stepsFor } from '../config/physics';
-import { MAGNET_SIZE, PICK_IDS, PICK_ORDER, PICKS } from '../config/picks';
+import {
+  HANABI_REACH,
+  HANABI_SIZE,
+  JOKER_SIZE,
+  MAGNET_SIZE,
+  PICK_IDS,
+  PICK_ORDER,
+  PICKS,
+} from '../config/picks';
 import type { PickId, PickKind } from '../config/picks';
 import { catRadius, STAGE_COUNT, stageHoldsTier, stageInfo } from '../config/stages';
 import {
@@ -42,6 +51,7 @@ import type { DerivedStats, UpgradeLevels } from '../core/upgrades';
 import type { Ball, BallKind, BallView } from '../physics/balls';
 import { DangerMonitor, luckySaveVictims } from '../physics/danger';
 import { clampDropX, dropStartY } from '../physics/geometry';
+import { fuseBurntOut, hanabiBlast } from '../physics/hanabi';
 import type { JarGeometry } from '../physics/geometry';
 import { MergeResolver } from '../physics/merges';
 import { FixedStepper, PhysicsWorld } from '../physics/PhysicsWorld';
@@ -354,12 +364,12 @@ export class RunController {
    * over.
    */
   drop(x: number): boolean {
-    if (!this.canDrop || !Number.isFinite(x)) return false;
+    const { kind } = this.queue.current;
+    if (!this.canDrop || !Number.isFinite(x) || kind === 'magnet') return false;
     const item = this.queue.take();
     const geo = this.world.geometry;
     const radius = this.radiusOf(item.tier);
     const at = clampDropX(x, radius, geo);
-    const kind = item.kind === 'boulder' ? 'boulder' : 'cat';
     this.world.addBall({
       kind,
       tier: item.tier,
@@ -454,19 +464,24 @@ export class RunController {
   }
 
   /**
-   * Puts a magnet, a boulder (with the current trials' size and hits) or a golden cat (of the
-   * stage's smallest tier) in the dropper instead of its ball.
+   * Puts a magnet, a boulder (with the current trials' size and hits), a hanabi, a joker or a
+   * golden cat (of the stage's smallest tier) in the dropper instead of its ball.
    */
-  giveSpecial(kind: 'magnet' | 'boulder' | 'golden'): void {
+  giveSpecial(kind: 'magnet' | 'boulder' | 'hanabi' | 'joker' | 'golden'): void {
     if (this.runState === 'over') return;
     const first = stageInfo(this.world.stage).firstTier;
     const odds = this.odds();
+    const plain = { golden: false, hits: 0 };
     this.queue.replaceCurrent(
       kind === 'magnet'
-        ? { kind, tier: first + MAGNET_SIZE - 1, golden: false, hits: 0 }
-        : kind === 'boulder'
-          ? { kind, tier: first + odds.boulderSize - 1, golden: false, hits: odds.boulderHits }
-          : { kind: 'cat', tier: first, golden: true, hits: 0 },
+        ? { kind, tier: first + MAGNET_SIZE - 1, ...plain }
+        : kind === 'hanabi'
+          ? { kind, tier: first + HANABI_SIZE - 1, ...plain }
+          : kind === 'joker'
+            ? { kind, tier: first + JOKER_SIZE - 1, ...plain }
+            : kind === 'boulder'
+              ? { kind, tier: first + odds.boulderSize - 1, golden: false, hits: odds.boulderHits }
+              : { kind: 'cat', tier: first, golden: true, hits: 0 },
     );
     this.dropAnnounced = false;
     this.announceDropIfReady();
@@ -640,6 +655,7 @@ export class RunController {
           newTier: o.newTier,
           newSize: o.ball?.size ?? world.sizeOf(o.newTier),
           golden: o.golden,
+          joker: o.joker,
           at,
           ...p,
         });
@@ -654,6 +670,7 @@ export class RunController {
       this.events.emit('runCoinsChanged', { coins: this.economy.coins });
     }
     this.hitBoulders(this.merges.hits);
+    this.fireHanabi(now);
     const combo = this.economy.comboAt(now);
     if (combo !== this.shownCombo) {
       this.shownCombo = combo;
@@ -690,6 +707,54 @@ export class RunController {
       this.world.removeBall(boulder);
       this.events.emit('boulderBroken', { id: boulder.id, tier: boulder.tier, at, reason: 'hits' });
     }
+  }
+
+  /**
+   * Every hanabi whose fuse has burnt down goes off (GAME_DESIGN §15.6), oldest first; a hanabi
+   * its blast reaches goes off in the same tick. Small cats pop into their value (no score, no
+   * combo), boulders break, bigger cats and jokers get pushed away.
+   */
+  private fireHanabi(now: number): void {
+    // Most ticks have none: check before building a list.
+    let any = false;
+    for (const ball of this.world.balls) any ||= fuseBurntOut(ball, now);
+    if (!any) return;
+    const lit = this.world.balls.filter((ball) => fuseBurntOut(ball, now));
+    let paid = false;
+    for (let hanabi = lit.shift(); hanabi; hanabi = lit.shift()) {
+      if (hanabi.removed) continue;
+      const blast = hanabiBlast(hanabi, this.world.balls);
+      const at = { x: hanabi.x, y: hanabi.y };
+      this.world.removeBall(hanabi);
+      this.events.emit('hanabiExploded', { id: hanabi.id, at, reach: HANABI_REACH });
+      for (const cat of blast.pops) {
+        this.world.removeBall(cat);
+        const { coins } = this.economy.pop(cat.tier);
+        this.bankCoins(coins);
+        paid = true;
+        const where = { x: cat.x, y: cat.y };
+        this.events.emit('catPopped', {
+          id: cat.id,
+          tier: cat.tier,
+          at: where,
+          coins,
+          reason: 'hanabi',
+        });
+      }
+      for (const boulder of blast.breaks) {
+        this.world.removeBall(boulder);
+        const where = { x: boulder.x, y: boulder.y };
+        this.events.emit('boulderBroken', {
+          id: boulder.id,
+          tier: boulder.tier,
+          at: where,
+          reason: 'hanabi',
+        });
+      }
+      for (const { ball, vx, vy } of blast.pushes) this.world.push(ball, vx, vy);
+      lit.push(...blast.chain);
+    }
+    if (paid) this.events.emit('runCoinsChanged', { coins: this.economy.coins });
   }
 
   /** What the queue rolls now: the stage and the picks so far. */
@@ -765,15 +830,20 @@ export class RunController {
 
   /**
    * Pops cats into their value in coins (stage clear, Lucky Save): no score, no combo. Boulders
-   * crumble and pay nothing.
+   * crumble, hanabi and jokers vanish; they pay nothing.
    */
   private pop(balls: readonly Ball[], reason: 'cashOut' | 'luckySave'): void {
     if (balls.length === 0) return;
     for (const ball of balls) {
       const at = { x: ball.x, y: ball.y };
       this.world.removeBall(ball);
-      if (ball.kind === 'boulder') {
-        this.events.emit('boulderBroken', { id: ball.id, tier: ball.tier, at, reason });
+      const { id, kind, tier } = ball;
+      if (kind === 'boulder') {
+        this.events.emit('boulderBroken', { id, tier, at, reason });
+        continue;
+      }
+      if (kind !== 'cat') {
+        this.events.emit('specialPopped', { id, kind, tier, at, reason });
         continue;
       }
       const { coins } = this.economy.pop(ball.tier);

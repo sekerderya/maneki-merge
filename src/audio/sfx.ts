@@ -179,6 +179,21 @@ export const RECIPES: Readonly<Record<SoundName, Recipe>> = {
     noise(v, { filter: 'lowpass', from: 1400, to: 300, attack: 0.004, decay: 0.22, gain: 0.9 });
     tone(v, { from: 140, to: 70, glide: 0.18, decay: 0.2, gain: 0.6 });
   },
+  // A hanabi goes off: a low boom, then a crackle of sparks.
+  boom(v) {
+    tone(v, { from: 110, to: 45, glide: 0.35, decay: 0.45, gain: 0.9 });
+    noise(v, { filter: 'lowpass', from: 2400, to: 400, attack: 0.003, decay: 0.3, gain: 0.8 });
+    noise(v, {
+      filter: 'bandpass',
+      from: 3200,
+      to: 5200,
+      q: 3,
+      delay: 0.12,
+      attack: 0.02,
+      decay: 0.35,
+      gain: 0.35,
+    });
+  },
   // Two rising notes and a ching.
   purchase(v) {
     const hz = 659.25;

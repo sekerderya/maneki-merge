@@ -20,6 +20,7 @@ describe('run feedback wiring (GAME_DESIGN §12)', () => {
       newTier: 15,
       newSize: 5,
       golden: false,
+      joker: false,
       at,
       score: 1,
       coins: 1,
@@ -69,7 +70,8 @@ describe('run feedback wiring (GAME_DESIGN §12)', () => {
     });
     const at = { x: 0, y: 0 };
     const merge = { id: 1, tier: 3, newTier: 4, newSize: 4, at, score: 1, coins: 3, combo: 1 };
-    events.emit('merged', { ...merge, golden: true });
+    const joker = false;
+    events.emit('merged', { ...merge, golden: true, joker });
     events.emit('jackpot', { tier: 46, at, score: 1, coins: 1, combo: 1 });
     expect(log).toEqual(['merge', 'coin', 'chime', 'buzz:tick', 'jackpot', 'buzz:jackpot']);
   });

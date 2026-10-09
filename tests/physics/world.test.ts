@@ -104,7 +104,7 @@ describe('PhysicsWorld', () => {
     );
     for (let i = 0; i < 4 * STEPS_PER_SECOND; i++) {
       world.step();
-      expect(world.sameTierContacts).toHaveLength(0);
+      expect(world.mergeContacts).toHaveLength(0);
     }
     expect(cats.map((cat) => Math.sign(cat.x))).toEqual([-1, -1, 1, 1]);
   });
@@ -261,9 +261,9 @@ describe('PhysicsWorld', () => {
     const b = world.addBall({ tier: 2, x: 32, y: -33 });
     const c = world.addBall({ tier: 3, x: 100, y: -40 });
     world.step();
-    expect(world.sameTierContacts).toHaveLength(2);
-    expect([...world.sameTierContacts].sort((x, y) => x.id - y.id)).toEqual([a, b]);
-    expect(world.sameTierContacts).not.toContain(c);
+    expect(world.mergeContacts).toHaveLength(2);
+    expect([...world.mergeContacts].sort((x, y) => x.id - y.id)).toEqual([a, b]);
+    expect(world.mergeContacts).not.toContain(c);
   });
 
   it('grows a cat into its radius in MERGE_GROW_MS and pushes neighbours gently', () => {

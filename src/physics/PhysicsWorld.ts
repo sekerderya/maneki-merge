@@ -1,8 +1,9 @@
 /**
  * The matter-js world of one run (TECH_SPEC §4–§5): the jar walls, the cats of the current stage,
  * and one fixed step at a time. Every stage has the same jar and gravity; the next stage starts
- * with an empty jar (`setStage`). Each step also tracks first contacts, collects same-tier contacts
- * for the merge resolver, grows merged cats and clamps speeds. No randomness and no wall clock:
+ * with an empty jar (`setStage`). Each step also tracks first contacts, collects the contacts that
+ * can merge (same-tier cats, a joker and a cat) for the merge resolver, grows merged cats and
+ * clamps speeds. No randomness and no wall clock:
  * the same calls always give the same world.
  */
 import Matter from 'matter-js';
@@ -105,11 +106,13 @@ export interface PhysicsWorldOptions {
 
 export class PhysicsWorld {
   /**
-   * Same-tier cats that touched during the last step, as a flat list: pair i is
-   * [2i] and [2i + 1]. matter-js keeps one pair per two bodies, so there are no duplicates.
-   * Boulders never merge, so they are never in it.
+   * The balls that touched during the last step and can merge, as a flat list: pair i is [2i] and
+   * [2i + 1]. Either two cats of the same tier, or a joker and a cat (the joker first). matter-js
+   * keeps one pair per two bodies, so there are no duplicates. Boulders and hanabi never merge.
    */
-  readonly sameTierContacts: Ball[] = [];
+  readonly mergeContacts: Ball[] = [];
+  /** Jokers touching boulders during the last step, flat like `mergeContacts`: joker, boulder. */
+  readonly jokerBoulderContacts: Ball[] = [];
 
   private readonly engine: Matter.Engine;
   private readonly list: Ball[] = [];
@@ -241,6 +244,18 @@ export class PhysicsWorld {
     return ball;
   }
 
+  /**
+   * Adds a velocity in world units per second to the ball (a hanabi's blast, GAME_DESIGN §15.6),
+   * within the speed limit.
+   */
+  push(ball: Ball, vx: number, vy: number): void {
+    const v = ball.body.velocity;
+    this.scratch.x = v.x + vx / MATTER_TICKS_PER_SECOND;
+    this.scratch.y = v.y + vy / MATTER_TICKS_PER_SECOND;
+    Matter.Body.setVelocity(ball.body, this.scratch);
+    this.limitSpeed(ball.body, this.maxSpeed);
+  }
+
   removeBall(ball: Ball): void {
     if (ball.removed) return;
     const index = this.list.indexOf(ball);
@@ -321,6 +336,7 @@ export class PhysicsWorld {
       y: saved.y,
       startRadius: saved.radius,
       landedMs: saved.landedMs,
+      struck: saved.struck,
     });
     ball.restoreGrowth(saved.growFrom, saved.growMs);
     const body = ball.body;
@@ -354,6 +370,7 @@ export class PhysicsWorld {
       hasher.number(positionPrev.x).number(positionPrev.y);
       hasher.number(angle).number(anglePrev);
       hasher.number(ball.radius).number(ball.landedMs);
+      for (const id of ball.struck) hasher.number(id);
     }
   }
 
@@ -363,8 +380,10 @@ export class PhysicsWorld {
    */
   private scanContacts(): void {
     const now = this.timeMs;
-    const contacts = this.sameTierContacts;
+    const contacts = this.mergeContacts;
     contacts.length = 0;
+    const struck = this.jokerBoulderContacts;
+    struck.length = 0;
 
     for (const pair of (this.engine.pairs as unknown as PairList).list) {
       if (!pair.isActive) continue;
@@ -373,7 +392,13 @@ export class PhysicsWorld {
       if (a && a.landedMs < 0) a.landedMs = now;
       if (b && b.landedMs < 0) b.landedMs = now;
       if (!a || !b) continue;
-      if (a.kind === 'cat' && b.kind === 'cat' && a.tier === b.tier) contacts.push(a, b);
+      if (a.kind === 'cat' && b.kind === 'cat') {
+        if (a.tier === b.tier) contacts.push(a, b);
+      } else if (a.kind === 'joker' || b.kind === 'joker') {
+        const [joker, other] = a.kind === 'joker' ? [a, b] : [b, a];
+        if (other.kind === 'cat') contacts.push(joker, other);
+        else if (other.kind === 'boulder') struck.push(joker, other);
+      }
       if (a.growing) b.touchesGrowth = true;
       if (b.growing) a.touchesGrowth = true;
     }
@@ -415,5 +440,6 @@ function saveBall(ball: Ball): SavedBall {
     growFrom: from,
     growMs: ageMs,
     landedMs: ball.landedMs,
+    struck: [...ball.struck],
   };
 }

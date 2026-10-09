@@ -71,9 +71,9 @@ export interface WorldPoint {
  */
 export interface GameEvents {
   runStarted: { readonly seed: number; readonly stage: number };
-  /** A cat or a boulder left the dropper. */
+  /** A ball left the dropper: a cat, a boulder, a hanabi or a joker. */
   catDropped: {
-    readonly kind: 'cat' | 'boulder';
+    readonly kind: Exclude<DropKind, 'magnet'>;
     readonly tier: number;
     readonly golden: boolean;
     readonly x: number;
@@ -86,7 +86,7 @@ export interface GameEvents {
   /** The magnet took a ball out of the jar (GAME_DESIGN §15.2): it is now in the dropper. */
   ballTaken: {
     readonly id: number;
-    readonly kind: 'cat' | 'boulder';
+    readonly kind: Exclude<DropKind, 'magnet'>;
     readonly tier: number;
     readonly golden: boolean;
     readonly at: WorldPoint;
@@ -94,14 +94,30 @@ export interface GameEvents {
   /** A merge next to a boulder knocked a band off; it breaks after `hitsLeft` more. */
   boulderHit: { readonly id: number; readonly hitsLeft: number; readonly at: WorldPoint };
   /**
-   * A boulder crumbled: its last hit, or it went with a stage clear's pops or a Lucky Save. It
-   * pays nothing.
+   * A boulder crumbled: its last hit, a hanabi's blast, or it went with a stage clear's pops or a
+   * Lucky Save. It pays nothing.
    */
   boulderBroken: {
     readonly id: number;
     readonly tier: number;
     readonly at: WorldPoint;
-    readonly reason: 'hits' | 'cashOut' | 'luckySave';
+    readonly reason: 'hits' | 'hanabi' | 'cashOut' | 'luckySave';
+  };
+  /**
+   * A hanabi went off (GAME_DESIGN §15.6): the small cats within `reach` of `at` pop
+   * (`catPopped`, reason `hanabi`), boulders there break, bigger cats get pushed away.
+   */
+  hanabiExploded: { readonly id: number; readonly at: WorldPoint; readonly reach: number };
+  /**
+   * A hanabi or a joker vanished without doing anything (a stage clear's pops, a Lucky Save). It
+   * pays nothing.
+   */
+  specialPopped: {
+    readonly id: number;
+    readonly kind: 'hanabi' | 'joker';
+    readonly tier: number;
+    readonly at: WorldPoint;
+    readonly reason: 'cashOut' | 'luckySave';
   };
   merged: {
     /** The new cat's id (BallView.id), so the scene can pop its sprite. */
@@ -112,6 +128,8 @@ export interface GameEvents {
     readonly newSize: number;
     /** A golden cat merged (GAME_DESIGN §15.4): the new cat skipped a tier. */
     readonly golden: boolean;
+    /** A joker merged with a cat of `tier` (GAME_DESIGN §15.7). */
+    readonly joker: boolean;
     readonly at: WorldPoint;
     readonly score: number;
     readonly coins: number;
@@ -125,14 +143,17 @@ export interface GameEvents {
     readonly coins: number;
     readonly combo: number;
   };
-  /** A single cat popped into coins: its value (half of C(t)), at a stage clear or a Lucky Save. */
+  /**
+   * A single cat popped into coins: its value (half of C(t)), at a stage clear, a Lucky Save or a
+   * hanabi's blast.
+   */
   catPopped: {
     /** The cat's id (BallView.id), so the scene can pop the cat's own sprite. */
     readonly id: number;
     readonly tier: number;
     readonly at: WorldPoint;
     readonly coins: number;
-    readonly reason: 'cashOut' | 'luckySave';
+    readonly reason: 'cashOut' | 'luckySave' | 'hanabi';
   };
   scoreChanged: { readonly score: number };
   runCoinsChanged: { readonly coins: number };

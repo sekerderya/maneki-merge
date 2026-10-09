@@ -105,6 +105,7 @@ describe('EventBus', () => {
       newTier: 4,
       newSize: 4,
       golden: false,
+      joker: false,
       at: { x: 0, y: -100 },
       score: 8,
       coins: 3,

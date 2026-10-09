@@ -2,6 +2,9 @@
 import {
   BOULDER_BASE_HITS,
   BOULDER_BASE_SIZE,
+  HANABI_FREE_DROPS,
+  HANABI_SIZE,
+  JOKER_SIZE,
   MAGNET_FREE_DROPS,
   MAGNET_SIZE,
 } from '../config/picks';
@@ -10,14 +13,17 @@ import { UPGRADES } from '../config/upgrades';
 import type { Rng } from './rng';
 import type { QueueSnapshot } from './runSave';
 
-/** A cat, a magnet (takes a ball out of the jar, GAME_DESIGN §15.2) or a boulder (§15.3). */
-export type DropKind = 'cat' | 'magnet' | 'boulder';
+/**
+ * A cat, a magnet (takes a ball out of the jar, GAME_DESIGN §15.2), a boulder (§15.3), a hanabi
+ * (pops the small cats around it, §15.6) or a joker cat (merges with any cat, §15.7).
+ */
+export type DropKind = 'cat' | 'magnet' | 'boulder' | 'hanabi' | 'joker';
 
 export interface Drop {
   readonly kind: DropKind;
   /**
    * The tier at the current stage: a cat's tier, a boulder's size as the tier of that size (so its
-   * size survives an expansion like a cat's), the magnet's drawn size as a tier.
+   * size survives an expansion like a cat's), the magnet's, hanabi's or joker's size as a tier.
    */
   readonly tier: number;
   /** A golden cat skips a tier when it merges (GAME_DESIGN §15.4). Only cats are golden. */
@@ -33,6 +39,8 @@ export interface DropOdds {
   readonly magnetChance: number;
   readonly boulderChance: number;
   readonly goldenChance: number;
+  readonly hanabiChance: number;
+  readonly jokerChance: number;
   /** A boulder's size (1–9) and the merges it needs to break. */
   readonly boulderSize: number;
   readonly boulderHits: number;
@@ -44,6 +52,8 @@ export const PLAIN_ODDS: DropOdds = {
   magnetChance: 0,
   boulderChance: 0,
   goldenChance: 0,
+  hanabiChance: 0,
+  jokerChance: 0,
   boulderSize: BOULDER_BASE_SIZE,
   boulderHits: BOULDER_BASE_HITS,
 };
@@ -76,7 +86,8 @@ export interface DropQueueOptions {
 /**
  * `current` is the ball in the dropper and `next` the one after it, which the HUD shows. Each item
  * rolls its tier, kind and golden once; the first two items of a run are cats of the pool's
- * smallest tier. No magnet is queued before MAGNET_FREE_DROPS balls were dropped in the stage.
+ * smallest tier. No magnet is queued before MAGNET_FREE_DROPS balls were dropped in the stage, no
+ * hanabi before HANABI_FREE_DROPS.
  */
 export class DropQueue {
   private readonly rng: Rng;
@@ -151,12 +162,13 @@ export class DropQueue {
 
   /**
    * A stage was cleared and the jar is empty (GAME_DESIGN §15.1): the drop count starts again, and
-   * a queued magnet becomes a cat of the pool's smallest tier, since it would have nothing to take.
+   * a queued magnet or hanabi becomes a cat of the pool's smallest tier, since it would have
+   * nothing to take or pop.
    */
   newStage(): void {
     this.stageDrops = 0;
-    this.dropper = this.withoutMagnet(this.dropper);
-    this.upcoming = this.withoutMagnet(this.upcoming);
+    this.dropper = this.forEmptyJar(this.dropper);
+    this.upcoming = this.forEmptyJar(this.upcoming);
   }
 
   /** The queue as it stands, for a saved run. */
@@ -178,8 +190,8 @@ export class DropQueue {
     this.stageDrops = saved.stageDrops;
   }
 
-  private withoutMagnet(drop: Drop): Drop {
-    if (drop.kind !== 'magnet') return drop;
+  private forEmptyJar(drop: Drop): Drop {
+    if (drop.kind !== 'magnet' && drop.kind !== 'hanabi') return drop;
     return { kind: 'cat', tier: this.pool[0] as number, golden: false, hits: 0 };
   }
 
@@ -197,14 +209,26 @@ export class DropQueue {
     const goldenRoll = this.specialRng.next();
     const odds = this.odds;
     if (forceSmallest) return { kind: 'cat', tier: first, golden: false, hits: 0 };
-    // Before the stage's MAGNET_FREE_DROPS-th drop no magnet comes; the other chances stay.
+    // Early in a stage no magnet or hanabi comes; the other chances stay.
     const magnetChance = this.stageDrops >= MAGNET_FREE_DROPS ? odds.magnetChance : 0;
-    if (kindRoll < magnetChance) {
+    const hanabiChance = this.stageDrops >= HANABI_FREE_DROPS ? odds.hanabiChance : 0;
+    // One roll picks the kind: magnet, boulder, hanabi, joker, then cat, in that order.
+    let below = magnetChance;
+    if (kindRoll < below) {
       return { kind: 'magnet', tier: first + MAGNET_SIZE - 1, golden: false, hits: 0 };
     }
-    if (kindRoll < magnetChance + odds.boulderChance) {
+    below += odds.boulderChance;
+    if (kindRoll < below) {
       const boulderTier = first + odds.boulderSize - 1;
       return { kind: 'boulder', tier: boulderTier, golden: false, hits: odds.boulderHits };
+    }
+    below += hanabiChance;
+    if (kindRoll < below) {
+      return { kind: 'hanabi', tier: first + HANABI_SIZE - 1, golden: false, hits: 0 };
+    }
+    below += odds.jokerChance;
+    if (kindRoll < below) {
+      return { kind: 'joker', tier: first + JOKER_SIZE - 1, golden: false, hits: 0 };
     }
     return { kind: 'cat', tier, golden: goldenRoll < odds.goldenChance, hits: 0 };
   }
