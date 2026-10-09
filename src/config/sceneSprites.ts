@@ -95,10 +95,11 @@ export const NOREN_ART: NorenSprite = NOREN_SPRITE;
 export const NOREN_SPAN = 1.44;
 export const NOREN_HEM = 300;
 /**
- * Behind the noren the paw's arm reaches this far above the hem, then ends, so it never shows
- * through the slits higher up.
+ * Behind the noren the paw's arm reaches this far above the hem, then ends: it shows through the
+ * slits up to about the score card's bottom (the owner's mark, v0.23.2; 30 before, which left
+ * empty slits above the hem), and never reaches the holes under the rod.
  */
-export const NOREN_ARM_OVERLAP = 30;
+export const NOREN_ARM_OVERLAP = 240;
 
 /** World units per jar image pixel, across and down (the opening fills JAR_WIDTH × JAR_HEIGHT). */
 export const JAR_ART_SCALE_X = JAR_WIDTH / (JAR_ART.right - JAR_ART.left);
