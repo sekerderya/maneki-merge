@@ -211,8 +211,8 @@ test('combos and Jackpots show their banners', async ({ page }) => {
   await expect(page.getByTestId('combo')).toContainText('Combo ×');
   await expect(page.getByTestId('combo')).toBeHidden(WAIT);
 
-  // Two of the stage's last cat: a Jackpot of 5 × C(10) = 595 coins.
+  // Two of the stage's last cat: a Jackpot of 5 × C(9) = 350 coins.
   await recordBanners(page);
-  await mergePair(page, 10, 0);
-  await expect.poll(() => banners(page), WAIT).toEqual(['Jackpot!+595']);
+  await mergePair(page, 9, 0);
+  await expect.poll(() => banners(page), WAIT).toEqual(['Jackpot!+350']);
 });
