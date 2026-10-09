@@ -74,22 +74,64 @@ async function mergePair(page: Page, tier: number, x: number): Promise<void> {
   );
 }
 
-test('coins earned in a run survive a reload in the middle of it', async ({ page }) => {
+test('a reload in the middle of a run brings the run back, coins and all', async ({ page }) => {
   const errors = watchConsole(page);
   await startRun(page);
   await mergePair(page, 4, -150);
   await mergePair(page, 3, 150);
+  for (const x of [-200, 0, 200]) {
+    await expect.poll(async () => (await state(page)).canDrop, WAIT).toBe(true);
+    await page.evaluate((at) => window.__game?.dropAt(at), x);
+  }
   await expect.poll(async () => (await state(page)).wallet, WAIT).toBeGreaterThan(5);
-  const { wallet, runCoins } = await state(page);
-  expect(wallet).toBe(runCoins);
-  await expect(page.getByTestId('hud-coins')).toHaveText(String(runCoins));
+  const before = await state(page);
+  expect(before.wallet).toBe(before.runCoins);
+  await expect(page.getByTestId('hud-coins')).toHaveText(String(before.runCoins));
 
-  // Reload at once, well inside the write throttle: the page-hide flush keeps every coin.
+  // Reload at once, well inside the write throttle: the page-hide flush keeps every coin, and
+  // the run comes back paused on the game screen (GAME_DESIGN §11).
+  await page.reload();
+  await expect(page.getByTestId('pause-overlay')).toBeVisible();
+  const after = await state(page);
+  expect(after.screen).toBe('game');
+  expect(after.runState).toBe('paused');
+  expect(after.wallet).toBe(before.wallet);
+  expect(after.runCoins).toBe(before.runCoins);
+  expect(after.score).toBe(before.score);
+  expect(after.balls).toBeGreaterThanOrEqual(before.balls - 2);
+  expect(after.balls).toBeGreaterThan(0);
+  await expect(page.getByTestId('hud-coins')).toHaveText(String(before.runCoins));
+  expect(await storedWallet(page)).toBe(before.wallet);
+
+  // Resume plays on; quitting ends the run, and the next launch opens the menu.
+  await page.getByTestId('resume').click();
+  await expect.poll(async () => (await state(page)).ticks, WAIT).toBeGreaterThan(after.ticks);
+  await page.getByTestId('pause').click();
+  await page.getByTestId('quit').click();
+  await expect(page.getByTestId('play')).toBeVisible();
   await page.reload();
   await expect(page.getByTestId('play')).toBeVisible();
-  expect((await state(page)).wallet).toBe(wallet);
-  await expect(page.getByTestId('coin-balance')).toHaveText(String(wallet));
-  expect(await storedWallet(page)).toBe(wallet);
+  await expect(page.getByTestId('coin-balance')).toHaveText(
+    (await state(page)).wallet.toLocaleString('en-US'),
+  );
+  expect(errors).toEqual([]);
+});
+
+test('a run waiting at its pick comes back with the cards under the pause', async ({ page }) => {
+  const errors = watchConsole(page);
+  await startRun(page);
+  await page.evaluate(() => window.__game?.offerPicks());
+  await expect(page.getByTestId('pick-overlay')).toBeVisible();
+  const { pick } = await state(page);
+  expect(pick).not.toBeNull();
+
+  await page.reload();
+  await expect(page.getByTestId('pause-overlay')).toBeVisible();
+  expect((await state(page)).pick).toEqual(pick);
+  await page.getByTestId('resume').click();
+  await expect(page.getByTestId('pick-overlay')).toBeVisible();
+  expect(await page.evaluate(() => window.__game?.choose())).toBe(true);
+  await expect.poll(async () => (await state(page)).runState, WAIT).not.toBe('paused');
   expect(errors).toEqual([]);
 });
 

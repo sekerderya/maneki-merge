@@ -3,7 +3,9 @@ import { AudioEngine } from './audio';
 import { Profile } from './core/profile';
 import { anyAffordable } from './core/upgrades';
 import type { Scheduler } from './core/profile';
+import { RunSaveStore } from './core/runSave';
 import { SaveStore } from './core/save';
+import type { SaveData } from './core/save';
 import { parseUrlFlags } from './core/urlFlags';
 import { installDebugHooks } from './debug';
 import { createGame, loadArt } from './game';
@@ -60,7 +62,19 @@ async function boot(): Promise<void> {
   if (loaded.status === 'corrupt' || loaded.status === 'repaired' || loaded.status === 'future') {
     console.warn(`Save ${loaded.status}; a copy was kept.`, loaded.issues);
   }
-  const profile = new Profile(store, loaded.data, { scheduler: windowScheduler });
+  // The run in progress has its own key (GAME_DESIGN §11); it is saved with every profile write.
+  const runStore = new RunSaveStore(storage.adapter);
+  const savedRun = runStore.load();
+  if (savedRun.status === 'dropped') console.warn('The saved run was dropped.', savedRun.reason);
+  let onProfileWrite = (): void => {};
+  const profileStore = {
+    save: (data: SaveData): boolean => {
+      const ok = store.save(data);
+      onProfileWrite();
+      return ok;
+    },
+  };
+  const profile = new Profile(profileStore, loaded.data, { scheduler: windowScheduler });
   if (storage.persistent) void requestPersistentStorage();
 
   // Sound and haptics (GAME_DESIGN §12): audio unlocks on the first tap (iOS needs a gesture).
@@ -223,6 +237,7 @@ async function boot(): Promise<void> {
   };
   const session = new GameSession({
     profile,
+    runSave: runStore,
     game,
     hud: gameScreen.hud,
     hint: gameScreen.hint,
@@ -238,6 +253,7 @@ async function boot(): Promise<void> {
     seed: flags.seed,
     onProfileChange: showProfile,
   });
+  onProfileWrite = () => session.profileWritten();
   showProfile();
 
   const toggleSound = (): void => session.setSetting('sound', !session.settings.sound);
@@ -252,6 +268,12 @@ async function boot(): Promise<void> {
     },
     () => session.onBack(),
   );
+
+  // A run the app was closed in comes back paused where it stopped (GAME_DESIGN §11).
+  if (savedRun.save) {
+    screens.showGame();
+    if (!session.continueRun(savedRun.save)) screens.showMenu();
+  }
 
   const setRotateOverlay = createRotateOverlay(byId('overlays'));
   watchPhoneLandscape((landscape) => {

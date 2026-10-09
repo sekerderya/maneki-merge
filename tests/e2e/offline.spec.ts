@@ -26,9 +26,9 @@ test('reloads and starts a run while offline', async ({ page, context }) => {
   await page.getByTestId('play').click();
   await expect(page.getByTestId('play-area')).toBeVisible();
 
-  // A deep link with flags still opens offline (navigateFallback).
+  // A deep link with flags still opens offline (navigateFallback), back in the saved run.
   await page.goto('./?seed=7');
-  await expect(page.getByTestId('play')).toBeVisible();
+  await expect(page.getByTestId('resume')).toBeVisible();
 
   await context.setOffline(false);
 });

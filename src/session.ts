@@ -1,6 +1,7 @@
 /**
  * The play session (composition root, next to main.ts): starts runs, wires a run's events to
- * the HUD, overlays, banners, coin flights and hints, and owns pause, game over and quit. The
+ * the HUD, overlays, banners, coin flights and hints, and owns pause, game over and quit. It keeps
+ * the run in progress saved (GAME_DESIGN §11), so closing the app never ends it. The
  * run decides the rules, the profile keeps what lasts, the game scene draws it, the DOM shows
  * its state; this file only connects them.
  */
@@ -13,7 +14,7 @@ import {
   GOLDEN_COIN_FLIGHTS,
   JACKPOT_COIN_FLIGHTS,
 } from './config/view';
-import type { PickId } from './config/picks';
+import type { PickId, PickKind } from './config/picks';
 import type { UpgradeId } from './config/upgrades';
 import { EventBus } from './core/events';
 import type { GameEvents } from './core/events';
@@ -22,9 +23,10 @@ import type { FeedbackOutputs } from './feedback';
 import { pickCard } from './core/picks';
 import { newRecords } from './core/profile';
 import type { Profile, Records, Settings } from './core/profile';
+import type { RunSave } from './core/runSave';
 import { comboBonus } from './core/upgrades';
 import type { GameView } from './game';
-import { startProfileRun } from './run/profileRun';
+import { resumeProfileRun, startProfileRun } from './run/profileRun';
 import type { RunController } from './run/RunController';
 import type { BannerView } from './ui/banners/banner';
 import type { HintView } from './ui/banners/hint';
@@ -35,8 +37,15 @@ import type { PauseView } from './ui/overlays/pauseOverlay';
 import type { PickView } from './ui/overlays/pickOverlay';
 import type { GameBackResult } from './ui/screenManager';
 
+/** Where the run in progress is kept; `RunSaveStore` fits. */
+export interface RunSaveSink {
+  save(save: RunSave): boolean;
+  clear(): void;
+}
+
 export interface SessionParts {
   readonly profile: Profile;
+  readonly runSave: RunSaveSink;
   readonly game: GameView;
   readonly hud: HudView;
   readonly hint: HintView;
@@ -57,6 +66,7 @@ export interface SessionParts {
 export class GameSession {
   private current: RunController | null = null;
   private hintTimer = 0;
+  private runSavePending = false;
   /** The records as they were when the current run started, for the Game Over badges. */
   private recordsBefore: Records;
 
@@ -115,14 +125,67 @@ export class GameSession {
     this.parts.game.confirmTake();
   }
 
-  /** Writes everything pending (backgrounding, page hide, leaving a run). */
+  /** Writes everything pending, the run in progress too (backgrounding, page hide). */
   save(): boolean {
-    return this.parts.profile.flush();
+    const ok = this.parts.profile.flush();
+    this.saveRun();
+    return ok;
+  }
+
+  /**
+   * The profile was just written: the run is saved with it, so the wallet and the run's coins
+   * agree after a crash. The profile may write in the middle of a tick (a payout), so the run is
+   * saved once the tick is over.
+   */
+  profileWritten(): void {
+    if (this.runSavePending) return;
+    this.runSavePending = true;
+    queueMicrotask(() => {
+      this.runSavePending = false;
+      this.saveRun();
+    });
   }
 
   /** Starts a new run (PLAY, Play Again). */
   startRun(): void {
-    const { game, hud, hint, banners, coins, pause, gameOver, picks, profile } = this.parts;
+    this.reset();
+    const events = new EventBus<GameEvents>();
+    this.recordsBefore = this.parts.profile.records;
+    const run = startProfileRun(this.parts.profile, {
+      seed: this.parts.seed ?? freshSeed(),
+      events,
+    });
+    this.play(run, events);
+    this.saveRun();
+  }
+
+  /**
+   * Continues the run the app was closed in (GAME_DESIGN §11), paused where it stopped, with a
+   * waiting pick under the pause. Returns false (and forgets it) when this version can't.
+   */
+  continueRun(saved: RunSave): boolean {
+    this.reset();
+    const events = new EventBus<GameEvents>();
+    let run: RunController;
+    try {
+      run = resumeProfileRun(this.parts.profile, saved.run, { events });
+    } catch (error) {
+      console.warn('The saved run could not be restored.', error);
+      this.parts.runSave.clear();
+      return false;
+    }
+    this.recordsBefore = saved.recordsBefore;
+    this.play(run, events);
+    const offer = run.pickOffer;
+    if (offer) this.showPick(run, offer.kind, offer.options);
+    this.parts.banners.setPaused(true);
+    this.parts.pause.show();
+    return true;
+  }
+
+  /** Clears what the last run left on screen. */
+  private reset(): void {
+    const { hint, banners, coins, pause, gameOver, picks } = this.parts;
     pause.hide();
     gameOver.hide();
     picks.hide();
@@ -130,13 +193,20 @@ export class GameSession {
     banners.clear();
     coins.clear();
     window.clearTimeout(this.hintTimer);
+  }
 
-    this.recordsBefore = profile.records;
-    const events = new EventBus<GameEvents>();
-    const run = startProfileRun(profile, {
-      seed: this.parts.seed ?? freshSeed(),
-      events,
-    });
+  private showPick(run: RunController, kind: PickKind, options: readonly PickId[]): void {
+    this.parts.banners.combo(0, 0);
+    const levels = run.pickLevels;
+    this.parts.picks.show(
+      kind,
+      options.map((id) => pickCard(id, levels, run.stats.bigCatchLevel)),
+    );
+  }
+
+  /** Shows `run` and wires its events to the screen. */
+  private play(run: RunController, events: EventBus<GameEvents>): void {
+    const { game, hud, hint, banners, profile } = this.parts;
     this.current = run;
     connectRunFeedback(events, this.parts.feedback);
 
@@ -202,15 +272,8 @@ export class GameSession {
     });
 
     // A stage clear's picks (GAME_DESIGN §15.5): a trial, then a blessing.
-    events.on('pickOffered', (e) => {
-      banners.combo(0, 0);
-      const levels = run.pickLevels;
-      picks.show(
-        e.kind,
-        e.options.map((id) => pickCard(id, levels, run.stats.bigCatchLevel)),
-      );
-    });
-    events.on('pickChosen', () => picks.hide());
+    events.on('pickOffered', (e) => this.showPick(run, e.kind, e.options));
+    events.on('pickChosen', () => this.parts.picks.hide());
     events.on('paused', () => banners.setPaused(true));
     events.on('resumed', () => banners.setPaused(false));
     events.on('gameOver', (e) => this.onGameOver(e));
@@ -250,6 +313,15 @@ export class GameSession {
     game.show(run);
   }
 
+  /** Saves the run in progress, or forgets it once it is over. */
+  private saveRun(): void {
+    const run = this.current;
+    if (!run) return;
+    const snapshot = run.snapshot();
+    if (snapshot) this.parts.runSave.save({ run: snapshot, recordsBefore: this.recordsBefore });
+    else this.parts.runSave.clear();
+  }
+
   pauseRun(): void {
     const run = this.current;
     if (!run || this.parts.gameOver.visible) return;
@@ -273,6 +345,8 @@ export class GameSession {
     this.parts.coins.clear();
     this.parts.game.sleep();
     this.current = null;
+    // Quitting ends the run: it doesn't come back on the next launch.
+    this.parts.runSave.clear();
     this.save();
     this.parts.onProfileChange();
   }
@@ -296,6 +370,7 @@ export class GameSession {
     this.parts.banners.clear();
     this.parts.pause.hide();
     this.parts.picks.hide();
+    this.parts.runSave.clear();
     const records = newRecords(this.recordsBefore, e);
     this.parts.gameOver.show({
       score: e.score,

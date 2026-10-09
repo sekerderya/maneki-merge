@@ -262,6 +262,8 @@ export function installDebugHooks(ctx: DebugContext): GameHooks {
       session.run?.forceDangerTimeout();
     },
     resetSave() {
+      // The run ends first, so the page hide doesn't save it again.
+      session.endRun();
       session.profile.reset();
       window.location.reload();
     },
