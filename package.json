@@ -1,6 +1,6 @@
 {
   "name": "maneki-merge",
-  "version": "0.23.1",
+  "version": "0.23.2",
   "private": true,
   "description": "Lucky-cat merge game with a growing jar. Offline PWA for iOS and Android.",
   "type": "module",

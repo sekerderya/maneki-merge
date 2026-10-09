@@ -8,6 +8,15 @@ All notable changes to this project are documented here. Versions follow [Semant
 
 - Faster deploys: the E2E suite moved to its own workflow that runs beside the deploy without blocking it, in four parallel jobs (iPhone and Pixel profiles, two shards each). A failure is reported, not gated. Pushes that only change docs, Markdown or art sources run neither workflow.
 
+## [0.23.2] - 2026-10-09
+
+### Changed
+
+- The paw's arm reaches up behind the noren to about the score card's bottom, so it shows through the curtain's slits instead of empty gaps.
+- "SCORE:" and "COINS:" are 17 px (14 and 13 before), like the owner's reference; "SCORE:" is centred on the card's body.
+- The coins card is only as wide as its coins need (about 98 px on screen, 110 before), with the coin and the number centred.
+- The coins card and the NEXT bubble sit a little lower (8 and 12 px), with 14 px between them (8 before). The HUD's height, and so the jar's place, is unchanged.
+
 ## [0.23.1] - 2026-10-09
 
 ### Fixed
