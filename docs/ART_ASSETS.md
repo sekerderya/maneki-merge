@@ -69,6 +69,8 @@ narrower than their canvas: Claude crops the empty space.
 | 5b  | 2 scene | `scene/noren.jpg`                  | Noren curtain over the jar; the paw reaches out under it  | 3:2, 1536×1024    |
 | 6   | 3 HUD   | `hud/hud-kit.png`                  | Sheet: card, sunken well, pause button, NEXT bubble, …    | 1:1, 1024×1024    |
 | 7   | 3 HUD   | `hud/icons.png`                    | Sheet: coin, paw badge, sparkle, petals, puff             | 1:1, 1024×1024    |
+| 7a  | 3 HUD   | `hud/score-card.png`               | The whole score card, blank, copied from `ref-score.png`  | 3:2, 1536×1024    |
+| 7b  | 3 HUD   | `hud/next-bubble.png`              | The round NEXT bubble, empty, copied from `ref-next.png`  | 1:1, 1024×1024    |
 | 7b  | 4 menu  | `menu/mockup.jpg`                  | Whole main-menu screen, design reference (done)           | 2:3, 1024×1536    |
 | 7c  | 4 menu  | `menu/background.png`              | Menu garden, the mockup without UI, logo and cat          | 2:3, 1024×1536    |
 | 8   | 4 menu  | `menu/logo.png`                    | "Maneki Merge" logo (the only image with text)            | 3:2, 1536×1024    |
@@ -333,6 +335,73 @@ plain flat white background, each readable at 32 px:
 6. a small gold bell.
 Square 1:1.
 ```
+
+**Score card and NEXT bubble, copied from the owner's references** (v0.22 plan). The owner wants
+these two exactly like `hud/ref-score.png` and `hud/ref-next.png` (small crops of a reference
+screen). Earlier prompts got the shapes and the paw wrong, so these ask for an **edit of the
+attached crop** (remove the text and the cat, redraw it big and clean) instead of a new drawing,
+and spell out every colour (sampled from the crops). Attach only that one crop, not the style
+reference or the lineup, and don't paste the style block (it would pull the style away from the
+crop). Labels and numbers stay live text (Fredoka): "SCORE:" and the score, and "NEXT" (dark brown
+with a cream edge, over the bubble's top rim).
+
+Score card (`hud/score-card.png`, 3:2):
+
+```text
+Edit the attached image. It is a small crop of a mobile game's score card. Redraw this exact card,
+large and razor sharp, as a single game UI asset: same shapes, same proportions, same colours, same
+soft rounded edges, same outline weight. Do not restyle, simplify or "improve" anything.
+Remove all text: no "SCORE:" label and no number; the caramel well is empty. Remove the background
+and the sakura branch: the card alone, centred, on a plain flat solid white background (#FFFFFF),
+no shadow, nothing cropped.
+Keep exactly:
+- The card: a wide rounded rectangle, about 2.1 times as wide as tall, corners rounded with a
+  radius of about a quarter of its height. Outline: dark chocolate brown (#5B2517), even, about
+  3% of the card's height. Just inside the outline along the top, a thin pure white highlight line.
+  Fill: flat warm cream (#FBE7CC). Along the bottom, a raised base like a soft button: a band of
+  light tan (#EBBD8E) about 6% of the height, with a thin pale cream line (#FFEFD4) above it.
+- The well: a long pill-shaped sunken well in flat caramel (#D4986D), in the lower 55% of the card,
+  its right end fully round and close to the card's right edge, with a thin pale cream lip
+  (#F7DDBC) under it. The space above the well is plain cream (the label goes there).
+- The paw, exactly like the crop: a white cat paw (fur #FFF9F4 with very soft cream shading,
+  outlined in the same dark brown) raised like a lucky cat's beckoning paw, palm facing the viewer,
+  tilted about 15 degrees to the left. It sits at the card's left end and sticks out past the card's
+  left edge by about a tenth of the card's width; its top stays below the card's top edge. Its
+  forearm runs down to the card's bottom edge and covers the left end of the well. Pink pads: four
+  oval toe beans in an arc and one large rounded triangular main pad, fill #FDB3B2 shading to
+  #F9A6A7, each outlined in rose brown (#C37D7B), not dark brown, with a tiny white shine on the
+  main pad.
+- The middle of the card (between the paw and the well's round right end) is plain, so the game
+  can stretch it sideways.
+Landscape 3:2.
+```
+
+NEXT bubble (`hud/next-bubble.png`, 1:1):
+
+```text
+Edit the attached image. It is a small crop of a mobile game's "next item" glass bubble. Redraw
+this exact bubble, large and razor sharp, as a single game UI asset: same colours, same glassy
+look, same outline weight, same highlights. Do not restyle, simplify or "improve" anything.
+Change only these things: remove the "NEXT" text, remove the black cat inside (the bubble is
+empty), and remove the speech-bubble tail at the lower left: the bubble is a perfect circle all
+the way round, its outline closed and unbroken at the top too. Remove the background and the
+pieces of other elements at the edges: the bubble alone, centred, on a plain flat solid white
+background (#FFFFFF), no shadow, nothing cropped.
+Keep exactly:
+- Outline: dark chocolate brown (#531C0A), even, about 2.5% of the bubble's width.
+- Just inside it, a cream rim (#F8E9D7 to #FFF8E6), about 3% of the width, a little thicker and
+  brighter (#FFFDE3) along the bottom, like the edge of a glass ball.
+- The glass: a smooth vertical gradient from pale mint (#CDE8D6) at the top, through pale cream
+  (#DDE0CC) in the middle, to soft pink (#F2C2BE) at the bottom.
+- Highlights: a long curved white glossy streak inside the rim at the upper left, a small white
+  dot just under it, a small white oval shine at the lower right, and two or three tiny white
+  sparkle dots.
+Square 1:1.
+```
+
+Checks for these two: no text anywhere; the paw sticks out of the card's left edge and its pads
+have rose-brown (not dark) outlines; the well is empty and pill-shaped; the bubble is a closed
+circle with no tail; colours side by side with the crops look the same.
 
 ### 4.5 Phase 4: menu
 
