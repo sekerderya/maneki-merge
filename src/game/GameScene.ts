@@ -10,8 +10,6 @@
  */
 import Phaser from 'phaser';
 import {
-  AIM_LINE_ALPHA,
-  AIM_LINE_COLOR,
   BOULDER_CHIPS,
   BOULDER_SPARKS,
   COUNTDOWN_FILL,
@@ -23,10 +21,7 @@ import { PAW_GRIP } from '../config/pawArt';
 import { NOREN_ARM_OVERLAP, NOREN_HEM } from '../config/sceneSprites';
 import { MAGNET_TAKE_MS } from '../config/timings';
 import {
-  AIM_DOT_RADIUS,
   AIM_DOT_SPACING,
-  AIM_GHOST_ALPHA,
-  AIM_LINE_WIDTH,
   BOULDER_BREAK_CHIPS,
   BOULDER_HIT_SPARKS,
   BURST_SPARKS,
@@ -50,6 +45,7 @@ import { clampDropX, dropStartY, jarGeometry, MAX_DROP_RADIUS } from '../physics
 import { reducedMotion } from '../platform/motion';
 import type { RunController } from '../run/RunController';
 import { landingY } from './aim';
+import { AimGuide } from './AimGuide';
 import { BallRenderer, glowAlpha } from './BallRenderer';
 import type { CatSprite } from './BallRenderer';
 import { fitCamera, worldToView } from './cameraFit';
@@ -115,7 +111,7 @@ export class GameScene extends Phaser.Scene {
   private fx!: MergeFx;
   private pops!: PopFx;
   private sparks!: SparkFx;
-  private aimLine!: Phaser.GameObjects.Graphics;
+  private aimGuide!: AimGuide;
   private selectRing!: Phaser.GameObjects.Graphics;
   private dropperGlow!: Phaser.GameObjects.Image;
   private dropperBody!: Phaser.GameObjects.Image;
@@ -186,14 +182,13 @@ export class GameScene extends Phaser.Scene {
     const art = this.skinId === 'art' ? this.art : null;
     this.jar = new JarView(this, jarBack, jarFront, this.add.graphics(), art);
 
-    this.aimLine = this.add.graphics();
-    aim.add(this.aimLine);
+    this.aimGuide = new AimGuide(this, aim);
     this.balls = new BallRenderer(this, this.skin, this.special, glows, bodies, numbers);
 
-    const first = this.skin.body(1).key;
+    const first = this.skin.body(1);
     this.dropperGlow = this.add.image(0, 0, this.special.glow().key).setVisible(false);
-    this.dropperBody = this.add.image(0, 0, first).setVisible(false);
-    this.dropperNumber = this.add.image(0, 0, first).setVisible(false);
+    this.dropperBody = this.add.image(0, 0, first.key, first.frame).setVisible(false);
+    this.dropperNumber = this.add.image(0, 0, first.key, first.frame).setVisible(false);
     dropper.add([this.dropperGlow, this.dropperBody, this.dropperNumber]);
     // The paw holds the cat by the head, so it is drawn over it.
     this.paw = new PawView(this, dropper, art);
@@ -228,6 +223,7 @@ export class GameScene extends Phaser.Scene {
     this.renderer.on(Phaser.Renderer.Events.RESTORE_WEBGL, () => {
       this.skin.restore();
       this.special.restore();
+      this.aimGuide.restore();
       this.jar.restore();
       this.paw.restore();
     });
@@ -481,7 +477,7 @@ export class GameScene extends Phaser.Scene {
     if (item.kind === 'magnet') this.pawX = 0;
     else if (run.state === 'playing') this.pawX = clampDropX(this.aimX, radius, geo);
     const x = this.pawX;
-    this.aimLine.clear();
+    this.aimGuide.hide();
 
     // The paw hangs over the jar whenever the jar is not growing; it keeps its place while the
     // next cat comes, and lifts a little when it lets go of one. With the raster art the arm
@@ -507,7 +503,7 @@ export class GameScene extends Phaser.Scene {
     const pop = backOut(t) * (shown / radius);
     const body = this.dropFrame(item, run.stage);
     this.dropperBody
-      .setTexture(body.key)
+      .setTexture(body.key, body.frame)
       .setPosition(x, geo.dropY)
       .setRotation(0)
       .setScale(body.unitsPerPixel * pop);
@@ -533,13 +529,7 @@ export class GameScene extends Phaser.Scene {
     // faint ghost of the ball there, at its true size.
     const fromY = dropStartY(radius, geo);
     const land = landingY(x, radius, fromY, run.balls);
-    const g = this.aimLine;
-    g.fillStyle(AIM_LINE_COLOR, AIM_LINE_ALPHA);
-    for (let y = geo.dropY + shown + AIM_DOT_SPACING; y < land + radius; y += AIM_DOT_SPACING) {
-      g.fillCircle(x, y, AIM_DOT_RADIUS);
-    }
-    g.lineStyle(AIM_LINE_WIDTH, AIM_LINE_COLOR, AIM_LINE_ALPHA * AIM_GHOST_ALPHA);
-    g.strokeCircle(x, land, radius);
+    this.aimGuide.draw(x, geo.dropY + shown + AIM_DOT_SPACING, land + radius, land, radius);
   }
 
   /**

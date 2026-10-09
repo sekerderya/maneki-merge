@@ -3,7 +3,9 @@
  * The art (config/jarArt.ts) is drawn once into textures, behind the cats and in front of them,
  * cut into pieces that only cover drawn parts (JAR_BACK_PIECES, JAR_FRONT_PIECES). They scale
  * with the jar while it grows: every stage has the same jar shape.
- * The rim layer redraws the dashed danger line and the post caps, which flash red in danger.
+ * The dashed danger line across the opening and the post caps flash red in danger. The dashes and
+ * the glass's shine strips are images, not Graphics: Phaser re-traces every Graphics path each
+ * frame, and the strips' round ends alone are 1200 points (TECH_SPEC §13).
  *
  * With the raster art (config/sceneSprites.ts) the pieces come from the owner's jar instead: its
  * inner layer (the glass's edge and the rail) behind the cats, its bamboo frame in front. The art's
@@ -32,7 +34,13 @@ import { DANGER_RED } from '../config/skin';
 import { JAR_ART, JAR_ART_SCALE_X, JAR_ART_SCALE_Y, jarArtToWorld } from '../config/sceneSprites';
 import type { PxRect } from '../config/sceneSprites';
 import { JAR_HEIGHT, JAR_WIDTH } from '../config/stages';
-import { JAR_PX_PER_UNIT, JAR_RIM_DASH, JAR_RIM_INSET, JAR_RIM_WIDTH } from '../config/view';
+import {
+  CAT_PX_PER_UNIT,
+  JAR_PX_PER_UNIT,
+  JAR_RIM_DASH,
+  JAR_RIM_INSET,
+  JAR_RIM_WIDTH,
+} from '../config/view';
 import { hexToNumber } from '../core/color';
 import { imageCanvas } from './artImages';
 import type { ArtImages } from './artImages';
@@ -40,6 +48,17 @@ import { addArtAtlas } from './paint';
 
 const INK = hexToNumber(JAR_INK);
 const KEY = 'jar';
+const SHINE_KEY = 'jar-shine';
+/** The shine strips' texture: like the cats', never upscaled on a phone or tablet. */
+const SHINE_PX_PER_UNIT = CAT_PX_PER_UNIT;
+/** Round each strip in its texture, so its anti-aliased edge isn't cut. */
+const SHINE_PAD_PX = 2;
+/** Phaser's plain white texture: the rim's dashes are tinted rectangles of it. */
+const WHITE_KEY = '__WHITE';
+/** The dashes start JAR_RIM_INSET in from each wall, JAR_RIM_DASH long with gaps as long. */
+const RIM_FROM = -JAR_WIDTH / 2 + JAR_RIM_INSET;
+const RIM_TO = JAR_WIDTH / 2 - JAR_RIM_INSET;
+const RIM_DASHES = Math.ceil((RIM_TO - RIM_FROM) / (2 * JAR_RIM_DASH));
 
 interface Piece {
   /** Its top-left corner in world units of the stage jar. */
@@ -59,9 +78,9 @@ export class JarView {
   private readonly keys: string[] = [];
   /** The raster art draws its own caps, which don't flash. */
   private readonly caps: boolean;
-  /** The glass behind the cats and its shine in front of them: plain vector shapes. */
+  /** The glass behind the cats: a plain vector shape (the DOM draws it unless the jar grows). */
   private readonly glass: Phaser.GameObjects.Graphics;
-  private readonly shine: Phaser.GameObjects.Graphics;
+  private readonly dashes: Phaser.GameObjects.Image[] = [];
 
   constructor(
     scene: Phaser.Scene,
@@ -72,15 +91,19 @@ export class JarView {
   ) {
     this.textures = scene.textures;
     this.glass = scene.add.graphics();
-    this.shine = scene.add.graphics();
     backLayer.add(this.glass);
-    frontLayer.add(this.shine);
+    this.addShine(scene, frontLayer);
     this.caps = !art;
     if (art) {
       this.addArtPieces(scene, backLayer, 'jar-art-back', art.jarBack, JAR_ART.backPieces);
       this.addArtPieces(scene, frontLayer, 'jar-art-front', art.jarFront, JAR_ART.frontPieces);
     } else {
       this.addVectorPieces(scene, backLayer, frontLayer);
+    }
+    for (let i = 0; i < RIM_DASHES; i++) {
+      const dash = scene.add.image(0, 0, WHITE_KEY).setOrigin(0, 0.5);
+      frontLayer.add(dash);
+      this.dashes.push(dash);
     }
     frontLayer.add(rim);
   }
@@ -108,6 +131,34 @@ export class JarView {
         this.pieces.push({ left: box.left, top: box.top, scaleX: scale, scaleY: scale, image });
       }
     }
+  }
+
+  /**
+   * The glass's shine in front of the cats (behind the frame): a frame per strip of one texture,
+   * white, at the strip's alpha.
+   */
+  private addShine(scene: Phaser.Scene, layer: Phaser.GameObjects.Layer): void {
+    if (this.textures.exists(SHINE_KEY)) this.textures.remove(SHINE_KEY);
+    const texture = this.textures.addCanvas(SHINE_KEY, shineCanvas());
+    if (!texture) return;
+    this.keys.push(SHINE_KEY);
+    const pad = SHINE_PAD_PX / SHINE_PX_PER_UNIT;
+    const scale = 1 / SHINE_PX_PER_UNIT;
+    shineFrames().forEach(({ x, y, w, h }, i) => {
+      texture.add(String(i), 0, x, y, w, h);
+      const shine = JAR_SHINES[i];
+      if (!shine) return;
+      const image = scene.add.image(0, 0, SHINE_KEY, String(i)).setOrigin(0, 0);
+      image.setAlpha(shine.alpha);
+      layer.add(image);
+      this.pieces.push({
+        left: shine.x - pad,
+        top: shine.y - pad,
+        scaleX: scale,
+        scaleY: scale,
+        image,
+      });
+    });
   }
 
   /** One layer of the raster jar: a texture of the image, a frame per piece. */
@@ -163,7 +214,7 @@ export class JarView {
       (this.textures.get(key) as Phaser.Textures.CanvasTexture).refresh();
   }
 
-  /** The glass (a translucent wash with a thin line inside its edge) and its shine, at scale s. */
+  /** The glass (a translucent wash with a thin line inside its edge), at scale s. */
   private drawGlass(s: number): void {
     const half = (JAR_WIDTH / 2) * s;
     const h = JAR_HEIGHT * s;
@@ -173,18 +224,11 @@ export class JarView {
     const i = JAR_GLASS.lineInset * s;
     g.lineStyle(JAR_GLASS.lineWidth * s, 0xffffff, JAR_GLASS.lineAlpha);
     g.strokeRect(-half + i, -h, 2 * (half - i), h - i);
-
-    const shine = this.shine.clear();
-    for (const { x, y, w, h: height, alpha } of JAR_SHINES) {
-      shine.fillStyle(0xffffff, alpha);
-      shine.fillRoundedRect(x * s, y * s, w * s, height * s, (w / 2) * s);
-    }
   }
 
   private drawRim(danger: boolean | null): void {
     this.flash = danger;
     const s = this.width / JAR_WIDTH;
-    const half = JAR_WIDTH / 2;
     const rimY = -JAR_HEIGHT * s;
     const g = this.rim.clear();
 
@@ -199,12 +243,58 @@ export class JarView {
     }
 
     // The dashed danger line across the opening.
-    const dash = JAR_RIM_DASH * s;
     const color = danger === null ? JAR_RIM_LINE : DANGER_RED;
     const alpha = danger ? 1 : danger === false ? 0.6 : JAR_RIM_LINE_ALPHA;
-    g.lineStyle(JAR_RIM_WIDTH * s * (danger === null ? 1 : 1.4), color, alpha);
-    const from = (-half + JAR_RIM_INSET) * s;
-    const to = (half - JAR_RIM_INSET) * s;
-    for (let x = from; x < to; x += 2 * dash) g.lineBetween(x, rimY, Math.min(x + dash, to), rimY);
+    const width = JAR_RIM_WIDTH * s * (danger === null ? 1 : 1.4);
+    this.dashes.forEach((dash, i) => {
+      const from = RIM_FROM + 2 * JAR_RIM_DASH * i;
+      const to = Math.min(from + JAR_RIM_DASH, RIM_TO);
+      dash
+        .setPosition(from * s, rimY)
+        .setDisplaySize((to - from) * s, width)
+        .setTint(color)
+        .setAlpha(alpha);
+    });
   }
+}
+
+/** Where each shine strip sits in the shine texture, in texture pixels (padding included). */
+function shineFrames(): { x: number; y: number; w: number; h: number }[] {
+  let x = 0;
+  return JAR_SHINES.map(({ w, h }) => {
+    const frame = {
+      x,
+      y: 0,
+      w: Math.ceil(w * SHINE_PX_PER_UNIT + 2 * SHINE_PAD_PX),
+      h: Math.ceil(h * SHINE_PX_PER_UNIT + 2 * SHINE_PAD_PX),
+    };
+    x += frame.w;
+    return frame;
+  });
+}
+
+/** The shine strips side by side, white: rounded at both ends (radius half their width). */
+function shineCanvas(): HTMLCanvasElement {
+  const frames = shineFrames();
+  const canvas = document.createElement('canvas');
+  canvas.width = frames.reduce((sum, f) => sum + f.w, 0);
+  canvas.height = Math.max(...frames.map((f) => f.h));
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return canvas;
+  ctx.fillStyle = '#ffffff';
+  JAR_SHINES.forEach(({ w, h }, i) => {
+    const frame = frames[i];
+    if (!frame) return;
+    const width = w * SHINE_PX_PER_UNIT;
+    const height = h * SHINE_PX_PER_UNIT;
+    const r = width / 2;
+    const left = frame.x + SHINE_PAD_PX;
+    const top = SHINE_PAD_PX;
+    ctx.beginPath();
+    ctx.arc(left + r, top + r, r, Math.PI, 0);
+    ctx.arc(left + r, top + height - r, r, 0, Math.PI);
+    ctx.closePath();
+    ctx.fill();
+  });
+  return canvas;
 }

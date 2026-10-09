@@ -13,6 +13,8 @@
  */
 export interface SkinFrame {
   readonly key: string;
+  /** The frame within the texture (an atlas), or undefined for the whole texture. */
+  readonly frame?: string;
   /**
    * Includes the hit-radius ratio: a frame whose visible circle is smaller than its texture
    * (padding, outline, art that doesn't touch the edges) gets a larger value.

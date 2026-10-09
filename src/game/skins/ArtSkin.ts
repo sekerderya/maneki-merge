@@ -1,8 +1,13 @@
 /**
  * The cat art skin, the default (GAME_DESIGN §13.1): the owner's raster cats (config/catSprites.ts)
- * scaled into one canvas texture per size at CAT_PX_PER_UNIT texture pixels per world unit, so the
- * body circle lands exactly on the physics radius. A thick dark outline goes round each cat (its
- * outer edge is the physics radius). The art shows no numbers: a cat's look tells its size. Every stage holds the same ten sizes, so the bodies are drawn once and shared by all stages.
+ * scaled to CAT_PX_PER_UNIT texture pixels per world unit, so the body circle lands exactly on the
+ * physics radius. A thick dark outline goes round each cat (its outer edge is the physics radius).
+ * The art shows no numbers: a cat's look tells its size. Every stage holds the same ten sizes, so
+ * the bodies are drawn once and shared by all stages.
+ *
+ * All ten sizes share one texture (an atlas, a frame per size), so the jar's cats draw in one batch
+ * whatever their order. Phaser binds a single texture per batch on phones, and one texture per
+ * size cost a draw call per cat there (TECH_SPEC §13).
  *
  * The images are loaded at boot (game/artImages.ts), before the game is created.
  */
@@ -19,6 +24,7 @@ import { SIZE_COUNT, sizeRadius } from '../../config/tiers';
 import { CAT_PX_PER_UNIT } from '../../config/view';
 import type { BallSkin, SkinFrame } from './BallSkin';
 import { context } from './canvas';
+import { packRows } from './packRows';
 
 const UNITS_PER_PIXEL = 1 / CAT_PX_PER_UNIT;
 
@@ -38,6 +44,11 @@ function spriteScale(size: number, sprite: CatSprite): number {
 
 /** Around the outline, so its anti-aliased edge isn't cut. */
 const PAD_PX = 2;
+const ATLAS_KEY = 'cat-art';
+/** The atlas's rows are at most this wide: every phone's GPU takes 2048-pixel textures. */
+const ATLAS_MAX_WIDTH = 2048;
+/** Between frames, so filtering never reaches a neighbour. */
+const ATLAS_GAP_PX = 2;
 /** The outline is the cat's silhouette stamped this many times round a circle. */
 const OUTLINE_STEPS = 24;
 
@@ -73,48 +84,67 @@ export class ArtSkin implements BallSkin {
     return catSprite(tier).color;
   }
 
-  prepare(_stage: number, budgetMs: number): boolean {
-    const start = performance.now();
-    let drew = false;
-    for (let size = 1; size <= SIZE_COUNT; size++) {
-      if (this.bodies.has(size)) continue;
-      if (drew && performance.now() - start >= budgetMs) return false;
-      this.bodyFrame(size);
-      drew = true;
-    }
+  /** The atlas holds every stage's cats: it is drawn once, whatever the budget. */
+  prepare(): boolean {
+    if (this.bodies.size === 0) this.drawAtlas();
     return true;
   }
 
   setStage(stage: number): void {
     if (stage === this.active) return;
-    this.prepare(stage, Infinity);
+    this.prepare();
     this.active = stage;
     this.rev++;
   }
 
   restore(): void {
-    for (const { key } of this.bodies.values()) {
-      (this.textures.get(key) as Phaser.Textures.CanvasTexture).refresh();
+    if (this.textures.exists(ATLAS_KEY)) {
+      (this.textures.get(ATLAS_KEY) as Phaser.Textures.CanvasTexture).refresh();
     }
   }
 
   private bodyFrame(size: number): SkinFrame {
-    const existing = this.bodies.get(size);
-    if (existing) return existing;
-    // Sizes repeat their looks, so size 10 wears size 1's.
-    const sprite = catSprite(size);
-    const source = this.images[CAT_SPRITES.indexOf(sprite)];
-    if (!source) throw new Error(`Cat art not loaded: ${sprite.file}`);
-    const body = document.createElement('canvas');
-    drawScaled(body, source, Math.ceil(sprite.side * spriteScale(size, sprite)));
-    const canvas = document.createElement('canvas');
-    drawOutlined(canvas, body, outlinePx(size));
-    const key = `cat-art-b${size}`;
-    if (this.textures.exists(key)) this.textures.remove(key);
-    this.textures.addCanvas(key, canvas);
-    const frame = { key, unitsPerPixel: UNITS_PER_PIXEL };
-    this.bodies.set(size, frame);
+    if (this.bodies.size === 0) this.drawAtlas();
+    const frame = this.bodies.get(size);
+    if (!frame) throw new Error(`No cat art for size ${size}`);
     return frame;
+  }
+
+  /** Draws every size's cat and packs them into the atlas, biggest first, in rows. */
+  private drawAtlas(): void {
+    const cats: { size: number; canvas: HTMLCanvasElement }[] = [];
+    for (let size = 1; size <= SIZE_COUNT; size++) {
+      // Sizes repeat their looks, so size 10 wears size 1's.
+      const sprite = catSprite(size);
+      const source = this.images[CAT_SPRITES.indexOf(sprite)];
+      if (!source) throw new Error(`Cat art not loaded: ${sprite.file}`);
+      const body = document.createElement('canvas');
+      drawScaled(body, source, Math.ceil(sprite.side * spriteScale(size, sprite)));
+      const canvas = document.createElement('canvas');
+      drawOutlined(canvas, body, outlinePx(size));
+      cats.push({ size, canvas });
+    }
+    const places = packRows(
+      cats.map(({ canvas }) => ({ w: canvas.width, h: canvas.height })),
+      ATLAS_MAX_WIDTH,
+      ATLAS_GAP_PX,
+    );
+    const atlas = document.createElement('canvas');
+    const ctx = context(atlas, places.width, places.height);
+    cats.forEach(({ canvas }, i) => {
+      const at = places.at[i];
+      if (at) ctx.drawImage(canvas, at.x, at.y);
+    });
+    if (this.textures.exists(ATLAS_KEY)) this.textures.remove(ATLAS_KEY);
+    const texture = this.textures.addCanvas(ATLAS_KEY, atlas);
+    if (!texture) throw new Error('Cat atlas not created');
+    cats.forEach(({ size, canvas }, i) => {
+      const at = places.at[i];
+      if (!at) return;
+      const frame = `b${size}`;
+      texture.add(frame, 0, at.x, at.y, canvas.width, canvas.height);
+      this.bodies.set(size, { key: ATLAS_KEY, frame, unitsPerPixel: UNITS_PER_PIXEL });
+    });
   }
 }
 

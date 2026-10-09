@@ -82,7 +82,8 @@ export class BallRenderer {
       if (ball.kind === 'boulder' && sprite.hits !== ball.hitsLeft) {
         // It lost a band.
         sprite.hits = ball.hitsLeft;
-        sprite.body.setTexture(this.frameOf(ball).key);
+        const body = this.frameOf(ball);
+        sprite.body.setTexture(body.key, body.frame);
       }
       const grow = (ball.radius / ball.targetRadius) * this.bumpAt(ball.id, nowMs);
       const body = this.frameOf(ball);
@@ -169,7 +170,8 @@ export class BallRenderer {
   }
 
   private applyTextures(sprite: CatSprite, ball: BallView): void {
-    sprite.body.setTexture(this.frameOf(ball).key);
+    const body = this.frameOf(ball);
+    sprite.body.setTexture(body.key, body.frame);
     const number = ball.kind === 'cat' ? this.skin.number(sprite.tier) : null;
     sprite.number.setVisible(number !== null);
     if (number) sprite.number.setTexture(number.key);
