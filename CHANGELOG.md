@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.21.1] - 2026-10-09
+
+The paw holds the cat higher, clear of the jar's top rail.
+
+### Changed
+
+- The dropper band above the rim is 0.4 of the jar's width (0.2 before), so even the biggest cat in the paw (size 4, or a magnet's catch) hangs just above the bamboo rail instead of in front of it. A unit test checks the gap against the rail measured from the jar art (`npm run art` now records the rail's top edge).
+- Every drop starts 60 world units higher: a cat reaches the empty floor in 1.03–1.04 s instead of 1 s. Gravity is unchanged.
+- The camera counts the taller band against the space above the dropper, so on a phone the jar stays where it was (on a 390 × 844 iPhone the rim is still at 304 px and the floor at 713 px).
+
+### Planned
+
+- A noren curtain across the top of the game screen, the paw reaching out from under it, so the arm no longer fills a tall phone's empty height. The owner picked it from a mockup (`art-source/scene/noren-mockup.webp`); its asset prompt is in docs/ART_ASSETS.md §4.3.
+
 ## [0.21.0] - 2026-10-08
 
 Special balls, trials and blessings (GAME_DESIGN §15): later stages get harder and every run gets its own build.
