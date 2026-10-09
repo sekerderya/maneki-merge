@@ -336,7 +336,7 @@ plain flat white background, each readable at 32 px:
 Square 1:1.
 ```
 
-**Score card and NEXT bubble, copied from the owner's references** (v0.22 plan). The owner wants
+**Score card and NEXT bubble, copied from the owner's references** (**done (2026-10-09), in the game in v0.23**; `hud/score-card.jpg` and `hud/next-bubble.jpg`, which replaced `hud/next.png`). The owner wants
 these two exactly like `hud/ref-score.png` and `hud/ref-next.png` (small crops of a reference
 screen). Earlier prompts got the shapes and the paw wrong, so these ask for an **edit of the
 attached crop** (remove the text and the cat, redraw it big and clean) instead of a new drawing,

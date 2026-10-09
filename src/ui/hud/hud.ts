@@ -1,8 +1,8 @@
 import {
-  HUD_BADGE_ART,
   HUD_COIN_ART,
   HUD_NEXT_ART,
   HUD_PAUSE_ART,
+  HUD_SCORE_CARD_ART,
   HUD_SPRITE_DIR,
 } from '../../config/hudSprites';
 import type { HudSprite } from '../../config/hudSprites';
@@ -11,6 +11,7 @@ import { formatNumber } from '../../core/format';
 import { catIcon, paintDropIcon } from '../catIcon';
 import { button, el } from '../dom';
 import { ICON_COIN, ICON_PAUSE, NEXT_BUBBLE_BACK, NEXT_BUBBLE_SHINE } from '../icons';
+import { scoreCardLayout } from './scoreCard';
 
 export interface HudActions {
   onPause(): void;
@@ -54,15 +55,31 @@ function setArtProperties(root: HTMLElement): void {
   set('--hud-next-ratio', `${HUD_NEXT_ART.width} / ${HUD_NEXT_ART.height}`);
   set('--hud-next-cy', `${HUD_NEXT_ART.cy * 100}%`);
   set('--hud-next-tag', `${HUD_NEXT_ART.tagY * 100}%`);
+  const card = scoreCardLayout();
+  const art = HUD_SCORE_CARD_ART;
+  set('--hud-score-art', artUrl(art));
+  set('--hud-score-slice', `0 ${art.sliceRight} 0 ${art.sliceLeft} fill`);
+  set('--hud-score-slice-left', `${card.sliceLeft}px`);
+  set('--hud-score-slice-right', `${card.sliceRight}px`);
+  set('--hud-score-height', `${card.height}px`);
+  set('--hud-score-min-width', `${card.minWidth}px`);
+  set('--hud-score-label-top', `${card.labelTop}px`);
+  set('--hud-score-label-height', `${card.labelHeight}px`);
+  set('--hud-score-label-left', `${card.labelLeft}px`);
+  set('--hud-score-label-right', `${card.labelRight}px`);
+  set('--hud-score-well-top', `${card.wellTop}px`);
+  set('--hud-score-well-height', `${card.wellHeight}px`);
+  set('--hud-score-margin-left', `${card.scoreMarginLeft}px`);
+  set('--hud-score-margin-right', `${card.scoreMarginRight}px`);
 }
 
 /**
  * In-game HUD (GAME_DESIGN §2.3), floating over the top of the play area: on the left the score
  * card (the stage card left in v0.18, until it has art); on the right the pink pause button, the
  * coins card and the next cat in a round glass bubble under it. Only the pause button takes
- * touches; the rest lets them through to the game. With `art` the bubble, the button, the coin and
- * the paw badge are the owner's images (config/hudSprites.ts); the cards are CSS drawn after the
- * owner's reference image.
+ * touches; the rest lets them through to the game. With `art` the score card, the bubble, the
+ * button and the coin are the owner's images (config/hudSprites.ts); the coins card is CSS drawn
+ * after the owner's reference image.
  */
 export function createHud(root: HTMLElement, actions: HudActions, art = false): HudView {
   root.replaceChildren();
@@ -73,9 +90,8 @@ export function createHud(root: HTMLElement, actions: HudActions, art = false): 
   const scoreCard = el('div', 'hud-card hud-score-card');
   const score = el('span', 'hud-score', '0');
   score.dataset['testid'] = 'hud-score';
+  // "SCORE:" centred on top, the score in a well (with `art`, the card's image: ui/hud/scoreCard.ts).
   scoreCard.append(el('span', 'hud-label', 'Score'), score);
-  // "SCORE:" centred on top, the score in a well, the paw badge over the card's left edge.
-  if (art) scoreCard.append(artImage(HUD_BADGE_ART, 'hud-badge'));
 
   const left = el('div', 'hud-left');
   left.append(scoreCard);
