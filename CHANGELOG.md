@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.23.4] - 2026-10-09
+
+### Changed
+
+- The jar's bottom corners are almost square: the owner's new bamboo jar bends into its bottom with tight elbows instead of the round U, and the physics jar has square corners.
+- The corner physics is gone with the curves: no more rounded floor and no soft "first landing" on a curve. A cat dropped against a wall lands in the corner and stays there.
+- The floor still slows a lone cat like a rug and keeps it rolling (without it, a pushed cat would glide for about 7 s).
+
+### Known issues
+
+- The art's inner bends are not perfectly square, so a small cat deep in a corner overlaps the bamboo's bend by a few pixels.
+
 ## [0.23.3] - 2026-10-09
 
 ### Changed

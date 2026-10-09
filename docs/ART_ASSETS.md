@@ -241,39 +241,32 @@ petals in the air. Soft, bright, cosy.
 
 ```text
 An empty tall glass jar in a bamboo frame, game prop, strictly front orthographic view, perfectly
-left-right symmetric, like the jar in the reference image. Shape: a rectangle — two straight
-vertical bamboo posts and a straight bamboo pole across the bottom, meeting in sharp square corners
-tied with brown twine; the posts continue a short way below the bottom pole as two short legs. A horizontal bamboo rail across the top, tied to the
+left-right symmetric, like the jar in the reference image. Shape: a U — two straight vertical
+bamboo posts, rounded bottom corners (corner radius about one fifth of the width), a straight
+bamboo bottom, two short bamboo feet under it. A horizontal bamboo rail across the top, tied to the
 posts with brown twine; the posts continue a little above the rail and end in cut bamboo caps.
 Inner opening proportions: width : height = 1 : 1.45. The inside is completely empty; the glass is
 almost invisible (only a faint highlight streak on the left). The jar fills most of the canvas
 height. Plain flat solid white background, no rug, no floor, no cast shadow. Portrait 2:3.
 ```
 
-**Square corners** (v0.23.4): the owner wanted the same jar with square bottom corners (the cats'
-corner physics went with the curves). Edit the current `scene/jar.jpg`: attach it with the
-reference image and the lineup sheet, style block, then:
+**Tighter corners** (done 2026-10-09, in the game in v0.23.4): the owner wanted the same jar with
+square bottom corners, and the physics corners went. Asked for square corners outright, the tools
+kept drawing the bottom like the top (a pole sticking out past the posts, twine on the corners) or
+turned the jar into a closed picture frame. What worked: edit the original `scene/jar.jpg` and only
+tighten the bends, one step at a time in the same thread:
 
 ```text
-Edit the attached bamboo jar image (the empty jar on white). Keep EVERYTHING exactly the same: the
-bamboo colours and outline weight, the top rail with its twine ties, the cut bamboo caps, the jar's
-size and position on the canvas, and the inner opening's width and height. Change ONLY the bottom.
-Make the bottom a rectangle: both bottom corners are sharp 90° right angles, inside and outside.
-The two vertical bamboo posts run straight down, a straight horizontal bamboo pole runs between
-them along the bottom, and they meet at square corners: no curve, no bend, no diagonal brace. Tie
-each bottom corner with the same brown twine cross-lashing as the two top corners. Each post
-continues a short way straight down below the bottom pole and ends in a plain cut bamboo end: two
-straight legs, nothing else under the frame.
-The pale tan glass edge inside the frame is flat and the same width all round: straight down both
-walls and straight across the floor, meeting in square corners with no diagonal lines, no depth
-and no perspective. The opening is an exact rectangle, completely empty.
-Strictly front orthographic view, perfectly left-right symmetric. Plain flat solid white
-background, no rug, no floor, no cast shadow. Portrait 2:3, 1024×1536.
+Edit the attached bamboo jar. Keep everything exactly the same: the top rail, the twine, the caps,
+the posts, the two angled feet, the pale tan glass edge, the colours, the outline, the size and
+position. Change only one thing: make the two rounded bottom corners much tighter. The bamboo
+still bends in one continuous piece from the post into the bottom, but the bend is now only half
+as round as before, so the bottom corners look sharper and more square. The tan glass edge
+inside follows the same tighter bend.
 ```
 
-Checks: the inner corners are exactly square (any rounding lets a small cat tuck behind the
-bamboo); the top is unchanged; one leg under each corner. The first try kept the old angled feet
-beside the new legs (four crowded legs) and drew the tan glass edge mitred like a box floor.
+The result's inner corners still curve a little (the tool reports it), so a small cat deep in a
+corner overlaps the bamboo's inner bend by a few pixels.
 
 **Rug** (`scene/rug.png`):
 
