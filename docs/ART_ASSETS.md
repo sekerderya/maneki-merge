@@ -71,7 +71,7 @@ narrower than their canvas: Claude crops the empty space.
 | 7   | 3 HUD   | `hud/icons.png`                    | Sheet: coin, paw badge, sparkle, petals, puff             | 1:1, 1024×1024    |
 | 7a  | 3 HUD   | `hud/score-card.png`               | The whole score card, blank, copied from `ref-score.png`  | 3:2, 1536×1024    |
 | 7b  | 3 HUD   | `hud/next-bubble.png`              | The round NEXT bubble, empty, copied from `ref-next.png`  | 1:1, 1024×1024    |
-| 7c  | 3 HUD   | `hud/xp-empty`, `hud/xp-full`      | The XP card, an edit of the score card: empty and full    | 4:3, 1024×768     |
+| 7c  | 3 HUD   | `hud/xp-empty`, `hud/xp-full`      | XP card, an edit of the score card (v0.25 only)           | 4:3, 1024×768     |
 | 7b  | 4 menu  | `menu/mockup.jpg`                  | Whole main-menu screen, design reference (done)           | 2:3, 1024×1536    |
 | 7c  | 4 menu  | `menu/background.png`              | Menu garden, the mockup without UI, logo and cat          | 2:3, 1024×1536    |
 | 8   | 4 menu  | `menu/logo.png`                    | "Maneki Merge" logo (the only image with text)            | 3:2, 1536×1024    |
@@ -428,7 +428,8 @@ Checks for these two: no text anywhere; the paw sticks out of the card's left ed
 have rose-brown (not dark) outlines; the well is empty and pill-shaped; the bubble is a closed
 circle with no tail; colours side by side with the crops look the same.
 
-**XP card** (`hud/xp-empty` and `hud/xp-full`, **done (2026-10-09), in the game in v0.25**). Mockups
+**XP card** (`hud/xp-empty` and `hud/xp-full`, **done (2026-10-09), in the game in v0.25 only**: the
+owner dropped the XP levels in v0.26; the images stay here, unused). Mockups
 of whole screens kept inventing their own bar styles, so the XP card is an **edit of the approved
 score card**: attach only `hud/score-card.jpg`, no style block. Ask for the empty card first, then,
 in the same chat, the full one, so both line up (the art tool cuts them to one box and checks the
