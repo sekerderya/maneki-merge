@@ -37,14 +37,6 @@ export const JAR_FRICTION_STATIC = BALL_FRICTION_STATIC;
 /** The floor never bounces: a cat that lands on it stops dead (physics/restitution.ts). */
 export const FLOOR_RESTITUTION = 0;
 
-/**
- * Rolling resistance in u/s²: a cat touching the jar floor and no other cat slows down by this
- * much, like a ball on a rug. It also rolls there instead of sliding (v0.19.5, owner: the cats
- * barely turned). Piles are left to the physics. 600 in v0.19.4, when the cats slid and friction
- * slowed them too.
- */
-export const FLOOR_ROLLING_RESISTANCE = 800;
-
 export const ENABLE_SLEEPING = false;
 
 /** Jar walls are static rectangles at least this thick, so nothing tunnels out. */

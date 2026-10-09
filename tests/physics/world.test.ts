@@ -83,41 +83,17 @@ describe('PhysicsWorld', () => {
     expect(cat.speed).toBeLessThan(1);
   });
 
-  it('rolls a lone cat on the floor and slows it evenly, like a ball on a rug', () => {
+  it('lets a pushed lone cat roll on, slowed only by air friction (v0.23.6)', () => {
     const world = new PhysicsWorld();
     const r = sizeRadius(2);
     const cat = world.addBall({ tier: 2, x: -100, y: -r, vx: 300, landedMs: 0 });
-    // A pushed cat rolls at once: its rim turns as fast as it moves (clockwise to the right).
-    world.step();
-    expect(cat.spin * r).toBeCloseTo(cat.vx, 6);
-    expect(cat.speed).toBeGreaterThan(280);
-    // It loses FLOOR_ROLLING_RESISTANCE (800 u/s²: 6.7 u/s a step, plus a little air friction)
-    // on every step until it stops.
-    let speed = cat.speed;
-    let steps = 1;
-    while (cat.speed > 0 && steps < STEPS_PER_SECOND) {
-      world.step();
-      steps++;
-      expect(cat.spin * r).toBeCloseTo(cat.vx, 6);
-      if (cat.speed > 0) expect(speed - cat.speed).toBeGreaterThan(6.6);
-      expect(speed - cat.speed).toBeLessThan(8.5);
-      speed = cat.speed;
-    }
-    expect(cat.spin).toBe(0);
-    // 300 u/s at about 800 u/s² stops in about 0.37 s, about 55 units on.
-    expect(steps / STEPS_PER_SECOND).toBeLessThan(0.4);
-    expect(cat.x + 100).toBeGreaterThan(45);
-    expect(cat.x + 100).toBeLessThan(60);
-  });
-
-  it('keeps the spin of a cat that turns faster than it rolls, slowing it by the rug', () => {
-    const world = new PhysicsWorld();
-    const r = sizeRadius(3);
-    // A merged cat is born at rest and turning (MERGE_SPIN_RIM_SPEED).
-    const cat = world.addBall({ tier: 3, x: 0, y: -r, spin: 4, landedMs: 0 });
-    world.step();
-    expect(cat.spin).toBeGreaterThan(3.5);
-    expect(cat.spin).toBeLessThan(4);
+    run(world, 1);
+    // No rug: a second later it still rolls on at over a quarter of its speed, turning as fast as
+    // it moves (the floor's friction), and it has gone a fifth of the jar's width.
+    expect(cat.speed).toBeGreaterThan(60);
+    expect(cat.speed).toBeLessThan(150);
+    expect(cat.x + 100).toBeGreaterThan(110);
+    expect(Math.abs(cat.spin * r - cat.vx)).toBeLessThan(0.1 * cat.speed);
   });
 
   it('keeps cats spawned across the floor (as in the Lucky Save e2e test) from merging', () => {

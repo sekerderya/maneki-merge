@@ -87,10 +87,6 @@ export class Ball implements BallView, CircleShape {
   removed = false;
   /** Set by the world during a step when the cat touches a growing cat. */
   touchesGrowth = false;
-  /** Set by the world during a step when the cat touches another cat. */
-  touchesCat = false;
-  /** Set by the world during a step when the cat touches the jar floor. */
-  touchesFloor = false;
   private growFrom: number;
   private growAgeMs = 0;
 

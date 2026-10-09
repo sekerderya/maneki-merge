@@ -9,7 +9,6 @@ import Matter from 'matter-js';
 import {
   ENABLE_SLEEPING,
   FLOOR_RESTITUTION,
-  FLOOR_ROLLING_RESISTANCE,
   GRAVITY_BASE,
   GROWTH_NEIGHBOUR_MAX_SPEED_BASE,
   JAR_FRICTION,
@@ -106,7 +105,6 @@ export class PhysicsWorld {
   private readonly list: Ball[] = [];
   private readonly leftWall: Matter.Body;
   private readonly rightWall: Matter.Body;
-  private readonly floor: Matter.Body;
   private readonly scratch = { x: 0, y: 0 };
   private geo: JarGeometry;
   private stepCount = 0;
@@ -116,9 +114,6 @@ export class PhysicsWorld {
   private readonly maxSpeed = MAX_SPEED_BASE / MATTER_TICKS_PER_SECOND;
   private readonly neighbourMaxSpeed = GROWTH_NEIGHBOUR_MAX_SPEED_BASE / MATTER_TICKS_PER_SECOND;
   private readonly maxAngularSpeed = MAX_ANGULAR_SPEED / MATTER_TICKS_PER_SECOND;
-  /** Speed a lone cat on the floor loses per step (FLOOR_ROLLING_RESISTANCE), in matter-js units. */
-  private readonly rollingLoss =
-    (FLOOR_ROLLING_RESISTANCE * PHYSICS_STEP_MS) / 1000 / MATTER_TICKS_PER_SECOND;
 
   constructor(options: PhysicsWorldOptions = {}) {
     installCircleCollisions();
@@ -145,7 +140,7 @@ export class PhysicsWorld {
       });
     this.leftWall = wall();
     this.rightWall = wall();
-    this.floor = Matter.Bodies.rectangle(
+    const floor = Matter.Bodies.rectangle(
       0,
       WALL_THICKNESS / 2,
       jar.width + 2 * WALL_THICKNESS,
@@ -162,7 +157,7 @@ export class PhysicsWorld {
     const offset = jar.halfWidth + WALL_THICKNESS / 2;
     Matter.Body.setPosition(this.leftWall, { x: -offset, y: wallY });
     Matter.Body.setPosition(this.rightWall, { x: offset, y: wallY });
-    Matter.Composite.add(this.engine.world, [this.floor, this.leftWall, this.rightWall]);
+    Matter.Composite.add(this.engine.world, [floor, this.leftWall, this.rightWall]);
   }
 
   /** Every ball in the world (cats and boulders), oldest first. */
@@ -261,7 +256,6 @@ export class PhysicsWorld {
       if (ball.growing) ball.grow(PHYSICS_STEP_MS);
     }
     for (const ball of this.list) {
-      if (ball.touchesFloor && !ball.touchesCat) this.rollOnRug(ball);
       if (ball.touchesGrowth) {
         ball.touchesGrowth = false;
         this.limitSpeed(ball.body, this.neighbourMaxSpeed);
@@ -303,50 +297,17 @@ export class PhysicsWorld {
     const contacts = this.sameTierContacts;
     contacts.length = 0;
 
-    for (const ball of this.list) {
-      ball.touchesCat = false;
-      ball.touchesFloor = false;
-    }
     for (const pair of (this.engine.pairs as unknown as PairList).list) {
       if (!pair.isActive) continue;
       const a = ballOf(pair.bodyA);
       const b = ballOf(pair.bodyB);
       if (a && a.landedMs < 0) a.landedMs = now;
       if (b && b.landedMs < 0) b.landedMs = now;
-      if (!a || !b) {
-        if (a && pair.bodyB === this.floor) a.touchesFloor = true;
-        if (b && pair.bodyA === this.floor) b.touchesFloor = true;
-        continue;
-      }
-      a.touchesCat = true;
-      b.touchesCat = true;
+      if (!a || !b) continue;
       if (a.kind === 'cat' && b.kind === 'cat' && a.tier === b.tier) contacts.push(a, b);
       if (a.growing) b.touchesGrowth = true;
       if (b.growing) a.touchesGrowth = true;
     }
-  }
-
-  /**
-   * A lone cat on the floor (FLOOR_ROLLING_RESISTANCE): it slows down like a ball on a rug, its
-   * speed and its rim's speed alike, and it rolls instead of sliding: it turns at least as fast
-   * as it moves along the floor (ω = v / r). A cat that turns faster, like a merged one, keeps its
-   * own spin.
-   */
-  private rollOnRug(ball: Ball): void {
-    const { body } = ball;
-    const loss = this.rollingLoss;
-    const { x, y } = body.velocity;
-    const speed = Math.sqrt(x * x + y * y);
-    const k = speed > loss ? 1 - loss / speed : 0;
-    this.scratch.x = x * k;
-    this.scratch.y = y * k;
-    Matter.Body.setVelocity(body, this.scratch);
-    const spinLoss = loss / ball.radius;
-    const spin = body.angularVelocity;
-    let turn = Math.abs(spin) > spinLoss ? spin - Math.sign(spin) * spinLoss : 0;
-    const rolling = this.scratch.x / ball.radius;
-    if (Math.abs(turn) < Math.abs(rolling)) turn = rolling;
-    Matter.Body.setAngularVelocity(body, turn);
   }
 
   private limitSpeed(body: Matter.Body, max: number): void {

@@ -9,7 +9,6 @@ import {
   densityForSize,
   GROWTH_NEIGHBOUR_MAX_SPEED_BASE,
   FLOOR_RESTITUTION,
-  FLOOR_ROLLING_RESISTANCE,
   GRAVITY_BASE,
   JAR_FRICTION,
   JAR_FRICTION_STATIC,
@@ -253,12 +252,6 @@ describe('physics tunables (TECH_SPEC §5)', () => {
   it('steps at 120 Hz with thick walls', () => {
     expect(PHYSICS_STEP_MS).toBeCloseTo(1000 / 120, 10);
     expect(WALL_THICKNESS).toBeGreaterThanOrEqual(300);
-  });
-
-  it('slows lone cats on the floor like a rug (v0.19.4–5)', () => {
-    expect(FLOOR_ROLLING_RESISTANCE).toBe(800);
-    // Gentler than gravity, so the floor never holds a cat up.
-    expect(FLOOR_ROLLING_RESISTANCE).toBeLessThan(GRAVITY_BASE * 1000);
   });
 
   it('makes mass grow like r', () => {
