@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.23.0] - 2026-10-09
+
+The score card and the NEXT bubble, copied from the owner's references.
+
+### Changed
+
+- **Score card**: the owner's image instead of the CSS card: cream with a dark chocolate outline and a tan base, a white beckoning paw with pink pads sticking out of its left end, "SCORE:" over a caramel well with the score in it. Its plain middle stretches when a score needs more room. The paw badge is gone from the HUD (the menu's record cards keep it).
+- **NEXT bubble**: the owner's new round glass bubble (a cream rim, mint fading to pink, white shines), with "NEXT" in dark brown with a cream edge on its top rim instead of a cream tag.
+- `npm run art` measures the score card's well and its stretchable columns, and the bubble's top rim.
+
 ## [0.22.0] - 2026-10-09
 
 A noren curtain over the jar: the paw reaches out from under it, so a tall phone's top is no longer a long bare arm.
