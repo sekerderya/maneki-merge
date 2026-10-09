@@ -2,6 +2,23 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.24.0] - 2026-10-09
+
+### Changed
+
+- Stages no longer loop (the owner's call). The goal of a stage is its 9th cat, made from two 8s, instead of the 10th; a stage holds 9 cats (stage 1: tiers 1–9, stage 2: 10–18, … stage 5: 37–45), so it takes half the cats it used to.
+- The last cat no longer becomes the next stage's first. It settles alone for half a second, then pops into its value like the others, and every stage starts with an empty jar. The jar still grows on screen as before (by 4.8), now empty; later a background per stage is meant to carry the feeling of growth. The last stage works the same way, without the growth: its last cat pops, the picks come, and play goes on in the empty jar.
+- Every cat is 20% bigger (size 1: 41, size 9: 165, as big as the old size 10). Sizes 1–8 together cover as much of the jar as sizes 1–9 did, and a test bot that drops each cat on a matching one clears stage 1 about as often as before (13 runs in 48 against 11) in half the drops (median 138 against 275). With 23% or 26% the same bot cleared only 7 in 48, so 20% is where a stage stays about as hard as it was.
+- The dropper hangs a little higher (band 0.44 of the jar width instead of 0.4), so the biggest drop, now bigger, still hangs clear of the jar's top rail.
+- Magnets: half the chance (1% instead of 2%, More Magnets +1.5% instead of +3% per level, so 8.5% at its max), and none in a stage's first 20 drops: the first ball that can be a magnet is the one queued when the 20th drop leaves the paw. A magnet queued at a stage clear becomes a small cat, since the new jar is empty.
+- Pick cards show chances with one decimal (2.5%).
+- Save format v6: a best tier above 45 (the old stage 5 ended at 46) becomes 45.
+
+### Known issues
+
+- With bigger cats the jar fills faster, so a run lasts fewer drops (that bot's median run fell from 302 s to 166 s), while each stage needs half the drops. The owner's playtests decide whether the balance needs a change; the radius is one number (`SIZE_BASE_RADIUS`).
+- A stage pays less: its last merge is two 8s instead of two 9s, and stage 5 ends at tier 45 instead of 46 (the last cat's pop pays a little back). The economy is still to be balanced.
+
 ## [0.23.8] - 2026-10-09
 
 ### Changed
