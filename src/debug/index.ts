@@ -59,6 +59,8 @@ export interface GameStateSnapshot {
     readonly phase: 'clear' | 'zoom' | 'reveal';
   } | null;
   readonly ticks: number;
+  /** Device pixels per CSS pixel the canvas renders at (adaptive, TECH_SPEC §6). */
+  readonly resolution: number;
 }
 
 /** Test hooks on `window.__game` (TECH_SPEC §11), installed only with `?debug=1`. */
@@ -156,6 +158,7 @@ export function installDebugHooks(ctx: DebugContext): GameHooks {
           ? { from: run.expansion.from, to: run.expansion.to, phase: run.expansion.phase }
           : null,
         ticks: run?.ticks ?? 0,
+        resolution: ctx.game.resolution,
       };
     },
     ballXs() {
@@ -382,7 +385,7 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
     if (body.hidden) return;
     const s = hooks.state();
     stats.textContent =
-      `fps ${ctx.game.fps.toFixed(0)}  bodies ${s.balls}\n` +
+      `fps ${ctx.game.fps.toFixed(0)}  bodies ${s.balls}  res ${s.resolution}\n` +
       `${s.screen} · ${s.runState ?? '-'} · stage ${s.stage}\n` +
       `score ${s.score}  wallet ${s.wallet}
 ` +

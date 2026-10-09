@@ -1,15 +1,16 @@
 import { describe, expect, it } from 'vitest';
+import { MAX_RENDER_RESOLUTION } from '../../src/config/view';
 import { parseUrlFlags } from '../../src/core/urlFlags';
 
 describe('parseUrlFlags', () => {
   it('defaults everything off when the query is empty', () => {
-    expect(parseUrlFlags('')).toEqual({ debug: false, seed: null, skin: null });
+    expect(parseUrlFlags('')).toEqual({ debug: false, seed: null, skin: null, resolution: null });
   });
 
-  it('reads all three flags, with or without the leading ?', () => {
-    const expected = { debug: true, seed: 42, skin: 'placeholder' };
-    expect(parseUrlFlags('?debug=1&seed=42&skin=placeholder')).toEqual(expected);
-    expect(parseUrlFlags('debug=1&seed=42&skin=placeholder')).toEqual(expected);
+  it('reads all four flags, with or without the leading ?', () => {
+    const expected = { debug: true, seed: 42, skin: 'placeholder', resolution: 1.5 };
+    expect(parseUrlFlags('?debug=1&seed=42&skin=placeholder&res=1.5')).toEqual(expected);
+    expect(parseUrlFlags('debug=1&seed=42&skin=placeholder&res=1.5')).toEqual(expected);
   });
 
   it.each([
@@ -50,6 +51,25 @@ describe('parseUrlFlags', () => {
   });
 
   it('ignores unrelated parameters', () => {
-    expect(parseUrlFlags('?utm_source=x&debug=1')).toEqual({ debug: true, seed: null, skin: null });
+    expect(parseUrlFlags('?utm_source=x&debug=1')).toEqual({
+      debug: true,
+      seed: null,
+      skin: null,
+      resolution: null,
+    });
+  });
+
+  it.each([
+    ['?res=1.5', 1.5],
+    ['?res=2', 2],
+    ['?res=0.5', 0.5],
+    [`?res=${MAX_RENDER_RESOLUTION}`, MAX_RENDER_RESOLUTION],
+    ['?res=0.4', null],
+    ['?res=3', null],
+    ['?res=-1', null],
+    ['?res=abc', null],
+    ['?res=', null],
+  ])('parses %s as resolution=%s', (search, resolution) => {
+    expect(parseUrlFlags(search).resolution).toBe(resolution);
   });
 });

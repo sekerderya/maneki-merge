@@ -231,6 +231,11 @@ export class GameScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.detach());
   }
 
+  /** Whether the player is playing (not paused, picking, expanding or over): frames that count. */
+  get playing(): boolean {
+    return this.run?.state === 'playing';
+  }
+
   /** Shows a new run (the previous one, if any, is dropped). */
   attach(run: RunController): void {
     this.detach();

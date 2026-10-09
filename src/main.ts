@@ -196,7 +196,13 @@ async function boot(): Promise<void> {
 
   // Phaser renders into the play area under the HUD; its loop sleeps while the menu is up. The
   // jar fits below the HUD, and the garden behind the canvas follows the jar.
-  const game = createGame(gameScreen.playArea, skin, () => gameScreen.hudBottom(), art);
+  const game = createGame(
+    gameScreen.playArea,
+    skin,
+    () => gameScreen.hudBottom(),
+    art,
+    flags.resolution,
+  );
   gameScreen.onHudResize(() => game.refit());
   game.onJarBox((box, growing) => gameScreen.setJarBox(box, growing));
   game.onTakePrompt((prompt) => gameScreen.setTakePrompt(prompt));

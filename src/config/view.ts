@@ -43,6 +43,30 @@ export const PAW_LIFT_DOWN_MS = 280;
 export const MAX_RENDER_RESOLUTION = 2.5;
 
 /**
+ * Adaptive resolution (TECH_SPEC §6, §13): a phone that stutters through play renders the canvas
+ * at fewer device pixels per CSS pixel, one of these caps at a time below MAX_RENDER_RESOLUTION.
+ * Phones that keep up never leave the full resolution.
+ */
+export const RENDER_RESOLUTION_STEPS: readonly number[] = [2, 1.5];
+/** Play is judged over windows this long (ms of frames while playing). */
+export const RENDER_WATCH_MS = 2000;
+/** Frames longer than this on average (under 45 fps) count as slow. */
+export const RENDER_SLOW_FRAME_MS = 1000 / 45;
+/**
+ * A steady frame rate is a cap (iOS Low Power Mode, a battery saver: 30 fps), not a phone that
+ * stutters, and is left alone: frames count as steady when the slowest tenth are at most this
+ * many times the fastest tenth, down to RENDER_STEADY_MIN_FPS.
+ */
+export const RENDER_STEADY_RATIO = 1.25;
+export const RENDER_STEADY_MIN_FPS = 28;
+/** A lower resolution stays only if it made frames at least this much shorter; else it goes back. */
+export const RENDER_MIN_GAIN = 0.1;
+/** Frames ignored after a change or a break in play (the resize itself costs a frame or two). */
+export const RENDER_SETTLE_MS = 500;
+/** Longer frames are pauses (a hidden tab, a menu), not load: ignored. */
+export const RENDER_STALL_MS = 250;
+
+/**
  * Placeholder textures are drawn at this many texture pixels per world unit (a CSS zoom of about 1
  * at the resolution cap), so they are never upscaled on a phone or tablet.
  */

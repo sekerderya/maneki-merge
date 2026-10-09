@@ -3,15 +3,17 @@
  *
  * The canvas fills the play area, the whole screen; the DOM HUD floats over its top, and the jar
  * fits below the HUD. It renders at devicePixelRatio (capped at MAX_RENDER_RESOLUTION) and is
- * shown at CSS size, so cats and numbers stay sharp. The game loop sleeps while the menu is up.
+ * shown at CSS size, so cats and numbers stay sharp. A phone that stutters through play gets
+ * fewer pixels (game/resolutionGovernor.ts). The game loop sleeps while the menu is up.
  */
 import Phaser from 'phaser';
-import { MAX_RENDER_RESOLUTION } from '../config/view';
+import { MAX_RENDER_RESOLUTION, RENDER_RESOLUTION_STEPS } from '../config/view';
 import type { RunController } from '../run/RunController';
 import { GAME_SCENE_KEY, GameScene } from './GameScene';
 import type { JarBox, SceneSkin, TakePrompt } from './GameScene';
 import type { ArtImages } from './artImages';
 import type { PayoutKind } from './fx/MergeFx';
+import { ResolutionGovernor, resolutionLevels } from './resolutionGovernor';
 
 export { loadArt } from './artImages';
 export type { ArtImages } from './artImages';
@@ -45,19 +47,28 @@ export interface GameView {
   confirmTake(): boolean;
   /** Frames per second actually rendered, for the debug panel. */
   readonly fps: number;
+  /** Device pixels per CSS pixel the canvas renders at now (TECH_SPEC §6). */
+  readonly resolution: number;
 }
 
 /**
  * `insetTop` tells how many CSS pixels at the top of the play area the HUD covers; the jar and
- * the dropper fit below them.
+ * the dropper fit below them. `fixedResolution` (`?res=`) caps the resolution and turns the
+ * adaptive resolution off.
  */
 export function createGame(
   parent: HTMLElement,
   skin: SceneSkin = 'art',
   insetTop: () => number = () => 0,
   art: ArtImages | null = null,
+  fixedResolution: number | null = null,
 ): GameView {
   let resolution = 1;
+  /** The device pixel ratio `levels` were made for. */
+  let pixelRatio = 0;
+  /** The resolutions this screen can step down to, best first, and the governor that picks one. */
+  let levels: number[] = [];
+  let governor = new ResolutionGovernor(1);
   let pending: RunController | null = null;
   let scene: GameScene | null = null;
   /** Whether the loop should run (a run is on screen). */
@@ -102,6 +113,16 @@ export function createGame(
           looping = true;
           if (!awake) booted.loop.sleep();
         });
+        // Only frames of play count; anything else (pause, picks, the zoom) starts the watch over.
+        booted.events.on(Phaser.Core.Events.STEP, () => {
+          if (fixedResolution !== null) return;
+          if (!scene?.playing) {
+            governor.reset();
+            return;
+          }
+          const level = governor.level;
+          if (governor.frame(booted.loop.rawDelta) !== level) refit();
+        });
         refit();
         if (pending) show(pending);
       },
@@ -113,14 +134,30 @@ export function createGame(
     const height = parent.clientHeight;
     // Hidden (the menu is up): keep the last size.
     if (width === 0 || height === 0 || !game.isBooted) return;
-    const next = Math.min(window.devicePixelRatio || 1, MAX_RENDER_RESOLUTION);
+    const ratio = window.devicePixelRatio || 1;
+    if (ratio !== pixelRatio) {
+      // A new screen (or browser zoom): start again from its full resolution.
+      pixelRatio = ratio;
+      levels = resolutionLevels(
+        ratio,
+        fixedResolution ?? MAX_RENDER_RESOLUTION,
+        RENDER_RESOLUTION_STEPS,
+      );
+      if (fixedResolution !== null) levels = levels.slice(0, 1);
+      governor = new ResolutionGovernor(levels.length);
+    }
+    const next = levels[governor.level] ?? Math.min(ratio, MAX_RENDER_RESOLUTION);
     if (next !== resolution) {
       resolution = next;
       game.scale.setZoom(1 / resolution);
     }
     const w = Math.round(width * resolution);
     const h = Math.round(height * resolution);
-    if (w !== game.scale.width || h !== game.scale.height) game.scale.resize(w, h);
+    if (w !== game.scale.width || h !== game.scale.height) {
+      game.scale.resize(w, h);
+      // The resize costs a frame or two: they say nothing about the load.
+      governor.reset();
+    }
     // Exactly the play area's CSS size, whatever the rounding above did.
     game.canvas.style.width = `${width}px`;
     game.canvas.style.height = `${height}px`;
@@ -169,6 +206,9 @@ export function createGame(
     },
     get fps() {
       return game.loop?.actualFps ?? 0;
+    },
+    get resolution() {
+      return resolution;
     },
   };
 }
