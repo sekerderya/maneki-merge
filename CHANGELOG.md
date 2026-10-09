@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.22.0] - 2026-10-09
+
+A noren curtain over the jar: the paw reaches out from under it, so a tall phone's top is no longer a long bare arm.
+
+### Added
+
+- **Noren** (the owner's mockup, the owner's generated art): a cream curtain with a pink hem, a rose-brown rod and a gold paw coin across the top of the game screen. Its hem hangs a fixed height above the jar (300 world units over the rim); its plain fabric stretches up to the top of any screen, and on a short screen the rod and coin go off the top instead of squashing. The HUD floats over it. With `?skin=vector` the paw still hangs from the top of the screen.
+- `npm run art` builds the noren: cuts the white, recolours the generated rod from tan to the mockup's rose brown, and measures the rows that may stretch.
+
+### Changed
+
+- The paw's arm ends just above the noren's hem (its texture is cropped there), so it never shows through the curtain's slits.
+
 ## [0.21.1] - 2026-10-09
 
 The paw holds the cat higher, clear of the jar's top rail.
