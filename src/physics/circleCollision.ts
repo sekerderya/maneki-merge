@@ -2,8 +2,8 @@
  * Exact circle contacts for matter-js (TECH_SPEC §5). matter-js treats every body as a polygon
  * and runs SAT on its vertices, which costs most of a step with 150 cats and makes round cats
  * roll over facets. `installCircleCollisions()` replaces `Matter.Collision.collides` with an
- * analytic test whenever a cat is involved (cat–cat, cat–wall, cat–floor with its rounded
- * corners) and keeps SAT for anything else.
+ * analytic test whenever a cat is involved (cat–cat, cat–wall, cat–floor) and keeps SAT for
+ * anything else.
  *
  * The record it returns follows matter-js 0.20.0's contract (src/collision/Collision.js), which
  * is why that version is pinned:
@@ -36,38 +36,6 @@ export const polygonCollides = Matter.Collision.collides;
 
 export function circleOf(body: Matter.Body): CircleShape | undefined {
   return (body.plugin as { circle?: CircleShape } | undefined)?.circle;
-}
-
-/**
- * The jar floor with rounded corners: its flat top at y = `top`, and quarter circles of `radius`
- * around (±cx, cy) in the corners. The floor body carries it on `body.plugin.roundedFloor`; its
- * rectangle reaches up to the corners' centres, so the broadphase pairs it with every cat that
- * could touch a curve. One pair per cat covers the flat floor and both curves, so a cat rolling
- * onto a curve keeps the same contact.
- */
-export interface RoundedFloor {
-  readonly top: number;
-  readonly cx: number;
-  readonly cy: number;
-  readonly radius: number;
-}
-
-export function roundedFloorOf(body: Matter.Body): RoundedFloor | undefined {
-  return (body.plugin as { roundedFloor?: RoundedFloor } | undefined)?.roundedFloor;
-}
-
-/**
- * True when a cat of `radius` centred at (x, y) is in a rounded corner: smaller than the corner,
- * beyond the corner's centre and below it. Elsewhere the flat floor and the walls hold it, and a
- * cat at least as big as the corner never reaches into it.
- */
-export function inRoundedCorner(
-  x: number,
-  y: number,
-  radius: number,
-  floor: RoundedFloor,
-): boolean {
-  return radius < floor.radius && Math.abs(x) > floor.cx && y > floor.cy;
 }
 
 /** The walls and the floor: static, unrotated, single-part rectangles. */
@@ -165,26 +133,6 @@ function circleVsBox(
   return true;
 }
 
-/**
- * Fills `hit` and returns true when a circle in a rounded corner (`inRoundedCorner`) pokes out of
- * the curve. At the foot of the curve this matches the flat floor's contact exactly.
- */
-function circleVsCorner(cx: number, cy: number, r: number, floor: RoundedFloor): boolean {
-  const dx = cx - (cx < 0 ? -floor.cx : floor.cx);
-  const dy = cy - floor.cy;
-  const d = Math.sqrt(dx * dx + dy * dy);
-  const limit = floor.radius - r;
-  if (d <= limit) return false;
-  // Push the circle back towards the corner's centre.
-  hit.nx = -dx / d;
-  hit.ny = -dy / d;
-  hit.depth = d - limit;
-  const reach = r - hit.depth / 2;
-  hit.px = cx - hit.nx * reach;
-  hit.py = cy - hit.ny * reach;
-  return true;
-}
-
 /** The replacement for `Matter.Collision.collides`. */
 export function collides(
   bodyA: Matter.Body,
@@ -205,13 +153,8 @@ export function collides(
     const radius = (circleA ?? circleB)!.radius;
     if (!isBox(other)) return polygonCollides(bodyA, bodyB, pairs);
     const { x, y } = circle.position;
-    const floor = roundedFloorOf(other);
-    if (floor && inRoundedCorner(x, y, radius, floor)) {
-      if (!circleVsCorner(x, y, radius, floor)) return null;
-    } else {
-      const { min, max } = other.bounds;
-      if (!circleVsBox(x, y, radius, min.x, floor ? floor.top : min.y, max.x, max.y)) return null;
-    }
+    const { min, max } = other.bounds;
+    if (!circleVsBox(x, y, radius, min.x, min.y, max.x, max.y)) return null;
   } else {
     return polygonCollides(bodyA, bodyB, pairs);
   }

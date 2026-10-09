@@ -22,10 +22,9 @@ import {
 } from '../../src/config/paintShape';
 import type { PaintShape } from '../../src/config/paintShape';
 import { PAW_ARM_HALF, PAW_ART_BOX, PAW_GRIP, pawShapes } from '../../src/config/pawArt';
-import { JAR_CORNER_RADIUS, JAR_HEIGHT, JAR_WIDTH } from '../../src/config/stages';
+import { JAR_HEIGHT, JAR_WIDTH } from '../../src/config/stages';
 import { PAW_LIFT, PAW_LIFT_DOWN_MS, PAW_LIFT_UP_MS } from '../../src/config/view';
 import { pawLift } from '../../src/game/PawView';
-import { jarGeometry } from '../../src/physics/geometry';
 
 /** Every number in a path, in order (arc flags included). */
 const numbers = (d: string): number[] => (d.match(/-?\d+(\.\d+)?/g) ?? []).map(Number);
@@ -35,23 +34,24 @@ function drawable(shape: PaintShape): boolean {
 }
 
 describe('jar art (GAME_DESIGN §13)', () => {
-  it('has the physics jar as its inner edge: walls, 168-unit corners, floor', () => {
-    const geo = jarGeometry(1);
-    expect(geo.cornerRadius).toBe(JAR_CORNER_RADIUS);
-    const d = jarInsidePath();
-    expect(d.startsWith(`M${-JAR_WIDTH / 2} ${-JAR_HEIGHT}`)).toBe(true);
-    expect(d).toContain(`A${JAR_CORNER_RADIUS} ${JAR_CORNER_RADIUS} 0 0 0`);
-    expect(d).toContain(`L${JAR_WIDTH / 2 - JAR_CORNER_RADIUS} 0`);
+  it('has the physics jar as its inner edge: walls, square corners, floor', () => {
+    const half = JAR_WIDTH / 2;
+    expect(jarInsidePath()).toBe(
+      `M${-half} ${-JAR_HEIGHT}L${-half} 0L${half} 0L${half} ${-JAR_HEIGHT}Z`,
+    );
     // An inset keeps the shape, smaller.
-    expect(jarInsidePath(10)).toContain(`A${JAR_CORNER_RADIUS - 10} ${JAR_CORNER_RADIUS - 10}`);
+    expect(jarInsidePath(10)).toBe(
+      `M${-half + 10} ${-JAR_HEIGHT}L${-half + 10} -10L${half - 10} -10L${half - 10} ${-JAR_HEIGHT}Z`,
+    );
   });
 
   it('runs the bamboo frame half its thickness outside the inner edge, up past the rim', () => {
     const d = jarFramePath();
     const half = JAR_WIDTH / 2 + JAR_FRAME / 2;
     expect(JAR_POST_X).toBe(half);
-    expect(d.startsWith(`M${-half} ${JAR_CAP_Y}`)).toBe(true);
-    expect(d).toContain(`A${JAR_CORNER_RADIUS + JAR_FRAME / 2}`);
+    expect(d).toBe(
+      `M${-half} ${JAR_CAP_Y}L${-half} ${JAR_FRAME / 2}L${half} ${JAR_FRAME / 2}L${half} ${JAR_CAP_Y}`,
+    );
     expect(JAR_CAP_Y).toBeLessThan(-JAR_HEIGHT);
   });
 
@@ -64,19 +64,13 @@ describe('jar art (GAME_DESIGN §13)', () => {
       expect(piece.right).toBeGreaterThan(piece.left);
       expect(piece.bottom).toBeGreaterThan(piece.top);
     }
-    // Both posts, from their caps down to the curves.
+    // Both posts, from their caps down to the bottom.
     expect(JAR_FRONT_PIECES.filter((p) => p.top === JAR_ART_BOX.top)).toHaveLength(2);
-    // Every point of the bamboo U, outline included, lies in a front piece.
+    // Every point of the bamboo frame, outline included, lies in a front piece.
     const reach = JAR_FRAME / 2 + 5;
-    const rr = JAR_CORNER_RADIUS + JAR_FRAME / 2;
-    const cx = JAR_WIDTH / 2 - JAR_CORNER_RADIUS;
     const centreLine: [number, number, number, number][] = [];
-    for (let y = JAR_CAP_Y; y <= -JAR_CORNER_RADIUS; y += 4) centreLine.push([JAR_POST_X, y, 1, 0]);
-    for (let a = 0; a <= 90; a += 1) {
-      const [c, s] = [Math.cos((a * Math.PI) / 180), Math.sin((a * Math.PI) / 180)];
-      centreLine.push([cx + rr * c, -JAR_CORNER_RADIUS + rr * s, c, s]);
-    }
-    for (let x = 0; x <= cx; x += 4) centreLine.push([x, JAR_FRAME / 2, 0, 1]);
+    for (let y = JAR_CAP_Y; y <= JAR_FRAME / 2; y += 4) centreLine.push([JAR_POST_X, y, 1, 0]);
+    for (let x = 0; x <= JAR_POST_X; x += 4) centreLine.push([x, JAR_FRAME / 2, 0, 1]);
     for (const [x, y, nx, ny] of centreLine) {
       for (let k = -reach; k <= reach; k += 3) {
         for (const side of [-1, 1]) {

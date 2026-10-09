@@ -87,13 +87,9 @@ export class Ball implements BallView, CircleShape {
   removed = false;
   /** Set by the world during a step when the cat touches a growing cat. */
   touchesGrowth = false;
-  /** Set by the world during the step a falling cat first touches anything, if that is a curve. */
-  landsOnCorner = false;
-  /** Steps into the first-landing cushion (CORNER_CUSHION_MS), or −1 outside it. */
-  cushionStep = -1;
   /** Set by the world during a step when the cat touches another cat. */
   touchesCat = false;
-  /** Set by the world during a step when the cat touches the jar floor or its curves. */
+  /** Set by the world during a step when the cat touches the jar floor. */
   touchesFloor = false;
   private growFrom: number;
   private growAgeMs = 0;

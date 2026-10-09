@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { STAGE_COUNT, stageInfo } from '../../src/config/stages';
 import { catRadius } from '../../src/config/stages';
-import { clampDropX, floorRestY, jarGeometry } from '../../src/physics/geometry';
+import { clampDropX, jarGeometry } from '../../src/physics/geometry';
 
 describe('jarGeometry (GAME_DESIGN §7, TECH_SPEC §4)', () => {
   it('is the same 600 × 870 jar at every stage, with the rim at y = −H', () => {
@@ -9,7 +9,6 @@ describe('jarGeometry (GAME_DESIGN §7, TECH_SPEC §4)', () => {
       const g = jarGeometry(s);
       expect(g.stage).toBe(s);
       expect([g.width, g.height, g.rimY, g.halfWidth]).toEqual([600, 870, -870, 300]);
-      expect(g.cornerRadius).toBe(168);
     }
   });
 
@@ -51,35 +50,5 @@ describe('clampDropX', () => {
 
   it('centres a cat wider than the jar', () => {
     expect(clampDropX(50, 400, g)).toBe(0);
-  });
-});
-
-describe('floorRestY (GAME_DESIGN §6: the rounded bottom corners)', () => {
-  const g = jarGeometry(1);
-
-  it('rests a cat on the flat floor at −radius', () => {
-    expect(floorRestY(0, 34, g)).toBe(-34);
-    expect(floorRestY(-132, 34, g)).toBe(-34); // the corner starts at |x| = 300 − 168
-  });
-
-  it('holds a cat higher in a corner, touching the curve', () => {
-    for (const x of [-266, -200, 200, 266]) {
-      const y = floorRestY(x, 34, g);
-      expect(y).toBeLessThan(-34);
-      // The centre stays (corner − radius) from the corner's centre.
-      const cx = Math.sign(x) * (300 - 168);
-      expect(Math.hypot(x - cx, y + 168)).toBeCloseTo(168 - 34, 9);
-    }
-    // Against the wall, a cat sits where the curve meets the wall.
-    expect(floorRestY(266, 34, g)).toBeCloseTo(-168, 9);
-  });
-
-  it('is continuous where the curve meets the floor', () => {
-    expect(floorRestY(132.001, 40, g)).toBeCloseTo(-40, 3);
-  });
-
-  it('leaves cats at least as big as the corner on the flat floor', () => {
-    expect(floorRestY(300 - 168, 168, g)).toBe(-168);
-    expect(floorRestY(0, 205, g)).toBe(-205);
   });
 });

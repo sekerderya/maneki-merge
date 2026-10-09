@@ -31,8 +31,6 @@ export interface JarSprite {
   /** The top rail's upper edge over the opening, px: a cat in the dropper hangs above it. */
   readonly railTop: number;
   readonly floor: number;
-  /** The inner bottom corners' radius, px. */
-  readonly cornerRadius: number;
   readonly backPieces: readonly PxRect[];
   readonly frontPieces: readonly PxRect[];
 }

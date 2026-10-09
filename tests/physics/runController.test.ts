@@ -506,7 +506,7 @@ describe('danger, Lucky Save and game over (GAME_DESIGN §6)', () => {
 
   it('replaces the game over with a Lucky Save that pops cats into coins', () => {
     const { run, of } = setup({ upgrades: upgrades({ secondChance: 1 }) });
-    // A tier-1 cat on top (in a corner it would roll under the tower and topple it).
+    // A tier-1 cat on top of the tower.
     run.spawnBall(1, 0, buildTower(run) - sizeRadius(1));
     let steps = 0;
     while (of('luckySave').length === 0 && steps < 120 * 10) {

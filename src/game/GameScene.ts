@@ -46,13 +46,7 @@ import { hexToNumber } from '../core/color';
 import type { Drop } from '../core/dropQueue';
 import type { GameEvents } from '../core/events';
 import type { BallView } from '../physics/balls';
-import {
-  clampDropX,
-  dropStartY,
-  floorRestY,
-  jarGeometry,
-  MAX_DROP_RADIUS,
-} from '../physics/geometry';
+import { clampDropX, dropStartY, jarGeometry, MAX_DROP_RADIUS } from '../physics/geometry';
 import { reducedMotion } from '../platform/motion';
 import type { RunController } from '../run/RunController';
 import { landingY } from './aim';
@@ -538,7 +532,7 @@ export class GameScene extends Phaser.Scene {
     // Aim guide: a dotted line from the ball down to where it first touches something, and a
     // faint ghost of the ball there, at its true size.
     const fromY = dropStartY(radius, geo);
-    const land = landingY(x, radius, fromY, run.balls, floorRestY(x, radius, geo));
+    const land = landingY(x, radius, fromY, run.balls);
     const g = this.aimLine;
     g.fillStyle(AIM_LINE_COLOR, AIM_LINE_ALPHA);
     for (let y = geo.dropY + shown + AIM_DOT_SPACING; y < land + radius; y += AIM_DOT_SPACING) {

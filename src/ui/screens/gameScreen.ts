@@ -8,7 +8,7 @@ import type { CoinFlyView } from '../fx/coinFly';
 import { createHud } from '../hud/hud';
 import type { HudActions, HudView } from '../hud/hud';
 import { JAR_GLASS } from '../../config/jarArt';
-import { JAR_CORNER_RADIUS, JAR_WIDTH } from '../../config/stages';
+import { JAR_WIDTH } from '../../config/stages';
 import {
   BACKGROUND_ART,
   BACKGROUND_JAR,
@@ -162,7 +162,6 @@ export function createGameScreen(
       g.top = `${box.top}px`;
       g.width = `${box.right - box.left}px`;
       g.height = `${box.bottom - box.top}px`;
-      g.setProperty('--glass-radius', `${JAR_CORNER_RADIUS * unit}px`);
       g.setProperty('--glass-inset', `${JAR_GLASS.lineInset * unit}px`);
       g.setProperty('--glass-line', `${JAR_GLASS.lineWidth * unit}px`);
       glass.classList.toggle('is-hidden', growing);

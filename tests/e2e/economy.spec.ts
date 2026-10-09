@@ -179,7 +179,7 @@ test('a Lucky Save pops cats into coins instead of ending the run', async ({ pag
   await page.getByTestId('play').click();
   await expect.poll(async () => (await state(page)).luckySaves, WAIT).toBe(1);
   const start = (await state(page)).ticks;
-  // Neighbours differ in tier: the outer cats land on the curves and roll inwards, unmerged.
+  // Neighbours differ in tier, so cats that roll together don't merge.
   for (const [i, x] of [-200, -70, 70, 200].entries()) {
     await page.evaluate(([t, at]) => window.__game?.spawnTier(t, at), [1 + (i % 2), x] as const);
   }

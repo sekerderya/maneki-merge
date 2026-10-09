@@ -5,8 +5,8 @@ import { fillJar, inJar, maxOverlap, maxWallPenetration, STEPS_PER_SECOND } from
 const SETTLED_SPEED_FRACTION = 0.05;
 /**
  * Speeds are averaged over this many steps (0.1 s): resting cats deep in the pile show velocity
- * jitter (a single step can read 150 u/s while the cat stays within a unit), which the taller pile
- * in v0.14's curved jar reads more often. The average shows real motion only.
+ * jitter (a single step can read 150 u/s while the cat stays within a unit). The average shows real
+ * motion only.
  */
 const SPEED_WINDOW_STEPS = 12;
 /**

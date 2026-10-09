@@ -13,7 +13,6 @@ import type { Scheduler } from '../../src/core/profile';
 import { defaultSave, MemoryStorage, SaveStore } from '../../src/core/save';
 import type { SaveData } from '../../src/core/save';
 import type { UpgradeLevels } from '../../src/core/upgrades';
-import { floorRestY } from '../../src/physics/geometry';
 import { startProfileRun } from '../../src/run/profileRun';
 import type { RunController } from '../../src/run/RunController';
 import { upgrades } from './fixtures';
@@ -107,10 +106,10 @@ describe('payout pipeline (GAME_DESIGN §5, §9)', () => {
 
   it('pays Lucky Save pops, then a forced timeout without saves ends the run', () => {
     const { run, profile, coins, stored } = setup({ secondChance: 1 });
-    // Neighbours differ in tier, so the outer cats can roll off the curves without a merge.
+    // Neighbours differ in tier, so cats that roll together don't merge.
     [-220, -80, 80, 220].forEach((x, i) => {
       const tier = 1 + (i % 2);
-      run.spawnBall(tier, x, floorRestY(x, run.radiusOf(tier), run.geometry));
+      run.spawnBall(tier, x, -run.radiusOf(tier));
     });
     for (let i = 0; i < 60; i++) run.tick(); // landed and past the landing grace
     run.forceDangerTimeout();

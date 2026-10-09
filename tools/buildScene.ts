@@ -4,8 +4,8 @@
  * `src/config/sceneSpriteData.ts`.
  *
  * - Jar: the white outside and the white opening become transparent. The opening is measured
- *   from the bamboo's dark inner outline (walls, floor, the rail's underside as the rim, and the
- *   bottom corners' radius), and the image is split in two: what lies inside the opening (the
+ *   from the bamboo's dark inner outline (walls, floor, and the rail's underside as the rim; its
+ *   bottom corners are square), and the image is split in two: what lies inside the opening (the
  *   glass's inner edge, the rail) goes behind the cats, the bamboo frame in front of them.
  * - Paw: the white is cut, the image is cropped, and a plain row of the arm is found for the game
  *   to stretch up to the top of the screen.
@@ -37,6 +37,8 @@ const DATA_FILE = 'src/config/sceneSpriteData.ts';
 
 /** The bamboo's ink outline: red channel below this. */
 const INK_MAX_RED = 150;
+/** A wall's inner edge counts as straight down to the floor while it stays this close, px. */
+const CORNER_TOLERANCE = 2;
 /** Piece finding: rows are scanned in bands this tall; gaps this wide split a band's pieces. */
 const PIECE_BAND = 40;
 const PIECE_GAP = 24;
@@ -55,7 +57,6 @@ interface JarData {
   rim: number;
   railTop: number;
   floor: number;
-  cornerRadius: number;
   backPieces: Rect[];
   frontPieces: Rect[];
 }
@@ -125,35 +126,25 @@ async function buildJar(path: string): Promise<JarData> {
     cols.map((x) => scan(0, Math.round(rim), (y) => alphaAt(image, x, y) > 128)),
   );
 
-  // The corner radius that best fits the outline where the wall turns into the floor.
-  const corner: [number, number][] = [];
-  for (let y = Math.round(floor - 300); y < floor; y++) {
-    corner.push([scan(cx, 0, (x) => ink(x, y)) + 0.5, y]);
+  // The physics corners are square: a rounded inner corner would let a cat tuck behind the bamboo.
+  // The corner's height is the highest row near the floor where a wall's edge leaves its line.
+  let cornerHeight = 0;
+  for (let y = Math.round(floor - 80); y < floor - 1; y++) {
+    const l = scan(cx, 0, (x) => ink(x, y)) + 0.5;
+    const r = scan(cx, width - 1, (x) => ink(x, y)) - 0.5;
+    if (l - left > CORNER_TOLERANCE || right - r > CORNER_TOLERANCE) {
+      cornerHeight = Math.max(cornerHeight, Math.round(floor - y));
+    }
   }
-  for (let x = Math.round(left); x < left + 300; x++) {
-    corner.push([x, scan(Math.round(height / 2), height - 1, (y) => ink(x, y)) - 0.5]);
+  if (cornerHeight > 0) {
+    console.warn(`${path}: the inner bottom corners are rounded over ${cornerHeight} px`);
   }
-  let best = { error: Infinity, radius: 0 };
-  for (let r = 40; r < 300; r++) {
-    const ox = left + r;
-    const oy = floor - r;
-    const errors = corner
-      .filter(([x, y]) => x < ox && y > oy)
-      .map(([x, y]) => Math.abs(Math.hypot(x - ox, y - oy) - r));
-    if (errors.length < 30) continue;
-    const error = errors.reduce((a, b) => a + b, 0) / errors.length;
-    if (error < best.error) best = { error, radius: r };
-  }
-  const radius = best.radius;
 
   // Inside the opening (and the column above it, where the rail is) goes behind the cats.
   const inside = (x: number, y: number): boolean => {
     const px = x + 0.5;
     const py = y + 0.5;
-    if (px < left || px > right || py > floor) return false;
-    if (py < floor - radius) return true;
-    const ox = Math.min(Math.max(px, left + radius), right - radius);
-    return Math.hypot(px - ox, py - (floor - radius)) <= radius;
+    return px >= left && px <= right && py <= floor;
   };
   const back = split(image, (x, y) => inside(x, y));
   const front = split(image, (x, y) => !inside(x, y));
@@ -169,14 +160,12 @@ async function buildJar(path: string): Promise<JarData> {
     rim,
     railTop,
     floor,
-    cornerRadius: radius,
     backPieces: pieces(back),
     frontPieces: pieces(front),
   };
   console.log(
     `${path}: opening x ${left}–${right}, rim ${rim} (rail from ${railTop}), floor ${floor} ` +
-      `(1 : ${round((floor - rim) / (right - left))}), corners r=${radius} ` +
-      `(fit ${round(best.error)} px), ${data.backPieces.length} back and ` +
+      `(1 : ${round((floor - rim) / (right - left))}), ${data.backPieces.length} back and ` +
       `${data.frontPieces.length} front pieces`,
   );
   return data;
@@ -459,7 +448,6 @@ export const JAR_SPRITE: JarSprite = {
   rim: ${jar.rim},
   railTop: ${jar.railTop},
   floor: ${jar.floor},
-  cornerRadius: ${jar.cornerRadius},
   backPieces: [${rects(jar.backPieces)}],
   frontPieces: [${rects(jar.frontPieces)}],
 };

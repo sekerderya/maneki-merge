@@ -1,5 +1,5 @@
 /**
- * The jar (GAME_DESIGN §13): glass in a bamboo frame with a curved bottom, on two feet on a rug.
+ * The jar (GAME_DESIGN §13): glass in a square bamboo frame, on two feet on a rug.
  * The art (config/jarArt.ts) is drawn once into textures, behind the cats and in front of them,
  * cut into pieces that only cover drawn parts (JAR_BACK_PIECES, JAR_FRONT_PIECES). They scale
  * with the jar while it grows: every stage has the same jar shape.
@@ -16,7 +16,6 @@ import {
   JAR_CAP_RX,
   JAR_CAP_RY,
   JAR_CAP_Y,
-  JAR_CORNER_SHINE,
   JAR_FRONT_PIECES,
   JAR_GLASS,
   JAR_INK,
@@ -32,7 +31,7 @@ import type { PaintShape } from '../config/paintShape';
 import { DANGER_RED } from '../config/skin';
 import { JAR_ART, JAR_ART_SCALE_X, JAR_ART_SCALE_Y, jarArtToWorld } from '../config/sceneSprites';
 import type { PxRect } from '../config/sceneSprites';
-import { JAR_CORNER_RADIUS, JAR_HEIGHT, JAR_WIDTH } from '../config/stages';
+import { JAR_HEIGHT, JAR_WIDTH } from '../config/stages';
 import { JAR_PX_PER_UNIT, JAR_RIM_DASH, JAR_RIM_INSET, JAR_RIM_WIDTH } from '../config/view';
 import { hexToNumber } from '../core/color';
 import { imageCanvas } from './artImages';
@@ -168,29 +167,18 @@ export class JarView {
   private drawGlass(s: number): void {
     const half = (JAR_WIDTH / 2) * s;
     const h = JAR_HEIGHT * s;
-    const r = JAR_CORNER_RADIUS * s;
     const g = this.glass.clear();
     g.fillStyle(0xffffff, JAR_GLASS.alpha);
-    g.fillRoundedRect(-half, -h, 2 * half, h, { tl: 0, tr: 0, bl: r, br: r });
+    g.fillRect(-half, -h, 2 * half, h);
     const i = JAR_GLASS.lineInset * s;
     g.lineStyle(JAR_GLASS.lineWidth * s, 0xffffff, JAR_GLASS.lineAlpha);
-    g.strokeRoundedRect(-half + i, -h, 2 * (half - i), h - i, {
-      tl: 0,
-      tr: 0,
-      bl: r - i,
-      br: r - i,
-    });
+    g.strokeRect(-half + i, -h, 2 * (half - i), h - i);
 
     const shine = this.shine.clear();
     for (const { x, y, w, h: height, alpha } of JAR_SHINES) {
       shine.fillStyle(0xffffff, alpha);
       shine.fillRoundedRect(x * s, y * s, w * s, height * s, (w / 2) * s);
     }
-    const c = JAR_CORNER_SHINE;
-    shine.lineStyle(c.width * s, 0xffffff, c.alpha);
-    shine.beginPath();
-    shine.arc(-half + r, -r, r - c.inset * s, c.from, c.to, true);
-    shine.strokePath();
   }
 
   private drawRim(danger: boolean | null): void {

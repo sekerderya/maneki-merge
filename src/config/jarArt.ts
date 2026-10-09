@@ -1,14 +1,14 @@
 /**
- * The jar's art (GAME_DESIGN §13): a glass jar in a bamboo frame whose bottom corners are
- * curved, standing on two bamboo feet on a rug. World units of the stage jar (JAR_WIDTH ×
- * JAR_HEIGHT, origin at the centre of the floor, y down); the game draws it once into two
- * textures and scales them with the jar while it grows. The frame hugs the physics walls: its
- * inner edge is the jar's inner edge, rounded corners included. Pure data, no DOM.
+ * The jar's art (GAME_DESIGN §13): a glass jar in a square bamboo frame, standing on two bamboo
+ * feet on a rug. World units of the stage jar (JAR_WIDTH × JAR_HEIGHT, origin at the centre of the
+ * floor, y down); the game draws it once into two textures and scales them with the jar while it
+ * grows. The frame hugs the physics walls: its inner edge is the jar's inner edge. Pure data, no
+ * DOM.
  */
 import { ellipsePath } from './catArt';
 import { linePath, polygonPath, r2, roundRectPath } from './paintShape';
 import type { PaintShape } from './paintShape';
-import { JAR_CORNER_RADIUS, JAR_HEIGHT, JAR_WIDTH } from './stages';
+import { JAR_HEIGHT, JAR_WIDTH } from './stages';
 
 export const JAR_INK = '#5B3A2B';
 const BAMBOO = '#E6C07A';
@@ -48,19 +48,17 @@ export interface JarPiece {
 /**
  * The textures are cut into pieces that only cover drawn parts, so the jar's see-through middle
  * costs no fill rate (on a software renderer whole-jar textures took two thirds of each frame).
- * Behind the cats: the far rail and the feet. In front: the two posts, the two curves and the
- * bottom between them, overlapping by 4 units so no seam shows.
+ * Behind the cats: the far rail and the feet. In front: the two posts and the bottom between
+ * them, overlapping by 4 units so no seam shows.
  */
 export const JAR_BACK_PIECES: readonly JarPiece[] = [
   { left: -336, top: -JAR_HEIGHT - 30, right: 336, bottom: -JAR_HEIGHT + 22 },
   { left: -250, top: 18, right: 250, bottom: 62 },
 ];
 export const JAR_FRONT_PIECES: readonly JarPiece[] = [
-  { left: -338, top: JAR_ART_BOX.top, right: -284, bottom: -118 },
-  { left: 284, top: JAR_ART_BOX.top, right: 338, bottom: -118 },
-  { left: -340, top: -122, right: -128, bottom: 40 },
-  { left: 128, top: -122, right: 340, bottom: 40 },
-  { left: -132, top: -8, right: 132, bottom: 40 },
+  { left: -340, top: JAR_ART_BOX.top, right: -284, bottom: -4 },
+  { left: 284, top: JAR_ART_BOX.top, right: 340, bottom: -4 },
+  { left: -340, top: -8, right: 340, bottom: 40 },
 ];
 
 /** The dashed danger line across the opening while safe (it turns red in danger). */
@@ -69,7 +67,6 @@ export const JAR_RIM_LINE_ALPHA = 0.75;
 
 const HALF = JAR_WIDTH / 2;
 const RIM = -JAR_HEIGHT;
-const RC = JAR_CORNER_RADIUS;
 const T = JAR_FRAME;
 /** Centre lines of the posts and of the bottom of the frame. */
 const POST_X = HALF + T / 2;
@@ -80,24 +77,19 @@ export const JAR_CAP_RX = T / 2 + 2.4;
 export const JAR_CAP_RY = 7.2;
 export const JAR_CAP_LINE = 4;
 
-/** The jar's inside: walls, rounded corners and floor, open at the rim. Inset shrinks it. */
+/** The jar's inside: walls and floor, open at the rim. Inset shrinks it. */
 export function jarInsidePath(inset = 0): string {
-  const a = -HALF + inset;
-  const b = HALF - inset;
-  const btm = -inset;
-  const r = Math.max(RC - inset, 1);
-  return (
-    `M${r2(a)} ${RIM}L${r2(a)} ${r2(btm - r)}A${r2(r)} ${r2(r)} 0 0 0 ${r2(a + r)} ${r2(btm)}` +
-    `L${r2(b - r)} ${r2(btm)}A${r2(r)} ${r2(r)} 0 0 0 ${r2(b)} ${r2(btm - r)}L${r2(b)} ${RIM}Z`
-  );
+  const a = r2(-HALF + inset);
+  const b = r2(HALF - inset);
+  const btm = r2(-inset);
+  return `M${a} ${RIM}L${a} ${btm}L${b} ${btm}L${b} ${RIM}Z`;
 }
 
-/** The centre line of the bamboo U: up the posts to their caps, round the curved bottom. */
+/** The centre line of the bamboo frame: up the posts to their caps, square at the bottom. */
 export function jarFramePath(): string {
-  const rr = RC + T / 2;
   return (
-    `M${-POST_X} ${JAR_CAP_Y}L${-POST_X} ${-RC}A${rr} ${rr} 0 0 0 ${-HALF + RC} ${BOTTOM_Y}` +
-    `L${HALF - RC} ${BOTTOM_Y}A${rr} ${rr} 0 0 0 ${POST_X} ${-RC}L${POST_X} ${JAR_CAP_Y}`
+    `M${-POST_X} ${JAR_CAP_Y}L${-POST_X} ${BOTTOM_Y}` +
+    `L${POST_X} ${BOTTOM_Y}L${POST_X} ${JAR_CAP_Y}`
   );
 }
 
@@ -186,7 +178,6 @@ function rug(): PaintShape[] {
  * canvas draws it then); the shine is drawn by the canvas, over the cats.
  */
 export const JAR_GLASS = { alpha: 0.3, lineInset: 10, lineWidth: 3.2, lineAlpha: 0.55 } as const;
-const SPAN = JAR_HEIGHT - RC;
 export const JAR_SHINES: readonly {
   readonly x: number;
   readonly y: number;
@@ -194,18 +185,10 @@ export const JAR_SHINES: readonly {
   readonly h: number;
   readonly alpha: number;
 }[] = [
-  { x: -HALF + 18, y: RIM + 36, w: 14, h: SPAN * 0.78, alpha: 0.32 },
-  { x: -HALF + 40, y: RIM + 60, w: 5.2, h: SPAN * 0.55, alpha: 0.3 },
-  { x: HALF - 32, y: RIM + SPAN * 0.3, w: 10, h: SPAN * 0.5, alpha: 0.26 },
+  { x: -HALF + 18, y: RIM + 36, w: 14, h: 548, alpha: 0.32 },
+  { x: -HALF + 40, y: RIM + 60, w: 5.2, h: 386, alpha: 0.3 },
+  { x: HALF - 32, y: RIM + 211, w: 10, h: 351, alpha: 0.26 },
 ];
-/** A soft streak along the left curve: an arc inset from it, and its width and strength. */
-export const JAR_CORNER_SHINE = {
-  inset: 20,
-  width: 8,
-  alpha: 0.35,
-  from: Math.PI,
-  to: Math.PI * 0.62,
-};
 
 /**
  * The rug and the jar's shadow on it. They never move on screen (the floor doesn't), so the DOM
@@ -222,10 +205,14 @@ export function jarRugShapes(): PaintShape[] {
   ];
 }
 
+/** The feet stand this far either side of the floor's centre. */
+const FEET_X = 174;
+/** The twine lashing at the bottom corners sits this far above the bottom's centre line. */
+const BOTTOM_TWINE_RISE = 30;
+
 /** Behind the cats: the feet and the far rail across the top. */
 export function jarBackShapes(): PaintShape[] {
-  const feetX = HALF - RC * 0.75;
-  const feet = [-feetX, feetX].flatMap((x): PaintShape[] => [
+  const feet = [-FEET_X, FEET_X].flatMap((x): PaintShape[] => [
     {
       d: roundRectPath(x - T * 0.42, BOTTOM_Y + T / 2 - 4, T * 0.84, 34, 6),
       fill: BAMBOO,
@@ -260,9 +247,8 @@ export function jarBackShapes(): PaintShape[] {
   ];
 }
 
-/** In front of the cats: the bamboo U with its nodes, ties and caps. */
+/** In front of the cats: the bamboo frame with its nodes, ties and caps. */
 export function jarFrontShapes(): PaintShape[] {
-  const span = JAR_HEIGHT - RC;
   const cap = (x: number): PaintShape[] => [
     {
       d: ellipsePath(x, JAR_CAP_Y, JAR_CAP_RX, JAR_CAP_RY),
@@ -274,14 +260,16 @@ export function jarFrontShapes(): PaintShape[] {
   ];
   return [
     ...bamboo(jarFramePath(), T),
-    ...[0.28, 0.6, 0.9].flatMap((k) => {
-      const y = RIM + span * k;
+    ...[0.23, 0.48, 0.73].flatMap((k) => {
+      const y = RIM + JAR_HEIGHT * k;
       return [...postNode(-POST_X, y, T), ...postNode(POST_X, y, T)];
     }),
     railNode(-0.18 * JAR_WIDTH, BOTTOM_Y, T),
     railNode(0.18 * JAR_WIDTH, BOTTOM_Y, T),
     twine(-POST_X, RIM - RAIL_RISE),
     twine(POST_X, RIM - RAIL_RISE),
+    twine(-POST_X, BOTTOM_Y - BOTTOM_TWINE_RISE),
+    twine(POST_X, BOTTOM_Y - BOTTOM_TWINE_RISE),
     ...cap(-POST_X),
     ...cap(POST_X),
   ];

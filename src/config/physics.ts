@@ -38,19 +38,10 @@ export const JAR_FRICTION_STATIC = BALL_FRICTION_STATIC;
 export const FLOOR_RESTITUTION = 0;
 
 /**
- * The first-landing cushion (v0.19.4, owner's choice B): a dropped cat whose first touch is a
- * rounded corner, and no cat, loses its fall's speed over this long, braking in and out gently,
- * instead of being swung along the curve across the jar. Only that once (TECH_SPEC §5).
- */
-export const CORNER_CUSHION_MS = 500;
-/** How much of its speed the cushion leaves a cat, gravity aside. */
-export const CORNER_CUSHION_KEEP = 0.25;
-
-/**
- * Rolling resistance in u/s²: a cat touching the jar floor (flat or curved) and no other cat
- * slows down by this much, like a ball on a rug, and stops on gentle slopes (under 22°). It also
- * rolls there instead of sliding (v0.19.5, owner: the cats barely turned). Piles are left to the
- * physics. 600 in v0.19.4, when the cats slid and friction slowed them too.
+ * Rolling resistance in u/s²: a cat touching the jar floor and no other cat slows down by this
+ * much, like a ball on a rug. It also rolls there instead of sliding (v0.19.5, owner: the cats
+ * barely turned). Piles are left to the physics. 600 in v0.19.4, when the cats slid and friction
+ * slowed them too.
  */
 export const FLOOR_ROLLING_RESISTANCE = 800;
 

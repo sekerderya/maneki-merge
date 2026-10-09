@@ -3,10 +3,8 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import {
   circleOf,
   collides,
-  inRoundedCorner,
   installCircleCollisions,
   polygonCollides,
-  roundedFloorOf,
 } from '../../src/physics/circleCollision';
 
 const { Bodies, Body, Composite, Engine } = Matter;
@@ -137,62 +135,6 @@ describe('circle–wall contacts', () => {
     const left = hitOf(wall, circle(304, -500, 10));
     expect(left.normal.x).toBeCloseTo(1, 12);
     expect(left.depth).toBeCloseTo(14, 12);
-  });
-});
-
-describe('circle–floor contacts with rounded corners', () => {
-  /** A 600-wide jar's floor: flat at y = 0, corners of radius 112 around (±188, −112). */
-  const rounded = { top: 0, cx: 188, cy: -112, radius: 112 };
-  const floor = () => box(0, 94, 2000, 412, { plugin: { roundedFloor: rounded } });
-
-  it('carries its shape on the body and knows which cats are in a corner', () => {
-    expect(roundedFloorOf(floor())).toEqual(rounded);
-    expect(roundedFloorOf(box(0, 0, 10, 10))).toBeUndefined();
-    expect(inRoundedCorner(-250, -50, 30, rounded)).toBe(true);
-    expect(inRoundedCorner(250, -50, 30, rounded)).toBe(true);
-    expect(inRoundedCorner(-150, -50, 30, rounded)).toBe(false); // over the flat floor
-    expect(inRoundedCorner(-250, -150, 30, rounded)).toBe(false); // above the corner: the wall's
-    expect(inRoundedCorner(-250, -50, 112, rounded)).toBe(false); // as big as the corner
-  });
-
-  it('uses the flat top, not the rectangle that reaches up over the corners', () => {
-    const record = hitOf(circle(0, -28, 30), floor());
-    expect(record.depth).toBeCloseTo(2, 12);
-    expect(Math.abs(record.normal.y)).toBeCloseTo(1, 12);
-    expect(collides(circle(0, -40, 30), floor())).toBeNull();
-  });
-
-  it('pushes a cat poking out of the curve back towards the corner centre', () => {
-    // 90 from the centre, straight down-left: the curve allows 112 − 30 = 82.
-    const d = 90 / Math.SQRT2;
-    const cat = circle(-188 - d, -112 + d, 30);
-    const record = hitOf(cat, floor());
-    expect(record.depth).toBeCloseTo(8, 9);
-    // The normal points from bodyB to bodyA; the cat is pushed up and right (to the centre).
-    const sign = record.bodyA === cat ? 1 : -1;
-    expect(record.normal.x * sign).toBeCloseTo(Math.SQRT1_2, 9);
-    expect(record.normal.y * sign).toBeCloseTo(-Math.SQRT1_2, 9);
-    // Midway through the overlap, on the line from the centre through the cat.
-    const support = record.supports[0]!;
-    expect(Math.hypot(support.x + 188, support.y + 112)).toBeCloseTo(112 + 4, 9);
-  });
-
-  it('leaves a cat inside the curve alone, on both sides', () => {
-    expect(collides(circle(-188 - 50, -112 + 50, 30), floor())).toBeNull();
-    expect(collides(circle(188 + 50, -112 + 50, 30), floor())).toBeNull();
-    expect(collides(circle(188 + 70, -112 + 70, 30), floor())).not.toBeNull();
-  });
-
-  it('meets the flat floor exactly at the foot of the curve', () => {
-    const inside = hitOf(circle(-188 - 1e-6, -28, 30), floor());
-    const outside = hitOf(circle(-188 + 1e-6, -28, 30), floor());
-    expect(inside.depth).toBeCloseTo(outside.depth, 6);
-    expect(inside.supports[0]!.y).toBeCloseTo(outside.supports[0]!.y, 6);
-  });
-
-  it('holds cats as big as the corner with the flat floor', () => {
-    const record = hitOf(circle(-163, -130, 137), floor());
-    expect(record.depth).toBeCloseTo(7, 9);
   });
 });
 
