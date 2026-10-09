@@ -135,7 +135,7 @@ Values are rounded only when paid (§5). Implement the formulas. Unit tests asse
 ## 6. Jar, danger line, game over
 
 - The jar is open at the top: straight walls, a flat floor and square bottom corners (v0.23.4, the owner's call, with the square bamboo frame). From v0.14 to v0.23.3 its bottom corners were quarter circles (radius 112, then 168 from v0.19.3), with a soft landing on the curves (v0.19.4); both are gone. Its rim is the danger line.
-- The floor is like a rug: a cat alone on it rolls like a ball (it turns as fast as it moves, v0.19.5; before, the slippery jar let it slide), slows down evenly and stops, instead of rolling for seconds (v0.19.4). Cats in a pile push each other as before.
+- The floor is slippery, like the walls: a cat alone on it rolls on, slowed only by the air, and stops against a wall or another cat (v0.23.6, the owner's call). From v0.19.4 to v0.23.5 the floor slowed a lone cat like a rug and stopped it within half a second.
 - A cat is _over the line_ when its top edge is above the rim. A cat is ignored until 0.5 s after it lands (first contact).
 - If at least one cat is over the line continuously for 2.5 s, the game is over. While that timer runs, the rim flashes red and a short countdown shows.
 - **Lucky Save** (from the Second Chance upgrade) replaces the game over: every cat over the line plus the 6 smallest other cats (smaller tier first, then older first) pop into their value, the timer resets, and a 2 s grace period follows. Only landed cats count, so a cat still falling from the dropper is left alone. You get one save per run per upgrade level.

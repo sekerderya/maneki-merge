@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.23.6] - 2026-10-09
+
+### Changed
+
+- No more rug on the jar's floor (the owner's call): a cat alone on the floor rolls on, slowed only by the air, until a wall or another cat stops it. Before, the floor stopped it within half a second; now a pushed cat can glide about 250 units (four tenths of the jar) over several seconds, and a merged cat on the floor drifts a little.
+
 ## [0.23.5] - 2026-10-09
 
 ### Changed
