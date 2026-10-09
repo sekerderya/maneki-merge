@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { STAGE_ZOOM } from '../../src/config/tiers';
-import { CAMERA_SPARE_BELOW_RATIO } from '../../src/config/view';
+import { CAMERA_SHARED_HEADROOM_RATIO, CAMERA_SPARE_BELOW_RATIO } from '../../src/config/view';
 import {
   easeInOut,
   fitCamera,
@@ -58,8 +58,12 @@ describe('camera fit (TECH_SPEC §4)', () => {
       const below = view.bottom - region.bottom;
       const above = region.top - view.top;
       expect(below).toBeGreaterThanOrEqual(-1e-6);
-      if (below + above > 1e-6) {
-        expect(below / (below + above)).toBeCloseTo(CAMERA_SPARE_BELOW_RATIO, 9);
+      // The dropper band past its shared part counts as spare above.
+      const reserved = geo.headroom - CAMERA_SHARED_HEADROOM_RATIO * geo.width;
+      if (below + above >= reserved) {
+        expect(below / (below + above + reserved)).toBeCloseTo(CAMERA_SPARE_BELOW_RATIO, 9);
+      } else {
+        expect(below).toBeLessThanOrEqual(below + above);
       }
       // 0 keeps the floor margin on the bottom edge.
       expect(visible(fitCamera(geo, w, h, 0), w, h).bottom).toBeCloseTo(region.bottom, 6);
@@ -69,7 +73,7 @@ describe('camera fit (TECH_SPEC §4)', () => {
   it('puts the jar below the HUD with room for the jar art’s frame (v0.17)', () => {
     // A 390 × 844 iPhone: 47 px status bar, HUD down to 173 px. The jar's inside is 283 px wide
     // (300 px in the owner's v0.14 screen, before the thicker bamboo of the jar art), its rim at
-    // 304 px and its floor at 713 px.
+    // 304 px and its floor at 713 px; the higher dropper of v0.21.1 left them there.
     const [w, h, hud] = [390, 844, 173];
     const fit = fitCamera(geo, w, h, undefined, hud);
     expect(geo.width * fit.zoom).toBeCloseTo(390 / 1.38, 6);

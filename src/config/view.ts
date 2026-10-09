@@ -18,6 +18,12 @@ export const CAMERA_FLOOR_MARGIN_RATIO = 0.2;
  * centres the jar between the HUD and the bottom edge, where the owner's v0.14 screen has it.
  */
 export const CAMERA_SPARE_BELOW_RATIO = 0.5;
+/**
+ * The spare height is shared as if the dropper band were only this tall (a fraction of the jar
+ * width); the rest of the band comes out of the share above. v0.21.1 raised the dropper from a
+ * 0.2 W band to 0.4 W and the jar stayed where it was on a phone.
+ */
+export const CAMERA_SHARED_HEADROOM_RATIO = 0.2;
 
 /** The jar's art is drawn at this many texture pixels per world unit (a CSS zoom of 0.65 at 2.5×). */
 export const JAR_PX_PER_UNIT = 1.6;

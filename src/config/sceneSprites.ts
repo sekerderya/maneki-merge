@@ -28,6 +28,8 @@ export interface JarSprite {
   readonly left: number;
   readonly right: number;
   readonly rim: number;
+  /** The top rail's upper edge over the opening, px: a cat in the dropper hangs above it. */
+  readonly railTop: number;
   readonly floor: number;
   /** The inner bottom corners' radius, px. */
   readonly cornerRadius: number;

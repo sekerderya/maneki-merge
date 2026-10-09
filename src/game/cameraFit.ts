@@ -7,6 +7,7 @@
  */
 import {
   CAMERA_FLOOR_MARGIN_RATIO,
+  CAMERA_SHARED_HEADROOM_RATIO,
   CAMERA_SIDE_MARGIN_RATIO,
   CAMERA_SPARE_BELOW_RATIO,
 } from '../config/view';
@@ -43,9 +44,10 @@ export function framedRegion(jar: JarFrame): {
 /**
  * Fits the jar into a viewport of `viewWidth` × `viewHeight` canvas pixels, below the top
  * `insetTop` pixels (the HUD). When the band is taller than the framed region, `spareBelow` of
- * the spare height goes below the floor and the rest above the dropper. Frames of the same shape
- * (every stage, every moment of an expansion) get the same spare in pixels, so the floor never
- * moves on screen.
+ * the spare height goes below the floor and the rest above the dropper, counting the dropper band
+ * past CAMERA_SHARED_HEADROOM_RATIO as spare above (as long as there is that much spare). Frames
+ * of the same shape (every stage, every moment of an expansion) get the same spare in pixels, so
+ * the floor never moves on screen.
  */
 export function fitCamera(
   jar: JarFrame,
@@ -60,8 +62,10 @@ export function fitCamera(
   const band = Math.max(1, h - Math.max(0, insetTop));
   const zoom = Math.min(w / region.width, band / region.height);
   const spare = Math.max(0, band / zoom - region.height);
+  const reserved = Math.max(0, jar.headroom - CAMERA_SHARED_HEADROOM_RATIO * jar.width);
+  const below = Math.min(spare, (spare + reserved) * spareBelow);
   // The band ends at the bottom edge, so the floor's place only depends on the spare below.
-  return { zoom, centerX: 0, centerY: region.bottom + spare * spareBelow - h / zoom / 2 };
+  return { zoom, centerX: 0, centerY: region.bottom + below - h / zoom / 2 };
 }
 
 /** Where a world point appears in the viewport, in canvas pixels from its top-left corner. */

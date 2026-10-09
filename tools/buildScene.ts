@@ -46,6 +46,7 @@ interface JarData {
   left: number;
   right: number;
   rim: number;
+  railTop: number;
   floor: number;
   cornerRadius: number;
   backPieces: Rect[];
@@ -100,6 +101,10 @@ async function buildJar(path: string): Promise<JarData> {
   const right = medianOf(rows.map((y) => scan(cx, width - 1, (x) => ink(x, y)))) - 0.5;
   const floor = medianOf(cols.map((x) => scan(height / 2, height - 1, (y) => ink(x, y)))) - 0.5;
   const rim = medianOf(cols.map((x) => scan(height / 2, 0, (y) => ink(x, y)))) + 0.5;
+  // The top rail's upper edge over the opening: the first solid pixel above it.
+  const railTop = medianOf(
+    cols.map((x) => scan(0, Math.round(rim), (y) => alphaAt(image, x, y) > 128)),
+  );
 
   // The corner radius that best fits the outline where the wall turns into the floor.
   const corner: [number, number][] = [];
@@ -143,13 +148,14 @@ async function buildJar(path: string): Promise<JarData> {
     left,
     right,
     rim,
+    railTop,
     floor,
     cornerRadius: radius,
     backPieces: pieces(back),
     frontPieces: pieces(front),
   };
   console.log(
-    `${path}: opening x ${left}–${right}, rim ${rim}, floor ${floor} ` +
+    `${path}: opening x ${left}–${right}, rim ${rim} (rail from ${railTop}), floor ${floor} ` +
       `(1 : ${round((floor - rim) / (right - left))}), corners r=${radius} ` +
       `(fit ${round(best.error)} px), ${data.backPieces.length} back and ` +
       `${data.frontPieces.length} front pieces`,
@@ -331,6 +337,7 @@ export const JAR_SPRITE: JarSprite = {
   left: ${jar.left},
   right: ${jar.right},
   rim: ${jar.rim},
+  railTop: ${jar.railTop},
   floor: ${jar.floor},
   cornerRadius: ${jar.cornerRadius},
   backPieces: [${rects(jar.backPieces)}],

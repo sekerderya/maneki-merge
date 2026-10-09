@@ -250,7 +250,7 @@ describe('PhysicsWorld', () => {
   });
 
   it.each([1, 2, 3, 4])(
-    'drops a size-%i cat from the dropper to the empty floor in 1 s, without a bounce',
+    'drops a size-%i cat from the dropper to the empty floor in about 1 s, without a bounce',
     (tier) => {
       const world = new PhysicsWorld();
       const cat = world.addBall({ tier, x: 0, y: world.geometry.dropY });
@@ -259,8 +259,10 @@ describe('PhysicsWorld', () => {
         world.step();
         if (cat.landedMs >= 0) highest = Math.min(highest, cat.y);
       }
-      // First contact on the step that reaches the floor: 1 s, give or take a step.
-      expect(Math.abs(cat.landedMs - 1000)).toBeLessThanOrEqual(PHYSICS_STEP_MS + 1e-9);
+      // First contact on the step that reaches the floor: 1.025 s (size 4) to 1.042 s (size 1)
+      // since v0.21.1 raised the dropper (1 s before), give or take a step.
+      expect(cat.landedMs).toBeGreaterThanOrEqual(1025 - PHYSICS_STEP_MS - 1e-9);
+      expect(cat.landedMs).toBeLessThanOrEqual(1042 + PHYSICS_STEP_MS + 1e-9);
       // The floor never bounces: after landing the cat only sinks into place.
       expect(highest).toBeGreaterThan(-sizeRadius(tier) - 0.5);
     },

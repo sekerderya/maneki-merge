@@ -12,6 +12,7 @@ import {
 } from '../../src/config/sceneSprites';
 import type { PxRect } from '../../src/config/sceneSprites';
 import { JAR_CORNER_RADIUS, JAR_HEIGHT, JAR_WIDTH } from '../../src/config/stages';
+import { jarGeometry, MAX_DROP_RADIUS } from '../../src/physics/geometry';
 import { CAMERA_SIDE_MARGIN_RATIO } from '../../src/config/view';
 
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -57,6 +58,16 @@ describe('scene art sprites (GAME_DESIGN §13.1)', () => {
       ...JAR_ART.frontPieces.map((r) => Math.abs(jarArtToWorld(r.x + r.w, 0).x)),
     );
     expect(reach).toBeLessThanOrEqual(JAR_WIDTH * (0.5 + CAMERA_SIDE_MARGIN_RATIO));
+  });
+
+  it('hangs the biggest cat in the dropper clear of the top rail (v0.21.1)', () => {
+    const geo = jarGeometry(1);
+    const railTop = jarArtToWorld(0, JAR_ART.railTop).y;
+    expect(railTop).toBeLessThan(geo.rimY - 40);
+    const gap = railTop - (geo.dropY + MAX_DROP_RADIUS);
+    expect(gap).toBeGreaterThan(2);
+    // Close above it, not floating high over it.
+    expect(gap).toBeLessThan(20);
   });
 
   it('has a paw at the bottom of its arm and a plain arm row to stretch', () => {

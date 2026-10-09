@@ -62,7 +62,7 @@ Layout: everything sits where it is in the mockup, on a stage of the mockup's si
 
 - The screen the owner chose in v0.14 (the "Sakura garden" design): the whole screen is the scene, and the HUD floats over its top.
 - The jar (§6, §13.1), with the danger line on its rim.
-- The dropper: a calico cat's paw hangs from the top of the screen and holds the current cat by the head, just above the rim. It follows the aim, stays where it is while the next cat comes, lifts a little when it lets go, and is hidden while the jar grows. A dotted aim guide shows where the cat will fall, with a faint ghost of the cat where it lands.
+- The dropper: a calico cat's paw hangs from the top of the screen and holds the current cat by the head, just above the jar's top rail (v0.21.1; until then the cat hung in front of the rail). It follows the aim, stays where it is while the next cat comes, lifts a little when it lets go, and is hidden while the jar grows. A dotted aim guide shows where the cat will fall, with a faint ghost of the cat where it lands.
 - HUD over the top of the scene. On the left, a narrow cream score card with "SCORE:" and the score in a sunken well. (The stage card under it, with the stage, a progress bar and the stage's last cat, was removed in v0.18 until the owner has art for it; the banners still announce stage clears and the new goal.) On the right, a pink pause button, a "COINS:" card with the coins earned this run, which runs off the right edge, and under it the next cat in a round glass bubble with a small "NEXT" tag on its rim (v0.14.1). Only the pause button takes touches; everywhere else a touch aims.
 - Overlays:
   - **Pause**: Resume, Sound, Haptics, Quit to Menu.
@@ -74,7 +74,7 @@ Layout: everything sits where it is in the mockup, on a stage of the mockup's si
 
 - Touch and drag anywhere in the play area. The dropper follows the finger horizontally, clamped so the cat stays inside the jar. Release to drop.
 - A tap without dragging drops the cat at the tapped x.
-- A dropped cat falls from the dropper to the empty jar floor in 1 second, and lands without bouncing off the floor (cats still bounce a little off each other and the walls).
+- A dropped cat falls from the dropper to the empty jar floor in about 1 second (1.03–1.04 s since v0.21.1 raised the dropper; 1 s before), and lands without bouncing off the floor (cats still bounce a little off each other and the walls).
 - After a drop, the next cat appears after a 0.45 s cooldown. Releases during the cooldown are ignored.
 - Mouse: move to aim, click to drop.
 - Android back button: game → pause, pause → menu, menu → system default.

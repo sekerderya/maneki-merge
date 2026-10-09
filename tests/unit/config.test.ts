@@ -278,7 +278,7 @@ describe('physics tunables (TECH_SPEC §5)', () => {
   });
 
   it('leaves room for the dropper above the rim (TECH_SPEC §4)', () => {
-    expect(DROPPER_HEADROOM_RATIO).toBe(0.2);
+    expect(DROPPER_HEADROOM_RATIO).toBe(0.4);
     expect(WALL_HEIGHT_FACTOR).toBeGreaterThan(1);
   });
 

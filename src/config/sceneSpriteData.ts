@@ -12,6 +12,7 @@ export const JAR_SPRITE: JarSprite = {
   left: 169.5,
   right: 725.5,
   rim: 227.5,
+  railTop: 175,
   floor: 1043.5,
   cornerRadius: 156,
   backPieces: [
