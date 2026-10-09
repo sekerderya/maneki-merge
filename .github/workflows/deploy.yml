@@ -43,38 +43,8 @@ jobs:
         with:
           path: dist
 
-  # The E2E suite runs beside the build, split by device profile and shard, so it costs about a
-  # quarter of its serial time. The deploy still waits for every part.
-  e2e:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    strategy:
-      fail-fast: true
-      matrix:
-        include:
-          - { project: iphone-webkit, browser: webkit, shard: 1/2 }
-          - { project: iphone-webkit, browser: webkit, shard: 2/2 }
-          - { project: pixel-chromium, browser: chromium, shard: 1/2 }
-          - { project: pixel-chromium, browser: chromium, shard: 2/2 }
-    name: e2e (${{ matrix.project }} ${{ matrix.shard }})
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
-      - run: npx playwright install --with-deps ${{ matrix.browser }}
-      - run: npx playwright test --project=${{ matrix.project }} --shard=${{ matrix.shard }}
-      - uses: actions/upload-artifact@v7
-        if: failure()
-        with:
-          name: playwright-report-${{ matrix.browser }}-${{ strategy.job-index }}
-          path: playwright-report/
-          retention-days: 7
-
   deploy:
-    needs: [build, e2e]
+    needs: build
     runs-on: ubuntu-latest
     environment:
       name: github-pages

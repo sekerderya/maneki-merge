@@ -1,0 +1,52 @@
+name: E2E
+
+# Runs the Playwright suite after every push to main. It doesn't gate the deploy (the game is still
+# in development, owner's call): a failure only marks this workflow red and GitHub sends its
+# failure notification.
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - 'art-source/**'
+      - '.claude/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A newer push supersedes an older run: only the latest main needs testing.
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Each device profile in two shards, as four parallel jobs.
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - { project: iphone-webkit, browser: webkit, shard: 1/2 }
+          - { project: iphone-webkit, browser: webkit, shard: 2/2 }
+          - { project: pixel-chromium, browser: chromium, shard: 1/2 }
+          - { project: pixel-chromium, browser: chromium, shard: 2/2 }
+    name: e2e (${{ matrix.project }} ${{ matrix.shard }})
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - run: npx playwright test --project=${{ matrix.project }} --shard=${{ matrix.shard }}
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-report-${{ matrix.browser }}-${{ strategy.job-index }}
+          path: playwright-report/
+          retention-days: 7

@@ -275,9 +275,10 @@ Data flow: pointer input (game) → `RunController.drop(x)` → PhysicsWorld ste
 
 ## 12. CI/CD
 
-- Development happens directly on `main` (no side branches or PRs), so `deploy.yml`'s checks are the gate before every deploy.
+- Development happens directly on `main` (no side branches or PRs), so `deploy.yml`'s checks are the gate before every deploy. While the game is in development nobody else plays it, so the E2E suite does not gate the deploy (owner's decision, v0.23.1+): it reports failures afterwards.
 - `ci.yml` runs on PRs and on pushes to branches other than main (kept for the rare case one is used): `npm ci` → typecheck → lint → format check → unit tests with coverage → build → Playwright (`npx playwright install --with-deps chromium webkit`).
-- `deploy.yml` runs on pushes to `main`, except pushes that only touch `docs/`, Markdown files, `art-source/` or `.claude/` (nothing the site is built from). The `build` job runs typecheck → lint → format check → unit tests with coverage → a build with the Pages base → `actions/upload-pages-artifact`. Beside it, the `e2e` job runs Playwright as four parallel jobs (each device profile in two `--shard`s, each installing only its own browser). `deploy` (`actions/deploy-pages`) waits for both. The Pages source is GitHub Actions; `workflow_dispatch` deploys by hand.
+- `deploy.yml` runs on pushes to `main`, except pushes that only touch `docs/`, Markdown files, `art-source/` or `.claude/` (nothing the site is built from). The `build` job runs typecheck → lint → format check → unit tests with coverage → a build with the Pages base → `actions/upload-pages-artifact`. `deploy` (`actions/deploy-pages`) follows it.
+- `e2e.yml` runs on the same pushes, beside the deploy: Playwright as four parallel jobs (each device profile in two `--shard`s, each installing only its own browser). A newer push cancels a running one. A failure marks the run red (GitHub notifies) and uploads the Playwright report; it does not undo the deploy. The Pages source is GitHub Actions; `workflow_dispatch` deploys by hand.
 - Versioning: the `package.json` version (0.x during development, 1.0.0 at release) plus the short commit hash, injected at build time and shown on the menu. Tag `vX.Y.Z` after each milestone merge.
 - Optional `android.yml` (M14): on tags, run Capacitor sync and a Gradle release build signed with a keystore from repo secrets, and attach the APK to the GitHub Release.
 

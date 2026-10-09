@@ -6,7 +6,7 @@ All notable changes to this project are documented here. Versions follow [Semant
 
 ### Changed
 
-- Faster deploys: the E2E suite runs beside the build in four parallel jobs (iPhone and Pixel profiles, two shards each) instead of after it, and pushes that only change docs, Markdown or art sources don't run the Deploy workflow at all.
+- Faster deploys: the E2E suite moved to its own workflow that runs beside the deploy without blocking it, in four parallel jobs (iPhone and Pixel profiles, two shards each). A failure is reported, not gated. Pushes that only change docs, Markdown or art sources run neither workflow.
 
 ## [0.23.1] - 2026-10-09
 
