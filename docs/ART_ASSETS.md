@@ -66,11 +66,12 @@ narrower than their canvas: Claude crops the empty space.
 | 4   | 2 scene | `scene/rug.png`                    | Mint rug the jar stands on                                | 3:2, 1536×1024    |
 | 5   | 2 scene | `scene/paw.png`                    | Calico dropper arm hanging from the top                   | 2:3, 1024×1536    |
 | 5a  | 2 scene | `scene/noren-mockup.webp`          | Game screen with the noren, design reference (done)       | –                 |
-| 5b  | 2 scene | `scene/noren.jpg`                  | Noren curtain over the jar; the paw reaches out under it  | 3:2, 1536×1024    |
+| 5b  | 2 scene | `scene/noren.jpg`                  | Noren curtain over the jar (v0.22–v0.24; gone in v0.25)   | 3:2, 1536×1024    |
 | 6   | 3 HUD   | `hud/hud-kit.png`                  | Sheet: card, sunken well, pause button, NEXT bubble, …    | 1:1, 1024×1024    |
 | 7   | 3 HUD   | `hud/icons.png`                    | Sheet: coin, paw badge, sparkle, petals, puff             | 1:1, 1024×1024    |
 | 7a  | 3 HUD   | `hud/score-card.png`               | The whole score card, blank, copied from `ref-score.png`  | 3:2, 1536×1024    |
 | 7b  | 3 HUD   | `hud/next-bubble.png`              | The round NEXT bubble, empty, copied from `ref-next.png`  | 1:1, 1024×1024    |
+| 7c  | 3 HUD   | `hud/xp-empty`, `hud/xp-full`      | The XP card, an edit of the score card: empty and full    | 4:3, 1024×768     |
 | 7b  | 4 menu  | `menu/mockup.jpg`                  | Whole main-menu screen, design reference (done)           | 2:3, 1024×1536    |
 | 7c  | 4 menu  | `menu/background.png`              | Menu garden, the mockup without UI, logo and cat          | 2:3, 1024×1536    |
 | 8   | 4 menu  | `menu/logo.png`                    | "Maneki Merge" logo (the only image with text)            | 3:2, 1536×1024    |
@@ -294,7 +295,8 @@ height, the arm is about a quarter of the canvas width and centered. Plain flat 
 no shadow. Portrait 2:3.
 ```
 
-**Noren** (`scene/noren.png`, **done (2026-10-09), in the game in v0.22**; its rod came out tan and
+**Noren** (`scene/noren.png`, **done (2026-10-09), in the game from v0.22 to v0.24**; removed in
+v0.25 with the new top HUD, where the paw floats instead; its rod came out tan and
 the art tool recolours it to the mockup's rose brown): on a tall phone the paw's arm filled the empty
 height between the HUD and the jar. The owner chose a noren (`scene/noren-mockup.webp`): a shop
 curtain across the top of the screen, its hem a fixed distance above the jar, the paw reaching out
@@ -425,6 +427,36 @@ Square 1:1.
 Checks for these two: no text anywhere; the paw sticks out of the card's left edge and its pads
 have rose-brown (not dark) outlines; the well is empty and pill-shaped; the bubble is a closed
 circle with no tail; colours side by side with the crops look the same.
+
+**XP card** (`hud/xp-empty` and `hud/xp-full`, **done (2026-10-09), in the game in v0.25**). Mockups
+of whole screens kept inventing their own bar styles, so the XP card is an **edit of the approved
+score card**: attach only `hud/score-card.jpg`, no style block. Ask for the empty card first, then,
+in the same chat, the full one, so both line up (the art tool cuts them to one box and checks the
+well; the game shows the full one over the empty one up to the run's XP). "Lv N" is live text.
+
+```text
+Edit the attached image. It is the score card of my mobile game. Turn it into an XP bar card by
+changing only what is listed below, and redraw it large and razor sharp. Keep exactly the same
+style, colours, outline weight, the white highlight inside the top edge, the tan base along the
+lower edge, the white paw on the left with its pink pads, and the soft rounded corners. Do not
+restyle, simplify or "improve" anything.
+Changes:
+- Remove all text: no "SCORE:" label and no number.
+- Make the caramel well much thicker: it fills almost the whole height of the card, leaving only
+  the card's frame around it, so the card becomes one fat, chunky bar. The paw still covers the
+  well's left end and sticks out past the card's left edge as now.
+- The well stays empty: flat caramel (#D4986D) with its soft inner shadow at the top.
+- The card is about 3 times as wide as it is tall.
+The card alone, centred, on a plain flat solid white background (#FFFFFF), no shadow, nothing
+cropped. Landscape 3:2.
+```
+
+```text
+Now the same card again, exactly the same in every way, but with the well completely full: the
+whole well is filled with glossy gold, like a shiny gold coin (#FECE5A at the top, #FBC23A in the
+middle, a darker gold #E39333 along its lower edge), with one long soft white shine streak along
+the top of the gold and two or three tiny white sparkles. Nothing else changes.
+```
 
 ### 4.5 Phase 4: menu
 
