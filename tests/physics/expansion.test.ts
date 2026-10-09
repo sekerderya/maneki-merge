@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { MAX_SPEED_BASE, PHYSICS_STEP_MS, stepsFor } from '../../src/config/physics';
 import { STAGE_COUNT, stageInfo } from '../../src/config/stages';
-import { STAGE_ZOOM, tierCoins, tierScore } from '../../src/config/tiers';
+import { tierCoins, tierScore } from '../../src/config/tiers';
 import { EXPANSION_DURATION_MS } from '../../src/config/timings';
 import { coinPayout, popCoins } from '../../src/core/economy';
 import { EventBus } from '../../src/core/events';
@@ -128,9 +128,9 @@ describe('clearing stages under a pile (GAME_DESIGN §7.1)', () => {
     };
 
     /**
-     * A stage was just cleared: only its last cat is left. It settles during the clear, then
-     * stands still through the zoom, shrinks with the world at the reveal, and the new stage
-     * plays on with no launches upwards and no jumps between steps.
+     * A stage was just cleared: only its last cat is left. It settles during the clear without
+     * escaping, then pops, and the jar stays empty through the zoom and the reveal. The new stage
+     * then plays on with no launches upwards and no jumps between steps.
      */
     const followExpansion = (): void => {
       expansions++;
@@ -141,20 +141,13 @@ describe('clearing stages under a pile (GAME_DESIGN §7.1)', () => {
         step(run);
         checkTick();
       }
-      const before = [last.x, last.y];
-      while (run.expansion?.phase === 'zoom') {
-        run.tick();
-        if (run.expansion?.phase === 'zoom') expect([last.x, last.y]).toEqual(before);
-      }
-      // The reveal: the same cat, one STAGE_ZOOM-th of the way from the floor's centre.
-      expect(last.x).toBeCloseTo(before[0]! / STAGE_ZOOM, 9);
-      expect(last.y).toBeCloseTo(before[1]! / STAGE_ZOOM, 9);
-      expect(last.size).toBe(1);
-      const revealed = [last.x, last.y];
+      expect(run.balls).not.toContain(last);
+      expect(run.balls).toHaveLength(0);
       while (run.state === 'expanding') {
         run.tick();
-        expect([last.x, last.y]).toEqual(revealed);
+        expect(run.balls).toHaveLength(0);
       }
+      addPile(12);
       const prev = new Map<number, [number, number]>();
       for (let t = 0; t < 1.5 * STEPS_PER_SECOND && run.state === 'playing'; t++) {
         run.tick();
@@ -232,7 +225,8 @@ describe('stage clear payouts (GAME_DESIGN §7)', () => {
       expect(banked() - bankedBefore).toBe(merge + pops);
 
       playUntilStage(run, stage + 1);
-      // Order: the merge, the pops and their total, the clear, then the expansion.
+      // Order: the merge, the pops and their total, the clear, the last cat's pop once it
+      // settled, then the expansion.
       const sequence = log
         .slice(logStart)
         .map((e) => e[0])
@@ -243,6 +237,8 @@ describe('stage clear payouts (GAME_DESIGN §7)', () => {
         ...doomed.map(() => 'catPopped'),
         'runCoinsChanged',
         'stageCleared',
+        'catPopped',
+        'runCoinsChanged',
         'expansionStarted',
         'expansionRevealed',
         'expansionFinished',
@@ -259,7 +255,7 @@ describe('stage clear payouts (GAME_DESIGN §7)', () => {
     playUntilStage(run, STAGE_COUNT);
     const range = (from: number, to: number) =>
       Array.from({ length: to - from + 1 }, (_, i) => from + i);
-    const expected = [range(11, 19), range(20, 28), range(29, 37), range(38, 46)];
+    const expected = [range(10, 18), range(19, 27), range(28, 36), range(37, 45)];
     expect(of('expansionRevealed').map((e) => e.newTiers)).toEqual(expected);
     expect(of('expansionFinished').map((e) => e.newTiers)).toEqual(expected);
     expect(of('expansionRevealed').map((e) => e.stage)).toEqual([2, 3, 4, 5]);

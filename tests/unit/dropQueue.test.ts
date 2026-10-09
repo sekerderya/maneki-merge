@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { MAGNET_FREE_DROPS } from '../../src/config/picks';
 import { stageInfo } from '../../src/config/stages';
 import { DropQueue, dropWeights, PLAIN_ODDS } from '../../src/core/dropQueue';
 import type { Drop, DropOdds, DropQueueOptions } from '../../src/core/dropQueue';
@@ -187,7 +188,8 @@ describe('special balls in the queue (GAME_DESIGN §15.1)', () => {
       stage: 2,
       odds: odds({ magnetChance: 0.5, boulderChance: 0.5, boulderSize: 5, boulderHits: 3 }),
     });
-    takeMany(q, 2);
+    // Past the magnet-free drops and the two items queued meanwhile.
+    takeMany(q, MAGNET_FREE_DROPS + 2);
     const first = stageInfo(2).firstTier;
     for (const d of takeMany(q, 200)) {
       if (d.kind === 'magnet') expect(d.tier).toBe(first + 2);
@@ -213,11 +215,53 @@ describe('special balls in the queue (GAME_DESIGN §15.1)', () => {
 
   it('applies new odds to the items rolled after them only', () => {
     const q = makeQueue({ rng: new Rng(4) });
-    takeMany(q, 2);
+    takeMany(q, MAGNET_FREE_DROPS);
     const queued = [q.current, q.next];
     q.setOdds(odds({ magnetChance: 1 }));
     expect([q.take(), q.take()]).toEqual(queued);
     expect(takeMany(q, 20).every((d) => d.kind === 'magnet')).toBe(true);
+  });
+
+  it('queues no magnet before the stage’s 20th drop', () => {
+    expect(MAGNET_FREE_DROPS).toBe(20);
+    const q = makeQueue({ odds: odds({ magnetChance: 1 }) });
+    // The two queued at the start and the ones queued by the first 19 drops are cats.
+    const early = takeMany(q, MAGNET_FREE_DROPS + 1);
+    expect(early.every((d) => d.kind === 'cat')).toBe(true);
+    expect(q.dropsThisStage).toBe(MAGNET_FREE_DROPS + 1);
+    // The 20th drop queued the 22nd ball, the first that can be a magnet.
+    expect(q.current.kind).toBe('magnet');
+    expect(q.next.kind).toBe('magnet');
+  });
+
+  it('keeps the boulder chance while magnets are held back', () => {
+    const q = makeQueue({ odds: odds({ magnetChance: 0.5, boulderChance: 0.5 }) });
+    const early = takeMany(q, MAGNET_FREE_DROPS).slice(2);
+    expect(early.some((d) => d.kind === 'boulder')).toBe(true);
+    expect(early.some((d) => d.kind === 'cat')).toBe(true);
+    expect(early.some((d) => d.kind === 'magnet')).toBe(false);
+  });
+
+  it('starts the count again at a new stage and turns queued magnets into small cats', () => {
+    const q = makeQueue({ odds: odds({ magnetChance: 1 }) });
+    takeMany(q, MAGNET_FREE_DROPS + 1);
+    expect([q.current.kind, q.next.kind]).toEqual(['magnet', 'magnet']);
+    q.newStage();
+    expect(q.dropsThisStage).toBe(0);
+    const small: Drop = { kind: 'cat', tier: 1, golden: false, hits: 0 };
+    expect([q.current, q.next]).toEqual([small, small]);
+    q.setStage(2);
+    expect(q.current).toEqual({ ...small, tier: stageInfo(2).firstTier });
+    expect(takeMany(q, MAGNET_FREE_DROPS + 1).every((d) => d.kind === 'cat')).toBe(true);
+    expect(q.current.kind).toBe('magnet');
+  });
+
+  it('leaves queued cats and boulders alone at a new stage', () => {
+    const q = makeQueue({ odds: odds({ boulderChance: 0.5, goldenChance: 0.5 }) });
+    takeMany(q, 5);
+    const queued = [q.current, q.next];
+    q.newStage();
+    expect([q.current, q.next]).toEqual(queued);
   });
 
   it('puts a taken ball in the dropper, leaving NEXT alone', () => {

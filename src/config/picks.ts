@@ -5,8 +5,14 @@
  */
 
 /** The queue's base chances (GAME_DESIGN §15.1), before any pick. */
-export const MAGNET_BASE_CHANCE = 0.02;
+export const MAGNET_BASE_CHANCE = 0.01;
 export const BOULDER_BASE_CHANCE = 0.03;
+/**
+ * No magnet comes in a stage's first drops: only items queued once the player has dropped this
+ * many balls in the stage can be magnets (GAME_DESIGN §15.1). A stage starts with an empty jar,
+ * where a magnet would have nothing to take.
+ */
+export const MAGNET_FREE_DROPS = 20;
 /** Boulders only come from this stage on. */
 export const BOULDER_FIRST_STAGE = 2;
 
@@ -91,10 +97,10 @@ export const PICKS: Readonly<Record<PickId, PickDef>> = {
     id: 'moreMagnets',
     kind: 'blessing',
     name: 'More Magnets',
-    description: '+3% magnet chance',
+    description: '+1.5% magnet chance',
     statLabel: 'Magnets',
     maxLevel: 5,
-    perLevel: 0.03,
+    perLevel: 0.015,
   },
   bigDrops: {
     id: 'bigDrops',

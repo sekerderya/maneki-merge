@@ -69,7 +69,7 @@ async function makeLastCat(page: Page): Promise<void> {
   });
 }
 
-test('making the last cat (two 9s) clears stage 1 and grows the jar', async ({ page }) => {
+test('making the last cat (two 8s) clears stage 1 and grows an empty jar', async ({ page }) => {
   const errors = watchConsole(page);
   await startRun(page, 3);
   await expect
@@ -77,37 +77,37 @@ test('making the last cat (two 9s) clears stage 1 and grows the jar', async ({ p
       const s = await state(page);
       return [s.stage, s.lastTier];
     })
-    .toEqual([1, 10]);
+    .toEqual([1, 9]);
 
   await makeLastCat(page);
   await expect(page.getByTestId('banner')).toHaveText('The shrine grows!', WAIT);
   // The other cats popped into coins; drops wait until the jar has grown.
   const clearing = await state(page);
   expect(clearing.expansion?.to).toBe(2);
-  expect(clearing.runCoins).toBeGreaterThan(70);
+  expect(clearing.runCoins).toBeGreaterThanOrEqual(41);
   expect(await page.evaluate(() => window.__game?.dropAt(0))).toBe(false);
-  // The picks: a trial, then a blessing, before the jar grows.
+  // The last cat pops too, then the picks: a trial, then a blessing, before the jar grows.
   await chooseThroughPanel(page);
   const levels = (await state(page)).pickLevels ?? {};
   expect(Object.values(levels).reduce((a, b) => a + b, 0)).toBe(2);
 
-  // The reveal: the 10 is stage 2's smallest cat, and 19 is the next goal.
+  // The reveal: stage 2 starts empty, and 18 is the next goal.
   // One wait for the banner and its cat: it only shows for 2 s, and a slow software renderer
   // can take most of that between two separate checks.
   const banner = page.getByTestId('banner').filter({ hasText: 'New cats unlocked!' });
-  await expect(banner.locator('.cat-icon')).toHaveAttribute('data-tier', '19', WAIT);
+  await expect(banner.locator('.cat-icon')).toHaveAttribute('data-tier', '18', WAIT);
   await expect
     .poll(async () => {
       const s = await state(page);
       return [s.stage, s.lastTier];
     })
-    .toEqual([2, 19]);
+    .toEqual([2, 18]);
 
   await expect.poll(async () => (await state(page)).runState, WAIT).toBe('playing');
   const s = await state(page);
   expect(s.stage).toBe(2);
-  expect([s.firstTier, s.lastTier]).toEqual([10, 19]);
-  expect(s.balls).toBe(1);
+  expect([s.firstTier, s.lastTier]).toEqual([10, 18]);
+  expect(s.balls).toBe(0);
   await expect.poll(async () => (await state(page)).canDrop, WAIT).toBe(true);
   expect(await page.evaluate(() => window.__game?.dropAt(0))).toBe(true);
   expect(errors).toEqual([]);
@@ -130,7 +130,7 @@ test('with no upgrades, clearing stage 2 grows the jar into stage 3', async ({ p
       const s = await state(page);
       return [s.stage, s.lastTier];
     })
-    .toEqual([3, 28]);
+    .toEqual([3, 27]);
   expect(errors).toEqual([]);
 });
 
@@ -174,6 +174,6 @@ test('the debug jump plays every expansion in turn', async ({ page }) => {
       const s = await state(page);
       return [s.stage, s.lastTier];
     })
-    .toEqual([3, 28]);
+    .toEqual([3, 27]);
   expect(errors).toEqual([]);
 });

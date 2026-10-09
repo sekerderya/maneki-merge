@@ -299,7 +299,7 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
     return node;
   };
 
-  // Sizes 1–10: the buttons spawn the current stage's tier of that size.
+  // Sizes 1–9: the buttons spawn the current stage's tier of that size.
   const size = select(
     Array.from({ length: SIZE_COUNT }, (_, i) => i + 1),
     1,

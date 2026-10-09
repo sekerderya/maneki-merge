@@ -12,10 +12,10 @@ describe('jarGeometry (GAME_DESIGN §7, TECH_SPEC §4)', () => {
     }
   });
 
-  it('puts the dropper in the middle of a 0.4 W band above the rim', () => {
+  it('puts the dropper in the middle of a 0.44 W band above the rim', () => {
     const g = jarGeometry(1);
-    expect(g.headroom).toBeCloseTo(240, 10);
-    expect(g.dropY).toBeCloseTo(-990, 10);
+    expect(g.headroom).toBeCloseTo(264, 10);
+    expect(g.dropY).toBeCloseTo(-1002, 10);
   });
 
   it('keeps every stage’s biggest dropped cat above the rim', () => {

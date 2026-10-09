@@ -8,7 +8,7 @@ import {
   PHYSICS_MAX_SUBSTEPS,
   PHYSICS_STEP_MS,
 } from '../../src/config/physics';
-import { sizeRadius, STAGE_ZOOM } from '../../src/config/tiers';
+import { sizeRadius } from '../../src/config/tiers';
 import { MERGE_GROW_MS } from '../../src/config/timings';
 import { StateHasher } from '../../src/core/hash';
 import { FixedStepper, PhysicsWorld } from '../../src/physics/PhysicsWorld';
@@ -183,49 +183,40 @@ describe('PhysicsWorld', () => {
     }
   });
 
-  it('rescales the world into the next stage: the last cat becomes the first', () => {
+  it('moves into the next stage with an empty jar, the same jar as before', () => {
     const world = new PhysicsWorld();
     expect(world.gravity).toBe(GRAVITY_BASE);
     expect(world.speedLimit).toBeCloseTo(MAX_SPEED_BASE, 9);
     const half = world.wallInnerX;
 
-    const last = world.addBall({ tier: 10, x: 20, y: -400, vx: 90, vy: 180 });
-    expect(last.size).toBe(10);
-    expect(last.radius).toBe(163);
-    const angle = last.angle;
-    const [vx, vy] = [last.vx, last.vy];
+    const last = world.addBall({ tier: 9, x: 20, y: -400 });
+    expect(last.size).toBe(9);
+    expect(last.radius).toBe(165);
+    // The jar must be empty: the run pops every ball first.
+    expect(() => world.setStage(2)).toThrow(RangeError);
+    world.removeBall(last);
     world.setStage(2);
     expect(world.stage).toBe(2);
-    // Same jar, same gravity, same speed limit: only the cat changed.
+    // Same jar, same gravity, same speed limit.
     expect(world.wallInnerX).toBe(half);
     expect(world.gravity).toBe(GRAVITY_BASE);
     expect(world.speedLimit).toBeCloseTo(MAX_SPEED_BASE, 9);
-    expect(last.tier).toBe(10);
-    expect(last.size).toBe(1);
-    expect(last.radius).toBeCloseTo(sizeRadius(1), 9);
-    expect(last.targetRadius).toBe(sizeRadius(1));
-    expect(last.x).toBeCloseTo(20 / STAGE_ZOOM, 9);
-    expect(last.y).toBeCloseTo(-400 / STAGE_ZOOM, 9);
-    expect(last.vx).toBeCloseTo(vx / STAGE_ZOOM, 6);
-    expect(last.vy).toBeCloseTo(vy / STAGE_ZOOM, 6);
-    expect(last.angle).toBe(angle);
-    expect(last.body.mass).toBeCloseTo(
-      new PhysicsWorld({ stage: 2 }).addBall({ tier: 10, x: 0, y: -50 }).body.mass,
-      9,
-    );
-    // It lands like any size-1 cat, and stage 2's cats join it.
+    // Stage 2's cats start at tier 10, size 1.
+    const first = world.addBall({ tier: 10, x: -150, y: -300 });
     const next = world.addBall({ tier: 11, x: 150, y: -300 });
-    expect(next.size).toBe(2);
+    expect([first.size, next.size]).toEqual([1, 2]);
     run(world, 2);
-    expect(last.y).toBeCloseTo(-sizeRadius(1), 0);
+    expect(first.y).toBeCloseTo(-sizeRadius(1), 0);
     expect(next.y).toBeCloseTo(-sizeRadius(2), 0);
 
-    // One stage at a time, and only with cats the next stage can hold.
+    // One stage at a time.
+    world.removeBall(first);
+    world.removeBall(next);
     expect(() => world.setStage(4)).toThrow(RangeError);
-    expect(() => world.setStage(3)).toThrow(RangeError);
     expect(world.stage).toBe(2);
-    expect(world.sizeOf(19)).toBe(10);
-    expect(world.sizeOf(5)).toBeLessThan(1);
+    expect(world.sizeOf(18)).toBe(9);
+    expect(world.sizeOf(9)).toBeLessThan(1);
+    expect(world.sizeOf(19)).toBeGreaterThan(9);
   });
 
   it('keeps a pile from spilling over the rim', () => {

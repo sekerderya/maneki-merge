@@ -34,7 +34,7 @@ describe('the trials and blessings (GAME_DESIGN §15.5)', () => {
     ['moreBoulders', 'trial', 'More Boulders', 5, 0.03],
     ['ironBands', 'trial', 'Iron Bands', 3, 1],
     ['bigBoulders', 'trial', 'Big Boulders', 4, 1],
-    ['moreMagnets', 'blessing', 'More Magnets', 5, 0.03],
+    ['moreMagnets', 'blessing', 'More Magnets', 5, 0.015],
     ['bigDrops', 'blessing', 'Big Drops', 5, 2],
     ['goldenCats', 'blessing', 'Golden Cats', 5, 0.04],
   ];
@@ -60,10 +60,10 @@ describe('the trials and blessings (GAME_DESIGN §15.5)', () => {
 });
 
 describe('dropOdds (GAME_DESIGN §15.1)', () => {
-  it('starts with 2% magnets, 3% boulders from stage 2, no golden cats', () => {
+  it('starts with 1% magnets, 3% boulders from stage 2, no golden cats', () => {
     expect(dropOdds(levels(), 1, 0)).toEqual({
       tiltLevel: 0,
-      magnetChance: 0.02,
+      magnetChance: 0.01,
       boulderChance: 0,
       goldenChance: 0,
       boulderSize: 2,
@@ -76,7 +76,7 @@ describe('dropOdds (GAME_DESIGN §15.1)', () => {
   it('matches every table value at the max level', () => {
     const max = levels(Object.fromEntries(PICK_IDS.map((id) => [id, PICKS[id].maxLevel])));
     const odds = dropOdds(max, 3, 0);
-    expect(odds.magnetChance).toBeCloseTo(0.17, 12);
+    expect(odds.magnetChance).toBeCloseTo(0.085, 12);
     expect(odds.boulderChance).toBeCloseTo(0.18, 12);
     expect(odds.goldenChance).toBeCloseTo(0.2, 12);
     expect(odds.boulderSize).toBe(6);
@@ -133,7 +133,8 @@ describe('the cards', () => {
     ['moreBoulders', { moreBoulders: 4 }, 0, '15%', '18%'],
     ['ironBands', {}, 0, '1', '2'],
     ['bigBoulders', { bigBoulders: 1 }, 0, 'Size 3', 'Size 4'],
-    ['moreMagnets', {}, 0, '2%', '5%'],
+    ['moreMagnets', {}, 0, '1%', '2.5%'],
+    ['moreMagnets', { moreMagnets: 4 }, 0, '7%', '8.5%'],
     ['bigDrops', {}, 0, '10%', '16%'],
     ['bigDrops', {}, 3, '19%', '25%'],
     ['goldenCats', { goldenCats: 2 }, 0, '8%', '12%'],

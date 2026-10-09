@@ -93,7 +93,7 @@ function replay(seed: number, inputs: readonly DropInput[], checkTicks: readonly
 
 describe('determinism (TECH_SPEC §5)', () => {
   it('replays a run exactly from its seed and inputs, at any frame rate', () => {
-    const recorded = playWithFrames(5, 1, Infinity, 8 * STEPS_PER_SECOND);
+    const recorded = playWithFrames(6, 1, Infinity, 8 * STEPS_PER_SECOND);
     expect(recorded.inputs.length).toBeGreaterThan(20);
     // Magnets took balls and a pick was chosen, so those replay too.
     const has = (key: string): boolean =>
@@ -104,12 +104,12 @@ describe('determinism (TECH_SPEC §5)', () => {
 
     // matter-js body ids are global: build other worlds in between so the replay's ids differ.
     new PhysicsWorld().addBall({ tier: 3, x: 0, y: -100 });
-    const { run, hashes } = replay(5, recorded.inputs, ticks);
+    const { run, hashes } = replay(6, recorded.inputs, ticks);
     expect(hashes).toEqual(recorded.hashes);
     expect(run.score).toBeGreaterThan(0);
 
     // No hidden state leaks between runs: a second replay matches as well.
-    const again = replay(5, recorded.inputs, ticks);
+    const again = replay(6, recorded.inputs, ticks);
     expect(again.hashes).toEqual(recorded.hashes);
   });
 

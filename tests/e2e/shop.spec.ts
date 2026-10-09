@@ -128,9 +128,9 @@ test('an old save gets its removed upgrades’ coins back', async ({ page }) => 
     (key) => JSON.parse(localStorage.getItem(key) ?? '{}'),
     SAVE_KEY,
   );
-  expect(saved.version).toBe(5);
-  // Capped at today's last tier (v3 → v4).
-  expect(saved.data.records.highestTier).toBe(46);
+  expect(saved.version).toBe(6);
+  // Capped at today's last tier (v3 → v4, then v5 → v6).
+  expect(saved.data.records.highestTier).toBe(45);
   expect(Object.keys(saved.data.upgrades)).toEqual([
     'luckyPaw',
     'bigCatch',

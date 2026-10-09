@@ -9,9 +9,8 @@
  * world by 1 / STAGE_ZOOM, so the grown jar is the current stage's jar again and nothing jumps.
  */
 import { PHYSICS_STEP_MS } from '../config/physics';
-import { STAGE_ZOOM } from '../config/tiers';
 import { EXPANSION_CLEAR_MS, EXPANSION_ZOOM_MS } from '../config/timings';
-import { EXPANSION_WALL_LAG } from '../config/view';
+import { EXPANSION_WALL_LAG, STAGE_ZOOM } from '../config/view';
 import { clamp } from '../core/math';
 import type { ExpansionView } from '../run/RunController';
 import { easeInOut, growFrame } from './cameraFit';

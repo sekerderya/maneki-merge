@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { PHYSICS_STEP_MS, stepsFor } from '../../src/config/physics';
-import { STAGE_ZOOM } from '../../src/config/tiers';
+import { STAGE_ZOOM } from '../../src/config/view';
 import {
   EXPANSION_CLEAR_MS,
   EXPANSION_DURATION_MS,

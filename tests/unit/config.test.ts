@@ -40,7 +40,6 @@ import {
   STAGE_TIER_STEP,
   SIZE_BASE_RADIUS,
   SIZE_RADIUS_GROWTH,
-  STAGE_ZOOM,
   TIER_COUNT,
   tierInfo,
   TIERS,
@@ -49,22 +48,21 @@ import * as timings from '../../src/config/timings';
 import { UPGRADE_IDS, UPGRADES } from '../../src/config/upgrades';
 
 describe('cat sizes (GAME_DESIGN §4)', () => {
-  // Size and radius: every stage holds these 10 sizes.
+  // Size and radius: every stage holds these 9 sizes.
   const SIZES: readonly [number, number][] = [
-    [1, 34],
-    [2, 40],
-    [3, 48],
-    [4, 57],
-    [5, 68],
-    [6, 81],
-    [7, 97],
-    [8, 115],
-    [9, 137],
-    [10, 163],
+    [1, 41],
+    [2, 49],
+    [3, 58],
+    [4, 69],
+    [5, 82],
+    [6, 98],
+    [7, 116],
+    [8, 139],
+    [9, 165],
   ];
 
-  it("has 10 sizes per stage, the last one becoming the next stage's first", () => {
-    expect(SIZE_COUNT).toBe(10);
+  it('has 9 sizes per stage, and the next stage starts after its last one', () => {
+    expect(SIZE_COUNT).toBe(9);
     expect(STAGE_TIER_STEP).toBe(9);
   });
 
@@ -72,26 +70,27 @@ describe('cat sizes (GAME_DESIGN §4)', () => {
     expect(sizeRadius(size)).toBe(radius);
   });
 
-  it('zooms out so the last cat shrinks to exactly the first one', () => {
-    expect(STAGE_ZOOM).toBeCloseTo(163 / 34, 12);
-    expect(sizeRadius(SIZE_COUNT) / STAGE_ZOOM).toBeCloseTo(sizeRadius(1), 12);
-  });
-
-  it("starts at size 2's old radius and keeps size 9's, with even steps between (v0.19.3)", () => {
-    // Until v0.19.3: r(s) = round(28 × 1.22^(s−1)).
-    const old = (size: number) => Math.round(28 * 1.22 ** (size - 1));
-    expect(sizeRadius(1)).toBe(old(2));
-    expect(sizeRadius(9)).toBe(old(9));
-    expect(SIZE_BASE_RADIUS * SIZE_RADIUS_GROWTH ** 8).toBeCloseTo(old(9), 0);
-    // Every step is smaller than before.
-    expect(SIZE_RADIUS_GROWTH).toBeLessThan(1.22);
+  it('makes every cat 20% bigger than in v0.23, with the same step (v0.24)', () => {
+    // v0.19.3 to v0.23: r(s) = round(34 × 1.19^(s−1)), 10 sizes.
+    const old = (size: number) => Math.round(34 * 1.19 ** (size - 1));
+    for (let size = 1; size <= SIZE_COUNT; size++) {
+      expect(sizeRadius(size) / old(size)).toBeGreaterThan(1.18);
+      expect(sizeRadius(size) / old(size)).toBeLessThan(1.23);
+    }
+    expect(SIZE_RADIUS_GROWTH).toBe(1.19);
+    // The last cat is as big as the old last cat (size 10, 163).
+    expect(SIZE_BASE_RADIUS * SIZE_RADIUS_GROWTH ** 8).toBeCloseTo(old(10), -1);
+    // Sizes 1–8 cover as much of the jar as the old sizes 1–9 did, within 2%.
+    const area = (r: (s: number) => number, n: number) =>
+      Array.from({ length: n }, (_, i) => r(i + 1) ** 2).reduce((a, b) => a + b, 0);
+    expect(area(sizeRadius, 8) / area(old, 9)).toBeCloseTo(1, 1);
   });
 
   it('rejects unknown sizes', () => {
     expect(isSize(0)).toBe(false);
-    expect(isSize(11)).toBe(false);
+    expect(isSize(10)).toBe(false);
     expect(isSize(1.5)).toBe(false);
-    expect(isSize(10)).toBe(true);
+    expect(isSize(9)).toBe(true);
   });
 });
 
@@ -108,15 +107,15 @@ describe('tiers (GAME_DESIGN §4)', () => {
     [8, 256, 41],
     [9, 512, 70],
     [10, 1_024, 119],
-    [19, 524_288, 14_063],
-    [28, 268_435_456, 1_667_711],
-    [37, 137_438_953_472, 197_770_344],
-    [46, 70_368_744_177_664, 23_453_165_165],
+    [18, 262_144, 8_272],
+    [27, 134_217_728, 981_007],
+    [36, 68_719_476_736, 116_335_497],
+    [45, 35_184_372_088_832, 13_795_979_509],
   ];
 
-  it('has 46 tiers: stage 5 ends at tier 46', () => {
-    expect(TIER_COUNT).toBe(46);
-    expect(TIERS).toHaveLength(46);
+  it('has 45 tiers: stage 5 ends at tier 45', () => {
+    expect(TIER_COUNT).toBe(45);
+    expect(TIERS).toHaveLength(45);
     expect(TIER_COUNT).toBe(stageInfo(STAGE_COUNT).lastTier);
   });
 
@@ -126,10 +125,10 @@ describe('tiers (GAME_DESIGN §4)', () => {
 
   it('rejects unknown tiers', () => {
     expect(isTier(0)).toBe(false);
-    expect(isTier(47)).toBe(false);
+    expect(isTier(46)).toBe(false);
     expect(isTier(2.5)).toBe(false);
     expect(() => tierInfo(0)).toThrow(RangeError);
-    expect(() => tierInfo(47)).toThrow(RangeError);
+    expect(() => tierInfo(46)).toThrow(RangeError);
   });
 
   it('repeats the colours with the sizes, so every stage looks the same', () => {
@@ -140,7 +139,7 @@ describe('tiers (GAME_DESIGN §4)', () => {
         expect(tierColor(info.firstTier + size - 1)).toBe(tierColor(size));
       }
     }
-    // The last cat takes the first one's colour: it becomes the next stage's first cat.
+    // The next stage's first cat looks like this stage's first.
     expect(tierColor(10)).toBe(tierColor(1));
   });
 });
@@ -148,11 +147,11 @@ describe('tiers (GAME_DESIGN §4)', () => {
 describe('stages (GAME_DESIGN §7)', () => {
   // Stage, first tier, last tier, drop pool.
   const TABLE: readonly [number, number, number, [number, number]][] = [
-    [1, 1, 10, [1, 4]],
-    [2, 10, 19, [10, 13]],
-    [3, 19, 28, [19, 22]],
-    [4, 28, 37, [28, 31]],
-    [5, 37, 46, [37, 40]],
+    [1, 1, 9, [1, 4]],
+    [2, 10, 18, [10, 13]],
+    [3, 19, 27, [19, 22]],
+    [4, 28, 36, [28, 31]],
+    [5, 37, 45, [37, 40]],
   ];
 
   it('has 5 stages', () => {
@@ -263,7 +262,7 @@ describe('physics tunables (TECH_SPEC §5)', () => {
   });
 
   it('leaves room for the dropper above the rim (TECH_SPEC §4)', () => {
-    expect(DROPPER_HEADROOM_RATIO).toBe(0.4);
+    expect(DROPPER_HEADROOM_RATIO).toBe(0.44);
     expect(WALL_HEIGHT_FACTOR).toBeGreaterThan(1);
   });
 

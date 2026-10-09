@@ -4,6 +4,7 @@ import { UPGRADE_IDS } from '../../src/config/upgrades';
 import {
   decodeSave,
   defaultSave,
+  endStageLoop,
   MemoryStorage,
   migrate,
   FORTUNE_TELLER_PRICES,
@@ -194,7 +195,7 @@ describe('sanitize', () => {
     expect(d.upgrades.bigCatch).toBe(2); // floored
     expect(d.upgrades.comboCharm).toBe(0);
     expect(d.upgrades.secondChance).toBe(0);
-    expect(d.records).toEqual({ bestScore: 0, bestStage: 1, highestTier: 46 });
+    expect(d.records).toEqual({ bestScore: 0, bestStage: 1, highestTier: 45 });
     expect(d.stats).toEqual(defaultSave().stats);
     expect(d.settings).toEqual({ sound: true, haptics: false, reduceMotion: false });
     expect(d.flags.hintsSeen).toEqual({ aim: false, merge: true, magnet: false });
@@ -210,7 +211,7 @@ describe('sanitize', () => {
   });
 
   it('keeps scores beyond 2^53 (later stages score in the quadrillions)', () => {
-    const result = sanitize({ records: { bestScore: 2 ** 56, bestStage: 5, highestTier: 46 } });
+    const result = sanitize({ records: { bestScore: 2 ** 56, bestStage: 5, highestTier: 45 } });
     expect(result.issues).toEqual([]);
     expect(result.data.records.bestScore).toBe(2 ** 56);
   });
@@ -316,8 +317,8 @@ describe('v2 → v3: Shrine Expansion and Fortune Teller refunds, Golden Merge (
   it('caps a record tier from the 12-cat stages at the 11-cat stages’ last tier', () => {
     const capped = retireUpgrades(v2({}, 100, 56).data) as { records: { highestTier: number } };
     expect(capped.records.highestTier).toBe(51);
-    // Then v3 → v4 caps it again, at today's last tier.
-    expect(migrate(v2({}, 100, 56)).data.records.highestTier).toBe(46);
+    // Then v3 → v4 and v5 → v6 cap it again, at today's last tier.
+    expect(migrate(v2({}, 100, 56)).data.records.highestTier).toBe(45);
     expect(migrate(v2({}, 100, 23)).data.records.highestTier).toBe(23);
     expect(migrate(v2({}, 100, 56)).status).toBe('migrated');
   });
@@ -348,13 +349,17 @@ describe('v3 → v4: 10 cats per stage (v0.15)', () => {
     },
   });
 
+  // v5 → v6 caps the record again, at 45 (v0.24).
   it.each([
-    [51, 46],
-    [47, 46],
-    [46, 46],
+    [51, 45],
+    [47, 45],
+    [46, 45],
     [23, 23],
     [0, 0],
   ])('turns a record tier of %i into %i', (before, after) => {
+    expect(shrinkStages(v3(before).data)).toMatchObject({
+      records: { highestTier: Math.min(before, 46) },
+    });
     const result = migrate(v3(before));
     expect(result.status).toBe('migrated');
     expect(result.issues).toEqual([]);
@@ -385,10 +390,6 @@ describe('v4 → v5: Golden Merge refund (v0.21)', () => {
     },
   });
 
-  it('is the current version', () => {
-    expect(SAVE_VERSION).toBe(5);
-  });
-
   it.each([
     [0, 0],
     [1, 120],
@@ -414,6 +415,42 @@ describe('v4 → v5: Golden Merge refund (v0.21)', () => {
     const broken = migrate(v4(2, 'lots'));
     expect(broken.status).toBe('repaired');
     expect(broken.issues).toEqual(['wallet.coins']);
+  });
+});
+
+describe('v5 → v6: 9 cats per stage, no loop (v0.24)', () => {
+  const v5 = (highestTier: unknown) => ({
+    version: 5,
+    data: {
+      wallet: { coins: 100 },
+      upgrades: { luckyPaw: 2 },
+      records: { bestScore: 900, bestStage: 4, highestTier },
+    },
+  });
+
+  it('is the current version', () => {
+    expect(SAVE_VERSION).toBe(6);
+  });
+
+  it.each([
+    [46, 45],
+    [45, 45],
+    [19, 19],
+    [0, 0],
+  ])('turns a record tier of %i into %i', (before, after) => {
+    const result = migrate(v5(before));
+    expect(result.status).toBe('migrated');
+    expect(result.issues).toEqual([]);
+    expect(result.data.records).toEqual({ bestScore: 900, bestStage: 4, highestTier: after });
+    expect(result.data.wallet.coins).toBe(100);
+  });
+
+  it('leaves malformed data for the repair', () => {
+    expect(endStageLoop(null)).toBeNull();
+    expect(endStageLoop({ records: 'none' })).toEqual({ records: 'none' });
+    const broken = migrate(v5(99));
+    expect(broken.status).toBe('repaired');
+    expect(broken.issues).toEqual(['records.highestTier']);
   });
 });
 

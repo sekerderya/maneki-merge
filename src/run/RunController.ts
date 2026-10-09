@@ -78,13 +78,15 @@ export interface SpawnOptions {
 }
 
 /**
- * The expansion sequence (GAME_DESIGN §7.1). `clear`: the other cats have popped and the last cat
- * settles while the jar holds still (the picks come at its end); `zoom`: time stops and the camera
+ * The stage-clear sequence (GAME_DESIGN §7.1). `clear`: the other cats have popped and the last
+ * cat settles alone, then pops too (the picks come at its end); `zoom`: time stops and the camera
  * zooms out while the jar grows; `reveal`: the world is the new stage's ("New cats unlocked!").
- * The scene derives camera and jar visuals from it.
+ * At the last stage (`to` equals `from`) the jar doesn't grow: play goes on after the clear and
+ * the picks. The scene derives camera and jar visuals from it.
  */
 export interface ExpansionView {
   readonly from: number;
+  /** The next stage, or `from` at the last stage (no zoom, no reveal). */
   readonly to: number;
   readonly elapsedMs: number;
   /** 0 → 1 over the whole sequence (EXPANSION_DURATION_MS). */
@@ -499,6 +501,7 @@ export class RunController {
     for (const item of [this.queue.current, this.queue.next]) {
       h.string(item.kind).number(item.tier).bool(item.golden).number(item.hits);
     }
+    h.number(this.queue.dropsThisStage);
     for (const value of Object.values(this.levels)) h.number(value);
     h.string(this.offer ? `${this.offer.kind}:${this.offer.options.join(',')}` : '');
     h.string(this.pickQueue.join(','));
@@ -592,8 +595,9 @@ export class RunController {
 
   /**
    * The stage's last cat exists (GAME_DESIGN §7): every other ball pops into its value (boulders
-   * crumble), oldest first. Then the jar grows into the next stage, with the picks before its
-   * zoom; at the last stage the picks come at once and play goes on with the last cat in the jar.
+   * crumble), oldest first, and the last cat pops after it settles, so the next stage starts with
+   * an empty jar. The picks come then, before the jar grows into the next stage; at the last stage
+   * play goes on after them in the same jar. A queued magnet becomes a cat (`DropQueue.newStage`).
    */
   private clearStage(last: Ball, picks = true): void {
     const stage = this.world.stage;
@@ -601,10 +605,10 @@ export class RunController {
       this.world.balls.filter((ball) => ball !== last),
       'cashOut',
     );
+    this.queue.newStage();
     const next = nextStage(stage);
     this.events.emit('stageCleared', { stage, tier: last.tier, next: next.kind });
-    if (next.kind === 'expand') this.startExpansion(next.stage, picks);
-    else if (picks) this.beginPicks();
+    this.startExpansion(next.kind === 'expand' ? next.stage : stage, picks);
   }
 
   /** Debug: puts the stage's last cat on the floor and clears the stage with it, without picks. */
@@ -709,7 +713,7 @@ export class RunController {
     const e = this.expansionState;
     if (e) {
       this.runState = 'expanding';
-      this.startZoom(e);
+      this.afterClear(e);
       if (this.instant) this.runExpansionToEnd();
       return;
     }
@@ -758,16 +762,25 @@ export class RunController {
       // Only the last cat is left: it finishes growing and settles while the jar holds still.
       this.world.step();
       if (e.elapsedSteps >= CLEAR_STEPS) {
-        // The picks come first (time stands still); `choose` starts the zoom after the last one.
+        // The last cat pops too: the next stage starts with an empty jar.
         this.world.pause();
+        this.pop([...this.world.balls], 'cashOut');
+        // The picks come first (time stands still); `choose` goes on after the last one.
         if (e.picks && this.beginPicks()) return;
-        this.startZoom(e);
+        this.afterClear(e);
+        return;
       }
     } else if (e.phase === 'zoom' && e.elapsedSteps >= CLEAR_STEPS + ZOOM_STEPS) {
       e.phase = 'reveal';
       this.reveal(e);
     }
     if (e.elapsedSteps >= EXPANSION_STEPS) this.finishExpansion(e);
+  }
+
+  /** After the clear and its picks: the zoom, or at the last stage straight back to play. */
+  private afterClear(e: Expansion): void {
+    if (e.to === e.from) this.finishExpansion(e);
+    else this.startZoom(e);
   }
 
   /** Time stops and the camera starts zooming out. */
@@ -778,15 +791,12 @@ export class RunController {
   }
 
   /**
-   * At the end of the zoom the jar has grown by STAGE_ZOOM: the world shrinks by as much, so the
-   * last cat becomes the new stage's first, and the dropper switches to the new stage's pool.
+   * At the end of the zoom the grown jar becomes the new stage's jar, empty, and the dropper
+   * switches to the new stage's pool.
    */
   private reveal(e: Expansion): void {
-    // Only the last cat should be left; anything else (a debug spawn) pops.
-    this.pop(
-      this.world.balls.filter((ball) => ball.kind !== 'cat' || !stageHoldsTier(e.to, ball.tier)),
-      'cashOut',
-    );
+    // The jar should be empty; anything in it (a debug spawn) pops.
+    this.pop([...this.world.balls], 'cashOut');
     this.world.setStage(e.to);
     this.queue.setStage(e.to);
     // Boulders come from stage 2 on (GAME_DESIGN §15.1).
@@ -807,7 +817,7 @@ export class RunController {
   }
 }
 
-/** The tiers a stage adds to the previous one ("New cats unlocked!"): up to its last cat. */
+/** The tiers a stage adds ("New cats unlocked!"), up to its last cat; none at the last stage. */
 function newTiers(from: number, to: number): number[] {
   const fromLast = stageInfo(from).lastTier;
   const toLast = stageInfo(to).lastTier;

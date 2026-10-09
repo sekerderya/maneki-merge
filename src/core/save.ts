@@ -11,7 +11,7 @@ import { UPGRADE_IDS, UPGRADES } from '../config/upgrades';
 import type { UpgradeId } from '../config/upgrades';
 
 /** Bump when the shape changes, and add MIGRATIONS[old] that converts old data to the new one. */
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 
 export interface SaveData {
   wallet: { coins: number };
@@ -86,6 +86,8 @@ export const FORTUNE_TELLER_PRICES: readonly number[] = [400];
 const V2_TIER_COUNT = 56;
 /** The highest tier from v0.12 to v0.14, when stages held 11 cats (stage 5 ended at tier 51). */
 const V3_TIER_COUNT = 51;
+/** The highest tier from v0.15 to v0.23, when stages held 10 cats (stage 5 ended at tier 46). */
+const V4_TIER_COUNT = 46;
 
 /**
  * v2 → v3 (v0.12): Shrine Expansion and Fortune Teller are gone, and the coins spent on their
@@ -110,7 +112,7 @@ export function retireUpgrades(data: unknown): unknown {
  * Anything malformed is left for `sanitize` to repair.
  */
 export function shrinkStages(data: unknown): unknown {
-  return isRecord(data) ? capRecordTier(data, V3_TIER_COUNT, TIER_COUNT) : data;
+  return isRecord(data) ? capRecordTier(data, V3_TIER_COUNT, V4_TIER_COUNT) : data;
 }
 
 /**
@@ -127,6 +129,14 @@ export function retireGoldenMerge(data: unknown): unknown {
   if (!isRecord(data) || !isRecord(data['upgrades'])) return data;
   const { goldenMerge, ...upgrades } = data['upgrades'];
   return withRefund({ ...data, upgrades }, spent(GOLDEN_MERGE_PRICES, goldenMerge));
+}
+
+/**
+ * v5 → v6 (v0.24): stages hold 9 cats now and no longer share their last cat with the next stage
+ * (tiers up to 45), so a higher record tier is capped. Anything malformed is left for `sanitize`.
+ */
+export function endStageLoop(data: unknown): unknown {
+  return isRecord(data) ? capRecordTier(data, V4_TIER_COUNT, TIER_COUNT) : data;
 }
 
 /** Lowers a record tier in (`max`, `oldMax`] to `max`: the stages shrank from `oldMax` to `max`. */
@@ -167,6 +177,7 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
   2: retireUpgrades,
   3: shrinkStages,
   4: retireGoldenMerge,
+  5: endStageLoop,
 };
 
 export type LoadStatus =

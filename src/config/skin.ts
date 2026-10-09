@@ -7,8 +7,7 @@ import { STAGE_TIER_STEP } from './tiers';
 
 /**
  * Body colour per size, index 0 is size 1. Neighbouring sizes differ in hue and lightness. The
- * colours repeat every STAGE_TIER_STEP tiers: a stage's last cat (size 10) has the colour of size
- * 1, because it becomes the next stage's first cat, and every stage looks the same.
+ * colours repeat every STAGE_TIER_STEP tiers, so every stage looks the same.
  */
 export const TIER_COLORS: readonly string[] = [
   '#9be7ff', // 1 light cyan

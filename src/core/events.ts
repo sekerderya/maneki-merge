@@ -108,7 +108,7 @@ export interface GameEvents {
     readonly id: number;
     readonly tier: number;
     readonly newTier: number;
-    /** The new cat's size at the current stage (1–10), for effects that grow with the cat. */
+    /** The new cat's size at the current stage (1–9), for effects that grow with the cat. */
     readonly newSize: number;
     /** A golden cat merged (GAME_DESIGN §15.4): the new cat skipped a tier. */
     readonly golden: boolean;

@@ -114,7 +114,6 @@ export class ArtSkin implements BallSkin {
   private drawAtlas(): void {
     const cats: { size: number; canvas: HTMLCanvasElement }[] = [];
     for (let size = 1; size <= SIZE_COUNT; size++) {
-      // Sizes repeat their looks, so size 10 wears size 1's.
       const sprite = catSprite(size);
       const source = this.images[CAT_SPRITES.indexOf(sprite)];
       if (!source) throw new Error(`Cat art not loaded: ${sprite.file}`);

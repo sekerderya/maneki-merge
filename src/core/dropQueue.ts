@@ -1,5 +1,10 @@
 /** The queue of balls the dropper hands out (GAME_DESIGN §8, §15.1). */
-import { BOULDER_BASE_HITS, BOULDER_BASE_SIZE, MAGNET_SIZE } from '../config/picks';
+import {
+  BOULDER_BASE_HITS,
+  BOULDER_BASE_SIZE,
+  MAGNET_FREE_DROPS,
+  MAGNET_SIZE,
+} from '../config/picks';
 import { DROP_WEIGHTS, FIRST_DROPS_SMALLEST_COUNT, stageInfo } from '../config/stages';
 import { UPGRADES } from '../config/upgrades';
 import type { Rng } from './rng';
@@ -27,7 +32,7 @@ export interface DropOdds {
   readonly magnetChance: number;
   readonly boulderChance: number;
   readonly goldenChance: number;
-  /** A boulder's size (1–10) and the merges it needs to break. */
+  /** A boulder's size (1–9) and the merges it needs to break. */
   readonly boulderSize: number;
   readonly boulderHits: number;
 }
@@ -70,7 +75,7 @@ export interface DropQueueOptions {
 /**
  * `current` is the ball in the dropper and `next` the one after it, which the HUD shows. Each item
  * rolls its tier, kind and golden once; the first two items of a run are cats of the pool's
- * smallest tier.
+ * smallest tier. No magnet is queued before MAGNET_FREE_DROPS balls were dropped in the stage.
  */
 export class DropQueue {
   private readonly rng: Rng;
@@ -79,6 +84,8 @@ export class DropQueue {
   private pool: readonly number[] = [];
   private weights: readonly number[] = [];
   private generated = 0;
+  /** Balls handed out since the stage started (`newStage`). */
+  private stageDrops = 0;
   private dropper: Drop;
   private upcoming: Drop;
 
@@ -101,9 +108,15 @@ export class DropQueue {
     return this.upcoming;
   }
 
+  /** Balls handed out since the stage started. */
+  get dropsThisStage(): number {
+    return this.stageDrops;
+  }
+
   /** Hands out the current ball and moves the queue forward. */
   take(): Drop {
     const drop = this.dropper;
+    this.stageDrops++;
     this.dropper = this.upcoming;
     this.upcoming = this.generate();
     return drop;
@@ -135,6 +148,21 @@ export class DropQueue {
     this.upcoming = { ...this.upcoming, tier: this.upcoming.tier + shift };
   }
 
+  /**
+   * A stage was cleared and the jar is empty (GAME_DESIGN §15.1): the drop count starts again, and
+   * a queued magnet becomes a cat of the pool's smallest tier, since it would have nothing to take.
+   */
+  newStage(): void {
+    this.stageDrops = 0;
+    this.dropper = this.withoutMagnet(this.dropper);
+    this.upcoming = this.withoutMagnet(this.upcoming);
+  }
+
+  private withoutMagnet(drop: Drop): Drop {
+    if (drop.kind !== 'magnet') return drop;
+    return { kind: 'cat', tier: this.pool[0] as number, golden: false, hits: 0 };
+  }
+
   private usePool(stage: number): void {
     this.pool = stageInfo(stage).dropPool;
     this.weights = dropWeights(this.odds.tiltLevel);
@@ -149,10 +177,12 @@ export class DropQueue {
     const goldenRoll = this.specialRng.next();
     const odds = this.odds;
     if (forceSmallest) return { kind: 'cat', tier: first, golden: false, hits: 0 };
-    if (kindRoll < odds.magnetChance) {
+    // Before the stage's MAGNET_FREE_DROPS-th drop no magnet comes; the other chances stay.
+    const magnetChance = this.stageDrops >= MAGNET_FREE_DROPS ? odds.magnetChance : 0;
+    if (kindRoll < magnetChance) {
       return { kind: 'magnet', tier: first + MAGNET_SIZE - 1, golden: false, hits: 0 };
     }
-    if (kindRoll < odds.magnetChance + odds.boulderChance) {
+    if (kindRoll < magnetChance + odds.boulderChance) {
       const boulderTier = first + odds.boulderSize - 1;
       return { kind: 'boulder', tier: boulderTier, golden: false, hits: odds.boulderHits };
     }

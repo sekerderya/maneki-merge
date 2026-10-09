@@ -3,26 +3,28 @@
  *
  * A cat's tier is its number: it only ever goes up, and it sets the score and coins a merge pays.
  * A cat's size is its place in the current stage, 1–SIZE_COUNT: it sets the radius. Every stage
- * holds the same 10 sizes, and the last one becomes the next stage's first (STAGE_TIER_STEP), so
- * stage 1 has tiers 1–10, stage 2 tiers 10–19, and so on (config/stages.ts).
+ * holds the same 9 sizes and starts where the previous one ended (STAGE_TIER_STEP), so stage 1
+ * has tiers 1–9, stage 2 tiers 10–18, and so on (config/stages.ts). Until v0.24 a stage held 10
+ * sizes and its last cat was the next stage's first.
  */
 
-/** Every stage holds this many cat sizes (tiers): two 9s make the last one and clear the stage. */
-export const SIZE_COUNT = 10;
-/** A stage's tiers start this many tiers after the previous stage's: its last cat is the next first. */
-export const STAGE_TIER_STEP = SIZE_COUNT - 1;
+/** Every stage holds this many cat sizes (tiers): two 8s make the last one and clear the stage. */
+export const SIZE_COUNT = 9;
+/** A stage's tiers start this many tiers after the previous stage's: right after its last cat. */
+export const STAGE_TIER_STEP = SIZE_COUNT;
 
-/** Tiers 1–46: stage 5's last cat is tier 1 + 5 × 9 (a config test checks it against STAGE_COUNT). */
-export const TIER_COUNT = 46;
+/** Tiers 1–45: stage 5's last cat is tier 5 × 9 (a config test checks it against STAGE_COUNT). */
+export const TIER_COUNT = 45;
 export const MIN_TIER = 1;
 export const MAX_TIER = TIER_COUNT;
 
 /**
- * r(size) = round(BASE × GROWTH^(size−1)) in world units; the jar is 600 wide. v0.19.3 (owner):
- * size 1 grew to size 2's old radius (34) and size 9 kept its 137, with an even step between them,
- * so the steps are smaller (× 1.19 instead of × 1.22). Size 10 follows the same step (163).
+ * r(size) = round(BASE × GROWTH^(size−1)) in world units; the jar is 600 wide. v0.24: every cat is
+ * 20% bigger (base 41 instead of 34, same step), because a stage now ends at size 9 and needs half
+ * the cats: sizes 1–8 together cover as much of the jar as sizes 1–9 did, and size 9 (165) is as
+ * big as the old size 10 (163). v0.19.3: base 34, × 1.19; before that 28, × 1.22.
  */
-export const SIZE_BASE_RADIUS = 34;
+export const SIZE_BASE_RADIUS = 41;
 export const SIZE_RADIUS_GROWTH = 1.19;
 
 /** S(t) = SCORE_BASE^t. */
@@ -47,16 +49,10 @@ export function isSize(value: number): boolean {
   return Number.isInteger(value) && value >= 1 && value <= SIZE_COUNT;
 }
 
-/** The radius of a cat of `size` (1–10) in world units. */
+/** The radius of a cat of `size` (1–9) in world units. */
 export function sizeRadius(size: number): number {
   return Math.round(SIZE_BASE_RADIUS * SIZE_RADIUS_GROWTH ** (size - 1));
 }
-
-/**
- * How much the jar grows (and the camera zooms out) from one stage to the next: the stage's last
- * cat shrinks on screen to exactly the size of the first one (GAME_DESIGN §7).
- */
-export const STAGE_ZOOM = sizeRadius(SIZE_COUNT) / sizeRadius(1);
 
 export function tierScore(tier: number): number {
   return TIER_SCORE_BASE ** tier;

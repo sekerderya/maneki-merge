@@ -11,12 +11,12 @@ describe('cat textures per stage (TECH_SPEC §6)', () => {
   it('covers every tier a stage can hold, the dropped ones first', () => {
     expect(stageSkinSet(1)).toEqual({
       stage: 1,
-      tiers: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      tiers: [1, 2, 3, 4, 5, 6, 7, 8, 9],
       drops: [1, 2, 3, 4],
     });
     expect(stageSkinSet(2)).toEqual({
       stage: 2,
-      tiers: [10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+      tiers: [10, 11, 12, 13, 14, 15, 16, 17, 18],
       drops: [10, 11, 12, 13],
     });
     for (let stage = 1; stage <= STAGE_COUNT; stage++) {

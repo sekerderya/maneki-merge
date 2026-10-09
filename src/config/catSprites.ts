@@ -4,7 +4,7 @@
  * the game scales it so that circle lands exactly on the physics radius. The art shows no numbers:
  * a cat's look tells its size. Pure data, no DOM.
  *
- * Looks repeat with the sizes like the vector looks (catArt.ts): size 10 wears look 1.
+ * One sprite per size, repeating every stage like the vector looks (catArt.ts).
  */
 import { STAGE_TIER_STEP } from './tiers';
 import { CAT_SPRITE_DATA } from './catSpriteData';

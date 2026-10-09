@@ -1,8 +1,8 @@
 /**
  * Jar geometry in world units (TECH_SPEC §4): the origin is the centre of the jar floor and y
  * grows downward, so the rim is at y = −height. The jar is a plain rectangle with square bottom
- * corners. Every stage has the same jar: when the jar grows, the run rescales the world instead
- * (GAME_DESIGN §7). Pure math, no matter-js, so the game scene can use it too.
+ * corners. Every stage has the same jar: when the jar grows on screen, the run empties it and the
+ * next stage plays in the same world jar (GAME_DESIGN §7). Pure math, no matter-js, so the game scene can use it too.
  */
 import { clamp } from '../core/math';
 import {

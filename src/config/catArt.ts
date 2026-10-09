@@ -6,8 +6,7 @@
  * Every shape is an SVG path, so the same data feeds the game's canvas textures (`Path2D`,
  * game/skins/CatSkin.ts) and the DOM icons (inline SVG, ui/catIcon.ts). Pure data, no DOM.
  *
- * Looks repeat with the sizes: size 10 (a stage's last cat) wears look 1, because it becomes the
- * next stage's size 1. A tier's look is the same at every stage (`catLook`).
+ * One look per size, repeating every stage: a tier's look is the same at every stage (`catLook`).
  */
 import { STAGE_TIER_STEP } from './tiers';
 

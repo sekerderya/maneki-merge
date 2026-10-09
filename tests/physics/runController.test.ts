@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { PHYSICS_STEP_MS, stepsFor } from '../../src/config/physics';
 import { stageInfo } from '../../src/config/stages';
-import { sizeRadius, STAGE_ZOOM } from '../../src/config/tiers';
+import { sizeRadius } from '../../src/config/tiers';
 import {
   DANGER_TIMEOUT_MS,
   DROP_COOLDOWN_MS,
@@ -114,7 +114,7 @@ describe('starting a run', () => {
     expect(run.canDrop).toBe(true);
     expect(run.next.tier).toBe(1);
     expect(run.luckySavesLeft).toBe(0);
-    expect(run.progress).toEqual({ fraction: 0, goalTier: 10, final: false });
+    expect(run.progress).toEqual({ fraction: 0, goalTier: 9, final: false });
     expect(run.expansion).toBeNull();
   });
 
@@ -230,15 +230,16 @@ describe('merges and payouts (GAME_DESIGN §5, §9)', () => {
   it('makes a Jackpot from two of the stage last cat', () => {
     const { run, of } = setup();
     const last = stageInfo(1).lastTier;
-    const r = sizeRadius(10);
+    const r = sizeRadius(9);
     run.spawnBall(last, 0, -r);
     run.spawnBall(last, 0, -3 * r + 2);
     run.tick();
+    // 2 × S(9) and 5 × C(9).
     expect(of('jackpot')).toEqual([
-      expect.objectContaining({ tier: last, score: 2048, coins: 595, combo: 1 }),
+      expect.objectContaining({ tier: last, score: 1024, coins: 350, combo: 1 }),
     ]);
     expect(run.balls).toHaveLength(0);
-    expect(run.score).toBe(2048);
+    expect(run.score).toBe(1024);
     expect(of('stageCleared')).toEqual([]);
   });
 });
@@ -264,8 +265,8 @@ function makeLastCat(run: RunController): void {
 describe('stage clears (GAME_DESIGN §7)', () => {
   it('pops every other cat into its value when the last cat is made, then grows the jar', () => {
     const { run, log, of, types } = setup();
-    run.spawnBall(1, -270, -28);
-    run.spawnBall(3, 260, -42);
+    run.spawnBall(1, -270, -run.radiusOf(1));
+    run.spawnBall(3, 260, -run.radiusOf(3));
     ticks(run, 60);
     const small = run.balls.map((b) => b.id);
     log.length = 0;
@@ -286,16 +287,17 @@ describe('stage clears (GAME_DESIGN §7)', () => {
       'stageCleared',
     ]);
     expect(of('merged')).toEqual([
-      expect.objectContaining({ tier: 9, newTier: 10, newSize: 10, score: 512, coins: 70 }),
+      expect.objectContaining({ tier: 8, newTier: 9, newSize: 9, score: 256, coins: 41 }),
     ]);
     // Their value is half of C(t): tier 1 → 0.5, paid as the 1-coin minimum; tier 3 → 1.5 → 2.
     expect(of('catPopped').map((p) => [p.id, p.tier, p.coins, p.reason])).toEqual([
       [small[0], 1, 1, 'cashOut'],
       [small[1], 3, 2, 'cashOut'],
     ]);
-    expect(of('stageCleared')).toEqual([{ stage: 1, tier: 10, next: 'expand' }]);
-    expect(run.coins).toBe(70 + 3);
-    expect(run.balls.map((b) => b.tier)).toEqual([10]);
+    expect(of('stageCleared')).toEqual([{ stage: 1, tier: 9, next: 'expand' }]);
+    expect(run.coins).toBe(41 + 3);
+    // The last cat stays for the clear's first half second, then pops too.
+    expect(run.balls.map((b) => b.tier)).toEqual([9]);
     expect(run.progress.fraction).toBe(1);
     expect(run.state).toBe('expanding');
     expect(run.expansion).toMatchObject({ from: 1, to: 2, phase: 'clear', zoomProgress: 0 });
@@ -303,21 +305,28 @@ describe('stage clears (GAME_DESIGN §7)', () => {
     expect(run.drop(0)).toBe(false);
   });
 
-  it('lets the last cat settle, stops time for the zoom, then rescales the world', () => {
+  it('lets the last cat settle, pops it, stops time for the zoom, then empties the jar', () => {
     const { run, of, types } = setup();
     makeLastCat(run);
     const last = run.balls[0]!;
-    expect(last.tier).toBe(10);
+    expect(last.tier).toBe(9);
     const queue = [run.current, run.next];
+    const coins = run.coins;
 
     // The stage clear: physics runs (the last cat finishes growing and falls), nothing else.
     const playTime = run.playTimeMs;
     ticks(run, CLEAR_STEPS - 1);
     expect(run.expansion?.phase).toBe('clear');
     expect(run.playTimeMs).toBeGreaterThan(playTime);
-    expect(last.radius).toBe(sizeRadius(10));
+    expect(last.radius).toBe(sizeRadius(9));
+    expect(run.balls).toHaveLength(1);
     expect(of('expansionStarted')).toEqual([]);
     run.tick();
+
+    // The last cat pops into its value, C(9) / 2 = 35: the next stage starts with an empty jar.
+    expect(of('catPopped').at(-1)).toMatchObject({ id: last.id, tier: 9, coins: 35 });
+    expect(run.coins).toBe(coins + 35);
+    expect(run.balls).toHaveLength(0);
 
     // The picks (GAME_DESIGN §15.5): a trial, then a blessing, while time stands still.
     expect(run.state).toBe('choosing');
@@ -345,29 +354,24 @@ describe('stage clears (GAME_DESIGN §7)', () => {
     expect(of('expansionStarted')).toEqual([{ from: 1, to: 2 }]);
 
     // The zoom: time stands still.
-    const frozen = [last.x, last.y];
     const time = run.playTimeMs;
     ticks(run, ZOOM_STEPS / 2);
-    expect([last.x, last.y]).toEqual(frozen);
     expect(run.playTimeMs).toBe(time);
     expect(run.expansion!.zoomProgress).toBeCloseTo(0.5, 9);
     expect(run.expansion!.elapsedMs).toBeCloseTo(EXPANSION_CLEAR_MS + EXPANSION_ZOOM_MS / 2, 6);
     expect(run.stage).toBe(1);
 
-    // The reveal: the jar has grown more than sevenfold, so the world shrinks by as much.
+    // The reveal: the grown jar is stage 2's jar, empty and the same size in world units.
     ticks(run, ZOOM_STEPS / 2);
     expect(run.expansion).toMatchObject({ phase: 'reveal', zoomProgress: 1 });
     expect(run.stage).toBe(2);
     expect(run.geometry.width).toBe(600);
-    expect(last.size).toBe(1);
-    expect(last.radius).toBeCloseTo(sizeRadius(1), 9);
-    expect(last.x).toBeCloseTo(frozen[0]! / STAGE_ZOOM, 9);
-    expect(last.y).toBeCloseTo(frozen[1]! / STAGE_ZOOM, 9);
+    expect(run.balls).toHaveLength(0);
     // Queued cats keep their size: a 1 becomes a 10, a 3 a 12.
     expect([run.current, run.next]).toEqual(queue.map((d) => ({ ...d, tier: d.tier + 9 })));
-    const newTiers = [11, 12, 13, 14, 15, 16, 17, 18, 19];
+    const newTiers = [10, 11, 12, 13, 14, 15, 16, 17, 18];
     expect(of('expansionRevealed')).toEqual([{ stage: 2, newTiers }]);
-    expect(run.progress).toEqual({ fraction: 0, goalTier: 19, final: false });
+    expect(run.progress).toEqual({ fraction: 0, goalTier: 18, final: false });
 
     ticks(run, EXPANSION_STEPS - CLEAR_STEPS - ZOOM_STEPS - 1);
     expect(run.state).toBe('expanding');
@@ -377,9 +381,12 @@ describe('stage clears (GAME_DESIGN §7)', () => {
     expect(of('expansionFinished')).toEqual([{ stage: 2, newTiers }]);
     expect(types().slice(-2)).toEqual(['expansionFinished', 'dropReady']);
     expect(run.canDrop).toBe(true);
-    // Stage 2 plays like stage 1: the 10 lands like a tier-1 cat did.
+    // Stage 2 plays like stage 1: its first cat lands like a tier-1 cat did.
+    const tier = run.current.tier;
+    expect(run.drop(0)).toBe(true);
     ticks(run, 240);
-    expect(last.y).toBeCloseTo(-sizeRadius(1), 0);
+    expect(run.balls[0]!.tier).toBe(tier);
+    expect(run.balls[0]!.y).toBeCloseTo(-run.radiusOf(tier), 0);
   });
 
   it('opens every stage: each clear grows the jar into the next one', () => {
@@ -395,24 +402,29 @@ describe('stage clears (GAME_DESIGN §7)', () => {
     expect(levels.reduce((a, b) => a + b, 0)).toBe(8);
     expect(of('stageCleared').map((e) => e.next)).toEqual(['expand', 'expand', 'expand', 'expand']);
     expect(of('expansionFinished').map((e) => e.stage)).toEqual([2, 3, 4, 5]);
-    // Each last cat became the next stage's first.
-    expect(run.balls.map((b) => b.tier)).toEqual([37]);
-    expect(run.progress).toEqual({ fraction: 0, goalTier: 46, final: true });
+    // Every stage starts with an empty jar: each last cat popped.
+    expect(run.balls).toHaveLength(0);
+    expect(of('catPopped').map((p) => p.tier)).toEqual([9, 18, 27, 36]);
+    expect(run.progress).toEqual({ fraction: 0, goalTier: 45, final: true });
   });
 
-  it('plays on after clearing the last stage, again and again', () => {
+  it('plays on after clearing the last stage, again and again, with an empty jar', () => {
     const { run, of } = setup({ instantExpansion: true });
     run.jumpToStage(5);
     expect(run.stage).toBe(5);
     makeLastCat(run);
-    expect(of('stageCleared').at(-1)).toEqual({ stage: 5, tier: 46, next: 'final' });
-    // The picks come at once, then play goes on.
+    expect(of('stageCleared').at(-1)).toEqual({ stage: 5, tier: 45, next: 'final' });
+    // The last cat settles and pops, the picks come, then play goes on in the same jar.
+    expect(of('catPopped').at(-1)).toMatchObject({ tier: 45 });
+    expect(run.balls).toHaveLength(0);
     expect(run.state).toBe('choosing');
     expect(chooseAll(run)).toHaveLength(2);
     expect(run.state).toBe('playing');
     expect(run.stage).toBe(5);
-    expect(run.progress).toEqual({ fraction: 1, goalTier: 46, final: true });
-    // A second 46: its clear pops the first one, so it stays alone in the jar.
+    expect(run.expansion).toBeNull();
+    expect(run.progress).toEqual({ fraction: 0, goalTier: 45, final: true });
+    expect(of('expansionStarted').map((e) => e.to)).toEqual([2, 3, 4, 5]);
+    expect(of('expansionFinished').at(-1)).toEqual({ stage: 5, newTiers: [] });
     makeLastCat(run);
     chooseAll(run);
     expect(
@@ -420,8 +432,28 @@ describe('stage clears (GAME_DESIGN §7)', () => {
         .map((e) => e.next)
         .slice(-2),
     ).toEqual(['final', 'final']);
-    expect(run.balls.map((b) => b.tier)).toEqual([46]);
+    expect(run.balls).toHaveLength(0);
     expect(of('jackpot')).toEqual([]);
+  });
+
+  it('holds the last stage still while its last cat settles, like an expansion’s clear', () => {
+    const { run, of } = setup();
+    run.jumpToStage(5);
+    for (let i = 0; i < 5 * EXPANSION_STEPS && run.state !== 'playing'; i++) run.tick();
+    expect(run.stage).toBe(5);
+    makeLastCat(run);
+    expect(run.state).toBe('expanding');
+    expect(run.expansion).toMatchObject({ from: 5, to: 5, phase: 'clear' });
+    expect(run.canDrop).toBe(false);
+    ticks(run, CLEAR_STEPS - 1);
+    expect(run.balls).toHaveLength(1);
+    run.tick();
+    expect(run.balls).toHaveLength(0);
+    expect(run.state).toBe('choosing');
+    chooseAll(run);
+    expect(run.state).toBe('playing');
+    expect(of('expansionStarted').map((e) => e.to)).toEqual([2, 3, 4, 5]);
+    expect(run.canDrop).toBe(true);
   });
 
   it('jumps (debug) through the stages, one expansion at a time', () => {
@@ -438,7 +470,7 @@ describe('stage clears (GAME_DESIGN §7)', () => {
       { from: 2, to: 3 },
       { from: 3, to: 4 },
     ]);
-    expect(run.balls.map((b) => b.tier)).toEqual([28]);
+    expect(run.balls).toHaveLength(0);
 
     // Ignored: the current stage, a lower one, or one that doesn't exist.
     const hash = run.stateHash();
@@ -464,10 +496,10 @@ describe('stage clears (GAME_DESIGN §7)', () => {
 });
 
 /** A stack of big, different-tier cats (so none merge) that pokes over the stage-1 rim. */
-/** Tiers 10 down to 6 stacked in the middle of the jar, past the rim. Returns the tower's top. */
+/** Tiers 9 down to 5 stacked in the middle of the jar, past the rim. Returns the tower's top. */
 function buildTower(run: RunController): number {
   let top = 0;
-  for (const tier of [10, 9, 8, 7, 6]) {
+  for (const tier of [9, 8, 7, 6, 5]) {
     const r = sizeRadius(tier);
     run.spawnBall(tier, 0, top - r);
     top -= 2 * r + 5;
@@ -518,10 +550,10 @@ describe('danger, Lucky Save and game over (GAME_DESIGN §6)', () => {
     const popped = of('catPopped');
     expect(popped.every((p) => p.reason === 'luckySave')).toBe(true);
     // Fewer than 6 other cats: the whole jar pops.
-    expect(popped.map((p) => p.tier).sort((a, b) => a - b)).toEqual([1, 6, 7, 8, 9, 10]);
+    expect(popped.map((p) => p.tier).sort((a, b) => a - b)).toEqual([1, 5, 6, 7, 8, 9]);
     expect(run.balls).toHaveLength(0);
-    // Each pays its value, half of C(t): 0.5 → 1, 7, 12, 20.5 → 21, 35, 59.5 → 60.
-    expect(run.coins).toBe(1 + 7 + 12 + 21 + 35 + 60);
+    // Each pays its value, half of C(t): 0.5 → 1, 4, 7, 12, 20.5 → 21, 35.
+    expect(run.coins).toBe(1 + 4 + 7 + 12 + 21 + 35);
     expect(of('dangerChanged').at(-1)).toEqual({ active: false, remainingMs: DANGER_TIMEOUT_MS });
     expect(run.state).toBe('playing');
 
@@ -584,6 +616,24 @@ describe('pause and frame timing', () => {
 });
 
 describe('magnets (GAME_DESIGN §15.2)', () => {
+  it('turns a magnet in the paw into a small cat at a stage clear, and holds magnets back', () => {
+    const { run } = setup({ instantExpansion: true });
+    run.setPickLevel('moreMagnets', 5);
+    run.giveSpecial('magnet');
+    expect(run.current.kind).toBe('magnet');
+    makeLastCat(run);
+    chooseAll(run);
+    expect(run.stage).toBe(2);
+    // Nothing to take in the empty jar: the magnet became the pool's smallest cat.
+    expect(run.current).toEqual({ kind: 'cat', tier: 10, golden: false, hits: 0 });
+    // No magnet comes before the stage's 20th drop (GAME_DESIGN §15.1).
+    for (let i = 0; i < 19; i++) {
+      expect(run.drop((i % 5) * 100 - 200)).toBe(true);
+      expect(run.next.kind).not.toBe('magnet');
+      ticks(run, COOLDOWN_STEPS);
+    }
+  });
+
   it('takes a landed ball into the dropper, leaving NEXT alone', () => {
     const { run, of } = setup();
     const cat = run.spawnBall(4, -150, -sizeRadius(4), { golden: true });
@@ -693,7 +743,7 @@ describe('boulders (GAME_DESIGN §15.3)', () => {
     makeLastCat(run);
     expect(of('boulderBroken').map((b) => b.reason)).toEqual(['cashOut']);
     expect(of('catPopped')).toHaveLength(1);
-    expect(run.balls.map((b) => b.tier)).toEqual([10]);
+    expect(run.balls.map((b) => b.tier)).toEqual([9]);
   });
 
   it('takes the trials’ size and hits, as a size of the stage', () => {
@@ -731,11 +781,11 @@ describe('golden cats (GAME_DESIGN §15.4)', () => {
 
   it('never skips past the stage’s last cat', () => {
     const { run, of } = setup();
-    const r = run.radiusOf(9);
-    run.spawnBall(9, 0, -r, { golden: true });
-    run.spawnBall(9, 0, -3 * r + 8, { golden: true });
+    const r = run.radiusOf(8);
+    run.spawnBall(8, 0, -r, { golden: true });
+    run.spawnBall(8, 0, -3 * r + 8, { golden: true });
     for (let i = 0; i < 120 && of('merged').length === 0; i++) run.tick();
-    expect(of('merged')).toEqual([expect.objectContaining({ tier: 9, newTier: 10 })]);
+    expect(of('merged')).toEqual([expect.objectContaining({ tier: 8, newTier: 9 })]);
     expect(of('stageCleared')).toHaveLength(1);
   });
 

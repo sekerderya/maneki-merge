@@ -118,6 +118,13 @@ export const POP_STAGGER_MS = 30;
 export const POP_STAGGER_MAX_MS = 240;
 
 /**
+ * How much the jar grows on screen (the camera zooms out by as much) from one stage to the next
+ * (GAME_DESIGN §7.1). A look only: the grown jar is emptied and rescaled to the same world jar at
+ * the reveal. Until v0.24 it was r(10) / r(1), so the last cat shrank to the first cat's size.
+ */
+export const STAGE_ZOOM = 4.8;
+
+/**
  * Expansion (GAME_DESIGN §7.1): the drawn walls and rim trail the camera by this fraction of the
  * zoom, so the view pulls back first and the jar then widens into the new frame. Both arrive
  * together when the zoom ends. 0 keeps the jar locked to the frame.

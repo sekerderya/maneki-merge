@@ -132,6 +132,7 @@ export function pickValue(id: PickId, levels: PickLevels, bigCatchLevel: number)
   }
 }
 
+/** A chance as a percentage with at most one decimal: 3%, 2.5%. */
 function percent(fraction: number): string {
-  return `${roundStable(fraction * 100)}%`;
+  return `${roundStable(fraction * 1000) / 10}%`;
 }

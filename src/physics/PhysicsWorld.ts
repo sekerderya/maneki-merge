@@ -1,7 +1,7 @@
 /**
  * The matter-js world of one run (TECH_SPEC §4–§5): the jar walls, the cats of the current stage,
- * and one fixed step at a time. Every stage has the same jar and gravity; moving to the next stage
- * rescales the cats instead (`setStage`). Each step also tracks first contacts, collects same-tier contacts
+ * and one fixed step at a time. Every stage has the same jar and gravity; the next stage starts
+ * with an empty jar (`setStage`). Each step also tracks first contacts, collects same-tier contacts
  * for the merge resolver, grows merged cats and clamps speeds. No randomness and no wall clock:
  * the same calls always give the same world.
  */
@@ -21,7 +21,6 @@ import {
   WALL_THICKNESS,
 } from '../config/physics';
 import { FIRST_STAGE, tierSize } from '../config/stages';
-import { isSize, STAGE_ZOOM } from '../config/tiers';
 import type { StateHasher } from '../core/hash';
 import { ballOf, createBall, MATTER_TICKS_PER_SECOND } from './balls';
 import type { Ball, BallSpec } from './balls';
@@ -206,21 +205,18 @@ export class PhysicsWorld {
   }
 
   /**
-   * Moves on to the next stage (GAME_DESIGN §7): the jar has grown by STAGE_ZOOM, so the world
-   * shrinks by as much around the floor's centre and the new stage plays in the same jar. The
-   * last cat of the old stage becomes the first of the new one. Every cat must fit the new stage;
-   * the run pops the others first.
+   * Moves on to the next stage (GAME_DESIGN §7): the grown jar is the same jar in world units,
+   * and it starts empty. The run pops every ball first.
    */
   setStage(stage: number): void {
     if (stage !== this.geo.stage + 1)
       throw new RangeError(`Can't move from stage ${this.geo.stage} to ${stage}`);
-    const sizes = this.list.map((ball) => tierSize(ball.tier, stage));
-    if (!sizes.every(isSize)) throw new RangeError(`Stage ${stage} can't hold every cat`);
+    if (this.list.length > 0)
+      throw new RangeError(`The jar must be empty to grow into stage ${stage}`);
     this.geo = jarGeometry(stage);
-    this.list.forEach((ball, i) => ball.rescale(1 / STAGE_ZOOM, sizes[i] as number));
   }
 
-  /** The size a tier has at the current stage (outside 1–10 when the stage can't hold it). */
+  /** The size a tier has at the current stage (outside 1–9 when the stage can't hold it). */
   sizeOf(tier: number): number {
     return tierSize(tier, this.geo.stage);
   }

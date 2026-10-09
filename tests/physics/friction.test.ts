@@ -214,8 +214,10 @@ describe('Coulomb friction (TECH_SPEC §5)', () => {
   it('keeps cats resting on the floor and in a corner still', () => {
     const world = new PhysicsWorld();
     const g = world.geometry;
+    // Apart from each other and from the corner cat.
+    const xs = [-255, -135, -15, 120];
     [1, 2, 3, 4].forEach((tier, i) => {
-      world.addBall({ tier, x: -230 + i * 150, y: -sizeRadius(tier) });
+      world.addBall({ tier, x: xs[i]!, y: -sizeRadius(tier) });
     });
     world.addBall({ tier: 2, x: g.halfWidth - sizeRadius(2), y: -200 });
     for (let i = 0; i < 3 * STEPS_PER_SECOND; i++) world.step();

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { STAGE_ZOOM } from '../../src/config/tiers';
+import { STAGE_ZOOM } from '../../src/config/view';
 import { CAMERA_SHARED_HEADROOM_RATIO, CAMERA_SPARE_BELOW_RATIO } from '../../src/config/view';
 import {
   easeInOut,

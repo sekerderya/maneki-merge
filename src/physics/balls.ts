@@ -33,7 +33,7 @@ export interface BallView {
   readonly golden: boolean;
   /** The merges a boulder still needs to break; 0 for a cat. */
   readonly hitsLeft: number;
-  /** The cat's size at the current stage (1–10). */
+  /** The cat's size at the current stage (1–9). */
   readonly size: number;
   readonly x: number;
   readonly y: number;
@@ -151,25 +151,6 @@ export class Ball implements BallView, CircleShape {
     Matter.Body.scale(this.body, factor, factor);
     this.radius = radius;
     setCircleMass(this.body, this.size, radius);
-  }
-
-  /**
-   * The world was rescaled by `factor` around the floor's centre (the jar grew into the next
-   * stage): the cat moves and shrinks with it and takes `size`, whose radius must be the old one
-   * times `factor`. Its velocity scales too, so it keeps moving the same way on screen.
-   */
-  rescale(factor: number, size: number): void {
-    const { position, velocity } = this.body;
-    const vx = velocity.x * factor;
-    const vy = velocity.y * factor;
-    Matter.Body.setPosition(this.body, { x: position.x * factor, y: position.y * factor });
-    Matter.Body.scale(this.body, factor, factor);
-    Matter.Body.setVelocity(this.body, { x: vx, y: vy });
-    this.size = size;
-    this.targetRadius = sizeRadius(size);
-    this.radius *= factor;
-    this.growFrom *= factor;
-    setCircleMass(this.body, size, this.radius);
   }
 }
 
