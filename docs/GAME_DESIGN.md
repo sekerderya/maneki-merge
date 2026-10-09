@@ -5,7 +5,7 @@
 
 ## 1. Pitch
 
-Drop lucky cats into a shrine jar. Two identical cats merge into a bigger cat and pay out coins. Every stage has 10 cats; merge two 9s into the 10th and every other cat pays out its value, then the jar grows: the camera zooms out until the 10th cat is as small as the first one was, and it becomes the first of a new stage of 10 bigger-numbered cats. Every stage is open from the start. Merges also give XP: every level up of the run offers a blessing, every stage clear a trial (§15). Coins carry over between runs and buy permanent upgrades.
+Drop lucky cats into a shrine jar. Two identical cats merge into a bigger cat and pay out coins. Every stage has 10 cats; merge two 9s into the 10th and every other cat pays out its value, then the jar grows: the camera zooms out until the 10th cat is as small as the first one was, and it becomes the first of a new stage of 10 bigger-numbered cats. Every stage is open from the start. Coins carry over between runs and buy permanent upgrades.
 
 - Mobile, portrait, one-handed, offline. A mouse works too, for testing on desktop.
 - A run lasts 3–20 minutes.
@@ -62,11 +62,10 @@ Layout: everything sits where it is in the mockup, on a stage of the mockup's si
 
 - The screen the owner chose in v0.14 (the "Sakura garden" design): the whole screen is the scene, and the HUD floats over its top.
 - The jar (§6, §13.1), with the danger line on its rim.
-- The dropper: a calico cat's paw floats over the jar (v0.25, with the raster art: its arm fades out a little above the wrist; from v0.22 to v0.24 it reached out from under a noren curtain; with `?skin=vector` it reaches down from the top of the screen) and holds the current cat by the head, just above the jar's top rail (v0.21.1; until then the cat hung in front of the rail). It follows the aim, stays where it is while the next cat comes, lifts a little when it lets go, and is hidden while the jar grows. A dotted aim guide shows where the cat will fall, with a faint ghost of the cat where it lands.
-- HUD over the top of the scene (v0.25 layout, the owner's mockup). At the top in the middle, the stage in words ("STAGE 2"), dark brown with a cream edge, no card. On the left, under that line, a narrow cream score card with "SCORE:" and the score in a sunken well, and under it the XP card (§15.6): the same frame and white paw around a thick caramel well that fills with gold towards the next level, with "Lv N" in it. (The stage card of v0.14–v0.17, with a progress bar and the stage's last cat, is gone; the banners still announce stage clears and the new goal.) On the right, a pink pause button, a "COINS:" card with the coins earned this run, which runs off the right edge, and under it the next cat in a round glass bubble with a small "NEXT" tag on its rim (v0.14.1). Only the pause button takes touches; everywhere else a touch aims.
+- The dropper: a calico cat's paw reaches out from under a noren curtain (v0.22, with the raster art; from the top of the screen with `?skin=vector`) and holds the current cat by the head, just above the jar's top rail (v0.21.1; until then the cat hung in front of the rail). It follows the aim, stays where it is while the next cat comes, lifts a little when it lets go, and is hidden while the jar grows. A dotted aim guide shows where the cat will fall, with a faint ghost of the cat where it lands.
+- HUD over the top of the scene. On the left, a narrow cream score card with "SCORE:" and the score in a sunken well. (The stage card under it, with the stage, a progress bar and the stage's last cat, was removed in v0.18 until the owner has art for it; the banners still announce stage clears and the new goal.) On the right, a pink pause button, a "COINS:" card with the coins earned this run, which runs off the right edge, and under it the next cat in a round glass bubble with a small "NEXT" tag on its rim (v0.14.1). Only the pause button takes touches; everywhere else a touch aims.
 - Overlays:
   - **Pause**: Resume, Sound, Haptics, Quit to Menu.
-  - **Pick** (§15.5): a stage clear's trial ("Choose a trial") or a level up's blessing ("Level up!").
   - **Game Over**: score, best score, stage reached, the biggest cat made this run, coins earned this run, new-record badges (best score, best stage, biggest cat ever), Play Again, Menu.
 - Short banners: Combo, Jackpot, The shrine grows! (a stage clear that grows the jar), Stage clear! (a clear at the last stage), New cats unlocked! (with the next goal), Lucky Save!.
 - First-run hints: "Drag to aim, release to drop" and "Merge two identical cats".
@@ -164,11 +163,11 @@ Every stage plays the same way: the same 600 × 870 jar (aspect 1 : 1.45), the s
 4. **Reveal** (0.4 s): the world is now the next stage's, with an empty jar. The dropper's cats move to the new stage's pool (§8), and a "New cats unlocked!" banner shows the new goal (the new stage's last cat).
 5. Physics resumes, the dropper returns, and input is enabled again.
 
-The trial pick (§15.5) comes between steps 2 and 3, followed by the blessing of any level up the clear's last merge earned.
+The trial and blessing picks (§15.5) come between steps 2 and 3.
 
 ### 7.2 The last stage
 
-At stage 5 there is no next stage: the clear still happens the same way (every other cat pops into its value and "Stage clear!" shows, the last cat settles for 0.5 s and pops, then the trial comes), but the jar doesn't grow. The run goes on in the empty jar, and the next 45 clears the stage again.
+At stage 5 there is no next stage: the clear still happens the same way (every other cat pops into its value and "Stage clear!" shows, the last cat settles for 0.5 s and pops, then the picks come), but the jar doesn't grow. The run goes on in the empty jar, and the next 45 clears the stage again.
 
 ## 8. Drop pool
 
@@ -251,7 +250,6 @@ If a save can't be read, or some of its fields are invalid, a copy is kept (TECH
 - Combo: "Combo ×N" over the jar, with the Combo Charm bonus ("+16%") when it has one. The label heats up (bigger, brighter) at ×4 and ×7.
 - Danger: the countdown number pulses on each new second, with a tick that rises in pitch (3, 2, 1).
 - Stage clear: every other cat pops in turn with its "+coins", and the Jackpot fanfare plays.
-- XP (§15.6): the XP card bumps when XP comes in; a level up flashes it (bigger, brighter, a gold glow) and opens the blessing with its chime.
 - Expansion: gold sparks along the rim when the zoom starts and again along the grown rim at the reveal.
 - Sound effects are procedural Web Audio, no files:
   - drop plop; merge pop (lower pitch for bigger sizes, the same at every stage); coin ching
@@ -289,10 +287,10 @@ The owner chose the scene in a design canvas (v0.14): a cream shrine garden, ink
 - **Numbers**: the cat art shows no numbers (v0.16, the owner's call): a cat's look tells its size. The tier still sets the score and coins (§4). The vector looks (`?skin=vector`) and the placeholders still show their number, upright on the cat's plate.
 - **Vector cats** (`?skin=vector`, `src/config/catArt.ts`): the code-drawn looks of v0.11–v0.15 (Sakura, Mint, Tangerine, Lavender, Sky, Calico, Matcha, Daruma, Indigo), kept as a fallback.
 - **Jar** (v0.17 art, square since v0.23.4–5; v0.14 layout): a bamboo frame on two angled bamboo feet: two posts joined to a straight, level bottom with small bamboo elbow joints (the round U of v0.17–v0.23.3, the owner's call), a rail across the top tied to the posts with twine, cut caps on the posts, and the glass's pale edge framing the opening. The art's opening is stretched onto the physics jar (its inner edge, the glass's pale rim, lies inside the opening, behind the cats); the bamboo is drawn in front of the cats, except its short inner bends, which lie inside the square physics corners and are drawn behind them: a small cat deep in a corner overlaps the bend by a few pixels. A dashed line across the opening marks the rim (the danger line) and flashes red in danger (the vector jar's caps flash too). The glass is a pale wash, so the garden shows through it. The bamboo is thicker than the vector frame's, so the camera shows 0.19 of the jar's width beside each wall (0.15 before v0.17): a 283 px jar on a 390 px phone.
-- **Dropper** (v0.17 art): a calico paw (white with orange and dark spots, pink pads). Since v0.25 it floats (the owner's call): the image shows 160 world units above the paw's bottom (the paw itself is about 102), and the top 55 of that fade out, so a tall phone never shows a long bare arm. Until v0.21 a plain row of its arm was stretched up to the screen's top (still so with `?skin=vector`); from v0.22 to v0.24 the arm went behind the noren.
-- **Noren** (v0.22–v0.24): a shop curtain across the top of the screen, hiding the paw's long arm. Removed in v0.25 (the owner's call) with the new HUD; the paw floats instead. Its art stays in `art-source/scene/`.
+- **Dropper** (v0.17 art): a calico paw (white with orange and dark spots, pink pads) hanging from the top of the screen; a plain row of its arm is stretched up to the screen's top. Since v0.22 the arm goes behind the noren; since v0.23.2 it reaches up to about the score card's bottom, so it shows through the curtain's slits.
+- **Noren** (v0.22 art, the owner's mockup `art-source/scene/noren-mockup.webp`): a shop curtain across the top of the screen, so a tall phone's empty height above the jar isn't a long bare arm. A rose-brown rod with cream loops (the generated rod was tan; the art tool recolours it to the mockup's), four cream panels with a pink band at the hem, and a gold paw coin under the rod in the middle. Its hem hangs 300 world units above the rim, so the paw and a little of the arm show under it; its panels span 1.44 jar widths (just past a phone's edges) and its plain fabric stretches up to the top of the screen. When there isn't room, the rod and the coin go off the top instead of squashing. The HUD floats over it; the paw's arm goes behind it.
 - **Background** (v0.17 art): a painted sakura shrine garden: sakura branches and clouds on a cream sky, a torii and a shrine seen through the glass, stone lanterns either side, and a rug on the wooden floor where the jar stands. It moves and scales with the jar so the feet stay on the rug; it always spans the screen's width, its top fades into the sky colour, and the floor colour fills the screen below it. The separate rug image is unused: the background has its own.
-- **HUD** (v0.19 art, v0.19.2 cards after the owner's reference image, v0.22 score card and bubble copied from the owner's references `art-source/hud/ref-score.png` and `ref-next.png`): the score card is the owner's image (66 px tall, 141 px wide, wider for a long score): cream with a dark chocolate outline, a white highlight inside its top edge and a tan base, a white beckoning paw with pink pads sticking out of its left end, "SCORE:" (#7F3D2A, 17 px, centred on the card's body, v0.23.2) over a caramel well with the score in it. The coins card is CSS in the reference's style: cream with a thin dark outline, rounded corners and a tan bottom edge. The coins card comes out of the screen's right edge (rounded on the left only), only as wide as its coins need (about 98 px on screen, v0.23.2), with "COINS:" (17 px) over the art's small gold coin and the run's coins, centred. The NEXT bubble hangs 14 px under it (v0.23.2). Both numbers are white with a thin brown edge. The XP card (v0.25) is two images the owner generated as edits of the score card (`art-source/hud/xp-empty`, `xp-full`): the same frame and paw around a thick well, empty (caramel) and full of glossy gold; the game shows the full one over the empty one, cut at the XP, and "Lv N" sits in the well like the score. It is as wide as the score card's narrowest. The stage is plain words at the top in the middle (22 px, dark brown #813c2d with a cream edge, like "NEXT"). The next cat sits in a round glass bubble (v0.22: a dark outline, a cream rim, mint fading to pink, white shines), with "NEXT" in dark brown with a cream edge on its top rim; the pause button is the art's glossy pink square, its outline recoloured to the reference's rose brown. Flying coins land on the coin. The vector HUD of v0.14 stays for `?skin=vector`.
+- **HUD** (v0.19 art, v0.19.2 cards after the owner's reference image, v0.22 score card and bubble copied from the owner's references `art-source/hud/ref-score.png` and `ref-next.png`): the score card is the owner's image (66 px tall, 141 px wide, wider for a long score): cream with a dark chocolate outline, a white highlight inside its top edge and a tan base, a white beckoning paw with pink pads sticking out of its left end, "SCORE:" (#7F3D2A, 17 px, centred on the card's body, v0.23.2) over a caramel well with the score in it. The coins card is CSS in the reference's style: cream with a thin dark outline, rounded corners and a tan bottom edge. The coins card comes out of the screen's right edge (rounded on the left only), only as wide as its coins need (about 98 px on screen, v0.23.2), with "COINS:" (17 px) over the art's small gold coin and the run's coins, centred. The NEXT bubble hangs 14 px under it (v0.23.2). Both numbers are white with a thin brown edge. The next cat sits in a round glass bubble (v0.22: a dark outline, a cream rim, mint fading to pink, white shines), with "NEXT" in dark brown with a cream edge on its top rim; the pause button is the art's glossy pink square, its outline recoloured to the reference's rose brown. Flying coins land on the coin. The vector HUD of v0.14 stays for `?skin=vector`.
 - **Main menu** (v0.20 art, §2.1): the owner first generated a whole-screen mockup, then every piece as an edit of it, so they keep its look: the garden without the interface (it added a stone path, kept by the owner's call), the logo, the cat on its cushion (its cushion turned from the generated peach back to the mockup's pink by the tool), the buttons and a record card, and the small icons (torii, coin, arrow, sparkles). PLAY, UPGRADES, the coins pill and the cards' wells stretch as three-slice strips and the cards as nine-slice frames, so they take any width; the paw badge is the HUD's. The glow and the twinkling sparkles are drawn in code.
 - **Palette**: cream ground, paper plates, ink outlines and text, cocoa for labels; coral only for the primary button of a screen (PLAY, Resume, Play Again), gold for coins, rewards and progress, red for danger and badges, mint for secondary buttons and "on". One font: Fredoka (700 for titles, numbers and buttons; 500–600 for labels).
 
@@ -322,7 +320,7 @@ These were written for score thresholds. With stage clears (§7), clearing stage
 
 > The owner's design (2026-10-08), built in v0.21. Its numbers are starting values: balance and the economy come later.
 
-Later stages get harder and every run gets its own build. Every stage clear asks the player to pick a **trial**, which makes the coming stages harder, and every level up of the run's XP (§15.6) a **blessing**, which helps. Picks stack by level for the rest of the run, like Vampire Survivors' level-ups: the same pick again raises its level. Trials work through **boulders**. Blessings work through **magnets**, bigger drops and **golden cats**.
+Later stages get harder and every run gets its own build. Every stage clear asks the player to pick a **trial**, which makes the coming stages harder, and then a **blessing**, which helps. Picks stack by level for the rest of the run, like Vampire Survivors' level-ups: the same pick again raises its level. Trials work through **boulders**. Blessings work through **magnets**, bigger drops and **golden cats**.
 
 ### 15.1 The queue
 
@@ -339,9 +337,9 @@ The dropper hands out three kinds of ball: cats, magnets and boulders. Every ite
 - **At a stage clear** a queued magnet (in the paw or in NEXT) becomes a cat of the pool's smallest tier; other queued items stay as they are.
 - v0.24 (owner): the magnet chance was halved, 2% → 1% and +3% → +1.5% per More Magnets level.
 - Magnets and boulders are never golden.
-- Debug jumps (`?debug=1`, "Jump to stage") skip the stage clears' trials.
+- Debug jumps (`?debug=1`, "Jump to stage") skip the stage-clear picks.
 - The NEXT bubble shows the item as it is: a cat (golden ones with their glow), the magnet, or the boulder at its size with its bands.
-- A level picked (at a stage clear or a level up) applies to items queued after the pick. The two items already queued (in the paw and in NEXT) stay as they are. At an expansion, queued cats change tier as in §8, and queued boulders keep their size and bands.
+- A level picked at a stage clear applies to items queued after the pick. The two items already queued (in the paw and in NEXT) stay as they are. At an expansion, queued cats change tier as in §8, and queued boulders keep their size and bands.
 - Determinism: kind and golden roll on their own generator, seeded from the run's seed. Every queued item rolls its kind, its golden and its tier every time, whatever the chances, so a seed gives the same tiers at any level.
 
 ### 15.2 Magnet
@@ -387,11 +385,14 @@ A boulder is a stone ball that only takes up room.
 - Feedback: the bell and gold sparks of a golden merge, and a bigger pop.
 - Golden cats replaced the Golden Merge upgrade (a merge's chance to pay ×3 coins), removed in v0.21.
 
-### 15.5 Picks
+### 15.5 Stage-clear picks
 
-- **Trial:** at every stage clear, including the repeated clears of the last stage, after the last cat settles alone and pops (§7.1 step 2) and before the zoom: "Choose a trial", 3 cards; the player picks one. Then the zoom follows (§7.1 step 3). At the last stage there is no zoom: play resumes after the pick, in the empty jar.
-- **Blessing:** at every level up (§15.6), at once, in the middle of play: "Level up!", "Choose a blessing for the whole run", 3 cards; the player picks one, and play goes on where it stopped (the danger timer too). Several level ups at once offer one blessing each, one after another. A stage clear's last merge can level up too: its blessing comes right after the trial, before the zoom.
-- Until v0.25 a stage clear offered a trial and then a blessing, and there were no levels.
+At every stage clear, including the repeated clears of the last stage, two picks come after the last cat settles alone and pops (§7.1 step 2) and before the zoom:
+
+1. **Choose a trial:** 3 cards; the player picks one.
+2. **Choose a blessing:** 3 cards; the player picks one.
+
+Then the zoom follows (§7.1 step 3). At the last stage there is no zoom: play resumes after the picks, in the empty jar.
 
 - **Options:** each pick shows up to 3 different options, drawn at random from those not at their max level, with the run's seeded RNG. Today there are exactly 3 of each kind, so a pick shows all of them in random order. With fewer than 3 left it shows fewer cards; with none left the pick is skipped.
 - The player must pick exactly one: no skip, no reroll, no rarities.
@@ -420,23 +421,10 @@ A boulder is a stone ball that only takes up room.
   - L = 6 gives 22/24/26/28%; L = 8 gives 16/22/28/34%; L = 10 gives 10/20/30/40%.
   - Big Drops counts as maxed (not offered) once L reaches 10.
 
-### 15.6 XP and levels
-
-> The owner's design (2026-10-09), built in v0.25. Its numbers are starting values, like the rest of §15.
-
-- A run starts at level 1 with no XP. The XP card under the score card (§2.3) shows "Lv N" and fills with gold towards the next level; XP left over after a level up carries on.
-- **XP:** a merge gives the size (1–9) of the cat it makes: two 3s make a 4, 4 XP; a golden merge gives the size it reached (two 3s make a 5: 5 XP). A Jackpot gives two merges into the stage's last cat (18).
-- **Combo:** each combo step past the first adds 25% of the merge's XP, up to 4 steps (double at combo 5 and above), halves rounded up: `xp = round(size × (1 + 0.25 × min(combo − 1, 4)))`. A 4 made at combo 2 gives 5.
-- Pops (stage clear, Lucky Save), drops and boulder breaks give no XP.
-- **Levels:** level n to n + 1 needs `round(100 × 1.4^(n−1))` XP: 100, 140, 196, 274, 384, 538, 753, …
-- Every level up offers a blessing (§15.5). With every blessing at its max the level still goes up and the pick is skipped.
-- XP and the level last for the run only (a run in progress isn't saved, §11).
-- Measured with two test bots (40 runs each, dropping every 0.45 s, taking each pick's first card): one that drops each cat on a matching one first levelled up after about 12 s of play and gained 2–4 levels in stage 1 (median 4) and 1–2 in each later stage; one that drops at random gained 2–4 in stage 1 (median 3). A player who takes a second or so per drop gets the first level up in about half a minute.
-
-### 15.7 Notes for building it
+### 15.6 Notes for building it
 
 - The rules (kinds, chances, hits, golden merges, the picks and their levels) live in the headless layers with unit tests. `game/` and `ui/` only draw and send intents (select, Take, the card pick). Every number goes in `src/config/`.
-- Debug panel (`?debug=1`): set trial and blessing levels, put a magnet, a boulder or a golden cat in the paw, open a stage clear's trial, add 25 XP or a whole level. `window.__game` gets matching hooks for Playwright (`addXp`, and the level and XP in `state()`).
+- Debug panel (`?debug=1`): set trial and blessing levels, put a magnet, a boulder or a golden cat in the paw, and open the stage-clear picks. `window.__game` gets matching hooks for Playwright.
 - The visuals are code-drawn first; the owner's raster art follows through docs/ART_ASSETS.md.
 - Procedural sounds (§12): the magnet's take, a boulder hit (clang), a boulder break (crunch), the golden two-tier merge.
 

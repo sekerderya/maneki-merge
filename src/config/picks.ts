@@ -1,7 +1,7 @@
 /**
  * Special balls, trials and blessings (GAME_DESIGN §15). Every stage clear offers a trial, which
- * makes the coming stages harder, and every level up (config/xp.ts) a blessing, which helps; each
- * pick raises that option's level for the rest of the run. Derived values: core/picks.ts.
+ * makes the coming stages harder, then a blessing, which helps; each pick raises that option's
+ * level for the rest of the run. Derived values: core/picks.ts.
  */
 
 /** The queue's base chances (GAME_DESIGN §15.1), before any pick. */
@@ -48,6 +48,9 @@ export type BlessingId = (typeof BLESSING_IDS)[number];
 export type PickId = TrialId | BlessingId;
 /** A trial makes the coming stages harder; a blessing helps. */
 export type PickKind = 'trial' | 'blessing';
+
+/** The order of a stage clear's picks: first a trial, then a blessing. */
+export const PICK_ORDER: readonly PickKind[] = ['trial', 'blessing'];
 
 export interface PickDef {
   readonly id: PickId;

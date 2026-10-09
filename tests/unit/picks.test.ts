@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { BLESSING_IDS, PICK_IDS, pickIds, PICKS, TRIAL_IDS } from '../../src/config/picks';
+import {
+  BLESSING_IDS,
+  PICK_IDS,
+  PICK_ORDER,
+  pickIds,
+  PICKS,
+  TRIAL_IDS,
+} from '../../src/config/picks';
 import type { PickId } from '../../src/config/picks';
 import { dropWeights } from '../../src/core/dropQueue';
 import {
@@ -36,6 +43,7 @@ describe('the trials and blessings (GAME_DESIGN §15.5)', () => {
     expect([...PICK_IDS]).toEqual(TABLE.map(([id]) => id));
     expect(pickIds('trial')).toEqual(TRIAL_IDS);
     expect(pickIds('blessing')).toEqual(BLESSING_IDS);
+    expect(PICK_ORDER).toEqual(['trial', 'blessing']);
   });
 
   it.each(TABLE)('%s: a %s, %s, max %i, %f per level', (id, kind, name, max, perLevel) => {

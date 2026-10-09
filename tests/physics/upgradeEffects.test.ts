@@ -36,14 +36,7 @@ function drops(run: RunController, count: number): Drop[] {
   const out: Drop[] = [];
   const span = run.geometry.halfWidth * 0.8;
   const wait = (): void => {
-    for (let t = 0; t <= stepsFor(DROP_COOLDOWN_MS); t++) {
-      // A level up's blessing: Golden Cats leaves the dropped tiers as they are.
-      while (run.state === 'choosing') {
-        const options = run.pickOffer!.options;
-        expect(run.choose(options.includes('goldenCats') ? 'goldenCats' : options[0]!)).toBe(true);
-      }
-      run.tick();
-    }
+    for (let t = 0; t <= stepsFor(DROP_COOLDOWN_MS); t++) run.tick();
   };
   for (let i = 0; i < count; i++) {
     out.push(run.current);

@@ -144,7 +144,6 @@ export class GameSession {
     hud.setScore(run.score);
     hud.setCoins(run.coins);
     hud.setStage(run.stage);
-    hud.setLevel(run.level, run.xp / run.xpToNext);
     showPreview();
 
     events.on('scoreChanged', (e) => hud.setScore(e.score));
@@ -202,13 +201,7 @@ export class GameSession {
       hud.setStage(run.stage);
     });
 
-    // The run's XP (GAME_DESIGN §15.6): the bar fills, and a level up flashes it.
-    events.on('xpChanged', (e) => {
-      hud.setLevel(e.level, e.xp / e.toNext);
-      hud.pulseXp(e.levelsGained > 0);
-    });
-
-    // The picks (GAME_DESIGN §15.5): a stage clear's trial, a level up's blessing.
+    // A stage clear's picks (GAME_DESIGN §15.5): a trial, then a blessing.
     events.on('pickOffered', (e) => {
       banners.combo(0, 0);
       const levels = run.pickLevels;

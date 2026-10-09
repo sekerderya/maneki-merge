@@ -33,10 +33,10 @@ async function startRun(page: Page, seed: number): Promise<void> {
   }
 }
 
-/** Picks the first card of the stage clear's trial through the panel (GAME_DESIGN §15.5). */
+/** Picks the first card of the trial, then of the blessing, through the panel (GAME_DESIGN §15.5). */
 async function chooseThroughPanel(page: Page): Promise<void> {
   const overlay = page.getByTestId('pick-overlay');
-  for (const kind of ['trial']) {
+  for (const kind of ['trial', 'blessing']) {
     await expect(overlay).toHaveAttribute('data-kind', kind, WAIT);
     await expect(overlay).toBeVisible();
     // The cards ignore taps for their first 0.4 s.
@@ -47,10 +47,10 @@ async function chooseThroughPanel(page: Page): Promise<void> {
   await expect(overlay).toBeHidden();
 }
 
-/** Takes the first option of the trial (and of any level up's blessing) through the hooks. */
+/** Takes the first option of both picks through the hooks. */
 async function choosePicks(page: Page, wait: { timeout: number }): Promise<void> {
-  await expect.poll(async () => (await state(page)).runState, wait).toBe('choosing');
-  while ((await state(page)).runState === 'choosing') {
+  for (let i = 0; i < 2; i++) {
+    await expect.poll(async () => (await state(page)).runState, wait).toBe('choosing');
     await page.evaluate(() => window.__game?.choose());
   }
 }
@@ -86,10 +86,10 @@ test('making the last cat (two 8s) clears stage 1 and grows an empty jar', async
   expect(clearing.expansion?.to).toBe(2);
   expect(clearing.runCoins).toBeGreaterThanOrEqual(41);
   expect(await page.evaluate(() => window.__game?.dropAt(0))).toBe(false);
-  // The last cat pops too, then the stage clear's trial, before the jar grows.
+  // The last cat pops too, then the picks: a trial, then a blessing, before the jar grows.
   await chooseThroughPanel(page);
   const levels = (await state(page)).pickLevels ?? {};
-  expect(Object.values(levels).reduce((a, b) => a + b, 0)).toBe(1);
+  expect(Object.values(levels).reduce((a, b) => a + b, 0)).toBe(2);
 
   // The reveal: stage 2 starts empty, and 18 is the next goal.
   // One wait for the banner and its cat: it only shows for 2 s, and a slow software renderer

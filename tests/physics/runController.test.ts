@@ -17,9 +17,7 @@ import type { UpgradeLevels } from '../../src/core/upgrades';
 import { RunController } from '../../src/run/RunController';
 import type { RunOptions } from '../../src/run/RunController';
 import { MAGNET_TAKE_MS } from '../../src/config/timings';
-import { BLESSING_IDS, PICKS } from '../../src/config/picks';
-import { XP_FIRST_LEVEL } from '../../src/config/xp';
-import { xpToNext } from '../../src/core/xp';
+import { PICKS } from '../../src/config/picks';
 import type { PickId } from '../../src/config/picks';
 import { MAX_DROP_RADIUS } from '../../src/physics/geometry';
 
@@ -45,7 +43,6 @@ const EVENT_TYPES: readonly (keyof GameEvents)[] = [
   'boulderBroken',
   'pickOffered',
   'pickChosen',
-  'xpChanged',
   'paused',
   'resumed',
   'gameOver',
@@ -192,7 +189,6 @@ describe('merges and payouts (GAME_DESIGN §5, §9)', () => {
       'merged',
       'scoreChanged',
       'runCoinsChanged',
-      'xpChanged',
       'comboChanged',
     ]);
     const [merged] = of('merged');
@@ -202,7 +198,6 @@ describe('merges and payouts (GAME_DESIGN §5, §9)', () => {
     expect(log[0]).toEqual(['bank', 3]);
     expect(of('scoreChanged')).toEqual([{ score: 8 }]);
     expect(of('runCoinsChanged')).toEqual([{ coins: 3 }]);
-    expect(of('xpChanged')).toEqual([{ gained: 4, xp: 4, toNext: 100, level: 1, levelsGained: 0 }]);
     expect(run.balls.map((b) => b.tier)).toEqual([4]);
     expect(merged!.id).toBe(run.balls[0]!.id);
     expect(run.highestTier).toBe(4);
@@ -283,7 +278,6 @@ describe('stage clears (GAME_DESIGN §7)', () => {
       'merged',
       'scoreChanged',
       'runCoinsChanged',
-      'xpChanged',
       'comboChanged',
       'bank',
       'catPopped',
@@ -334,7 +328,7 @@ describe('stage clears (GAME_DESIGN §7)', () => {
     expect(run.coins).toBe(coins + 35);
     expect(run.balls).toHaveLength(0);
 
-    // The stage clear's pick (GAME_DESIGN §15.5): a trial, while time stands still.
+    // The picks (GAME_DESIGN §15.5): a trial, then a blessing, while time stands still.
     expect(run.state).toBe('choosing');
     expect(of('pickOffered')).toEqual([{ kind: 'trial', options: expect.any(Array) }]);
     expect([...run.pickOffer!.options].sort()).toEqual([
@@ -351,6 +345,8 @@ describe('stage clears (GAME_DESIGN §7)', () => {
     const trial = run.pickOffer!.options[1]!;
     expect(run.choose(trial)).toBe(true);
     expect(of('pickChosen')).toEqual([{ kind: 'trial', id: trial, level: 1 }]);
+    expect(run.pickOffer?.kind).toBe('blessing');
+    expect(run.choose(run.pickOffer!.options[0]!)).toBe(true);
     expect(run.pickLevels[trial]).toBe(1);
     expect(run.state).toBe('expanding');
     expect(run.choose(trial)).toBe(false); // nothing waits any more
@@ -398,13 +394,12 @@ describe('stage clears (GAME_DESIGN §7)', () => {
     for (let stage = 1; stage < 5; stage++) {
       expect(run.stage).toBe(stage);
       makeLastCat(run);
-      expect(chooseAll(run)).toHaveLength(1);
+      expect(chooseAll(run)).toHaveLength(2);
     }
     expect(run.stage).toBe(5);
-    // A trial at each of the four clears (their merges gave too little XP for a level up).
+    // A trial and a blessing at each of the four clears.
     const levels = Object.values(run.pickLevels);
-    expect(levels.reduce((a, b) => a + b, 0)).toBe(4);
-    expect(of('pickOffered').map((p) => p.kind)).toEqual(['trial', 'trial', 'trial', 'trial']);
+    expect(levels.reduce((a, b) => a + b, 0)).toBe(8);
     expect(of('stageCleared').map((e) => e.next)).toEqual(['expand', 'expand', 'expand', 'expand']);
     expect(of('expansionFinished').map((e) => e.stage)).toEqual([2, 3, 4, 5]);
     // Every stage starts with an empty jar: each last cat popped.
@@ -419,11 +414,11 @@ describe('stage clears (GAME_DESIGN §7)', () => {
     expect(run.stage).toBe(5);
     makeLastCat(run);
     expect(of('stageCleared').at(-1)).toEqual({ stage: 5, tier: 45, next: 'final' });
-    // The last cat settles and pops, the trial comes, then play goes on in the same jar.
+    // The last cat settles and pops, the picks come, then play goes on in the same jar.
     expect(of('catPopped').at(-1)).toMatchObject({ tier: 45 });
     expect(run.balls).toHaveLength(0);
     expect(run.state).toBe('choosing');
-    expect(chooseAll(run)).toHaveLength(1);
+    expect(chooseAll(run)).toHaveLength(2);
     expect(run.state).toBe('playing');
     expect(run.stage).toBe(5);
     expect(run.expansion).toBeNull();
@@ -829,9 +824,9 @@ describe('trials and blessings (GAME_DESIGN §15.5)', () => {
     expect(run.choose(run.pickOffer!.options[0]!)).toBe(false);
     run.resume();
     expect(run.state).toBe('choosing');
-    expect(chooseAll(run)).toHaveLength(1);
+    expect(chooseAll(run)).toHaveLength(2);
     expect(run.state).toBe('playing');
-    expect(of('pickOffered').map((p) => p.kind)).toEqual(['trial']);
+    expect(of('pickOffered').map((p) => p.kind)).toEqual(['trial', 'blessing']);
     // Not while a pick is already waiting or the run isn't playing.
     run.forceGameOver();
     run.offerPicks();
@@ -843,21 +838,16 @@ describe('trials and blessings (GAME_DESIGN §15.5)', () => {
     for (const id of ['moreBoulders', 'ironBands', 'bigBoulders'] as const) {
       run.setPickLevel(id, PICKS[id].maxLevel);
     }
-    // No trial left: nothing to pick.
-    run.offerPicks();
-    expect(run.state).toBe('playing');
-    expect(of('pickOffered')).toEqual([]);
-    // A level up's blessing, without the maxed More Magnets.
     run.setPickLevel('moreMagnets', PICKS.moreMagnets.maxLevel);
-    run.addXp(XP_FIRST_LEVEL);
+    run.offerPicks();
+    // No trial left: straight to the blessings, without More Magnets.
     expect(of('pickOffered')).toEqual([
       { kind: 'blessing', options: expect.arrayContaining(['bigDrops', 'goldenCats']) },
     ]);
     expect(run.pickOffer!.options).toHaveLength(2);
     chooseAll(run);
     for (const id of ['bigDrops', 'goldenCats'] as const) run.setPickLevel(id, 9);
-    run.addXp(run.xpToNext);
-    expect(run.level).toBe(3);
+    run.offerPicks();
     expect(run.state).toBe('playing');
     expect(of('pickOffered')).toHaveLength(1);
   });
@@ -868,91 +858,5 @@ describe('trials and blessings (GAME_DESIGN §15.5)', () => {
     run.tick();
     expect(run.stage).toBe(3);
     expect(of('pickOffered')).toEqual([]);
-  });
-});
-
-describe('XP and level ups (GAME_DESIGN §15.6)', () => {
-  it('gives XP by the size of the cat a merge makes, more in a combo', () => {
-    const { run, of } = setup();
-    expect([run.level, run.xp, run.xpToNext]).toEqual([1, 0, XP_FIRST_LEVEL]);
-    spawnPair(run, 3, -150);
-    run.tick();
-    // A size-4 cat: 4 XP.
-    expect(of('xpChanged')).toEqual([
-      { gained: 4, xp: 4, toNext: XP_FIRST_LEVEL, level: 1, levelsGained: 0 },
-    ]);
-    spawnPair(run, 3, 150);
-    run.tick();
-    // Combo ×2: 4 × 1.25 = 5.
-    expect(run.combo).toBe(2);
-    expect(of('xpChanged').at(-1)).toMatchObject({ gained: 5, xp: 9 });
-    expect(run.xp).toBe(9);
-  });
-
-  it('levels up and offers a blessing at once, while time stands still', () => {
-    const { run, of } = setup();
-    run.addXp(XP_FIRST_LEVEL - 1);
-    expect(run.state).toBe('playing');
-    run.addXp(3);
-    expect(run.level).toBe(2);
-    expect(run.xp).toBe(2);
-    expect(run.xpToNext).toBe(xpToNext(2));
-    expect(of('xpChanged').at(-1)).toMatchObject({ level: 2, levelsGained: 1 });
-    expect(run.state).toBe('choosing');
-    expect(of('pickOffered')).toEqual([{ kind: 'blessing', options: expect.any(Array) }]);
-    expect([...run.pickOffer!.options].sort()).toEqual([...BLESSING_IDS].sort());
-    const time = run.playTimeMs;
-    ticks(run, 60);
-    expect(run.playTimeMs).toBe(time);
-    expect(run.canDrop).toBe(false);
-    const id = run.pickOffer!.options[0]!;
-    expect(run.choose(id)).toBe(true);
-    expect(of('pickChosen')).toEqual([{ kind: 'blessing', id, level: 1 }]);
-    expect(run.state).toBe('playing');
-    expect(run.canDrop).toBe(true);
-  });
-
-  it('opens the blessing on the tick a merge levels it up, and queues one per level', () => {
-    const { run, of } = setup();
-    run.addXp(XP_FIRST_LEVEL + xpToNext(2) - 4);
-    chooseAll(run);
-    expect(run.level).toBe(2);
-    // A size-4 cat crosses one level; a big gain crosses two at once.
-    spawnPair(run, 3);
-    run.tick();
-    expect(run.level).toBe(3);
-    expect(run.state).toBe('choosing');
-    chooseAll(run);
-    run.addXp(xpToNext(3) + xpToNext(4));
-    expect(run.level).toBe(5);
-    expect(chooseAll(run)).toHaveLength(2);
-    expect(of('pickOffered').map((p) => p.kind)).toEqual(Array(4).fill('blessing'));
-    expect(run.state).toBe('playing');
-  });
-
-  it("offers a stage clear's trial first, then the blessing its last merge earned", () => {
-    const { run, of } = setup({ instantExpansion: true });
-    run.addXp(XP_FIRST_LEVEL - 1);
-    makeLastCat(run);
-    expect(run.level).toBe(2);
-    expect(run.pickOffer?.kind).toBe('trial');
-    chooseAll(run);
-    expect(of('pickOffered').map((p) => p.kind)).toEqual(['trial', 'blessing']);
-    expect(run.stage).toBe(2);
-    expect(run.state).toBe('playing');
-  });
-
-  it('pays XP for a Jackpot and ignores bad amounts', () => {
-    const { run } = setup();
-    run.jumpToStage(5);
-    for (let i = 0; i < 5 * EXPANSION_STEPS && run.state !== 'playing'; i++) run.tick();
-    const xp = run.xp;
-    run.addXp(Number.NaN);
-    run.addXp(-5);
-    expect(run.xp).toBe(xp);
-    spawnPair(run, stageInfo(5).lastTier);
-    run.tick();
-    // Two merges into the last cat (size 9): 18 XP.
-    expect(run.xp).toBe(xp + 18);
   });
 });

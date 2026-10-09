@@ -2,21 +2,19 @@
  * One run, headless (TECH_SPEC §3–§5): dropping cats, the cooldown and queue, merges and their
  * payouts, the combo timer, stage clears and the expansion timeline, the danger line, Lucky Saves
  * and game over; and the special balls, trials and blessings of GAME_DESIGN §15 (magnets taking a
- * ball out of the jar, boulders breaking, golden cats, a trial at every stage clear and a blessing
- * at every level up of the run's XP). The game scene renders it and forwards input; the HUD, FX,
- * audio and save listen to its events.
+ * ball out of the jar, boulders breaking, golden cats, the picks at every stage clear). The game
+ * scene renders it and forwards input; the HUD, FX, audio and save listen to its events.
  *
  * Time comes in fixed ticks of PHYSICS_STEP_MS. `update(frameMs)` only decides how many ticks a
  * frame runs, and every timer counts ticks, so a run is a pure function of its seed and of the
  * tick at which each input arrives: the same inputs replay the same run at any frame rate.
  *
- * Tick pipeline while playing: physics step → merges (payouts, XP and events, oldest first) →
- * boulder hits → combo expiry → stage clear → level-up picks → drop ready → danger. The stage clear
- * goes first, so making the stage's last cat saves the jar even on the step the danger timer would
- * run out.
+ * Tick pipeline while playing: physics step → merges (payouts and events, oldest first) → boulder
+ * hits → combo expiry → stage clear → drop ready → danger. The stage clear goes first, so making
+ * the stage's last cat saves the jar even on the step the danger timer would run out.
  */
 import { PHYSICS_STEP_MS, stepsFor } from '../config/physics';
-import { MAGNET_SIZE, PICKS } from '../config/picks';
+import { MAGNET_SIZE, PICK_ORDER, PICKS } from '../config/picks';
 import type { PickId, PickKind } from '../config/picks';
 import { catRadius, STAGE_COUNT, stageHoldsTier, stageInfo } from '../config/stages';
 import {
@@ -27,7 +25,6 @@ import {
   LUCKY_SAVE_GRACE_MS,
   MAGNET_TAKE_MS,
 } from '../config/timings';
-import { XP_JACKPOT_MERGES } from '../config/xp';
 import type { Drop, DropOdds } from '../core/dropQueue';
 import { DropQueue } from '../core/dropQueue';
 import { RunEconomy } from '../core/economy';
@@ -41,7 +38,6 @@ import type { StageProgress } from '../core/progression';
 import { Rng } from '../core/rng';
 import { defaultUpgradeLevels, deriveStats } from '../core/upgrades';
 import type { DerivedStats, UpgradeLevels } from '../core/upgrades';
-import { mergeXp, XpTracker } from '../core/xp';
 import type { Ball, BallKind, BallView } from '../physics/balls';
 import { DangerMonitor, luckySaveVictims } from '../physics/danger';
 import { clampDropX, dropStartY } from '../physics/geometry';
@@ -49,10 +45,10 @@ import type { JarGeometry } from '../physics/geometry';
 import { MergeResolver } from '../physics/merges';
 import { FixedStepper, PhysicsWorld } from '../physics/PhysicsWorld';
 
-/** `choosing`: a pick waits for `choose` (GAME_DESIGN §15.5); time stands still. */
+/** `choosing`: a stage clear's pick waits for `choose` (GAME_DESIGN §15.5); time stands still. */
 export type RunState = 'playing' | 'paused' | 'expanding' | 'choosing' | 'over';
 
-/** A pick (a stage clear's trial or a level up's blessing): the options on its cards. */
+/** A stage clear's pick: the options on its cards. */
 export interface PickOffer {
   readonly kind: PickKind;
   readonly options: readonly PickId[];
@@ -161,12 +157,9 @@ export class RunController {
   private debugTargetStage = 0;
   /** The trials' and blessings' levels this run (GAME_DESIGN §15). */
   private readonly levels = defaultPickLevels();
-  /** The pick waiting for `choose`, and the kinds still to come before play goes on. */
+  /** The pick waiting for `choose`, and the kinds still to come at this clear. */
   private offer: PickOffer | null = null;
   private pickQueue: PickKind[] = [];
-  /** The run's XP and level (GAME_DESIGN §15.6), and the level ups whose blessing still waits. */
-  private readonly xpTracker = new XpTracker();
-  private pendingBlessings = 0;
 
   constructor(options: RunOptions) {
     if (!Number.isFinite(options.seed)) throw new RangeError(`Invalid seed: ${options.seed}`);
@@ -286,21 +279,6 @@ export class RunController {
     return { ...this.levels };
   }
 
-  /** The run's level (GAME_DESIGN §15.6): 1 at the start, one more per level up. */
-  get level(): number {
-    return this.xpTracker.level;
-  }
-
-  /** XP gathered towards the next level. */
-  get xp(): number {
-    return this.xpTracker.xp;
-  }
-
-  /** XP from this level to the next. */
-  get xpToNext(): number {
-    return this.xpTracker.toNext;
-  }
-
   /** The HUD's progress bar: the biggest cat in the jar against the stage's last cat. */
   get progress(): StageProgress {
     let biggest = 0;
@@ -395,8 +373,7 @@ export class RunController {
   /**
    * Chooses one of the waiting pick's options (GAME_DESIGN §15.5): its level goes up for the rest
    * of the run and applies to the balls queued from now on. The next pick follows, then the zoom
-   * (after a level up, or at the last stage: play). Returns false when no pick waits or `id` isn't
-   * one of its options.
+   * (at the last stage: play). Returns false when no pick waits or `id` isn't one of its options.
    */
   choose(id: PickId): boolean {
     const offer = this.offer;
@@ -478,17 +455,10 @@ export class RunController {
     this.queue.setOdds(this.odds());
   }
 
-  /** Opens a stage clear's trial now (and any waiting blessings): play goes on after them. */
+  /** Opens a stage clear's picks now, as at the last stage: play goes on after them. */
   offerPicks(): void {
     if (this.runState !== 'playing') return;
-    this.beginPicks(['trial']);
-  }
-
-  /** Adds XP as a merge would (no combo); a level up opens its blessing at once. */
-  addXp(amount: number): void {
-    if (this.runState !== 'playing' || !Number.isFinite(amount)) return;
-    this.gainXp(Math.round(amount));
-    if (this.pendingBlessings > 0) this.beginPicks([]);
+    this.beginPicks();
   }
 
   /** Sets the run score (it only counts for records). */
@@ -535,7 +505,6 @@ export class RunController {
     for (const value of Object.values(this.levels)) h.number(value);
     h.string(this.offer ? `${this.offer.kind}:${this.offer.options.join(',')}` : '');
     h.string(this.pickQueue.join(','));
-    h.number(this.xpTracker.level).number(this.xpTracker.xp).number(this.pendingBlessings);
     h.number(this.dropAllowedAt).number(this.savesLeft).number(this.debugTargetStage);
     h.number(this.danger.remainingMs).bool(this.danger.inGrace);
     const e = this.expansionState;
@@ -555,20 +524,17 @@ export class RunController {
     const outcomes = this.merges.resolve(world, last);
     /** The first cat this step made of the stage's last tier: it clears the stage. */
     let cleared: Ball | null = null;
-    let xp = 0;
     for (const o of outcomes) {
       const at = { x: o.x, y: o.y };
       if (o.kind === 'merge') {
         const p = this.economy.merge(o.tier, now, o.newTier);
         this.bankCoins(p.coins);
         if (o.ball && o.ball.tier === last) cleared ??= o.ball;
-        const newSize = o.ball?.size ?? world.sizeOf(o.newTier);
-        xp += mergeXp(newSize, p.combo);
         this.events.emit('merged', {
           id: o.ball?.id ?? -1,
           tier: o.tier,
           newTier: o.newTier,
-          newSize,
+          newSize: o.ball?.size ?? world.sizeOf(o.newTier),
           golden: o.golden,
           at,
           ...p,
@@ -576,14 +542,12 @@ export class RunController {
       } else {
         const p = this.economy.jackpot(last, now);
         this.bankCoins(p.coins);
-        xp += XP_JACKPOT_MERGES * mergeXp(world.sizeOf(last), p.combo);
         this.events.emit('jackpot', { tier: o.tier, at, ...p });
       }
     }
     if (outcomes.length > 0) {
       this.events.emit('scoreChanged', { score: this.economy.score });
       this.events.emit('runCoinsChanged', { coins: this.economy.coins });
-      this.gainXp(xp);
     }
     this.hitBoulders(this.merges.hits);
     const combo = this.economy.comboAt(now);
@@ -595,24 +559,8 @@ export class RunController {
       this.clearStage(cleared);
       if (this.runState !== 'playing') return;
     }
-    // A level up's blessing comes at once (time stands still); a clear's comes after its trial.
-    if (this.pendingBlessings > 0 && this.beginPicks([])) return;
     this.announceDropIfReady();
     this.updateDanger(now);
-  }
-
-  /** Adds XP (GAME_DESIGN §15.6); each level it gains owes a blessing pick. */
-  private gainXp(amount: number): void {
-    if (amount <= 0) return;
-    const levelsGained = this.xpTracker.add(amount);
-    this.pendingBlessings += levelsGained;
-    this.events.emit('xpChanged', {
-      gained: amount,
-      xp: this.xpTracker.xp,
-      toNext: this.xpTracker.toNext,
-      level: this.xpTracker.level,
-      levelsGained,
-    });
   }
 
   private announceDropIfReady(): void {
@@ -739,14 +687,9 @@ export class RunController {
 
   // ── Trials and blessings (GAME_DESIGN §15.5) ───────────────────────────────
 
-  /**
-   * Starts the picks: `first` (a stage clear's trial), then a blessing for every level up still
-   * waiting. Returns false when none has an option left (nothing to pick).
-   */
-  private beginPicks(first: readonly PickKind[]): boolean {
-    const blessings: PickKind[] = Array.from({ length: this.pendingBlessings }, () => 'blessing');
-    this.pendingBlessings = 0;
-    this.pickQueue = [...first, ...blessings];
+  /** Starts a stage clear's picks. Returns false when every option is maxed (nothing to pick). */
+  private beginPicks(): boolean {
+    this.pickQueue = [...PICK_ORDER];
     return this.offerNextPick();
   }
 
@@ -765,10 +708,7 @@ export class RunController {
     return false;
   }
 
-  /**
-   * The picks are done: after a stage clear the expansion's zoom starts (at the last stage play goes
-   * on); after a level up play goes on where it stopped, the danger timer too.
-   */
+  /** The picks are done: the expansion's zoom starts, or play goes on at the last stage. */
   private afterPicks(): void {
     const e = this.expansionState;
     if (e) {
@@ -779,6 +719,8 @@ export class RunController {
     }
     this.runState = 'playing';
     this.world.resume();
+    this.danger.reset();
+    this.showDanger();
     this.dropAnnounced = false;
     this.announceDropIfReady();
   }
@@ -823,9 +765,8 @@ export class RunController {
         // The last cat pops too: the next stage starts with an empty jar.
         this.world.pause();
         this.pop([...this.world.balls], 'cashOut');
-        // The trial comes first (time stands still), then any blessings the clear's merges
-        // earned; `choose` goes on after the last one.
-        if (e.picks && this.beginPicks(['trial'])) return;
+        // The picks come first (time stands still); `choose` goes on after the last one.
+        if (e.picks && this.beginPicks()) return;
         this.afterClear(e);
         return;
       }
