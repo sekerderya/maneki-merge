@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.23.8] - 2026-10-09
+
+### Changed
+
+- Smoother on old phones, with no change on phones that keep up (the owner's request). The game looks exactly the same on every phone that holds its frame rate; screenshots before and after match pixel for pixel within GPU noise.
+  - The aim guide's dots, the jar's glass shine and its dashed danger line are pre-drawn images instead of shapes the engine re-traced every frame (about 5000 points a frame). On a CPU slowed six times as a stand-in for an old phone, drawing a frame took 2.5 ms instead of 4.6.
+  - All the cats share one texture, so a phone draws the whole jar of cats in one go instead of one draw call per cat (9 draw calls a frame for the whole scene instead of 29 with 24 cats, and no longer more with more cats).
+  - Adaptive resolution: if play stutters (under 45 fps and uneven) the game draws the canvas at fewer pixels, 2.5 → 2 → 1.5 per CSS pixel, and keeps a step only when it makes frames at least 10% shorter; otherwise it goes back to full sharpness for the rest of the session. A steady 30 fps (iPhone Low Power Mode, battery savers) is left alone. On a software renderer standing in for a weak GPU this took play from 28 fps to about 60.
+- `?res=<n>` fixes the canvas resolution, to see on a phone what a slow one gets (e.g. `?res=1.5`). The debug panel shows the current resolution.
+
+### Known issues
+
+- A phone held back by its CPU (the physics of a full jar) gets nothing from fewer pixels, so it keeps the full resolution and can still slow down when the jar is very full.
+
 ## [0.23.7] - 2026-10-09
 
 ### Changed
