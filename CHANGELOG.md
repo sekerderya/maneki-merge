@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.23.5] - 2026-10-09
+
+### Changed
+
+- The owner's final square jar: the bamboo bottom is straight and level, joined to the posts with small elbow joints, and the frame is a little wider, so its opening matches the game's jar (1 : 1.51 against 1 : 1.45).
+- `npm run art` measures the jar's opening from the bamboo's dark outline only, not from the thin line of the glass edge inside it.
+
 ## [0.23.4] - 2026-10-09
 
 ### Changed

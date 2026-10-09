@@ -265,8 +265,13 @@ as round as before, so the bottom corners look sharper and more square. The tan 
 inside follows the same tighter bend.
 ```
 
-The result's inner corners still curve a little (the tool reports it), so a small cat deep in a
-corner overlaps the bamboo's inner bend by a few pixels.
+That gave v0.23.4's jar, whose bottom still bent upwards a little. v0.23.5's jar came from more
+edits in the same thread: "make the bottom bamboo and the tan strip above it completely straight and
+level from end to end, with sharp square corners at both ends"; then the elbow joints copied back
+from the previous image (attached as a second image), since the straightening had cut the corners
+flat; then "make the whole frame about 15% wider, keeping exactly the same height", because the
+edits had stretched the opening to 1 : 1.65 (asking for a shorter frame changed nothing). Every
+edit softens the lines a little, so download the tool's original file each time.
 
 **Rug** (`scene/rug.png`):
 
