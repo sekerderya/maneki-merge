@@ -10,6 +10,9 @@
  * - Paw: the white is cut, the image is cropped, and a plain row of the arm is found for the game
  *   to stretch up to the top of the screen.
  * - Background: converted as is; its sky and floor colours are sampled for the screen around it.
+ * - Noren: the white is cut (also the holes between the loops under the rod), the rod is recoloured
+ *   to the owner's mockup, and the rows the game may stretch are measured: from under the coin to
+ *   above the pink band.
  */
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -37,6 +40,10 @@ const INK_MAX_RED = 150;
 /** Piece finding: rows are scanned in bands this tall; gaps this wide split a band's pieces. */
 const PIECE_BAND = 40;
 const PIECE_GAP = 24;
+/** The noren's rod in the owner's mockup (art-source/scene/noren-mockup.webp): a dusty rose wood. */
+const NOREN_ROD = [201, 153, 128] as const;
+/** Rows kept plain above the pink band and below the coin when stretching, px. */
+const NOREN_SLICE_MARGIN = 14;
 
 interface JarData {
   back: string;
@@ -63,6 +70,17 @@ interface PawData {
   armRow: number;
 }
 
+interface NorenData {
+  file: string;
+  width: number;
+  height: number;
+  left: number;
+  right: number;
+  hem: number;
+  sliceTop: number;
+  sliceBottom: number;
+}
+
 interface BackgroundData {
   file: string;
   width: number;
@@ -76,7 +94,8 @@ export async function buildScene(): Promise<void> {
   const jar = await buildJar(await findSource(SOURCE_DIR, 'jar'));
   const paw = await buildPaw(await findSource(SOURCE_DIR, 'paw'));
   const background = await buildBackground(await findSource(SOURCE_DIR, 'background'));
-  await writeFile(DATA_FILE, dataModule(jar, paw, background));
+  const noren = await buildNoren(await findSource(SOURCE_DIR, 'noren'));
+  await writeFile(DATA_FILE, dataModule(jar, paw, background, noren));
   console.log(`Wrote the scene to ${OUT_DIR} and ${DATA_FILE}`);
 }
 
@@ -227,6 +246,107 @@ async function buildPaw(path: string): Promise<PawData> {
   return data;
 }
 
+async function buildNoren(path: string): Promise<NorenData> {
+  const source = await loadRgba(path);
+  cutBackground(source);
+  const { width, height } = source;
+  const hsv = (x: number, y: number): { max: number; sat: number } => {
+    const [r = 0, g = 0, b = 0] = pixel(source, x, y);
+    const max = Math.max(r, g, b);
+    return { max, sat: max > 0 ? (max - Math.min(r, g, b)) / max : 0 };
+  };
+  // The rod: the rows in the top third where most of the width is tan wood.
+  const wood = (x: number, y: number): boolean => {
+    const { max, sat } = hsv(x, y);
+    return alphaAt(source, x, y) > 128 && max > 150 && sat > 0.2;
+  };
+  const rodRows: number[] = [];
+  for (let y = 0; y < height / 3; y++) {
+    let count = 0;
+    for (let x = 0; x < width; x++) if (wood(x, y)) count++;
+    if (count > width * 0.3) rodRows.push(y);
+  }
+  const rodTop = rodRows[0] ?? 0;
+  const rodBottom = rodRows[rodRows.length - 1] ?? 0;
+  // Each wood pixel takes the mockup's colour, keeping its light and shade.
+  const woodSamples: number[][] = [];
+  for (let y = rodTop; y <= rodBottom; y++) {
+    for (let x = 0; x < width; x += 3) if (wood(x, y)) woodSamples.push(pixel(source, x, y));
+  }
+  const base = median(woodSamples)
+    .slice(1)
+    .match(/../g)
+    ?.map((h) => parseInt(h, 16)) ?? [255, 255, 255];
+  for (let y = Math.max(0, rodTop - 3); y <= rodBottom + 3; y++) {
+    for (let x = 0; x < width; x++) {
+      if (!wood(x, y)) continue;
+      const i = 4 * (y * width + x);
+      for (let c = 0; c < 3; c++) {
+        source.data[i + c] = ((source.data[i + c] ?? 0) * NOREN_ROD[c]!) / Math.max(1, base[c]!);
+      }
+    }
+  }
+  // The white holes between the rod, its loops and the fabric's top edge.
+  for (let x = 0; x < width; x++) {
+    for (let y = rodBottom + 1; y < rodBottom + 30; y++) {
+      const [r = 0, g = 0, b = 0] = pixel(source, x, y);
+      if (alphaAt(source, x, y) > 0 && Math.min(r, g, b) >= 236) clearRegion(source, x, y);
+    }
+  }
+  const box = opaqueBox(source);
+  const image = crop(source, box);
+  const cx = Math.round(image.width / 2);
+  // The coin: gold pixels near the middle, under the rod.
+  let coinBottom = 0;
+  for (let y = rodBottom - box.y + 8; y < image.height / 2; y++) {
+    for (let x = cx - 90; x < cx + 90; x++) {
+      const [r = 0, g = 0, b = 0] = pixel(image, x, y);
+      if (r > 200 && g > 130 && r - b > 90 && alphaAt(image, x, y) > 128) coinBottom = y;
+    }
+  }
+  const span = (y: number): [number, number] => {
+    let a = -1;
+    let b = -1;
+    for (let x = 0; x < image.width; x++) {
+      if (alphaAt(image, x, y) > 128) {
+        if (a < 0) a = x;
+        b = x;
+      }
+    }
+    return [a, b];
+  };
+  const [left, right] = span(Math.round(image.height * 0.6));
+  // The pink band: from each panel's middle up from the hem to the first row that isn't pink.
+  const hem = image.height;
+  let bandTop = hem;
+  for (let k = 0; k < 4; k++) {
+    const x = Math.round(left + ((right - left) * (2 * k + 1)) / 8);
+    let y = hem - 8;
+    while (y > hem / 2) {
+      const [r = 0, g = 0, b = 0] = pixel(image, x, y);
+      if (!(r - g > 25 && r - b > 25) || alphaAt(image, x, y) < 128) break;
+      y--;
+    }
+    bandTop = Math.min(bandTop, y);
+  }
+  await saveWebp(image, join(OUT_DIR, 'noren.webp'));
+  const data: NorenData = {
+    file: 'noren.webp',
+    width: image.width,
+    height: image.height,
+    left,
+    right: right + 1,
+    hem,
+    sliceTop: coinBottom + NOREN_SLICE_MARGIN,
+    sliceBottom: bandTop - NOREN_SLICE_MARGIN,
+  };
+  console.log(
+    `${path}: ${image.width}×${image.height}, rod rows ${rodTop}–${rodBottom} ` +
+      `(was ${median(woodSamples)}), panels ${left}–${right}, stretch ${data.sliceTop}–${data.sliceBottom}`,
+  );
+  return data;
+}
+
 async function buildBackground(path: string): Promise<BackgroundData> {
   const image = await loadRgba(path);
   await saveWebp(image, join(OUT_DIR, 'background.webp'), 85);
@@ -322,12 +442,12 @@ function rects(list: readonly Rect[]): string {
   return list.map((r) => `{ x: ${r.x}, y: ${r.y}, w: ${r.w}, h: ${r.h} }`).join(', ');
 }
 
-function dataModule(jar: JarData, paw: PawData, bg: BackgroundData): string {
+function dataModule(jar: JarData, paw: PawData, bg: BackgroundData, noren: NorenData): string {
   return `/**
  * Generated by tools/build-art.ts (\`npm run art\`) from art-source/scene/: do not edit by hand.
  * Image pixels of the sprites in public/assets/scene/ (see sceneSprites.ts for each field).
  */
-import type { BackgroundSprite, JarSprite, PawSprite } from './sceneSprites';
+import type { BackgroundSprite, JarSprite, NorenSprite, PawSprite } from './sceneSprites';
 
 export const JAR_SPRITE: JarSprite = {
   back: '${jar.back}',
@@ -360,6 +480,17 @@ export const BACKGROUND_SPRITE: BackgroundSprite = {
   height: ${bg.height},
   sky: '${bg.sky}',
   ground: '${bg.ground}',
+};
+
+export const NOREN_SPRITE: NorenSprite = {
+  file: '${noren.file}',
+  width: ${noren.width},
+  height: ${noren.height},
+  left: ${noren.left},
+  right: ${noren.right},
+  hem: ${noren.hem},
+  sliceTop: ${noren.sliceTop},
+  sliceBottom: ${noren.sliceBottom},
 };
 `;
 }

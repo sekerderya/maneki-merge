@@ -4,7 +4,7 @@
  * files. The measured data is in sceneSpriteData.ts; the choices here place the art. Pure data.
  */
 import { JAR_HEIGHT, JAR_WIDTH } from './stages';
-import { BACKGROUND_SPRITE, JAR_SPRITE, PAW_SPRITE } from './sceneSpriteData';
+import { BACKGROUND_SPRITE, JAR_SPRITE, NOREN_SPRITE, PAW_SPRITE } from './sceneSpriteData';
 
 /** A rectangle in an image's pixels. */
 export interface PxRect {
@@ -60,12 +60,45 @@ export interface BackgroundSprite {
   readonly ground: string;
 }
 
+/**
+ * The noren curtain over the jar (GAME_DESIGN §13.1): a rod on top, four panels, a pink band at the
+ * hem. Rows from `sliceTop` to `sliceBottom` are plain fabric, which stretches to any height.
+ */
+export interface NorenSprite {
+  readonly file: string;
+  readonly width: number;
+  readonly height: number;
+  /** The outer edges of the side panels, px (the rod reaches past them). */
+  readonly left: number;
+  readonly right: number;
+  /** The bottom of the panels, px. */
+  readonly hem: number;
+  readonly sliceTop: number;
+  readonly sliceBottom: number;
+}
+
 /** Where the sprites live, relative to the app's base URL. */
 export const SCENE_SPRITE_DIR = 'assets/scene/';
 
 export const JAR_ART: JarSprite = JAR_SPRITE;
 export const PAW_ART: PawSprite = PAW_SPRITE;
 export const BACKGROUND_ART: BackgroundSprite = BACKGROUND_SPRITE;
+export const NOREN_ART: NorenSprite = NOREN_SPRITE;
+
+/**
+ * The noren's panels span this many jar widths (a phone shows 1.38, CAMERA_SIDE_MARGIN_RATIO), so
+ * their outer edges are just off a phone's screen. Its hem hangs NOREN_HEM world units above the
+ * rim: the paw and a little of the arm show under it (the paw's bottom is 145–161 units above the
+ * rim, its wrist about 95 above that). The fabric reaches up to the top of the screen; when there
+ * isn't room for the rod and the coin, they go off the top.
+ */
+export const NOREN_SPAN = 1.44;
+export const NOREN_HEM = 300;
+/**
+ * Behind the noren the paw's arm reaches this far above the hem, then ends, so it never shows
+ * through the slits higher up.
+ */
+export const NOREN_ARM_OVERLAP = 30;
 
 /** World units per jar image pixel, across and down (the opening fills JAR_WIDTH × JAR_HEIGHT). */
 export const JAR_ART_SCALE_X = JAR_WIDTH / (JAR_ART.right - JAR_ART.left);
