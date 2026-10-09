@@ -303,6 +303,10 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
   - [x] the run in progress is saved: stage, every ball where it lies, score, coins, queue, picks, Lucky Saves, a waiting pick or a growing jar
   - [x] closing the app and opening it again goes straight back into the run, paused, with Resume
   - [x] Quit to Menu and game over end the run; a snapshot a new version can't read is dropped
+- [x] Batch 12 (v0.28.0), two new blessings (GAME_DESIGN §15.1, §15.5–§15.7):
+  - [x] Hanabi: a firework ball that goes off 1 s after it lands, pops the small cats (sizes 1–4) around it into coins, breaks boulders and pushes bigger cats away
+  - [x] Joker Cat: merges with the first cat it touches and makes it one size bigger (a size 8 makes the stage's last cat)
+  - [x] the blessing pick shows 3 of the 5 blessings; code-drawn placeholder looks until the owner's art
 
 ## M13: Final art integration
 

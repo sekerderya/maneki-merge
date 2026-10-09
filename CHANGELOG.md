@@ -2,6 +2,24 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.28.0] - 2026-10-10
+
+### Added
+
+- Two new blessings (the owner's picks, GAME_DESIGN §15.6–§15.7). Each comes from the dropper like the magnet, with 1.5% per level (5 levels).
+- **Hanabi**: a firework ball. It lights when it lands and goes off a second later. Every cat of size 1–4 within reach pops into its value, boulders break, another hanabi goes off too, and bigger cats and jokers get a gentle push away. None comes in a stage's first 20 drops, and a queued one becomes a small cat at a stage clear, like the magnet.
+- **Joker Cat**: merges with the first cat it touches, whatever its size, and makes it one size bigger where it is (a golden cat two). A joker on a size 8 makes the stage's last cat and clears the stage. Its merge pays like the cat's own and counts for the combo; a joker that touches a boulder knocks a band off once.
+- Code-drawn placeholder looks (a navy firework ball with a fuse, a white ball with a rainbow ring and a star), the NEXT icons and card icons, a boom sound, and debug buttons to put either in the paw.
+
+### Changed
+
+- The blessing pick now draws 3 of the 5 blessings, so it can differ from one clear to the next.
+
+### Notes
+
+- A run saved by v0.27 still loads: the new blessings start at level 0.
+- The numbers are first values from the chat (reach 200, fuse 1 s, push 320 units/s, 1.5% per level); balance comes later.
+
 ## [0.27.0] - 2026-10-10
 
 ### Added
