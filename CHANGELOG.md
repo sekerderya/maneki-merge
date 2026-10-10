@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.32.0] - 2026-10-10
+
+### Changed
+
+- The trial and blessing picks in the owner's art (GAME_DESIGN §15.5), built from the Upgrades screen's pieces over the shut stage doors: the title on a cream pill, three cream cards with the stat in their tan strip, and Choose on the menu's coral PLAY pill (faded until a card is chosen). The chosen card lifts and glows, stone blue-grey for a trial, gold for a blessing.
+- Until their icons come from the icon kit, the cards show the code-drawn icons in a cream medallion (stone-grey rim for trials, gold for blessings).
+- The Upgrades screen and the picks share their art settings (`ui/uiArt.ts`).
+
 ## [0.31.0] - 2026-10-10
 
 ### Added
