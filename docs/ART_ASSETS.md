@@ -84,7 +84,8 @@ narrower than their canvas: Claude crops the empty space.
 | 12  | 4 menu  | `menu/settings-icons.png`          | Sheet: sound, haptics, reduce motion, how to play         | 1:1, 1024×1024    |
 | 13  | 4 menu  | `menu/banner.png`                  | Blank ribbon banner for "The shrine grows!" etc.          | 3:2, 1536×1024    |
 | 14  | 5 app   | `app-icon.png`                     | App icon                                                  | 1:1, 1024×1024    |
-| 15  | 6 doors | `doors/screen.png`                 | Four-panel folding screen for the stage-clear transition  | 2:3, 1024×1536 ×2 |
+| 15  | 6 doors | `doors/picture.png`                | Stage-door picture, cut into four strips by the game      | 9:16              |
+| 16  | 6 doors | `doors/panel.png`                  | One empty door frame, laid over each strip                | 2:3, 1024×1536    |
 
 How the pieces go into the game:
 
@@ -688,6 +689,53 @@ stage is cleared, two wings of two panels each fold in from the sides like an ac
 the middle. The screen stays closed while the trial and blessing are picked (the pick cards are
 their own UI on top, not part of this art), then folds open again and the zoom plays as before
 (GAME_DESIGN §7.1). The fold is CSS 3D in code; the art is the screen seen flat and closed.
+
+**Current plan (2026-10-10): two pieces.** Every one-image attempt below came out folded at an
+angle: asked for four panels, the tools draw a folding screen as furniture, and an attached angled
+image makes them copy its shape. So the art is now two separate images, and the game puts them
+together: it cuts the picture into four vertical strips and lays one panel frame over each strip,
+stretching the frame's plain sides to the screen's height. The picture is 9:16, close to a phone's
+shape, so nothing needs repeating.
+
+Use a new thread for each. Attach only the two game screenshots
+(`docs/screenshots/v0.26.0/390-1-hud.png` and `docs/screenshots/v0.20.1/menu-390x844.png`), not
+an earlier screen image. Style block, then:
+
+**Picture** (`doors/picture.png`, 9:16):
+
+```text
+A full-screen vertical illustration for a cute mobile game, portrait 9:16, filling the whole
+canvas edge to edge, with no border and no frame: a peaceful Japanese shrine garden in spring,
+seen straight on. A pale cream sky fills the upper half, with puffy cream clouds; a big soft gold
+sun sits exactly in the horizontal centre of the image, in the upper third; a few round blank gold
+coins hang on strings from the top edge. Lower down: a big sakura tree with pink blossoms rising
+on the left side, a red torii gate left of centre, a small wooden shrine with a dark tiled roof
+right of centre, soft pink sakura trees and green bushes behind them, and a sandy path along the
+bottom. Draw it in exactly the art style of the attached game screenshots: thick warm dark-brown
+outlines around every shape, flat cel shading, chunky rounded cartoon shapes, blossoms and clouds
+like the ones in the screenshots. No doors, no panels, no frame, no lattice, no cats, no text,
+no kanji. This image fills the whole canvas, so ignore the white background rule.
+```
+
+**Panel** (`doors/panel.png`, 2:3):
+
+```text
+One single tall wooden shoji door frame, a game UI piece, seen perfectly straight from the front,
+completely flat like a drawing on paper: a plain upright rectangle, perfectly left-right
+symmetric, no perspective, no angle, no depth, no second panel. About two and a half times as
+tall as it is wide, centred, filling most of the canvas height. A chunky glossy rose-brown wooden
+frame (#813C2D) with soft rounded corners and small gold corner caps on all four corners. At the
+top, under the top rail, two rows of small square lattice windows with cream paper (#FFF4E2),
+three windows per row; the same two rows at the bottom, above the bottom rail. Between them the
+middle of the frame is one big empty opening: nothing inside, only the plain white background
+showing through, no paper, no bars, no picture. The two side bars run straight and even from top
+to bottom. Plain flat solid white background, no shadow. Portrait 2:3.
+```
+
+Checks: the picture fills the canvas with no panels or frame and the sun in the exact centre; the
+panel is one flat, symmetric frame, its middle plain white, its window paper cream.
+
+**Earlier attempts** (kept for what went wrong):
 
 Claude cuts the four panels apart at the white gaps. Phones are taller than the 2:3 image (a
 390×844 screen needs about 45% more height), so each panel gets taller by repeating its plain
