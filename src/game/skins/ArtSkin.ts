@@ -151,7 +151,11 @@ export class ArtSkin implements BallSkin {
  * Draws `body` centred in `canvas` with a `width` px outline of CAT_OUTLINE_COLOR round its
  * silhouette: the silhouette, filled with the colour, stamped round a circle under the body.
  */
-function drawOutlined(canvas: HTMLCanvasElement, body: HTMLCanvasElement, width: number): void {
+export function drawOutlined(
+  canvas: HTMLCanvasElement,
+  body: HTMLCanvasElement,
+  width: number,
+): void {
   const side = Math.ceil(body.width + 2 * (width + PAD_PX));
   const ctx = context(canvas, side, side);
   const silhouette = document.createElement('canvas');
@@ -173,7 +177,11 @@ function drawOutlined(canvas: HTMLCanvasElement, body: HTMLCanvasElement, width:
  * Draws `source` into a `side` × `side` canvas. Big reductions go through halving steps, so small
  * cats stay smooth instead of shimmering.
  */
-function drawScaled(canvas: HTMLCanvasElement, source: HTMLImageElement, side: number): void {
+export function drawScaled(
+  canvas: HTMLCanvasElement,
+  source: HTMLImageElement,
+  side: number,
+): void {
   let current: CanvasImageSource = source;
   let currentSide = source.naturalWidth;
   while (currentSide / 2 > side) {

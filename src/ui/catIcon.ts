@@ -1,7 +1,9 @@
 import { ART_BOX, ART_PAD, ART_TWO_DIGIT_SCALE, catLook } from '../config/catArt';
-import { CAT_SPRITE_DIR, catSprite } from '../config/catSprites';
+import { CAT_SPRITE_DIR, CAT_SPRITES, catSprite } from '../config/catSprites';
+import type { CatSprite } from '../config/catSprites';
 import type { ArtShape, CatLook } from '../config/catArt';
 import { OUTLINE_DARKEN, tierColor } from '../config/skin';
+import { SPECIAL_ART, SPECIAL_SPRITE_DIR, boulderSprite } from '../config/specialSprites';
 import { darken } from '../core/color';
 import type { Drop } from '../core/dropQueue';
 import { el } from './dom';
@@ -71,13 +73,18 @@ export function paintDropIcon(icon: HTMLElement, drop: Drop): void {
     paintCatIcon(icon, drop.tier);
     return;
   }
-  const painted = drop.kind === 'boulder' ? `boulder:${drop.hits}` : drop.kind;
+  const painted = `${iconSkin}:${drop.kind === 'boulder' ? `boulder:${drop.hits}` : drop.kind}`;
   if (icon.dataset['painted'] === painted) return;
   icon.dataset['painted'] = painted;
   delete icon.dataset['tier'];
   icon.classList.remove('is-placeholder', 'is-two-digits');
   icon.style.removeProperty('--cat-color');
   icon.style.removeProperty('--cat-outline');
+  if (iconSkin === 'art') {
+    const sprite = drop.kind === 'boulder' ? boulderSprite(drop.hits - 1) : SPECIAL_ART[drop.kind];
+    paintSpecialArt(icon, sprite);
+    return;
+  }
   icon.innerHTML =
     drop.kind === 'magnet'
       ? MAGNET_SVG
@@ -142,6 +149,23 @@ function paintArt(icon: HTMLElement, tier: number): void {
   image.src = catSpriteUrl(tier);
   image.alt = '';
   image.draggable = false;
+  icon.replaceChildren(image);
+}
+
+/** The cats' body circle as a share of their sprite's side, on average. */
+const CAT_BODY_SHARE =
+  CAT_SPRITES.reduce((sum, sprite) => sum + sprite.radius / sprite.side, 0) / CAT_SPRITES.length;
+
+/**
+ * A special ball's art (GAME_DESIGN §15): its sprite, scaled so its body is as big in the icon as
+ * a cat's (a joker's hat makes its sprite wider than a cat's).
+ */
+function paintSpecialArt(icon: HTMLElement, sprite: CatSprite): void {
+  const image = el('img');
+  image.src = `${import.meta.env.BASE_URL}${SPECIAL_SPRITE_DIR}${sprite.file}`;
+  image.alt = '';
+  image.draggable = false;
+  image.style.transform = `scale(${(CAT_BODY_SHARE * sprite.side) / sprite.radius})`;
   icon.replaceChildren(image);
 }
 

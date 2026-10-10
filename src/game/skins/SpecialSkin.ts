@@ -1,14 +1,18 @@
 /**
- * The special balls' look (GAME_DESIGN §15), drawn in code with the 2D canvas API and kept simple
- * until the owner's art: the magnet (a cream disc with a red horseshoe magnet), boulders (grey
- * stone with one iron band per extra merge they need; with `?skin=placeholder` a grey circle
- * showing the merges left), the hanabi (a navy ball with a firework burst and a fuse), the joker
- * (a white ball with a rainbow ring and a gold star) and the gold glow behind golden cats. Like the cats, each texture is
- * drawn at CAT_PX_PER_UNIT for the radius of its size, with the outline's outer edge on the
- * physics radius, and is shared by every stage. Textures are drawn the first time they are asked for.
+ * The special balls' look (GAME_DESIGN §13.1, §15). With the art skin they are the owner's images
+ * (config/specialSprites.ts), scaled and outlined like the cats (ArtSkin), so their body circle
+ * lands on the physics radius. Otherwise they are drawn in code with the 2D canvas API: the magnet
+ * (a cream disc with a red horseshoe magnet), boulders (grey stone with one iron band per extra
+ * merge they need; with  a grey circle showing the merges left), the hanabi
+ * (a navy ball with a firework burst and a fuse) and the joker (a white ball with a rainbow ring
+ * and a gold star). The gold glow behind golden cats is always drawn in code. Like the cats, each
+ * texture is drawn at CAT_PX_PER_UNIT for the radius of its size, with the outline's outer edge on
+ * the physics radius, and is shared by every stage. Textures are drawn the first time they are
+ * asked for.
  */
 import type Phaser from 'phaser';
 import { CAT_OUTLINE_MIN, CAT_OUTLINE_RATIO } from '../../config/catSprites';
+import type { CatSprite } from '../../config/catSprites';
 import { MAGNET_SIZE } from '../../config/picks';
 import {
   BOULDER_BAND,
@@ -32,8 +36,11 @@ import {
   NUMBER_STROKE,
   SPECIAL_INK,
 } from '../../config/skin';
+import { SPECIAL_ART, boulderSprite } from '../../config/specialSprites';
 import { sizeRadius } from '../../config/tiers';
 import { CAT_PX_PER_UNIT } from '../../config/view';
+import type { SpecialImages } from '../artImages';
+import { drawOutlined, drawScaled } from './ArtSkin';
 import type { SkinFrame } from './BallSkin';
 import { context, drawNumber } from './canvas';
 
@@ -45,35 +52,54 @@ const GLOW_PX = 128;
 export class SpecialSkin {
   private readonly frames = new Map<string, SkinFrame>();
 
-  /** `numbers`: boulders show the merges they still need as a number (`?skin=placeholder`). */
+  /**
+   * `numbers`: boulders show the merges they still need as a number (`?skin=placeholder`).
+   * `art`: the owner's images (the art skin); without them the balls are drawn in code.
+   */
   constructor(
     private readonly textures: Phaser.Textures.TextureManager,
     private readonly numbers = false,
+    private readonly art: SpecialImages | null = null,
   ) {}
 
   /** The magnet, at the radius of MAGNET_SIZE. */
   magnet(): SkinFrame {
-    return this.frame('special-magnet', (canvas) => drawMagnet(canvas, sizeRadius(MAGNET_SIZE)));
+    const radius = sizeRadius(MAGNET_SIZE);
+    const { art } = this;
+    return this.frame('special-magnet', (canvas) =>
+      art ? drawArt(canvas, art.magnet, SPECIAL_ART.magnet, radius) : drawMagnet(canvas, radius),
+    );
   }
 
   /** A boulder of `size` that needs `hitsLeft` more merges: one band per extra merge. */
   boulder(size: number, hitsLeft: number): SkinFrame {
     const key = `special-boulder-${size}-${hitsLeft}`;
-    return this.frame(key, (canvas) =>
-      this.numbers
-        ? drawBoulderNumber(canvas, sizeRadius(size), hitsLeft)
-        : drawBoulder(canvas, sizeRadius(size), hitsLeft - 1),
-    );
+    const radius = sizeRadius(size);
+    const bands = hitsLeft - 1;
+    const { art } = this;
+    return this.frame(key, (canvas) => {
+      if (this.numbers) drawBoulderNumber(canvas, radius, hitsLeft);
+      else if (art) drawArt(canvas, boulderImage(art, bands), boulderSprite(bands), radius);
+      else drawBoulder(canvas, radius, bands);
+    });
   }
 
   /** A hanabi of `size` (GAME_DESIGN §15.6). */
   hanabi(size: number): SkinFrame {
-    return this.frame(`special-hanabi-${size}`, (canvas) => drawHanabi(canvas, sizeRadius(size)));
+    const radius = sizeRadius(size);
+    const { art } = this;
+    return this.frame(`special-hanabi-${size}`, (canvas) =>
+      art ? drawArt(canvas, art.hanabi, SPECIAL_ART.hanabi, radius) : drawHanabi(canvas, radius),
+    );
   }
 
   /** A joker cat of `size` (GAME_DESIGN §15.7). */
   joker(size: number): SkinFrame {
-    return this.frame(`special-joker-${size}`, (canvas) => drawJoker(canvas, sizeRadius(size)));
+    const radius = sizeRadius(size);
+    const { art } = this;
+    return this.frame(`special-joker-${size}`, (canvas) =>
+      art ? drawArt(canvas, art.joker, SPECIAL_ART.joker, radius) : drawJoker(canvas, radius),
+    );
   }
 
   /**
@@ -106,6 +132,31 @@ export class SpecialSkin {
     this.frames.set(key, frame);
     return frame;
   }
+}
+
+/**
+ * The owner's image of a special ball, scaled like a cat's (ArtSkin): its body circle inside the
+ * thick outline, whose outer edge is the physics `radius`.
+ */
+function drawArt(
+  canvas: HTMLCanvasElement,
+  image: HTMLImageElement,
+  sprite: CatSprite,
+  radius: number,
+): void {
+  const line = outlinePx(radius);
+  const scale = (radius * CAT_PX_PER_UNIT - line) / sprite.radius;
+  const body = document.createElement('canvas');
+  drawScaled(body, image, Math.ceil(sprite.side * scale));
+  drawOutlined(canvas, body, line);
+}
+
+/** The boulder image with `bands` iron bands (as many as the art has at most). */
+function boulderImage(art: SpecialImages, bands: number): HTMLImageElement {
+  const { boulders } = art;
+  const image = boulders[Math.max(0, Math.min(boulders.length - 1, Math.round(bands)))];
+  if (!image) throw new Error('Boulder art not loaded');
+  return image;
 }
 
 /** The outline width in texture pixels for a ball of `radius` world units, as the cats'. */

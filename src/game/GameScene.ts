@@ -169,7 +169,11 @@ export class GameScene extends Phaser.Scene {
           ? new ArtSkin(this.textures, this.art.cats)
           : new CatSkin(this.textures);
     this.skin.prepare(FIRST_STAGE, Infinity);
-    this.special = new SpecialSkin(this.textures, this.skinId === 'placeholder');
+    this.special = new SpecialSkin(
+      this.textures,
+      this.skinId === 'placeholder',
+      this.skinId === 'art' ? (this.art?.specials ?? null) : null,
+    );
 
     const layer = (): Phaser.GameObjects.Layer => this.add.layer();
     const jarBack = layer();
