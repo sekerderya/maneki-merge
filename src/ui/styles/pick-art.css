@@ -12,7 +12,7 @@
 
 .pick-overlay.is-art .pick-panel {
   --u: calc(min(100cqw, 520px) / var(--shop-mockup-w));
-  --glow: #ffd257;
+  --glow: #ffc531;
   width: calc(768 * var(--u));
   max-width: none;
   gap: calc(22 * var(--u));
@@ -24,7 +24,7 @@
 }
 
 .pick-overlay.is-art[data-kind='trial'] .pick-panel {
-  --glow: #a9bfd4;
+  --glow: #7fb2e5;
 }
 
 .pick-overlay.is-art .pick-title {
@@ -79,18 +79,39 @@
   box-shadow: none;
   color: #4e2416;
   transition:
-    transform 90ms ease-out,
-    filter 90ms ease-out;
+    transform 220ms cubic-bezier(0.2, 1.6, 0.4, 1),
+    filter 160ms ease-out;
 }
 
 /* The chosen card lifts and glows round its outline. */
+/*
+ * The chosen card pops forward (it overshoots a little, then settles) inside a thick ring of
+ * light; the other cards dim a little.
+ */
 .pick-overlay.is-art .pick-card.is-selected {
   border-width: 0;
   background: none;
   box-shadow: none;
-  transform: translateY(calc(-4 * var(--u))) scale(1.015);
-  filter: drop-shadow(0 0 calc(5 * var(--u)) var(--glow))
-    drop-shadow(0 0 calc(5 * var(--u)) var(--glow)) drop-shadow(0 0 calc(2 * var(--u)) #fff);
+  transform: translateY(calc(-6 * var(--u))) scale(1.04);
+  filter: drop-shadow(0 0 calc(2.5 * var(--u)) var(--glow))
+    drop-shadow(0 0 calc(2.5 * var(--u)) var(--glow))
+    drop-shadow(0 0 calc(2.5 * var(--u)) var(--glow))
+    drop-shadow(0 0 calc(14 * var(--u)) var(--glow));
+  animation: pick-card-pop 220ms cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+
+@keyframes pick-card-pop {
+  from {
+    transform: translateY(0) scale(1);
+  }
+}
+
+.pick-overlay.is-art .pick-cards.has-selection .pick-card:not(.is-selected) {
+  filter: saturate(0.5) brightness(0.86);
+}
+
+.reduce-motion .pick-overlay.is-art .pick-card.is-selected {
+  animation: none;
 }
 
 .pick-overlay.is-art .pick-info {
