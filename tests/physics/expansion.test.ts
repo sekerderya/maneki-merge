@@ -143,8 +143,8 @@ describe('clearing stages under a pile (GAME_DESIGN §7.1)', () => {
       }
       expect(run.balls).not.toContain(last);
       expect(run.balls).toHaveLength(0);
-      while (run.state === 'expanding') {
-        run.tick();
+      while (run.state !== 'playing') {
+        step(run);
         expect(run.balls).toHaveLength(0);
       }
       addPile(12);

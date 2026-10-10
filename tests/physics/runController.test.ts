@@ -8,6 +8,7 @@ import {
   EXPANSION_CLEAR_MS,
   EXPANSION_DURATION_MS,
   EXPANSION_ZOOM_MS,
+  EXPANSION_ZOOM_START_MS,
   LUCKY_SAVE_GRACE_MS,
 } from '../../src/config/timings';
 import { EventBus } from '../../src/core/events';
@@ -97,6 +98,7 @@ function spawnPair(run: RunController, tier: number, centre = 0) {
 const COOLDOWN_STEPS = stepsFor(DROP_COOLDOWN_MS);
 const CLEAR_STEPS = stepsFor(EXPANSION_CLEAR_MS);
 const ZOOM_STEPS = stepsFor(EXPANSION_ZOOM_MS);
+const ZOOM_START_STEPS = stepsFor(EXPANSION_ZOOM_START_MS);
 const EXPANSION_STEPS = stepsFor(EXPANSION_DURATION_MS);
 
 describe('starting a run', () => {
@@ -365,37 +367,26 @@ describe('stage clears (GAME_DESIGN §7)', () => {
     expect(run.coins).toBe(coins + value);
     expect(run.balls).toHaveLength(0);
 
-    // The picks (GAME_DESIGN §15.5): a trial, then a blessing, while time stands still.
-    expect(run.state).toBe('choosing');
-    expect(of('pickOffered')).toEqual([{ kind: 'trial', options: expect.any(Array) }]);
-    expect([...run.pickOffer!.options].sort()).toEqual([
-      'bigBoulders',
-      'ironBands',
-      'moreBoulders',
-    ]);
-    const settled = run.playTimeMs;
-    ticks(run, 100);
-    run.update(1000);
-    expect(run.playTimeMs).toBe(settled);
-    expect(run.expansion?.phase).toBe('clear');
-    expect(run.choose('moreMagnets')).toBe(false); // not on these cards
-    const trial = run.pickOffer!.options[1]!;
-    expect(run.choose(trial)).toBe(true);
-    expect(of('pickChosen')).toEqual([{ kind: 'trial', id: trial, level: 1 }]);
-    expect(run.pickOffer?.kind).toBe('blessing');
-    expect(run.choose(run.pickOffer!.options[0]!)).toBe(true);
-    expect(run.pickLevels[trial]).toBe(1);
+    // The empty jar holds still while "Stage clear!" finishes: no picks yet, time stands still.
     expect(run.state).toBe('expanding');
-    expect(run.choose(trial)).toBe(false); // nothing waits any more
+    expect(of('pickOffered')).toEqual([]);
+    const settled = run.playTimeMs;
+    ticks(run, ZOOM_START_STEPS - CLEAR_STEPS - 1);
+    expect(run.expansion?.phase).toBe('clear');
+    expect(run.playTimeMs).toBe(settled);
+    expect(of('expansionStarted')).toEqual([]);
+    run.tick();
+
+    // The zoom: the shrine grows right after the clear, before the picks (v0.33.2).
     expect(run.expansion?.phase).toBe('zoom');
     expect(of('expansionStarted')).toEqual([{ from: 5, to: 6 }]);
-
-    // The zoom: time stands still.
-    const time = run.playTimeMs;
     ticks(run, ZOOM_STEPS / 2);
-    expect(run.playTimeMs).toBe(time);
+    expect(run.playTimeMs).toBe(settled);
     expect(run.expansion!.zoomProgress).toBeCloseTo(0.5, 9);
-    expect(run.expansion!.elapsedMs).toBeCloseTo(EXPANSION_CLEAR_MS + EXPANSION_ZOOM_MS / 2, 6);
+    expect(run.expansion!.elapsedMs).toBeCloseTo(
+      EXPANSION_ZOOM_START_MS + EXPANSION_ZOOM_MS / 2,
+      6,
+    );
     expect(run.stage).toBe(5);
 
     // The reveal: the grown jar is stage 6's jar, empty and the same size in world units.
@@ -410,11 +401,33 @@ describe('stage clears (GAME_DESIGN §7)', () => {
     expect(of('expansionRevealed').at(-1)).toEqual({ stage: 6, newTiers });
     expect(run.progress).toEqual({ fraction: 0, goalTier: 54, grows: false });
 
-    ticks(run, EXPANSION_STEPS - CLEAR_STEPS - ZOOM_STEPS - 1);
+    // Then the picks (GAME_DESIGN §15.5): a trial, then a blessing, while time stands still.
+    ticks(run, EXPANSION_STEPS - ZOOM_START_STEPS - ZOOM_STEPS - 1);
     expect(run.state).toBe('expanding');
     run.tick();
+    expect(run.state).toBe('choosing');
+    expect(of('pickOffered')).toEqual([{ kind: 'trial', options: expect.any(Array) }]);
+    expect([...run.pickOffer!.options].sort()).toEqual([
+      'bigBoulders',
+      'ironBands',
+      'moreBoulders',
+    ]);
+    ticks(run, 100);
+    run.update(1000);
+    expect(run.playTimeMs).toBe(settled);
+    expect(run.choose('moreMagnets')).toBe(false); // not on these cards
+    const trial = run.pickOffer!.options[1]!;
+    expect(run.choose(trial)).toBe(true);
+    expect(of('pickChosen')).toEqual([{ kind: 'trial', id: trial, level: 1 }]);
+    expect(run.pickOffer?.kind).toBe('blessing');
+    expect(run.choose(run.pickOffer!.options[0]!)).toBe(true);
+    expect(run.pickLevels[trial]).toBe(1);
+    expect(run.choose(trial)).toBe(false); // nothing waits any more
+
+    // Play resumes in stage 6.
     expect(run.state).toBe('playing');
     expect(run.expansion).toBeNull();
+    expect(of('expansionStarted')).toHaveLength(1);
     expect(of('expansionFinished').at(-1)).toEqual({ stage: 6, newTiers });
     expect(types().slice(-2)).toEqual(['expansionFinished', 'dropReady']);
     expect(run.canDrop).toBe(true);

@@ -9,7 +9,7 @@
  * world by 1 / STAGE_ZOOM, so the grown jar is the current stage's jar again and nothing jumps.
  */
 import { PHYSICS_STEP_MS } from '../config/physics';
-import { EXPANSION_CLEAR_MS, EXPANSION_ZOOM_MS } from '../config/timings';
+import { EXPANSION_ZOOM_MS, EXPANSION_ZOOM_START_MS } from '../config/timings';
 import { EXPANSION_WALL_LAG, STAGE_ZOOM } from '../config/view';
 import { clamp } from '../core/math';
 import type { ExpansionView } from '../run/RunController';
@@ -27,7 +27,7 @@ export interface ExpansionFrames {
 export function zoomProgressAt(expansion: ExpansionView, alpha: number): number {
   if (expansion.phase === 'clear') return 0;
   if (expansion.phase === 'reveal') return 1;
-  const ms = expansion.elapsedMs - EXPANSION_CLEAR_MS + clamp(alpha, 0, 1) * PHYSICS_STEP_MS;
+  const ms = expansion.elapsedMs - EXPANSION_ZOOM_START_MS + clamp(alpha, 0, 1) * PHYSICS_STEP_MS;
   return clamp(ms / EXPANSION_ZOOM_MS, 0, 1);
 }
 

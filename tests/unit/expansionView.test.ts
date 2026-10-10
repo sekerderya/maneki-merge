@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { PHYSICS_STEP_MS, stepsFor } from '../../src/config/physics';
 import { STAGE_ZOOM } from '../../src/config/view';
 import {
-  EXPANSION_CLEAR_MS,
   EXPANSION_DURATION_MS,
   EXPANSION_ZOOM_MS,
+  EXPANSION_ZOOM_START_MS,
 } from '../../src/config/timings';
 import { EXPANSION_WALL_LAG } from '../../src/config/view';
 import { fitCamera, scaleFrame, worldToView } from '../../src/game/cameraFit';
@@ -13,13 +13,13 @@ import { expansionFrames, wallProgress, zoomProgressAt } from '../../src/game/ex
 import { jarGeometry } from '../../src/physics/geometry';
 import type { ExpansionView } from '../../src/run/RunController';
 
-const CLEAR_STEPS = stepsFor(EXPANSION_CLEAR_MS);
+const ZOOM_START_STEPS = stepsFor(EXPANSION_ZOOM_START_MS);
 const ZOOM_STEPS = stepsFor(EXPANSION_ZOOM_MS);
 const EXPANSION_STEPS = stepsFor(EXPANSION_DURATION_MS);
 
 /** The run's expansion view `steps` ticks into the zoom (as RunController computes it). */
 function view(from: number, steps: number): ExpansionView {
-  const elapsed = CLEAR_STEPS + steps;
+  const elapsed = ZOOM_START_STEPS + steps;
   return {
     from,
     to: from + 1,

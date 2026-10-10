@@ -44,6 +44,11 @@ import {
   tierInfo,
 } from '../../src/config/tiers';
 import * as timings from '../../src/config/timings';
+import {
+  SHRINE_GROWS_BANNER_MS,
+  STAGE_CLEAR_BANNER_MS,
+  STAGE_CLEAR_EXIT_MS,
+} from '../../src/config/view';
 import { UPGRADE_IDS, UPGRADES } from '../../src/config/upgrades';
 
 describe('cat sizes (GAME_DESIGN §4)', () => {
@@ -256,7 +261,16 @@ describe('timings (GAME_DESIGN §3, §5, §6, §7.1)', () => {
     expect(timings.EXPANSION_CLEAR_MS).toBe(500);
     expect(timings.EXPANSION_ZOOM_MS).toBe(1200);
     expect(timings.EXPANSION_REVEAL_MS).toBe(400);
-    expect(timings.EXPANSION_DURATION_MS).toBe(2100);
+    expect(timings.EXPANSION_HOLD_MS).toBe(1500);
+    expect(timings.EXPANSION_ZOOM_START_MS).toBe(2000);
+    expect(timings.EXPANSION_DURATION_MS).toBe(3600);
+    // "The shrine grows!" holds (75%) through the zoom and the reveal, then slides away.
+    expect(SHRINE_GROWS_BANNER_MS * 0.75).toBeCloseTo(
+      timings.EXPANSION_ZOOM_MS + timings.EXPANSION_REVEAL_MS,
+      -2,
+    );
+    // The jar grows once "Stage clear!" has slid away.
+    expect(timings.EXPANSION_ZOOM_START_MS).toBe(STAGE_CLEAR_BANNER_MS + STAGE_CLEAR_EXIT_MS);
   });
 });
 

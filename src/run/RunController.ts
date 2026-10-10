@@ -30,6 +30,7 @@ import {
   DROP_COOLDOWN_MS,
   EXPANSION_CLEAR_MS,
   EXPANSION_DURATION_MS,
+  EXPANSION_ZOOM_START_MS,
   EXPANSION_ZOOM_MS,
   LUCKY_SAVE_GRACE_MS,
   MAGNET_TAKE_MS,
@@ -90,10 +91,12 @@ export interface SpawnOptions {
 
 /**
  * The stage-clear sequence (GAME_DESIGN §7.1). `clear`: the other cats have popped and the last
- * cat settles alone, then pops too (the picks come at its end); `zoom`: time stops and the camera
- * zooms out while the jar grows; `reveal`: the world is the new stage's.
- * The jar only grows every JAR_GROWTH_STAGES stages (`grows`): after the other clears the run
- * moves on to the next stage in the same jar right after the picks, with no zoom.
+ * cat settles alone, then pops too; `zoom`: time stops and the camera zooms out while the jar
+ * grows; `reveal`: the world is the new stage's.
+ * The jar only grows every JAR_GROWTH_STAGES stages (`grows`): then the empty jar holds still
+ * until EXPANSION_ZOOM_START_MS, the zoom and the reveal play, and the picks come at the end.
+ * After the other clears the picks come once the last cat has popped, and the run moves on to the
+ * next stage in the same jar, with no zoom.
  * The scene derives camera and jar visuals from it.
  */
 export interface ExpansionView {
@@ -114,7 +117,10 @@ interface Expansion {
   from: number;
   to: number;
   grows: boolean;
-  /** The picks come between the clear and the zoom (a debug jump skips them). */
+  /**
+   * Picks still to come: after the clear, or after the reveal when the jar grows (a debug jump
+   * skips them). Cleared once they are made.
+   */
   picks: boolean;
   elapsedSteps: number;
   elapsedMs: number;
@@ -125,6 +131,7 @@ interface Expansion {
 
 const COOLDOWN_STEPS = stepsFor(DROP_COOLDOWN_MS);
 const CLEAR_STEPS = stepsFor(EXPANSION_CLEAR_MS);
+const ZOOM_START_STEPS = stepsFor(EXPANSION_ZOOM_START_MS);
 const ZOOM_STEPS = stepsFor(EXPANSION_ZOOM_MS);
 const EXPANSION_STEPS = stepsFor(EXPANSION_DURATION_MS);
 const TAKE_STEPS = stepsFor(MAGNET_TAKE_MS);
@@ -888,13 +895,17 @@ export class RunController {
     return false;
   }
 
-  /** The picks are done: the expansion's zoom starts, or the next stage starts in the same jar. */
+  /**
+   * The picks are done: the next stage starts (in the grown jar, or the same one). A run saved
+   * before v0.33.2 may wait for its picks before the zoom: the hold and the zoom go on then.
+   */
   private afterPicks(): void {
     const e = this.expansionState;
     if (e) {
+      e.picks = false;
       this.runState = 'expanding';
-      this.afterClear(e);
-      if (this.instant) this.runExpansionToEnd();
+      if (e.phase === 'reveal' || !e.grows) this.moveOn(e);
+      else if (this.instant) this.runExpansionToEnd();
       return;
     }
     this.runState = 'playing';
@@ -939,31 +950,36 @@ export class RunController {
     timeExpansion(e);
     if (e.phase === 'clear') {
       // Only the last cat is left: it finishes growing and settles while the jar holds still.
-      this.world.step();
-      if (e.elapsedSteps >= CLEAR_STEPS) {
+      if (e.elapsedSteps <= CLEAR_STEPS) this.world.step();
+      if (e.elapsedSteps === CLEAR_STEPS) {
         // The last cat pops too: the next stage starts with an empty jar.
         this.world.pause();
         this.pop([...this.world.balls], 'cashOut');
-        // The picks come first (time stands still); `choose` goes on after the last one.
-        if (e.picks && this.beginPicks()) return;
-        this.afterClear(e);
-        return;
+        if (!e.grows) {
+          // The picks (time stands still), then the next stage in the same jar.
+          if (e.picks && this.beginPicks()) return;
+          this.moveOn(e);
+          return;
+        }
       }
-    } else if (e.phase === 'zoom' && e.elapsedSteps >= CLEAR_STEPS + ZOOM_STEPS) {
+      // The jar grows once "Stage clear!" has slid away.
+      if (e.grows && e.elapsedSteps >= ZOOM_START_STEPS) this.startZoom(e);
+    } else if (e.phase === 'zoom' && e.elapsedSteps >= ZOOM_START_STEPS + ZOOM_STEPS) {
       e.phase = 'reveal';
       this.reveal(e);
     }
-    if (e.elapsedSteps >= EXPANSION_STEPS) this.finishExpansion(e);
+    if (e.elapsedSteps < EXPANSION_STEPS) return;
+    // The grown jar's picks; `choose` goes on after the last one.
+    if (e.picks && this.beginPicks()) return;
+    this.finishExpansion(e);
   }
 
-  /** After the clear and its picks: the zoom, or straight on to the next stage in the same jar. */
-  private afterClear(e: Expansion): void {
-    if (e.grows) {
-      this.startZoom(e);
-      return;
+  /** The picks are done or skipped: the next stage starts (it already did in a grown jar). */
+  private moveOn(e: Expansion): void {
+    if (e.phase !== 'reveal') {
+      e.phase = 'reveal';
+      this.reveal(e);
     }
-    e.phase = 'reveal';
-    this.reveal(e);
     this.finishExpansion(e);
   }
 
@@ -1007,13 +1023,14 @@ export class RunController {
 function timeExpansion(e: Expansion): void {
   e.elapsedMs = (e.elapsedSteps / EXPANSION_STEPS) * EXPANSION_DURATION_MS;
   e.progress = e.elapsedSteps / EXPANSION_STEPS;
-  e.zoomProgress = Math.min(1, Math.max(0, (e.elapsedSteps - CLEAR_STEPS) / ZOOM_STEPS));
+  e.zoomProgress = Math.min(1, Math.max(0, (e.elapsedSteps - ZOOM_START_STEPS) / ZOOM_STEPS));
 }
 
 /**
  * A saved expansion at a world of `stage`: before the reveal it is the old stage, then the new.
  * A save from before v0.33 may hold a clear of the old last stage (`to` equals `from`, 5): it
- * now leads on to stage 6.
+ * now leads on to stage 6. One from v0.33.0–v0.33.1 may be in a zoom that came after its picks,
+ * without the hold: it moves on by the hold, its picks made.
  */
 function restoreExpansion(saved: ExpansionSnapshot, stage: number): Expansion {
   const { from, phase } = saved;
@@ -1024,8 +1041,22 @@ function restoreExpansion(saved: ExpansionSnapshot, stage: number): Expansion {
   if (!valid) {
     throw new RangeError(`Invalid saved expansion ${from} → ${saved.to} at stage ${stage}`);
   }
+  const early =
+    (phase === 'zoom' && saved.elapsedSteps < ZOOM_START_STEPS) ||
+    (phase === 'reveal' && saved.elapsedSteps < ZOOM_START_STEPS + ZOOM_STEPS);
+  const elapsedSteps = saved.elapsedSteps + (early ? ZOOM_START_STEPS - CLEAR_STEPS : 0);
+  const picks = saved.picks && !early;
   // Any time is safe: the next tick moves an overdue phase on.
-  const e: Expansion = { ...saved, to, grows, elapsedMs: 0, progress: 0, zoomProgress: 0 };
+  const e: Expansion = {
+    ...saved,
+    to,
+    grows,
+    picks,
+    elapsedSteps,
+    elapsedMs: 0,
+    progress: 0,
+    zoomProgress: 0,
+  };
   timeExpansion(e);
   return e;
 }

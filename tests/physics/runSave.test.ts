@@ -158,6 +158,25 @@ describe('saved runs (GAME_DESIGN §11)', () => {
     expect(back.stage).toBe(6);
   });
 
+  it('finish a zoom saved by v0.33.0–v0.33.1 (after its picks) without picking again', () => {
+    const run = new RunController({ seed: 5 });
+    run.jumpToStage(5);
+    for (let i = 0; i < 5000 && (run.stage < 5 || run.state !== 'playing'); i++) run.tick();
+    clearStage(run);
+    for (let i = 0; i < 5000 && run.expansion?.phase !== 'zoom'; i++) run.tick();
+    run.pause();
+    const saved = roundTrip(run.snapshot());
+    // Back then the zoom started right after the clear, once the picks were made.
+    const old = { ...saved, expansion: { ...saved.expansion!, elapsedSteps: CLEAR_STEPS + 5 } };
+    const back = RunController.restore(old);
+    expect(back.expansion).toMatchObject({ phase: 'zoom', grows: true });
+    expect(back.expansion!.zoomProgress).toBeCloseTo(5 / ZOOM_STEPS, 9);
+    back.resume();
+    for (let i = 0; i < 2000 && back.state === 'expanding'; i++) back.tick();
+    expect(back.state).toBe('playing');
+    expect(back.stage).toBe(6);
+  });
+
   it('turn an old clear of the last stage (before v0.33) into a move on to stage 6', () => {
     const run = new RunController({ seed: 4 });
     run.jumpToStage(5);

@@ -76,7 +76,7 @@ export class GameSession {
   private current: RunController | null = null;
   private hintTimer = 0;
   private runSavePending = false;
-  /** The last pick, chosen but held back until the doors are open (then the zoom starts). */
+  /** The last pick, chosen but held back until the doors are open (then the next stage starts). */
   private heldPick: PickId | null = null;
   /** When the latest stage clear started (performance.now()), so the doors wait for its banner. */
   private clearedAt = 0;
@@ -132,7 +132,7 @@ export class GameSession {
 
   /**
    * The pick panel's Choose: the waiting pick takes `id`. The last pick waits for the doors to
-   * fold open, so the zoom it starts shows from its first frame (GAME_DESIGN §7.1).
+   * fold open, so the next stage starts as they open (GAME_DESIGN §7.1).
    */
   choosePick(id: PickId): void {
     const run = this.current;
@@ -308,14 +308,23 @@ export class GameSession {
       });
       this.clearedAt = performance.now();
     });
-    // Every JAR_GROWTH_STAGES stages the jar grows once the doors are open: "The shrine grows!"
-    // and the next garden (v0.33, the owner's call).
+    // Every JAR_GROWTH_STAGES stages the jar grows right after "Stage clear!", before the doors:
+    // "The shrine grows!" and the next garden (v0.33.2, the owner's call). It slides up as the
+    // doors come for the picks.
     events.on('expansionStarted', (e) => {
-      banners.show('The shrine grows!', { y: bannerY(), durationMs: SHRINE_GROWS_BANNER_MS });
+      banners.show('The shrine grows!', {
+        y: bannerY(),
+        durationMs: SHRINE_GROWS_BANNER_MS,
+        exit: 'up',
+      });
       this.parts.scenery.setJar(stageJar(e.to), true);
     });
     // The new stage's cats in NEXT; no banner (v0.29.5, the owner's call).
-    events.on('expansionRevealed', showPreview);
+    // The stage words move on as the new stage starts: when the jar grows, before its picks.
+    events.on('expansionRevealed', () => {
+      showPreview();
+      hud.setStage(run.stage);
+    });
     events.on('expansionFinished', () => {
       showPreview();
       hud.setStage(run.stage);
@@ -324,7 +333,8 @@ export class GameSession {
     });
 
     // A stage clear's picks (GAME_DESIGN §7.1, §15.5): the doors shut, then a trial and a
-    // blessing; the doors open again before the zoom (choosePick).
+    // blessing; the doors open again onto the next stage (choosePick). When the jar grows, the
+    // picks come after the zoom.
     const { doors } = this.parts;
     events.on('pickOffered', () => {
       const shut = (): void =>
