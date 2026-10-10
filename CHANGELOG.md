@@ -2,6 +2,24 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.33.0] - 2026-10-11
+
+### Added
+
+- Stages have no end (the owner's call): clearing stage 5 moves on to stage 6, and so on, and the stage at the top keeps counting. Tiers, score and coins keep growing with them.
+- "The shrine grows!" shows as the jar grows, once the stage doors have opened.
+- One background per jar: the old garden shrinks towards the jar's feet and fades out during the zoom, uncovering the next one. Until the owner's new backgrounds come, every jar keeps the shrine garden. The art plan has the prompts for four new ones (docs/ART_ASSETS.md §4.10), and `npm run art` takes `scene/background-2` to `-5`.
+- Numbers past 10^18 show as Sx, Sp, Oc, No and Dc, then as "1.2e36".
+
+### Changed
+
+- The jar grows only every 5 stages (after stages 5, 10, 15, …). The other clears go on to the next stage in the same jar right after the picks, without the zoom.
+- The debug panel's stage jump goes up to stage 21.
+
+### Fixed
+
+- A run saved in the middle of clearing stage 5 with an older version goes on to stage 6.
+
 ## [0.32.4] - 2026-10-10
 
 ### Changed
