@@ -394,6 +394,8 @@ A boulder is a stone ball that only takes up room.
 
 At every stage clear, including the repeated clears of the last stage, two picks come after the last cat settles alone and pops (§7.1 step 2) and before the zoom:
 
+The cards show in front of the shut stage doors (§7.1). With the art skin (v0.32) they are built from the Upgrades screen's pieces (§13.1): the title on its cream pill with a line under it, three cards with the icon, the name and the level change ("Lv 0 → 1"), the effect and the stat in the tan strip, and Choose on the menu's coral PLAY pill, faded until a card is chosen. The chosen card lifts and glows, stone blue-grey for a trial and gold for a blessing. The icons come from the icon kit (docs/ART_ASSETS.md §5); a card without one shows its code-drawn icon in a cream medallion, stone-grey rimmed for a trial, gold for a blessing.
+
 1. **Choose a trial:** 3 cards; the player picks one.
 2. **Choose a blessing:** 3 cards; the player picks one.
 

@@ -1186,6 +1186,136 @@ Everything else stays as it is. Portrait, the same size.
 The other blessings' icons (Big Drops, Golden Cats) and the pieces for the game come after the
 mockups are approved, as edits of them.
 
+**Pick icons (icon kit, §5).** The trial and blessing screens are built from the Upgrades pieces (v0.32, without the trial and blessing mockups above: the approved pieces fit them, so Claude built the screens straight away for the owner to judge on the phone). Their cards' icons come from the icon kit, one per request, square 1:1; trials get the cool grey stone rim, blessings the gold one. Attach the icon sheet (`art-source/ui/upgrade-icons.webp`), the lineup sheet and the art named with each icon, and save the result as `art-source/icons/<id>.png`. Until an icon exists the card shows its code-drawn icon in a cream medallion.
+
+More Boulders (`icons/moreBoulders.png`, trial; also attach `art-source/specials/boulders.jpg`):
+
+```text
+Style: match the attached icons exactly. Polished casual mobile-game art, cute chibi kawaii
+illustration, thick warm dark-brown outlines (never black) of even weight, soft pastel cel shading
+with gentle gradients and one small glossy highlight, light from the upper left, clean crisp
+vector-like edges, readable at 48 px.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow
+under the icon. No text, no letters, no numbers, no kanji, no watermark, no signature.
+
+One round icon for the mobile game "Maneki Merge", drawn exactly like the attached icons: a
+perfect circle, centred, filling about 80% of the canvas, with a cream face inside a
+cool grey stone rim and the same thick dark-brown outline round it. Inside, big and centred:
+three of the attached grey boulders (plain, no bands) piled up in a little heap, two at the bottom and one on top. It stands for "more boulders fall into the jar". Nothing sticks out of the circle. Square 1:1.
+```
+
+Iron Bands (`icons/ironBands.png`, trial; also attach `art-source/specials/boulders.jpg`):
+
+```text
+Style: match the attached icons exactly. Polished casual mobile-game art, cute chibi kawaii
+illustration, thick warm dark-brown outlines (never black) of even weight, soft pastel cel shading
+with gentle gradients and one small glossy highlight, light from the upper left, clean crisp
+vector-like edges, readable at 48 px.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow
+under the icon. No text, no letters, no numbers, no kanji, no watermark, no signature.
+
+One round icon for the mobile game "Maneki Merge", drawn exactly like the attached icons: a
+perfect circle, centred, filling about 80% of the canvas, with a cream face inside a
+cool grey stone rim and the same thick dark-brown outline round it. Inside, big and centred:
+one of the attached grey boulders wrapped with two riveted dark steel iron bands, a small cartoon padlock hanging from the front band. It stands for "boulders get tougher to break". Nothing sticks out of the circle. Square 1:1.
+```
+
+Big Boulders (`icons/bigBoulders.png`, trial; also attach `art-source/specials/boulders.jpg`):
+
+```text
+Style: match the attached icons exactly. Polished casual mobile-game art, cute chibi kawaii
+illustration, thick warm dark-brown outlines (never black) of even weight, soft pastel cel shading
+with gentle gradients and one small glossy highlight, light from the upper left, clean crisp
+vector-like edges, readable at 48 px.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow
+under the icon. No text, no letters, no numbers, no kanji, no watermark, no signature.
+
+One round icon for the mobile game "Maneki Merge", drawn exactly like the attached icons: a
+perfect circle, centred, filling about 80% of the canvas, with a cream face inside a
+cool grey stone rim and the same thick dark-brown outline round it. Inside, big and centred:
+one big attached grey boulder with a small one beside it, a small grey up arrow between them. It stands for "boulders get bigger". Nothing sticks out of the circle. Square 1:1.
+```
+
+More Magnets (`icons/moreMagnets.png`, blessing; also attach `art-source/specials/magnet.jpg`):
+
+```text
+Style: match the attached icons exactly. Polished casual mobile-game art, cute chibi kawaii
+illustration, thick warm dark-brown outlines (never black) of even weight, soft pastel cel shading
+with gentle gradients and one small glossy highlight, light from the upper left, clean crisp
+vector-like edges, readable at 48 px.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow
+under the icon. No text, no letters, no numbers, no kanji, no watermark, no signature.
+
+One round icon for the mobile game "Maneki Merge", drawn exactly like the attached icons: a
+perfect circle, centred, filling about 80% of the canvas, with a cream face inside a
+gold rim and the same thick dark-brown outline round it. Inside, big and centred:
+the glossy red horseshoe magnet with silver tips from the attached magnet token, opening downwards, with small curved gold lines showing its pull. It stands for "more magnets come". Nothing sticks out of the circle. Square 1:1.
+```
+
+Big Drops (`icons/bigDrops.png`, blessing; also attach `art-source/scene/paw.jpg`):
+
+```text
+Style: match the attached icons exactly. Polished casual mobile-game art, cute chibi kawaii
+illustration, thick warm dark-brown outlines (never black) of even weight, soft pastel cel shading
+with gentle gradients and one small glossy highlight, light from the upper left, clean crisp
+vector-like edges, readable at 48 px.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow
+under the icon. No text, no letters, no numbers, no kanji, no watermark, no signature.
+
+One round icon for the mobile game "Maneki Merge", drawn exactly like the attached icons: a
+perfect circle, centred, filling about 80% of the canvas, with a cream face inside a
+gold rim and the same thick dark-brown outline round it. Inside, big and centred:
+the attached white cat paw with pink pads reaching down from the top and holding a big round orange lucky-cat ball like the orange cat of the attached lineup. It stands for "bigger cats come from the paw". Nothing sticks out of the circle. Square 1:1.
+```
+
+Golden Cats (`icons/goldenCats.png`, blessing):
+
+```text
+Style: match the attached icons exactly. Polished casual mobile-game art, cute chibi kawaii
+illustration, thick warm dark-brown outlines (never black) of even weight, soft pastel cel shading
+with gentle gradients and one small glossy highlight, light from the upper left, clean crisp
+vector-like edges, readable at 48 px.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow
+under the icon. No text, no letters, no numbers, no kanji, no watermark, no signature.
+
+One round icon for the mobile game "Maneki Merge", drawn exactly like the attached icons: a
+perfect circle, centred, filling about 80% of the canvas, with a cream face inside a
+gold rim and the same thick dark-brown outline round it. Inside, big and centred:
+a round white lucky-cat ball like the white cat of the attached lineup (one raised beckoning paw, a red collar, a gold bell), wrapped in a warm gold glow with a few four-pointed gold sparkles around it. It stands for "golden cats that skip a size when they merge". Nothing sticks out of the circle. Square 1:1.
+```
+
+Hanabi (`icons/hanabi.png`, blessing; also attach `art-source/specials/hanabi.jpg`):
+
+```text
+Style: match the attached icons exactly. Polished casual mobile-game art, cute chibi kawaii
+illustration, thick warm dark-brown outlines (never black) of even weight, soft pastel cel shading
+with gentle gradients and one small glossy highlight, light from the upper left, clean crisp
+vector-like edges, readable at 48 px.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow
+under the icon. No text, no letters, no numbers, no kanji, no watermark, no signature.
+
+One round icon for the mobile game "Maneki Merge", drawn exactly like the attached icons: a
+perfect circle, centred, filling about 80% of the canvas, with a cream face inside a
+gold rim and the same thick dark-brown outline round it. Inside, big and centred:
+the attached navy firework shell with its fuse lit, a small bright pink and gold firework burst popping above it. It stands for "fireworks that pop the small cats". Nothing sticks out of the circle. Square 1:1.
+```
+
+Joker Cat (`icons/joker.png`, blessing; also attach `art-source/specials/joker.jpg`):
+
+```text
+Style: match the attached icons exactly. Polished casual mobile-game art, cute chibi kawaii
+illustration, thick warm dark-brown outlines (never black) of even weight, soft pastel cel shading
+with gentle gradients and one small glossy highlight, light from the upper left, clean crisp
+vector-like edges, readable at 48 px.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow
+under the icon. No text, no letters, no numbers, no kanji, no watermark, no signature.
+
+One round icon for the mobile game "Maneki Merge", drawn exactly like the attached icons: a
+perfect circle, centred, filling about 80% of the canvas, with a cream face inside a
+gold rim and the same thick dark-brown outline round it. Inside, big and centred:
+the attached rainbow-striped joker cat in its jester hat, winking. It stands for "a wild cat that merges with any cat". Nothing sticks out of the circle. Square 1:1.
+```
+
 ## 5. Icon kit (every new icon)
 
 > Read this before writing a prompt for any new icon: an upgrade, a trial or blessing card, a
