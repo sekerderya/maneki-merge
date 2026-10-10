@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.32.3] - 2026-10-10
+
+### Changed
+
+- More Boulders' card shows a heap of boulders (the owner's art), so it no longer looks like Big Boulders'. A pick can now have a picture of its own (`art-source/picks/<id>`), shown in its card's medallion instead of the ball.
+
 ## [0.32.2] - 2026-10-10
 
 ### Changed
