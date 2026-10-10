@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.33.5] - 2026-10-11
+
+### Changed
+
+- The stage's last cat no longer pops at once (the owner's call): it waits 1.5 s and shines, with a pulsing gold halo, slowly turning light rays and sparkles flying off it, then pops in a burst of sparks. The jar still grows 2 s after the last cat is made.
+- The other cats of a stage clear pop quickly from the top of the jar down, 45 ms apart, instead of almost all at once.
+
 ## [0.33.4] - 2026-10-11
 
 ### Changed
