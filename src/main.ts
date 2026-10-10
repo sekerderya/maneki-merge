@@ -131,15 +131,19 @@ async function boot(): Promise<void> {
 
   // Shop panel (GAME_DESIGN §2.2) over the menu, with its own back layer.
   let shopLayer: number | null = null;
-  const shop = createShopPanel(byId('overlays'), {
-    onBuy: (id) => {
-      if (!profile.buy(id).ok) return;
-      showProfile();
-      shop.purchased(id);
-      audio.play('purchase');
+  const shop = createShopPanel(
+    byId('overlays'),
+    {
+      onBuy: (id) => {
+        if (!profile.buy(id).ok) return;
+        showProfile();
+        shop.purchased(id);
+        audio.play('purchase');
+      },
+      onClose: () => closeShop(),
     },
-    onClose: () => closeShop(),
-  });
+    skin === 'art',
+  );
   const openShop = (): void => {
     if (shop.visible) return;
     showProfile();

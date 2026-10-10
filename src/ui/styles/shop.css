@@ -130,29 +130,8 @@
   font-variant-numeric: tabular-nums;
 }
 
-.shop-pips {
-  display: flex;
-  gap: 4px;
-  margin: 6px 0;
-}
-
-.shop-pip {
-  flex: 0 1 26px;
-  height: 7px;
-  border-radius: var(--radius-pill);
-  background: var(--color-greige);
-}
-
-.shop-pips.is-dense .shop-pip {
-  flex-basis: 16px;
-}
-
-.shop-pip.is-on {
-  background: var(--color-gold);
-}
-
 .shop-desc {
-  margin: 0 0 8px;
+  margin: 6px 0 8px;
   color: var(--color-muted);
   font-size: 0.88rem;
   line-height: 1.3;
@@ -212,6 +191,21 @@
   color: var(--color-ink);
   font-size: 1.1rem;
   font-variant-numeric: tabular-nums;
+}
+
+/* The art's button says "Buy" over the price; the code-drawn one shows the price only. */
+.shop-buy-label {
+  display: none;
+}
+
+.shop-buy-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.shop-buy-mark {
+  display: inline-flex;
 }
 
 .shop-buy svg {

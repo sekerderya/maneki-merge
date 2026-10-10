@@ -1,3 +1,6 @@
+import { ICON_SPRITE_DIR, iconSprite } from '../../config/iconSprites';
+import { MENU_ART, MENU_SPRITE_DIR } from '../../config/menuSprites';
+import { SHOP_ART, SHOP_MOCKUP_WIDTH, SHOP_SPRITE_DIR } from '../../config/shopSprites';
 import { SHOP_BALANCE_COUNT_MS } from '../../config/view';
 import { UPGRADE_IDS, UPGRADES } from '../../config/upgrades';
 import type { UpgradeId } from '../../config/upgrades';
@@ -25,18 +28,28 @@ export interface ShopView {
 interface CardParts {
   readonly root: HTMLElement;
   readonly level: HTMLElement;
-  readonly pips: HTMLElement[];
   readonly current: HTMLElement;
   readonly arrow: HTMLElement;
   readonly next: HTMLElement;
   readonly buy: HTMLButtonElement;
   readonly price: HTMLElement;
   readonly need: HTMLElement;
+  /** The coin or the check in front of the price. */
+  readonly mark: HTMLElement;
+  /** The owner's art (the art skin): the coin is the menu's. */
+  readonly art: boolean;
 }
 
-/** Shop panel over the main menu (GAME_DESIGN §2.2): one card per upgrade, scrolling. */
-export function createShopPanel(root: HTMLElement, actions: ShopActions): ShopView {
+/**
+ * Shop panel over the main menu (GAME_DESIGN §2.2): one card per upgrade, scrolling. With `art`
+ * (the art skin) it is the owner's approved mockup (docs/ART_ASSETS.md §4.9): the menu blurred
+ * behind, the title on a cream pill, the menu's coins pill, and the cards, buttons and icons in the
+ * owner's art (shop-art.css); otherwise the code-drawn sheet of v0.14.
+ */
+export function createShopPanel(root: HTMLElement, actions: ShopActions, art = false): ShopView {
   const overlay = el('div', 'overlay shop-overlay');
+  overlay.classList.toggle('is-art', art);
+  if (art) setShopArtProperties(overlay);
   overlay.dataset['testid'] = 'shop';
   overlay.setAttribute('role', 'dialog');
   overlay.setAttribute('aria-label', 'Upgrades');
@@ -51,10 +64,12 @@ export function createShopPanel(root: HTMLElement, actions: ShopActions): ShopVi
   const title = el('h2', 'shop-title', 'Upgrades');
   const balance = el('div', 'coin-balance shop-balance');
   balance.dataset['testid'] = 'shop-balance';
-  balance.insertAdjacentHTML('beforeend', ICON_COIN);
+  if (art) balance.append(artImage(`${MENU_SPRITE_DIR}${MENU_ART.coin.file}`, 'shop-balance-coin'));
+  else balance.insertAdjacentHTML('beforeend', ICON_COIN);
   const balanceValue = el('span', 'coin-value', '0');
   balance.append(balanceValue);
-  const close = button('icon-btn shop-close', '', ICON_CLOSE);
+  const close = button('icon-btn shop-close', '', art ? '' : ICON_CLOSE);
+  if (art) close.append(artImage(`${SHOP_SPRITE_DIR}${SHOP_ART.close.file}`, 'shop-close-art'));
   close.setAttribute('aria-label', 'Close');
   close.dataset['testid'] = 'shop-close';
   close.addEventListener('click', actions.onClose);
@@ -64,7 +79,7 @@ export function createShopPanel(root: HTMLElement, actions: ShopActions): ShopVi
   list.dataset['scrollable'] = '';
   const cards = new Map<UpgradeId, CardParts>();
   for (const id of UPGRADE_IDS) {
-    const card = createCard(id, () => actions.onBuy(id));
+    const card = createCard(id, art, () => actions.onBuy(id));
     cards.set(id, card);
     list.append(card.root);
   }
@@ -120,26 +135,59 @@ export function createShopPanel(root: HTMLElement, actions: ShopActions): ShopVi
   };
 }
 
-function createCard(id: UpgradeId, onBuy: () => void): CardParts {
+/** The art's images and nine-slice measurements, as CSS custom properties on the panel. */
+function setShopArtProperties(node: HTMLElement): void {
+  const set = (name: string, value: string | number): void =>
+    node.style.setProperty(name, String(value));
+  const url = (path: string): string => `url("${import.meta.env.BASE_URL}${path}")`;
+  const { card, buy, title } = SHOP_ART;
+  set('--shop-mockup-w', SHOP_MOCKUP_WIDTH);
+  set('--shop-card-art', url(`${SHOP_SPRITE_DIR}${card.file}`));
+  set('--shop-card-w', card.width);
+  set('--shop-card-corner', card.corner);
+  set('--shop-card-bottom', card.bottom);
+  for (const [name, sprite] of [
+    ['buy', buy],
+    ['title', title],
+  ] as const) {
+    set(`--shop-${name}-art`, url(`${SHOP_SPRITE_DIR}${sprite.file}`));
+    set(`--shop-${name}-slice`, sprite.cap);
+    set(`--shop-${name}-cap`, sprite.cap / sprite.height);
+  }
+  const coins = MENU_ART.coinsPill;
+  set('--shop-coins-art', url(`${MENU_SPRITE_DIR}${coins.file}`));
+  set('--shop-coins-slice', coins.cap);
+  set('--shop-coins-cap', coins.cap / coins.height);
+}
+
+function artImage(path: string, className: string): HTMLImageElement {
+  const image = el('img', className);
+  image.src = `${import.meta.env.BASE_URL}${path}`;
+  image.alt = '';
+  image.draggable = false;
+  return image;
+}
+
+function createCard(id: UpgradeId, art: boolean, onBuy: () => void): CardParts {
   const def = UPGRADES[id];
   const root = el('article', 'shop-card');
   root.dataset['testid'] = `shop-card-${id}`;
   root.addEventListener('animationend', () => root.classList.remove('is-bought'));
 
   const icon = el('span', 'shop-icon');
-  icon.insertAdjacentHTML('beforeend', UPGRADE_ICONS[id]);
+  const sprite = art ? iconSprite(id) : null;
+  if (sprite) {
+    icon.classList.add('is-art');
+    icon.append(artImage(`${ICON_SPRITE_DIR}${sprite.file}`, 'shop-icon-art'));
+  } else {
+    icon.insertAdjacentHTML('beforeend', UPGRADE_ICONS[id]);
+  }
 
   const info = el('div', 'shop-info');
   const head = el('div', 'shop-head');
   const level = el('span', 'shop-level');
   level.dataset['testid'] = `shop-level-${id}`;
   head.append(el('h3', 'shop-name', def.name), level);
-
-  const pipRow = el('div', 'shop-pips');
-  pipRow.setAttribute('aria-hidden', 'true');
-  const pips = Array.from({ length: def.maxLevel }, () => el('span', 'shop-pip'));
-  pipRow.append(...pips);
-  pipRow.classList.toggle('is-dense', def.maxLevel > 5);
 
   const desc = el('p', 'shop-desc', def.description);
 
@@ -155,8 +203,13 @@ function createCard(id: UpgradeId, onBuy: () => void): CardParts {
   buy.dataset['sfx'] = 'none'; // A purchase plays its own sound.
   buy.dataset['testid'] = `shop-buy-${id}`;
   buy.addEventListener('click', onBuy);
+  // "Buy" over the coin and the price (the art's button; the code-drawn one shows no label).
+  const label = el('span', 'shop-buy-label', 'Buy');
+  const line = el('span', 'shop-buy-line');
+  const mark = el('span', 'shop-buy-mark');
   const price = el('span', 'shop-price');
-  buy.append(price);
+  line.append(mark, price);
+  buy.append(label, line);
   // Not enough coins: how many are missing, under the price (GAME_DESIGN §2.2).
   const need = el('span', 'shop-need');
   need.dataset['testid'] = `shop-need-${id}`;
@@ -165,16 +218,15 @@ function createCard(id: UpgradeId, onBuy: () => void): CardParts {
   buyBox.append(buy, need);
   foot.append(value, buyBox);
 
-  info.append(head, pipRow, desc, foot);
+  info.append(head, desc, foot);
   root.append(icon, info);
-  return { root, level, pips, current, arrow, next, buy, price, need };
+  return { root, level, current, arrow, next, buy, price, need, mark, art };
 }
 
 function paintCard(card: CardParts, levels: UpgradeLevels, coins: number, id: UpgradeId): void {
   const data = shopCard(id, levels, coins);
   card.root.dataset['state'] = data.state;
   card.level.textContent = `${data.level}/${data.maxLevel}`;
-  card.pips.forEach((pip, i) => pip.classList.toggle('is-on', i < data.level));
   card.current.textContent = data.current;
   card.arrow.hidden = data.next === null;
   card.next.hidden = data.next === null;
@@ -182,16 +234,21 @@ function paintCard(card: CardParts, levels: UpgradeLevels, coins: number, id: Up
 
   card.buy.disabled = data.state !== 'affordable';
   card.buy.dataset['state'] = data.state;
-  card.buy.querySelector('svg')?.remove();
   card.need.hidden = data.shortfall === null;
   card.need.textContent =
     data.shortfall === null ? '' : `Need ${formatNumber(data.shortfall)} more`;
   if (data.price === null) {
-    card.buy.insertAdjacentHTML('afterbegin', ICON_CHECK);
+    card.mark.innerHTML = ICON_CHECK;
     card.price.textContent = 'MAX';
     card.buy.setAttribute('aria-label', `${data.name} is at the max level`);
   } else {
-    card.buy.insertAdjacentHTML('afterbegin', ICON_COIN);
+    if (card.art) {
+      if (!card.mark.querySelector('img')) {
+        card.mark.replaceChildren(artImage(`${MENU_SPRITE_DIR}${MENU_ART.coin.file}`, 'shop-coin'));
+      }
+    } else {
+      card.mark.innerHTML = ICON_COIN;
+    }
     card.price.textContent = formatNumber(data.price);
     card.buy.setAttribute('aria-label', `Buy ${data.name} level ${data.level + 1}`);
   }

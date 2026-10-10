@@ -2,13 +2,15 @@
  * The raster art the canvas draws (GAME_DESIGN §13.1): the cats, the jar's two layers, the paw and
  * the special balls.
  * Boot loads and decodes them with the fonts (main.ts), before the game is created, with the
- * main menu's and the stage doors' images; the backgrounds are DOM images.
+ * main menu's, the stage doors' and the Upgrades screen's images; the backgrounds are DOM images.
  */
 import { CAT_ART_LOAD_TIMEOUT_MS, CAT_SPRITE_DIR, CAT_SPRITES } from '../config/catSprites';
 import { DOOR_ART, DOOR_SPRITE_DIR } from '../config/doorSprites';
 import { HUD_BADGE_ART, HUD_SPRITE_DIR } from '../config/hudSprites';
+import { ICON_SPRITE_DIR, iconSprites } from '../config/iconSprites';
 import { MENU_SPRITE_DIR, menuSprites } from '../config/menuSprites';
 import { JAR_ART, PAW_ART, SCENE_SPRITE_DIR } from '../config/sceneSprites';
+import { SHOP_ART, SHOP_SPRITE_DIR } from '../config/shopSprites';
 import { SPECIAL_ART, SPECIAL_SPRITE_DIR } from '../config/specialSprites';
 
 export interface ArtImages {
@@ -66,6 +68,11 @@ export function loadArt(baseUrl: string): Promise<ArtImages> {
       ),
     ),
     specials,
+    // The Upgrades screen's pieces and icons (DOM), so it opens whole.
+    Promise.all([
+      ...Object.values(SHOP_ART).map(({ file }) => image(`${baseUrl}${SHOP_SPRITE_DIR}${file}`)),
+      ...iconSprites().map(({ file }) => image(`${baseUrl}${ICON_SPRITE_DIR}${file}`)),
+    ]),
   ]).then(([cats, jarBack, jarFront, paw, , , , specials]) => ({
     cats,
     jarBack,

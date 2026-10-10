@@ -1,0 +1,322 @@
+/*
+ * The Upgrades screen in the owner's art (GAME_DESIGN §2.2, docs/ART_ASSETS.md §4.9), laid out on
+ * the approved mockup (art-source/ui/upgrades-mockup.jpg, 768 px wide): every number here is
+ * mockup pixels, scaled by --u (CSS px per mockup px) so the screen fills the phone's width (at
+ * most 520 px). The cards scroll; the menu shows through, blurred and a little darker.
+ */
+.shop-overlay.is-art {
+  container-type: inline-size;
+  justify-content: flex-start;
+  padding: 0;
+  background: rgba(70, 38, 22, 0.22);
+  -webkit-backdrop-filter: blur(6px) brightness(0.92);
+  backdrop-filter: blur(6px) brightness(0.92);
+}
+
+.shop-overlay.is-art .shop-sheet {
+  --u: calc(min(100cqw, 520px) / var(--shop-mockup-w));
+  /* Card art pixels → CSS px: the card is 677 mockup px wide. */
+  --s: calc(677 * var(--u) / var(--shop-card-w));
+  width: calc(768 * var(--u));
+  max-width: none;
+  height: 100%;
+  padding-top: var(--safe-top);
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+
+/* The title on its cream pill, the close button at the top right, the coins pill under them. */
+.shop-overlay.is-art .shop-header {
+  position: relative;
+  flex: none;
+  height: calc(268 * var(--u));
+  padding: 0;
+  border: 0;
+}
+
+.shop-overlay.is-art .shop-title {
+  position: absolute;
+  left: 50%;
+  top: calc(80 * var(--u));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: calc(412 * var(--u));
+  height: calc(116 * var(--u));
+  padding: 0 calc(56 * var(--u)) calc(8 * var(--u));
+  border: 0 solid transparent;
+  border-image: var(--shop-title-art) 0 var(--shop-title-slice) fill / 0
+    calc(116 * var(--u) * var(--shop-title-cap)) stretch;
+  color: #fbe7c6;
+  font-size: calc(66 * var(--u));
+  line-height: 1;
+  white-space: nowrap;
+  -webkit-text-stroke: calc(10 * var(--u)) #4e2416;
+  paint-order: stroke fill;
+  text-shadow: 0 calc(5 * var(--u)) 0 #4e2416;
+  transform: translateX(-50%);
+}
+
+.shop-overlay.is-art .shop-close {
+  position: absolute;
+  right: calc(28 * var(--u));
+  top: calc(30 * var(--u));
+  width: max(calc(100 * var(--u)), 44px);
+  height: max(calc(100 * var(--u)), 44px);
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.shop-close-art {
+  width: 100%;
+  height: 100%;
+}
+
+.shop-overlay.is-art .shop-balance {
+  position: absolute;
+  z-index: 1;
+  right: calc(40 * var(--u));
+  top: calc(228 * var(--u));
+  display: flex;
+  align-items: center;
+  gap: calc(12 * var(--u));
+  min-height: 0;
+  height: calc(72 * var(--u));
+  padding: 0 calc(30 * var(--u)) calc(4 * var(--u)) calc(18 * var(--u));
+  border: 0 solid transparent;
+  border-radius: 0;
+  border-image: var(--shop-coins-art) 0 var(--shop-coins-slice) fill / 0
+    calc(72 * var(--u) * var(--shop-coins-cap)) stretch;
+  background: none;
+  box-shadow: none;
+}
+
+.shop-balance-coin {
+  width: calc(50 * var(--u));
+  height: auto;
+}
+
+/* White numbers with a dark-brown edge, like the menu's. */
+.shop-overlay.is-art .shop-balance .coin-value {
+  color: #fff;
+  font-size: calc(40 * var(--u));
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+  -webkit-text-stroke: calc(6 * var(--u)) #4e2416;
+  paint-order: stroke fill;
+  text-shadow: 0 calc(3 * var(--u)) 0 #4e2416;
+}
+
+.shop-overlay.is-art .shop-list {
+  gap: calc(26 * var(--u));
+  padding: 0 calc(45 * var(--u)) calc(var(--safe-bottom) + 40 * var(--u));
+}
+
+/*
+ * A card: the art's nine-slice (its tan stat strip in the bottom slice). The icon sits on the left
+ * over the name and the description, the stat lies in the strip, and the Buy button stands on the
+ * strip's right end.
+ */
+.shop-overlay.is-art .shop-card {
+  grid-template-columns: calc(196 * var(--u)) minmax(0, 1fr) auto;
+  grid-template-rows: auto 1fr calc(var(--shop-card-bottom) * var(--s));
+  column-gap: 0;
+  row-gap: 0;
+  min-height: calc(245 * var(--u));
+  padding: calc(24 * var(--u)) calc(24 * var(--u)) 0 calc(22 * var(--u));
+  border: 0 solid transparent;
+  border-radius: 0;
+  border-image: var(--shop-card-art) var(--shop-card-corner) var(--shop-card-corner)
+    var(--shop-card-bottom) fill / calc(var(--shop-card-corner) * var(--s))
+    calc(var(--shop-card-corner) * var(--s)) calc(var(--shop-card-bottom) * var(--s)) stretch;
+  background: none;
+  box-shadow: none;
+  color: #4e2416;
+}
+
+@keyframes shop-card-bought-art {
+  30% {
+    transform: scale(1.03);
+    filter: brightness(1.08);
+  }
+}
+
+.shop-overlay.is-art .shop-card.is-bought {
+  animation-name: shop-card-bought-art;
+}
+
+.shop-overlay.is-art .shop-info,
+.shop-overlay.is-art .shop-foot {
+  display: contents;
+}
+
+.shop-overlay.is-art .shop-icon {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  align-self: center;
+  width: calc(168 * var(--u));
+  height: calc(168 * var(--u));
+  margin-bottom: calc(8 * var(--u));
+  border: 0;
+  background: none;
+}
+
+.shop-icon-art {
+  width: 100%;
+  height: 100%;
+}
+
+.shop-overlay.is-art .shop-head {
+  grid-column: 2 / 4;
+  grid-row: 1;
+  align-items: baseline;
+}
+
+.shop-overlay.is-art .shop-name {
+  font-size: calc(42 * var(--u));
+}
+
+.shop-overlay.is-art .shop-level {
+  color: #4e2416;
+  font-size: calc(34 * var(--u));
+  font-weight: var(--weight-bold);
+}
+
+.shop-overlay.is-art .shop-desc {
+  grid-column: 2 / 4;
+  grid-row: 2;
+  align-self: start;
+  /* Clear of the Buy button, which rises out of the strip into this row. */
+  margin: calc(14 * var(--u)) 0 calc(40 * var(--u));
+  color: #5b3324;
+  font-size: calc(29 * var(--u));
+  font-weight: var(--weight-semibold);
+}
+
+/* The stat in the strip: "COINS +30% → +45%". */
+.shop-overlay.is-art .shop-value {
+  grid-column: 1 / 3;
+  grid-row: 3;
+  align-self: center;
+  flex-wrap: nowrap;
+  gap: calc(10 * var(--u));
+  padding: 0 0 calc(4 * var(--u)) calc(14 * var(--u));
+  color: #4e2416;
+  font-size: calc(28 * var(--u));
+  font-weight: var(--weight-bold);
+  white-space: nowrap;
+}
+
+.shop-overlay.is-art .shop-stat {
+  width: auto;
+  color: #4e2416;
+  font-size: inherit;
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.02em;
+}
+
+.shop-overlay.is-art .shop-arrow {
+  color: #4e2416;
+}
+
+.shop-overlay.is-art .shop-buy-box {
+  position: relative;
+  grid-column: 3;
+  grid-row: 3;
+  align-self: end;
+  margin-bottom: calc(14 * var(--u));
+}
+
+/*
+ * The gold Buy button: "Buy" over the coin and the price. The mockup's pill is under 48 px tall on
+ * a phone, so the button's box is at least 48 px tall (the touch target) and the pill is drawn in
+ * its middle at the mockup's height, like the menu's UPGRADES.
+ */
+.shop-overlay.is-art .shop-buy {
+  --pill: calc(86 * var(--u));
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0;
+  min-width: calc(172 * var(--u));
+  min-height: max(var(--pill), 48px);
+  padding: 0 calc(26 * var(--u)) calc(6 * var(--u));
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: #4e2416;
+  line-height: 1;
+}
+
+.shop-overlay.is-art .shop-buy::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  left: 0;
+  right: 0;
+  top: calc(50% - var(--pill) / 2);
+  height: var(--pill);
+  border: 0 solid transparent;
+  border-image: var(--shop-buy-art) 0 var(--shop-buy-slice) fill / 0
+    calc(86 * var(--u) * var(--shop-buy-cap)) stretch;
+}
+
+.shop-overlay.is-art .shop-buy-label {
+  display: block;
+  font-size: calc(24 * var(--u));
+  font-weight: var(--weight-bold);
+}
+
+.shop-overlay.is-art .shop-buy-line {
+  gap: calc(8 * var(--u));
+  font-size: calc(32 * var(--u));
+  font-weight: var(--weight-bold);
+}
+
+.shop-coin {
+  width: calc(34 * var(--u));
+  height: auto;
+}
+
+.shop-overlay.is-art .shop-buy svg {
+  width: calc(30 * var(--u));
+  height: calc(30 * var(--u));
+}
+
+/* Not enough coins: a faded button, and what is missing where "Buy" was. */
+.shop-overlay.is-art .shop-buy[data-state='insufficient'] {
+  border-color: transparent;
+  background: none;
+  color: #4e2416;
+  filter: grayscale(0.85) brightness(1.06);
+  opacity: 0.85;
+}
+
+.shop-overlay.is-art .shop-buy[data-state='insufficient'] .shop-buy-label,
+.shop-overlay.is-art .shop-buy[data-state='max'] .shop-buy-label {
+  visibility: hidden;
+}
+
+.shop-overlay.is-art .shop-need {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(8 * var(--u));
+  color: #b3261e;
+  font-size: calc(19 * var(--u));
+  font-weight: var(--weight-bold);
+  text-align: center;
+  pointer-events: none;
+}
+
+/* The top level: the button stays, faded, with a check and "MAX". */
+.shop-overlay.is-art .shop-buy[data-state='max'] {
+  filter: saturate(0.4);
+  letter-spacing: 0.04em;
+}
