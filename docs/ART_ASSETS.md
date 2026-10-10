@@ -62,7 +62,7 @@ narrower than their canvas: Claude crops the empty space.
 | 0   | 0 style    | `style/lineup.png`                 | The 9 cats on one sheet (style lock, not used in game)    | 1:1, 1024×1024    |
 | 1   | 1 cats     | `cats/size-01.png` … `size-09.png` | One cat per size (GAME_DESIGN §4)                         | 1:1, 1024×1024    |
 | 2   | 2 scene    | `scene/background.png`             | Shrine garden behind and around the jar                   | 2:3, 1024×1536 ×2 |
-| 2a  | 9 jars     | `scene/background-2.png` … `-5`    | The grown jars' backgrounds, a bigger place each (§4.10)  | 9:16              |
+| 2a  | 9 jars     | `scene/background-2` … `-5`        | The grown jars' backgrounds, a bigger place each (§4.10)  | 9:16              |
 | 3   | 2 scene    | `scene/jar.png`                    | Empty bamboo-framed glass jar, front view                 | 2:3, 1024×1536    |
 | 4   | 2 scene    | `scene/rug.png`                    | Mint rug the jar stands on                                | 3:2, 1536×1024    |
 | 5   | 2 scene    | `scene/paw.png`                    | Calico dropper arm hanging from the top                   | 2:3, 1024×1536    |
@@ -1376,13 +1376,19 @@ smaller every time**, as if the camera pulled back and the jar now towered over 
 in before. During the zoom the old background shrinks towards the jar's feet and fades out over the
 new one.
 
-| Jar | Stages | File (in `art-source/scene/`) | Where the jar stands now                          |
-| --: | ------ | ----------------------------- | ------------------------------------------------- |
-|   1 | 1–5    | `background.jpg` (done)       | The sakura shrine garden, on a veranda            |
-|   2 | 6–10   | `background-2.png`            | A grand temple courtyard: as tall as a pagoda     |
-|   3 | 11–15  | `background-3.png`            | A hilltop above a whole shrine town               |
-|   4 | 16–20  | `background-4.png`            | A mountain peak above a sea of clouds             |
-|   5 | 21 on  | `background-5.png`            | A cloud island in the heavens (kept from then on) |
+| Jar | Stages | File (in `art-source/scene/`) | Where the jar stands now                                  |
+| --: | ------ | ----------------------------- | --------------------------------------------------------- |
+|   1 | 1–5    | `background.jpg` (done)       | The sakura shrine garden, on a veranda                    |
+|   2 | 6–10   | `background-2.jpg` (done)     | A grand temple courtyard: as tall as a pagoda             |
+|   3 | 11–15  | `background-3.jpg` (done)     | A hilltop terrace above a whole shrine town               |
+|   4 | 16–20  | `background-4.png` (to make)  | A wooden temple stage high on a mountainside              |
+|   5 | 21 on  | `background-5.jpg` (done)     | A mountain peak above a sea of clouds (kept from then on) |
+
+**Done (2026-10-11):** backgrounds 2, 3 and the mountain peak are in the game (v0.33.1). The owner
+turned down a sixth, the heavens (it also drew a jar): the mountain peak is high enough to be the
+last, and a step between the hilltop and the peak comes instead. Until that step is painted the
+peak ships as `background-4.jpg` (stages 16 on); when it comes, the peak becomes
+`background-5.jpg`.
 
 **How to generate.** One image per request, full-bleed (this is a scene, so it has no white
 background). Attach two images: the style reference, and the game's current background
@@ -1459,7 +1465,40 @@ through it. A few sakura petals in the air. No jar, no cats, no people, no user 
 airy, cosy, a sense of height.
 ```
 
-**Background 4** (`scene/background-4.png`), a mountain peak above a sea of clouds:
+**Background 4** (`scene/background-4.png`), a wooden temple stage high on a mountainside, the
+step between the hilltop (3) and the peak (5). Attach background 3 and the peak too, and say they
+are the steps before and after it:
+
+```text
+A vertical mobile-game background, portrait 9:16, the same shape and layout as the attached game
+background, in the style of the attached reference: polished casual mobile-game art, cute chibi
+kawaii illustration, thick warm dark-brown outlines (never black), soft pastel cel shading with
+gentle gradients, light from the upper left, warm cream, peach and sakura-pink palette with soft
+greens, clean crisp vector-like edges. No text, no letters, no kanji, no watermark, no signature.
+
+This scene is the step between the two attached scenes: higher than the hilltop above the shrine
+town, but still below the mountain peak above the sea of clouds. An invisible giant glass jar now
+stands on a big wooden temple stage built out from a steep mountainside, high above the forests.
+Do not draw any jar, glass or container: the middle of the picture stays empty.
+Keep the attached game background's layout exactly: the same mint rug at the bottom centre, the
+same size and in the same place, its middle at 87% of the height; the ground across the bottom 15%
+is the temple stage's warm wooden floorboards seen slightly from above, with a straight horizon
+line, and a low red wooden railing and a tiny stone lantern at its left and right edges.
+Beyond the railing and far, far below, much smaller than the jar would be: a deep green valley with
+the shrine town from the hilltop scene now only a tiny patch of rooftops beside a thread-thin river,
+layered forested mountain ridges dotted with pink sakura trees, a thin white waterfall on one
+ridge, the first soft bands of cream cloud drifting below the stage, and on the horizon a bigger,
+closer snow-capped Mount Fuji. A small temple roof with dark tiles peeks in at one side edge, and
+sakura branches reach in from the top-left and top-right corners.
+The top 15% is only a soft peach-to-cream sky that ends in one flat colour at the top edge, plain
+enough to extend upwards. The centre column (the middle 85% of the width, from 30% to 87% of the
+height) stays calm and low in contrast, because a glass jar will stand there and the scene shows
+through it. A few sakura petals in the air. No jar, no cats, no people, no user interface. Bright,
+airy, a sense of great height.
+```
+
+**Background 5** (`scene/background-5.jpg`, done; shipped as `background-4.jpg` until background 4
+comes), a mountain peak above a sea of clouds, kept for every jar after it:
 
 ```text
 A vertical mobile-game background, portrait 9:16, the same shape and layout as the attached game
@@ -1482,32 +1521,6 @@ The top 15% is only a soft pale-gold-to-cream sky that ends in one flat colour a
 plain enough to extend upwards. The centre column (the middle 85% of the width, from 30% to 87% of
 the height) stays calm and low in contrast, because a glass jar will stand there and the scene
 shows through it. No jar, no cats, no people, no user interface. Bright, serene, majestic.
-```
-
-**Background 5** (`scene/background-5.png`), the heavens (kept for every jar after it):
-
-```text
-A vertical mobile-game background, portrait 9:16, the same shape and layout as the attached game
-background, in the style of the attached reference: polished casual mobile-game art, cute chibi
-kawaii illustration, thick warm dark-brown outlines (never black), soft pastel cel shading with
-gentle gradients, light from the upper left, warm cream, gold, lavender and sakura-pink palette,
-clean crisp vector-like edges. No text, no letters, no kanji, no watermark, no signature.
-
-The last and biggest scene: an invisible giant glass jar now floats in the heavens, bigger than
-the mountains. Keep the attached background's layout exactly: the same mint rug at the bottom
-centre, the same size and in the same place, its middle at 87% of the height; the ground across
-the bottom 15% is the flat top of a fluffy cream cloud island with a gold-trimmed edge, seen
-slightly from above, with a straight horizon line.
-All around and far below, much smaller than the jar would be: a golden heavenly shrine palace on
-its own little cloud on the left, a soft rainbow bridge arching to another cloud on the right,
-floating paper lanterns, a big pale crescent moon and a small gold sun both in the sky, a few
-twinkling stars in the middle of the sky, and far, far below through a gap in the clouds the tiny
-snowy tip of Mount Fuji. Sakura branches drifting on clouds frame the left and right edges.
-The top 15% is only a soft lavender-to-cream sky that ends in one flat colour at the top edge, with
-no stars there, plain enough to extend upwards. The centre column (the middle 85% of the width,
-from 30% to 87% of the height) stays calm and low in contrast, because a glass jar will stand
-there and the scene shows through it. A few sakura petals in the air. No jar, no cats, no people,
-no user interface. Dreamy, magical, celebratory.
 ```
 
 If the rug moves or changes size, ask in the same chat: "Keep everything, but put the mint rug back

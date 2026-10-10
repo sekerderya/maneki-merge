@@ -325,7 +325,8 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
   - [x] the jar grows only every 5 stages, with "The shrine grows!" once the doors open; the other clears go on in the same jar
   - [x] a background per jar (up to five), the old one shrinking away during the zoom; prompts for the four new ones in the art plan
   - [x] numbers past 10^18: Sx, Sp, Oc, No, Dc, then "1.2e36"; a saved clear of the old last stage goes on to stage 6
-  - [ ] the owner's four backgrounds (`art-source/scene/background-2` to `-5`)
+  - [x] the owner's backgrounds 2 (temple courtyard), 3 (hilltop town) and 5 (mountain peak, shown from stage 16 for now) (v0.33.1)
+  - [ ] background 4, a temple stage on a mountainside between the hilltop and the peak
 
 ## M13: Final art integration
 
