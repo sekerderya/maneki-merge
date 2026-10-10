@@ -52,6 +52,7 @@ import { BallRenderer, glowAlpha } from './BallRenderer';
 import type { CatSprite } from './BallRenderer';
 import { fitCamera, worldToView } from './cameraFit';
 import type { CameraFit, JarFrame } from './cameraFit';
+import { LastCatFx } from './fx/LastCatFx';
 import { MergeFx } from './fx/MergeFx';
 import type { PayoutKind } from './fx/MergeFx';
 import { PopFx } from './fx/PopFx';
@@ -112,6 +113,8 @@ export class GameScene extends Phaser.Scene {
   private fx!: MergeFx;
   private pops!: PopFx;
   private sparks!: SparkFx;
+  /** The stage's last cat shining while it waits alone (GAME_DESIGN §7.1). */
+  private lastCat!: LastCatFx;
   private aimGuide!: AimGuide;
   private selectRing!: Phaser.GameObjects.Graphics;
   private dropperGlow!: Phaser.GameObjects.Image;
@@ -206,6 +209,13 @@ export class GameScene extends Phaser.Scene {
     );
     this.pops = new PopFx(this.balls, this.fx);
     this.sparks = new SparkFx(this, fx);
+    this.lastCat = new LastCatFx(
+      this,
+      glows,
+      this.sparks,
+      (count) => this.particles(count),
+      () => reducedMotion(),
+    );
     this.selectRing = this.add.graphics();
     fx.add(this.selectRing);
     this.countdown = this.add
@@ -332,11 +342,14 @@ export class GameScene extends Phaser.Scene {
       this.clearSelection();
     });
     on('stageCleared', (e) => {
+      // The last cat is the only ball left: it shines until it pops.
+      const last = run.balls.find((b) => b.tier === e.tier);
+      if (last) this.lastCat.start(last.id, this.nowMs);
       // The next stage's textures get drawn while the last cat settles and the picks wait.
       this.preparing = e.stage + 1;
     });
     on('expansionStarted', (e) => {
-      // The zoom starts: the rim sparkles (the next stage's textures may still be drawing).
+      // The shrine grows: the rim sparkles (the next stage's textures may still be drawing).
       this.preparing = e.to;
       const geo = jarGeometry(e.from);
       this.sparks.rim(geo.width, geo.rimY);
@@ -443,6 +456,7 @@ export class GameScene extends Phaser.Scene {
     this.balls?.clear();
     this.fx?.clear();
     this.sparks?.clear();
+    this.lastCat?.clear();
   }
 
   override update(time: number, delta: number): void {
@@ -481,6 +495,7 @@ export class GameScene extends Phaser.Scene {
     this.renderSelection(run);
     this.renderFlights(run);
     this.renderCountdown(run, geo);
+    this.lastCat.update(this.nowMs, run.balls, run.state === 'paused');
     this.pops.update(this.nowMs);
     this.fx.update(this.nowMs);
   }

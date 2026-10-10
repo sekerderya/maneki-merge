@@ -270,20 +270,18 @@ describe('stage clear payouts (GAME_DESIGN §7)', () => {
 });
 
 describe('time stop (GAME_DESIGN §7.1)', () => {
-  it('freezes play time and the combo window during the zoom and the reveal', () => {
+  it('runs play time while the last cat shines, then freezes it until the next stage', () => {
     const { run } = setup();
     makeLastCat(run);
     expect(run.combo).toBe(1);
+    const start = run.playTimeMs;
     while (run.expansion?.phase === 'clear') step(run);
-    // The clear took 0.5 s of the 1 s combo window; the rest waits for the picks, the zoom and the
-    // reveal.
+    // The last cat shone for 1.5 s: longer than the 1 s combo window, so the combo is over.
     const playTime = run.playTimeMs;
-    expect(run.combo).toBe(1);
+    expect(playTime - start).toBeGreaterThanOrEqual(1400);
+    expect(run.combo).toBe(0);
     playUntilStage(run, 2);
     expect(run.playTimeMs).toBe(playTime);
-    expect(run.combo).toBe(1);
-    ticks(run, 0.6 * STEPS_PER_SECOND);
-    expect(run.combo).toBe(0);
   });
 });
 

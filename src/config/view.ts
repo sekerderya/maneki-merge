@@ -109,13 +109,25 @@ export const FX_POOL_SIZE = 48;
 
 /**
  * Popping cats (cash-out, Lucky Save): each grows by POP_SCALE and fades over POP_MS. Pops of the
- * same tick go off one after another, POP_STAGGER_MS apart but within POP_STAGGER_MAX_MS in all,
- * so a cash-out finishes inside the expansion's reveal.
+ * same tick go off one after another from the top of the jar down, POP_STAGGER_MS apart but
+ * within POP_STAGGER_MAX_MS in all, so a stage clear ripples down the jar while its last cat
+ * shines (v0.33.5, the owner's call; until then 30 ms apart within 0.24 s, oldest first).
  */
 export const POP_MS = 220;
 export const POP_SCALE = 1.3;
-export const POP_STAGGER_MS = 30;
-export const POP_STAGGER_MAX_MS = 240;
+export const POP_STAGGER_MS = 45;
+export const POP_STAGGER_MAX_MS = 900;
+
+/**
+ * The stage's last cat shines while it waits alone after a clear (GAME_DESIGN §7.1 step 2,
+ * v0.33.5): a gold halo LAST_CAT_GLOW.scale times its radius grows in over growMs and pulses over
+ * pulseMs; behind it a sunburst of `count` rays (each `width` of its share of the turn),
+ * `scale` times its radius, turns spinPerSecond radians a second; every everyMs `count`
+ * sparkles fly off its edge, and `pop` sparks burst when it pops.
+ */
+export const LAST_CAT_GLOW = { scale: 2.1, growMs: 350, pulseMs: 700, alpha: { min: 0.6, max: 1 } };
+export const LAST_CAT_RAYS = { scale: 3.4, count: 14, width: 0.45, spinPerSecond: 0.6, alpha: 0.8 };
+export const LAST_CAT_SPARKS = { everyMs: 90, count: 3, pop: 60 } as const;
 
 /** Gold sparks along the rim when the zoom starts and at the reveal, in world units. */
 export const EXPANSION_SPARKS = {

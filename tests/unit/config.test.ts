@@ -258,10 +258,10 @@ describe('timings (GAME_DESIGN §3, §5, §6, §7.1)', () => {
     expect(timings.LANDING_GRACE_MS).toBe(500);
     expect(timings.DANGER_TIMEOUT_MS).toBe(2500);
     expect(timings.LUCKY_SAVE_GRACE_MS).toBe(2000);
-    expect(timings.EXPANSION_CLEAR_MS).toBe(500);
+    expect(timings.EXPANSION_CLEAR_MS).toBe(1500);
     expect(timings.EXPANSION_ZOOM_MS).toBe(2050);
     expect(timings.EXPANSION_REVEAL_MS).toBe(1500);
-    expect(timings.EXPANSION_HOLD_MS).toBe(1500);
+    expect(timings.EXPANSION_HOLD_MS).toBe(500);
     expect(timings.EXPANSION_ZOOM_START_MS).toBe(2000);
     expect(timings.EXPANSION_DURATION_MS).toBe(5550);
     // "The shrine grows!" holds (75%) while the clouds come and part, then slides away.

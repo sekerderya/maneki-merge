@@ -1,8 +1,9 @@
 /**
  * Cats popping into coins (stage clear, Lucky Save; GAME_DESIGN §7.1) and boulders crumbling
  * (§15.3). The run removes them at once; here each ball's own sprite stays where it was, then grows
- * and fades in turn while a cat's ring and "+coins" go off (a boulder pays nothing). Pops of one tick are staggered (POP_STAGGER_MS apart, POP_STAGGER_MAX_MS in
- * all), so a stage clear ripples through the jar and ends before the zoom starts.
+ * and fades in turn while a cat's ring and "+coins" go off (a boulder pays nothing). Pops of one
+ * tick go off from the top of the jar down, staggered (POP_STAGGER_MS apart, POP_STAGGER_MAX_MS
+ * in all), so a stage clear ripples down the jar while its last cat shines.
  */
 import { POP_MS, POP_SCALE, POP_STAGGER_MAX_MS, POP_STAGGER_MS } from '../../config/view';
 import type { BallRenderer, CatSprite } from '../BallRenderer';
@@ -49,7 +50,9 @@ export class PopFx {
 
   /** Pops a batch of cats that left the run in the same tick. */
   popAll(nowMs: number, requests: readonly PopRequest[]): void {
-    requests.forEach((r, i) => {
+    // The top of the jar first (y grows downward).
+    const topDown = [...requests].sort((a, b) => a.y - b.y);
+    topDown.forEach((r, i) => {
       const item = this.spare.pop() ?? ({} as Popping);
       const sprite = this.balls.detach(r.id);
       item.sprite = sprite;
@@ -58,7 +61,7 @@ export class PopFx {
       item.x = r.x;
       item.y = r.y;
       item.coins = r.coins;
-      item.startMs = nowMs + popDelay(i, requests.length);
+      item.startMs = nowMs + popDelay(i, topDown.length);
       item.started = false;
       item.bodyScale = sprite?.body.scaleX ?? 1;
       item.numberScale = sprite?.number.scaleX ?? 1;

@@ -20,14 +20,15 @@ export const LUCKY_SAVE_GRACE_MS = 2000;
 
 /**
  * The expansion sequence (GAME_DESIGN §7.1): the stage clear (the other cats pop and the last cat
- * settles, then pops), then, when the jar grows, a hold in the empty jar while "Stage clear!"
+ * settles and shines, then pops), then, when the jar grows, a hold in the empty jar while "Stage clear!"
  * finishes and slides away (it shows 1.5 + 0.5 s, config/view.ts), the growth clouds (the phase
  * is still called `zoom`; the camera zoomed until v0.33.3), and the reveal; the picks come after it (v0.33.2, the owner's call: the shrine grows
  * right after the clear, before the doors). The whole sequence lasts EXPANSION_DURATION_MS. A
  * clear that doesn't grow the jar ends with the picks after EXPANSION_CLEAR_MS.
  */
-export const EXPANSION_CLEAR_MS = 500;
-export const EXPANSION_HOLD_MS = 1500;
+/** The last cat waits alone and shines this long before it pops (v0.33.5; 0.5 s until then). */
+export const EXPANSION_CLEAR_MS = 1500;
+export const EXPANSION_HOLD_MS = 500;
 /** The growth clouds' whole transition (config/view.ts, CLOUD_*): they come and part. */
 export const EXPANSION_ZOOM_MS = 2050;
 /**
