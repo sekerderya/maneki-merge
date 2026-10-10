@@ -1,0 +1,134 @@
+/**
+ * The Upgrades screen part of the art pipeline (docs/ART_ASSETS.md §4.9): the empty pieces cut from
+ * the approved mockup (`art-source/ui/upgrade-pieces.*`), written to `public/assets/shop/` with
+ * their measurements in `src/config/shopSpriteData.ts`.
+ *
+ * The sheet holds an empty upgrade card (top), and under it the gold Buy button, the title card and
+ * the round close button, left to right.
+ * - Card: a nine-slice frame. Its corners are measured from where the top edge's outline starts;
+ *   its bottom slice holds the whole tan stat strip, so the strip keeps its height.
+ * - Buy button and title card: three-slice strips (their round ends stay whole).
+ * - Close button: cropped as it is.
+ */
+import { mkdir, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import {
+  alphaAt,
+  components,
+  crop,
+  cutBackground,
+  findSource,
+  isolate,
+  loadRgba,
+  pixel,
+  saveWebp,
+} from './artImage.ts';
+import type { Rgba } from './artImage.ts';
+
+const SOURCE_DIR = 'art-source/ui';
+const OUT_DIR = 'public/assets/shop';
+const DATA_FILE = 'src/config/shopSpriteData.ts';
+const MARGIN = 2;
+/** Pieces smaller than this (px) are specks, not pieces. */
+const MIN_AREA = 500;
+/** The stat strip is tan: its red channel beats its blue by more than this (the card's cream less). */
+const TAN_MIN_WARMTH = 55;
+
+interface Sprite {
+  file: string;
+  width: number;
+  height: number;
+}
+
+interface ShopData {
+  card: Sprite & { corner: number; bottom: number };
+  buy: Sprite & { cap: number };
+  title: Sprite & { cap: number };
+  close: Sprite;
+}
+
+export async function buildShop(): Promise<void> {
+  await mkdir(OUT_DIR, { recursive: true });
+  const sheet = await loadRgba(await findSource(SOURCE_DIR, 'upgrade-pieces'));
+  cutBackground(sheet);
+  const pieces = components(sheet).filter((c) => c.area > MIN_AREA);
+  const [cardPiece, ...rest] = pieces;
+  if (!cardPiece || rest.length < 3) throw new Error('The pieces sheet needs a card and 3 pieces');
+  // Under the card, left to right: the Buy button, the title card, the close button.
+  const [buyPiece, titlePiece, closePiece] = rest
+    .filter((c) => c.y > cardPiece.y + cardPiece.h)
+    .slice(0, 3)
+    .sort((a, b) => a.x - b.x);
+  if (!buyPiece || !titlePiece || !closePiece) throw new Error('Missing a piece under the card');
+
+  const cardImage = isolate(sheet, cardPiece, MARGIN);
+  const card = { ...(await save(cardImage, 'card.webp')), ...measureCard(cardImage) };
+  const buy = await saveStrip(isolate(sheet, buyPiece, MARGIN), 'buy.webp');
+  const title = await saveStrip(isolate(sheet, titlePiece, MARGIN), 'title.webp');
+  const close = await save(isolate(sheet, closePiece, MARGIN), 'close.webp');
+
+  await writeFile(DATA_FILE, dataModule({ card, buy, title, close }));
+  console.log(
+    `Shop: card ${card.width}×${card.height} (corner ${card.corner}, bottom ${card.bottom}), ` +
+      `Buy ${buy.width}×${buy.height}, title ${title.width}×${title.height}; wrote ${DATA_FILE}`,
+  );
+}
+
+async function save(image: Rgba, file: string): Promise<Sprite> {
+  await saveWebp(image, join(OUT_DIR, file));
+  return { file, width: image.width, height: image.height };
+}
+
+/**
+ * The card's nine-slice: `corner` px stay whole at the top and the sides (the rounded corners,
+ * measured where the top edge's outline begins), and `bottom` px at the bottom (the stat strip).
+ */
+function measureCard(image: Rgba): { corner: number; bottom: number } {
+  const { width, height } = image;
+  let top = 0;
+  while (top < height && alphaAt(image, Math.floor(width / 2), top) <= 128) top++;
+  let start = 0;
+  while (start < width && alphaAt(image, start, top) <= 128) start++;
+  const corner = start + 4;
+  const mid = Math.floor(width / 2);
+  let strip = Math.floor(height * 0.4);
+  while (strip < height) {
+    const [r = 0, , b = 0] = pixel(image, mid, strip);
+    if (r - b > TAN_MIN_WARMTH) break;
+    strip++;
+  }
+  if (strip >= height - corner) throw new Error('No stat strip found on the card');
+  return { corner, bottom: height - strip + 2 };
+}
+
+/**
+ * A three-slice strip from a horizontal pill: its left cap, a few plain columns from the middle
+ * and its right cap, like the menu's buttons (tools/buildMenu.ts).
+ */
+async function saveStrip(image: Rgba, file: string): Promise<Sprite & { cap: number }> {
+  const cap = Math.ceil(image.height * 0.6);
+  const middle = 8;
+  const width = 2 * cap + middle;
+  const out = crop(image, { x: 0, y: 0, w: width, h: image.height });
+  const mid = Math.floor(image.width / 2);
+  for (let y = 0; y < image.height; y++) {
+    for (let x = 0; x < width; x++) {
+      const sx = x < cap ? x : x < cap + middle ? mid + x - cap : image.width - width + x;
+      for (let c = 0; c < 4; c++) {
+        out.data[4 * (y * width + x) + c] = image.data[4 * (y * image.width + sx) + c] ?? 0;
+      }
+    }
+  }
+  return { ...(await save(out, file)), cap };
+}
+
+function dataModule(data: ShopData): string {
+  return `/**
+ * Generated by tools/build-art.ts (\`npm run art\`) from art-source/ui/upgrade-pieces: do not edit
+ * by hand. The Upgrades screen's sprites in public/assets/shop/ (see shopSprites.ts).
+ */
+import type { ShopSprites } from './shopSprites';
+
+export const SHOP_SPRITE_DATA: ShopSprites = ${JSON.stringify(data, null, 2)};
+`;
+}

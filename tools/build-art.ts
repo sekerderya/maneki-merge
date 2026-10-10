@@ -3,7 +3,8 @@
  * game sprites. Run it with `npm run art` after adding or replacing a file in `art-source/`. The
  * scene (jar, paw, background) is built by tools/buildScene.ts, the HUD by tools/buildHud.ts,
  * the main menu by tools/buildMenu.ts, the stage doors by tools/buildDoors.ts, the special balls by
- * tools/buildSpecials.ts. Cats and special balls go through tools/artBall.ts.
+ * tools/buildSpecials.ts, the Upgrades screen by tools/buildShop.ts and the icon kit by
+ * tools/buildIcons.ts. Cats, special balls and icons go through tools/artBall.ts.
  *
  * For each `art-source/cats/size-NN.{png,jpg,jpeg,webp}` (NN = 01–09, one per look):
  *   1. removes the plain white background: the near-white region connected to the image border,
@@ -18,8 +19,10 @@ import { buildBall } from './artBall.ts';
 import { findSource } from './artImage.ts';
 import { buildDoors } from './buildDoors.ts';
 import { buildHud } from './buildHud.ts';
+import { buildIcons } from './buildIcons.ts';
 import { buildMenu } from './buildMenu.ts';
 import { buildScene } from './buildScene.ts';
+import { buildShop } from './buildShop.ts';
 import { buildSpecials } from './buildSpecials.ts';
 
 const SOURCE_DIR = 'art-source/cats';
@@ -50,6 +53,8 @@ async function main(): Promise<void> {
   await buildMenu();
   await buildDoors();
   await buildSpecials();
+  await buildShop();
+  await buildIcons();
 }
 
 function dataModule(looks: readonly LookData[]): string {
