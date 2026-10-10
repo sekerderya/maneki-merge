@@ -805,7 +805,32 @@ The edit only widened the canvas to 9:16 and left the folded screen as it was. A
 every byobu photo looks. What to use instead: a new thread, size 9:16, attaching the restyled image
 (for its scene) and the two screenshots (for the style); style block, then:
 
-\
+```text
+Four tall shoji door panels standing side by side in one flat row, seen perfectly straight from
+the front, like a flat wall of sliding doors: a full-screen graphic for a cute mobile game, not a
+piece of furniture. Every panel is a plain upright rectangle, all four exactly the same width and
+height, their top edges on one straight horizontal line and their bottom edges on another. No
+folding, no zigzag, no angle, no perspective, no depth.
+SIZE: the four panels fill the whole portrait canvas from the top edge to the bottom edge (about
+97% of its height, only a thin white margin), and the whole width. Each panel is very tall and
+narrow, about seven times as tall as it is wide. Between the panels a narrow straight vertical gap
+of plain white background.
+PANEL: a chunky rose-brown wooden frame around each panel, gold corner caps on the four outer
+corners of the row. At the top and at the bottom of every panel, two rows of small square lattice
+windows with cream paper. Between them, the rest of the panel is plain cream paper with no lattice
+bars, and one picture is painted across all four panels.
+PICTURE: the same scene as the first attached image, made taller to fill the tall panels: a pale
+cream sky taking the upper half, with a big soft gold sun split exactly between panel 2 and panel 3,
+gold coins hanging on strings from the top, puffy cream clouds; lower down a big sakura tree with
+pink blossoms rising on the left panel, a red torii gate on panel 2, a small wooden shrine with a
+dark roof on panels 3 and 4, soft pink sakura trees and green bushes behind them, and a sandy path
+at the bottom.
+Draw it in exactly the art style of the attached game screenshots: thick warm dark-brown outlines
+around every shape, flat cel shading, chunky rounded cartoon shapes.
+No text, no kanji, no stamp. Plain flat solid white background around the panels, no floor, no
+shadow. Portrait 9:16.
+```
+
 Checks for this one: four panels of equal width with straight white gaps between them; the
 panels are flat (no angle or zigzag); the paper is cream, not white; the top two and bottom two
 rows of cells are plain and the same height as the others; no kanji or stamp anywhere. If the tool
