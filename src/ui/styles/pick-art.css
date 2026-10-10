@@ -1,0 +1,206 @@
+/*
+ * A stage clear's picks in the owner's art (GAME_DESIGN §15.5), built from the Upgrades screen's
+ * pieces (docs/ART_ASSETS.md §4.9) over the shut stage doors: the title on its cream pill, three
+ * cards with their tan stat strips, and the menu's coral PLAY pill as Choose. Sizes are mockup
+ * pixels times --u, as in shop-art.css. A trial's selection glows stone blue-grey, a blessing's
+ * gold.
+ */
+.pick-overlay.is-art {
+  container-type: inline-size;
+  background: rgba(60, 32, 20, 0.28);
+}
+
+.pick-overlay.is-art .pick-panel {
+  --u: calc(min(100cqw, 520px) / var(--shop-mockup-w));
+  --glow: #ffd257;
+  width: calc(768 * var(--u));
+  max-width: none;
+  gap: calc(22 * var(--u));
+  padding: 0 calc(45 * var(--u));
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.pick-overlay.is-art[data-kind='trial'] .pick-panel {
+  --glow: #a9bfd4;
+}
+
+.pick-overlay.is-art .pick-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: calc(520 * var(--u));
+  height: calc(116 * var(--u));
+  padding: 0 calc(56 * var(--u)) calc(8 * var(--u));
+  border: 0 solid transparent;
+  border-image: var(--shop-title-art) 0 var(--shop-title-slice) fill / 0
+    calc(116 * var(--u) * var(--shop-title-cap)) stretch;
+  color: #fbe7c6;
+  font-size: calc(58 * var(--u));
+  line-height: 1;
+  white-space: nowrap;
+  -webkit-text-stroke: calc(9 * var(--u)) #4e2416;
+  paint-order: stroke fill;
+  text-shadow: 0 calc(5 * var(--u)) 0 #4e2416;
+}
+
+/* The line under the title, over the doors: cream with a dark-brown edge. */
+.pick-overlay.is-art .pick-detail {
+  margin: 0;
+  color: #fff6e7;
+  font-size: calc(32 * var(--u));
+  font-weight: var(--weight-bold);
+  -webkit-text-stroke: calc(6 * var(--u)) #4e2416;
+  paint-order: stroke fill;
+  text-shadow: 0 calc(3 * var(--u)) 0 #4e2416;
+}
+
+.pick-overlay.is-art .pick-cards {
+  gap: calc(24 * var(--u));
+}
+
+/* A card: the Upgrades card's nine-slice; the whole card is the button. */
+.pick-overlay.is-art .pick-card {
+  grid-template-columns: calc(184 * var(--u)) minmax(0, 1fr);
+  grid-template-rows: auto 1fr calc(var(--shop-card-bottom) * var(--s));
+  align-items: start;
+  gap: 0;
+  --s: calc(677 * var(--u) / var(--shop-card-w));
+  min-height: calc(228 * var(--u));
+  padding: calc(22 * var(--u)) calc(26 * var(--u)) 0 calc(20 * var(--u));
+  border: 0 solid transparent;
+  border-radius: 0;
+  border-image: var(--shop-card-art) var(--shop-card-corner) var(--shop-card-corner)
+    var(--shop-card-bottom) fill / calc(var(--shop-card-corner) * var(--s))
+    calc(var(--shop-card-corner) * var(--s)) calc(var(--shop-card-bottom) * var(--s)) stretch;
+  background: none;
+  box-shadow: none;
+  color: #4e2416;
+  transition:
+    transform 90ms ease-out,
+    filter 90ms ease-out;
+}
+
+/* The chosen card lifts and glows round its outline. */
+.pick-overlay.is-art .pick-card.is-selected {
+  border-width: 0;
+  background: none;
+  box-shadow: none;
+  transform: translateY(calc(-4 * var(--u))) scale(1.015);
+  filter: drop-shadow(0 0 calc(5 * var(--u)) var(--glow))
+    drop-shadow(0 0 calc(5 * var(--u)) var(--glow)) drop-shadow(0 0 calc(2 * var(--u)) #fff);
+}
+
+.pick-overlay.is-art .pick-info {
+  display: contents;
+}
+
+.pick-overlay.is-art .pick-icon {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  align-self: center;
+  width: calc(156 * var(--u));
+  height: calc(156 * var(--u));
+  margin-bottom: calc(8 * var(--u));
+  border: calc(6 * var(--u)) solid #4e2416;
+  background: #fff6e7;
+  box-shadow: inset 0 0 0 calc(9 * var(--u)) #f2c552;
+  color: #4e2416;
+}
+
+.pick-overlay.is-art .pick-card.is-trial .pick-icon {
+  background: #fff6e7;
+  box-shadow: inset 0 0 0 calc(9 * var(--u)) #a7a7a9;
+}
+
+.pick-overlay.is-art .pick-icon svg {
+  width: calc(64 * var(--u));
+  height: calc(64 * var(--u));
+}
+
+/* An icon of the icon kit is the whole medallion. */
+.pick-overlay.is-art .pick-icon.is-art {
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.pick-icon-art {
+  width: 100%;
+  height: 100%;
+}
+
+.pick-overlay.is-art .pick-head {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.pick-overlay.is-art .pick-name {
+  font-size: calc(42 * var(--u));
+}
+
+.pick-overlay.is-art .pick-level {
+  color: #4e2416;
+  font-size: calc(30 * var(--u));
+  font-weight: var(--weight-bold);
+}
+
+.pick-overlay.is-art .pick-desc {
+  grid-column: 2;
+  grid-row: 2;
+  margin: calc(12 * var(--u)) 0 calc(14 * var(--u));
+  color: #5b3324;
+  font-size: calc(29 * var(--u));
+  font-weight: var(--weight-semibold);
+  line-height: 1.25;
+}
+
+/* The stat in the strip: "BOULDERS 3% → 6%". */
+.pick-overlay.is-art .pick-value {
+  grid-column: 1 / 3;
+  grid-row: 3;
+  align-self: center;
+  gap: calc(10 * var(--u));
+  padding: 0 0 calc(4 * var(--u)) calc(14 * var(--u));
+  color: #4e2416;
+  font-size: calc(28 * var(--u));
+  font-weight: var(--weight-bold);
+  white-space: nowrap;
+}
+
+.pick-overlay.is-art .pick-stat {
+  color: #4e2416;
+  font-size: inherit;
+  font-weight: var(--weight-bold);
+}
+
+.pick-overlay.is-art .pick-arrow {
+  color: #4e2416;
+}
+
+/* Choose: the menu's coral PLAY pill, faded until a card is chosen. */
+.pick-overlay.is-art .pick-choose {
+  width: calc(460 * var(--u));
+  min-height: max(calc(120 * var(--u)), 48px);
+  margin-top: calc(6 * var(--u));
+  padding-bottom: calc(10 * var(--u));
+  border: 0 solid transparent;
+  border-radius: 0;
+  border-image: var(--shop-play-art) 0 var(--shop-play-slice) fill / 0
+    calc(120 * var(--u) * var(--shop-play-cap)) stretch;
+  background: none;
+  box-shadow: none;
+  color: #fff;
+  font-size: calc(60 * var(--u));
+  letter-spacing: 0.03em;
+  -webkit-text-stroke: calc(8 * var(--u)) #4e2416;
+  paint-order: stroke fill;
+  text-shadow: 0 calc(5 * var(--u)) 0 #4e2416;
+}
+
+.pick-overlay.is-art .pick-choose:disabled {
+  opacity: 1;
+  filter: grayscale(0.6) brightness(1.05);
+}

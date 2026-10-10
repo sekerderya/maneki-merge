@@ -1,6 +1,6 @@
 import { ICON_SPRITE_DIR, iconSprite } from '../../config/iconSprites';
 import { MENU_ART, MENU_SPRITE_DIR } from '../../config/menuSprites';
-import { SHOP_ART, SHOP_MOCKUP_WIDTH, SHOP_SPRITE_DIR } from '../../config/shopSprites';
+import { SHOP_ART, SHOP_SPRITE_DIR } from '../../config/shopSprites';
 import { SHOP_BALANCE_COUNT_MS } from '../../config/view';
 import { UPGRADE_IDS, UPGRADES } from '../../config/upgrades';
 import type { UpgradeId } from '../../config/upgrades';
@@ -8,6 +8,7 @@ import { formatNumber } from '../../core/format';
 import { shopCard } from '../../core/shop';
 import type { UpgradeLevels } from '../../core/upgrades';
 import { button, el } from '../dom';
+import { artImage, setUiArtProperties } from '../uiArt';
 import { ICON_CHECK, ICON_CLOSE, ICON_COIN, UPGRADE_ICONS } from '../icons';
 
 export interface ShopActions {
@@ -49,7 +50,7 @@ interface CardParts {
 export function createShopPanel(root: HTMLElement, actions: ShopActions, art = false): ShopView {
   const overlay = el('div', 'overlay shop-overlay');
   overlay.classList.toggle('is-art', art);
-  if (art) setShopArtProperties(overlay);
+  if (art) setUiArtProperties(overlay);
   overlay.dataset['testid'] = 'shop';
   overlay.setAttribute('role', 'dialog');
   overlay.setAttribute('aria-label', 'Upgrades');
@@ -133,39 +134,6 @@ export function createShopPanel(root: HTMLElement, actions: ShopActions, art = f
       card.root.classList.add('is-bought');
     },
   };
-}
-
-/** The art's images and nine-slice measurements, as CSS custom properties on the panel. */
-function setShopArtProperties(node: HTMLElement): void {
-  const set = (name: string, value: string | number): void =>
-    node.style.setProperty(name, String(value));
-  const url = (path: string): string => `url("${import.meta.env.BASE_URL}${path}")`;
-  const { card, buy, title } = SHOP_ART;
-  set('--shop-mockup-w', SHOP_MOCKUP_WIDTH);
-  set('--shop-card-art', url(`${SHOP_SPRITE_DIR}${card.file}`));
-  set('--shop-card-w', card.width);
-  set('--shop-card-corner', card.corner);
-  set('--shop-card-bottom', card.bottom);
-  for (const [name, sprite] of [
-    ['buy', buy],
-    ['title', title],
-  ] as const) {
-    set(`--shop-${name}-art`, url(`${SHOP_SPRITE_DIR}${sprite.file}`));
-    set(`--shop-${name}-slice`, sprite.cap);
-    set(`--shop-${name}-cap`, sprite.cap / sprite.height);
-  }
-  const coins = MENU_ART.coinsPill;
-  set('--shop-coins-art', url(`${MENU_SPRITE_DIR}${coins.file}`));
-  set('--shop-coins-slice', coins.cap);
-  set('--shop-coins-cap', coins.cap / coins.height);
-}
-
-function artImage(path: string, className: string): HTMLImageElement {
-  const image = el('img', className);
-  image.src = `${import.meta.env.BASE_URL}${path}`;
-  image.alt = '';
-  image.draggable = false;
-  return image;
 }
 
 function createCard(id: UpgradeId, art: boolean, onBuy: () => void): CardParts {

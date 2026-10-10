@@ -200,7 +200,11 @@ async function boot(): Promise<void> {
   // The stage doors shut over the game screen, under the picks and the pause overlay.
   const doors = createDoors(overlays, import.meta.env.BASE_URL);
   // A stage clear's picks sit under the pause overlay, so a pause can cover them.
-  const picks = createPickOverlay(overlays, { onChoose: (id) => session.choosePick(id) });
+  const picks = createPickOverlay(
+    overlays,
+    { onChoose: (id) => session.choosePick(id) },
+    skin === 'art',
+  );
   const pause = createPauseOverlay(overlays, {
     onResume: () => session.resumeRun(),
     onToggleSound: () => toggleSound(),
