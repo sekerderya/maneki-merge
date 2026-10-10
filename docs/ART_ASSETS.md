@@ -694,8 +694,17 @@ Claude cuts the four panels apart at the white gaps. Phones are taller than the 
 lattice rows at the very top and bottom; the painting stays whole in the middle. If the tool offers
 a taller portrait size (9:16), use it: less needs repeating. Upscale ×2: it fills the whole screen.
 
-Attach the reference image and the lineup sheet. Style block, then **one** of the two paintings
-(generate both if unsure and compare).
+Attach two screenshots of the game as the style reference: the game screen
+(`docs/screenshots/v0.26.0/390-1-hud.png`) and the main menu
+(`docs/screenshots/v0.20.1/menu-390x844.png`), plus the lineup sheet for variant B. Style block,
+then **one** of the two paintings (generate both if unsure and compare). Add this line at the end
+of the prompt:
+
+```text
+Draw it in exactly the art style of the attached game screenshots: thick warm dark-brown outlines
+around every shape, flat cel shading, chunky rounded cartoon shapes, blossoms and clouds drawn
+like the ones in the screenshots.
+```
 
 **Variant A: gold clouds and sakura** (`doors/screen.png`):
 
@@ -739,6 +748,36 @@ coins falling like gentle rain and small piles of gold coins at the cat's sides,
 petals. The painting fills the panels except the top two and bottom two rows of lattice cells,
 which stay plain cream paper with nothing painted on them.
 ```
+
+**Restyle** (2026-10-10): the first generation of variant A had the right layout but a thin-lined,
+watercolour look that didn't match the game, and its panels were slightly tilted. Edit it in the
+same thread, attaching the two screenshots:
+
+```text
+Redraw the first attached image, the four-panel folding screen, in exactly the art style of the
+other attached images, the screenshots of the game and its main menu. Keep the composition: the
+four panels, the white gaps between them, the cream paper, the lattice, the sakura tree, the
+clouds, the sun, the hanging coins and the plain top and bottom rows of cells.
+Change the drawing style to match the screenshots:
+- a thick warm dark-brown outline of even weight around every shape: the frames, every lattice
+  bar, the trunk and branches, every blossom, every cloud, the sun and every coin;
+- flat cel shading with soft pastel gradients and one small glossy highlight, no watercolour,
+  no gold-leaf texture, no fine painterly detail;
+- chunky, rounded, simplified cartoon shapes; the trunk and branches thicker and smoother;
+- blossoms drawn like the ones in the screenshots: simple round five-petal pink flowers with a
+  darker pink centre, fewer and bigger;
+- clouds drawn like the clouds in the screenshots: puffy rounded shapes with an outline, in soft
+  cream and pale gold;
+- the sun a flat soft gold circle with an outline; the coins like the game's gold coin: round,
+  glossy, blank, with an outline;
+- the frame chunky glossy rose-brown wood with gold corner caps, like the game's buttons and cards.
+Make all four panels perfectly flat and facing the viewer: their top and bottom edges perfectly
+horizontal and level with each other, no tilt, no perspective.
+No text, no kanji, no stamp. Plain flat solid white background around the screen.
+```
+
+If the edit keeps too much of the old look, start a new thread with the two screenshots and the
+text prompt above (with the style line at its end).
 
 Checks for this one: four panels of equal width with straight white gaps between them; the
 panels are flat (no angle or zigzag); the paper is cream, not white; the top two and bottom two
