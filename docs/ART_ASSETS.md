@@ -1188,6 +1188,43 @@ mockups are approved, as edits of them.
 
 **Pick icons: not needed (v0.32.1).** The owner chose the game's own art instead: each card shows the ball it is about (`src/ui/pickArt.ts`). The prompts below stay for a pick that gets its own icon later.
 
+**More Boulders and Big Boulders pictures (2026-10-10).** Both showed the same plain boulder, so the owner asked for art that tells them apart. They are not medallions: like the other cards' balls, each is drawn alone on white and the game puts it in the card's grey medallion. Attach `art-source/specials/boulders.jpg` and the lineup sheet, one per request, square 1:1, and save them as `art-source/picks/moreBoulders.png` and `art-source/picks/bigBoulders.png`.
+
+More Boulders:
+
+```text
+Style: match the attached boulder art exactly. Polished casual mobile-game art, cute chibi kawaii
+illustration, thick warm dark-brown outlines (never black) of even weight, soft pastel cel shading
+with gentle gradients and one small glossy highlight, light from the upper left, clean crisp
+vector-like edges, readable at 48 px.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow
+under the objects. No text, no letters, no numbers, no kanji, no watermark, no signature.
+
+A small game picture for a Suika-style merge game: three of the attached grey boulders (the bare
+stone, no iron bands), all the same size, piled in a little heap: two side by side at the bottom,
+touching, and one resting on top between them. Each one keeps the attached boulder's round shape,
+colours, speckles and highlight. The heap is centred and fills about 80% of the canvas. No frame,
+no circle, no medallion, no ground, nothing else. Square 1:1.
+```
+
+Big Boulders:
+
+```text
+Style: match the attached boulder art exactly. Polished casual mobile-game art, cute chibi kawaii
+illustration, thick warm dark-brown outlines (never black) of even weight, soft pastel cel shading
+with gentle gradients and one small glossy highlight, light from the upper left, clean crisp
+vector-like edges, readable at 48 px.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow
+under the objects. No text, no letters, no numbers, no kanji, no watermark, no signature.
+
+A small game picture for a Suika-style merge game: one big grey boulder like the attached one (the
+bare stone, no iron bands) and, at its lower left, a small one half its size, both resting on the
+same invisible line; between them, above the small one, a chunky light-grey up arrow with the same
+dark-brown outline, pointing up. The boulders keep the attached art's round shape, colours,
+speckles and highlight. The group is centred and fills about 80% of the canvas. No frame, no
+circle, no medallion, no ground, nothing else. Square 1:1.
+```
+
 **Pick icons (icon kit, §5).** The trial and blessing screens are built from the Upgrades pieces (v0.32, without the trial and blessing mockups above: the approved pieces fit them, so Claude built the screens straight away for the owner to judge on the phone). Their cards' icons come from the icon kit, one per request, square 1:1; trials get the cool grey stone rim, blessings the gold one. Attach the icon sheet (`art-source/ui/upgrade-icons.webp`), the lineup sheet and the art named with each icon, and save the result as `art-source/icons/<id>.png`. Until an icon exists the card shows its code-drawn icon in a cream medallion.
 
 More Boulders (`icons/moreBoulders.png`, trial; also attach `art-source/specials/boulders.jpg`):
