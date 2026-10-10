@@ -67,15 +67,20 @@ function minChannel(data: Uint8ClampedArray, i: number): number {
 /**
  * Makes the white background transparent and returns each pixel's distance (4-connected steps)
  * from it: 0 for background, 1 for the first pixel inside, and so on (capped). `open` marks the
- * top-row pixels that are not background (an arm cut off by the image's top edge).
+ * top-row pixels that are not background (an arm cut off by the image's top edge). `holes` are
+ * pixels (indices) inside enclosed white regions that are background too, like a frame's opening.
  */
-export function cutBackground(image: Rgba, open?: (x: number) => boolean): Uint8Array {
+export function cutBackground(
+  image: Rgba,
+  open?: (x: number) => boolean,
+  holes: readonly number[] = [],
+): Uint8Array {
   const { data, width, height } = image;
   const n = width * height;
   const depth = new Uint8Array(n).fill(255);
 
-  // Flood the near-white region from the border.
-  const seeds: number[] = [];
+  // Flood the near-white region from the border (and the holes).
+  const seeds: number[] = [...holes];
   for (let x = 0; x < width; x++) {
     if (!open?.(x)) seeds.push(x);
     seeds.push((height - 1) * width + x);

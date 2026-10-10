@@ -2,7 +2,7 @@
  * Final art pipeline (TECH_SPEC §14, docs/ART_ASSETS.md): turns the owner's generated images into
  * game sprites. Run it with `npm run art` after adding or replacing a file in `art-source/`. The
  * scene (jar, paw, background) is built by tools/buildScene.ts, the HUD by tools/buildHud.ts,
- * the main menu by tools/buildMenu.ts.
+ * the main menu by tools/buildMenu.ts, the stage doors by tools/buildDoors.ts.
  *
  * For each `art-source/cats/size-NN.{png,jpg,jpeg,webp}` (NN = 01–09, one per look):
  *   1. removes the plain white background: the near-white region connected to the image border,
@@ -26,6 +26,7 @@ import {
   saveWebp,
 } from './artImage.ts';
 import type { Circle, Rgba } from './artImage.ts';
+import { buildDoors } from './buildDoors.ts';
 import { buildHud } from './buildHud.ts';
 import { buildMenu } from './buildMenu.ts';
 import { buildScene } from './buildScene.ts';
@@ -63,6 +64,7 @@ async function main(): Promise<void> {
   await buildScene();
   await buildHud();
   await buildMenu();
+  await buildDoors();
 }
 
 async function buildLook(look: number, path: string, file: string): Promise<LookData> {

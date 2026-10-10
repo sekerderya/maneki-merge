@@ -264,3 +264,20 @@ export const TAKE_ARM_MS = 300;
 export const PICK_ARM_MS = 400;
 /** The Take button floats this many CSS pixels above the selected ball. */
 export const TAKE_BUTTON_GAP = 10;
+
+/**
+ * The stage doors (GAME_DESIGN §7.1): after a stage clear four doors fold in from the sides and
+ * stay shut while the trial and blessing are picked, then fold open before the zoom. Each wing is
+ * two doors that fold like an accordion: at 90° they stand edge-on at the screen's edge.
+ */
+export const DOORS_CLOSE_MS = 700;
+export const DOORS_OPEN_MS = 750;
+/** With reduced motion the doors fade in and out instead of folding. */
+export const DOORS_FADE_MS = 250;
+/** The fold's perspective distance, in screen widths. */
+export const DOORS_PERSPECTIVE = 2.2;
+/** How dark a door is when folded edge-on: the outer doors face the light, the inner ones away. */
+export const DOORS_SHADE_OUTER = 0.1;
+export const DOORS_SHADE_INNER = 0.38;
+/** The picture reaches this many frame-image pixels under the frame, past its inner outline. */
+export const DOORS_PICTURE_BLEED = 6;

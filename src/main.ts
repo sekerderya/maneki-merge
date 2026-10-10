@@ -34,6 +34,7 @@ import { createSettingsPanel } from './ui/panels/settingsPanel';
 import { createShopPanel } from './ui/panels/shopPanel';
 import { createPauseOverlay } from './ui/overlays/pauseOverlay';
 import { createPickOverlay } from './ui/overlays/pickOverlay';
+import { createDoors } from './ui/fx/doors';
 import { createRotateOverlay } from './ui/overlays/rotateOverlay';
 import { ScreenManager } from './ui/screenManager';
 import { createGameScreen } from './ui/screens/gameScreen';
@@ -192,6 +193,8 @@ async function boot(): Promise<void> {
     skin === 'art',
   );
   const overlays = byId('overlays');
+  // The stage doors shut over the game screen, under the picks and the pause overlay.
+  const doors = createDoors(overlays, import.meta.env.BASE_URL);
   // A stage clear's picks sit under the pause overlay, so a pause can cover them.
   const picks = createPickOverlay(overlays, { onChoose: (id) => session.choosePick(id) });
   const pause = createPauseOverlay(overlays, {
@@ -246,6 +249,7 @@ async function boot(): Promise<void> {
     pause,
     gameOver,
     picks,
+    doors,
     feedback: {
       play: (name, value) => audio.play(name, value),
       vibrate: (name) => haptics.play(name),

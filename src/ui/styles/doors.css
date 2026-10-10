@@ -1,0 +1,75 @@
+/*
+ * The stage doors (GAME_DESIGN §7.1): above the game screen and its HUD, under the pick panel and
+ * the pause overlay. doors.ts sets each door's fold; this places the art.
+ */
+.doors {
+  position: fixed;
+  inset: 0;
+  z-index: 140;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.doors[hidden] {
+  display: none;
+}
+
+/*
+ * One door: a quarter of the screen, turning about its hinge edge. Its art is measured in the
+ * frame image's pixels; --door-s is one of them on screen (the frame spans the door's width).
+ */
+.door {
+  --door-s: calc(100cqw / var(--door-w));
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--door-index) * 25%);
+  width: 25%;
+  container-type: size;
+  transform-origin: left center;
+  will-change: transform;
+}
+
+.door.is-right {
+  transform-origin: right center;
+}
+
+/* The picture shows through the frame's opening; each door shows its quarter of it. */
+.door-window {
+  position: absolute;
+  inset: calc((var(--door-top) - var(--door-bleed)) * var(--door-s))
+    calc((var(--door-right) - var(--door-bleed)) * var(--door-s))
+    calc((var(--door-bottom) - var(--door-bleed)) * var(--door-s))
+    calc((var(--door-left) - var(--door-bleed)) * var(--door-s));
+  overflow: hidden;
+}
+
+.door-picture {
+  position: absolute;
+  top: calc((var(--door-bleed) - var(--door-top)) * var(--door-s));
+  left: calc((var(--door-bleed) - var(--door-left)) * var(--door-s) - var(--door-index) * 100cqw);
+  width: 400cqw;
+  height: 100cqh;
+  background: var(--door-picture) center / cover no-repeat;
+}
+
+/* The frame: the lattice caps stay whole, the stiles stretch to the screen's height. */
+.door-frame {
+  position: absolute;
+  inset: 0;
+  border-style: solid;
+  border-width: calc(var(--door-top) * var(--door-s)) calc(var(--door-right) * var(--door-s))
+    calc(var(--door-bottom) * var(--door-s)) calc(var(--door-left) * var(--door-s));
+  border-image: var(--door-frame) var(--door-top) var(--door-right) var(--door-bottom)
+    var(--door-left) stretch;
+}
+
+/* A folded door turns from the light: darker the further it turns. */
+.door-shade {
+  position: absolute;
+  inset: 0;
+  border-radius: calc(40 * var(--door-s));
+  background: #3a1d14;
+  opacity: 0;
+  pointer-events: none;
+}

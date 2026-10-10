@@ -1,9 +1,10 @@
 /**
  * The raster art the canvas draws (GAME_DESIGN §13.1): the cats, the jar's two layers and the paw.
  * Boot loads and decodes them with the fonts (main.ts), before the game is created, with the
- * main menu's images; the backgrounds are DOM images.
+ * main menu's and the stage doors' images; the backgrounds are DOM images.
  */
 import { CAT_ART_LOAD_TIMEOUT_MS, CAT_SPRITE_DIR, CAT_SPRITES } from '../config/catSprites';
+import { DOOR_ART, DOOR_SPRITE_DIR } from '../config/doorSprites';
 import { HUD_BADGE_ART, HUD_SPRITE_DIR } from '../config/hudSprites';
 import { MENU_SPRITE_DIR, menuSprites } from '../config/menuSprites';
 import { JAR_ART, PAW_ART, SCENE_SPRITE_DIR } from '../config/sceneSprites';
@@ -38,6 +39,12 @@ export function loadArt(baseUrl: string): Promise<ArtImages> {
     // The menu's pieces, so the first screen shows up whole (the DOM uses them by URL).
     Promise.all(menuSprites().map(({ file }) => image(`${baseUrl}${MENU_SPRITE_DIR}${file}`))),
     image(`${baseUrl}${HUD_SPRITE_DIR}${HUD_BADGE_ART.file}`),
+    // The stage doors (DOM), so they shut whole at the first stage clear.
+    Promise.all(
+      [DOOR_ART.picture, DOOR_ART.panel].map(({ file }) =>
+        image(`${baseUrl}${DOOR_SPRITE_DIR}${file}`),
+      ),
+    ),
   ]).then(([cats, jarBack, jarFront, paw]) => ({ cats, jarBack, jarFront, paw }));
   const timeout = new Promise<never>((_, reject) =>
     window.setTimeout(() => reject(new Error('Art timed out')), CAT_ART_LOAD_TIMEOUT_MS),

@@ -14,6 +14,7 @@ import {
   GOLDEN_COIN_FLIGHTS,
   JACKPOT_COIN_FLIGHTS,
 } from './config/view';
+import { PICK_ORDER } from './config/picks';
 import type { PickId, PickKind } from './config/picks';
 import type { UpgradeId } from './config/upgrades';
 import { EventBus } from './core/events';
@@ -31,6 +32,7 @@ import type { RunController } from './run/RunController';
 import type { BannerView } from './ui/banners/banner';
 import type { HintView } from './ui/banners/hint';
 import type { CoinFlyView } from './ui/fx/coinFly';
+import type { DoorsView } from './ui/fx/doors';
 import type { HudView } from './ui/hud/hud';
 import type { GameOverView } from './ui/overlays/gameOverOverlay';
 import type { PauseView } from './ui/overlays/pauseOverlay';
@@ -55,6 +57,8 @@ export interface SessionParts {
   readonly gameOver: GameOverView;
   /** A stage clear's trial and blessing cards (GAME_DESIGN §15.5). */
   readonly picks: PickView;
+  /** The doors that shut over the game while the picks are made (GAME_DESIGN §7.1). */
+  readonly doors: DoorsView;
   /** Sound effects and haptics for the run's events. */
   readonly feedback: FeedbackOutputs;
   /** A fixed seed (`?seed=`) for every run, or null for a fresh one each time. */
@@ -67,6 +71,8 @@ export class GameSession {
   private current: RunController | null = null;
   private hintTimer = 0;
   private runSavePending = false;
+  /** The last pick, chosen but held back until the doors are open (then the zoom starts). */
+  private heldPick: PickId | null = null;
   /** The records as they were when the current run started, for the Game Over badges. */
   private recordsBefore: Records;
 
@@ -115,9 +121,30 @@ export class GameSession {
     this.parts.profile.resetHints();
   }
 
-  /** The pick panel's Choose: the waiting pick takes `id`. */
+  /**
+   * The pick panel's Choose: the waiting pick takes `id`. The last pick waits for the doors to
+   * fold open, so the zoom it starts shows from its first frame (GAME_DESIGN §7.1).
+   */
   choosePick(id: PickId): void {
-    this.current?.choose(id);
+    const run = this.current;
+    const offer = run?.pickOffer;
+    if (!run || !offer?.options.includes(id)) return;
+    if (offer.kind !== PICK_ORDER[PICK_ORDER.length - 1]) {
+      run.choose(id);
+      return;
+    }
+    this.parts.picks.hide();
+    this.heldPick = id;
+    this.parts.doors.open(() => this.releasePick(run));
+  }
+
+  /** The held pick goes to the run once the doors are open and the run isn't paused. */
+  private releasePick(run: RunController): void {
+    const id = this.heldPick;
+    if (id === null || this.current !== run) return;
+    if (run.state !== 'choosing' || !this.parts.doors.isOpen) return;
+    this.heldPick = null;
+    run.choose(id);
   }
 
   /** The magnet's Take button: it takes the selected ball (GAME_DESIGN §15.2). */
@@ -177,7 +204,10 @@ export class GameSession {
     this.recordsBefore = saved.recordsBefore;
     this.play(run, events);
     const offer = run.pickOffer;
-    if (offer) this.showPick(run, offer.kind, offer.options);
+    if (offer) {
+      this.parts.doors.closeNow();
+      this.showPick(run, offer.kind, offer.options);
+    }
     this.parts.banners.setPaused(true);
     this.parts.pause.show();
     return true;
@@ -185,7 +215,9 @@ export class GameSession {
 
   /** Clears what the last run left on screen. */
   private reset(): void {
-    const { hint, banners, coins, pause, gameOver, picks } = this.parts;
+    const { hint, banners, coins, pause, gameOver, picks, doors } = this.parts;
+    this.heldPick = null;
+    doors.reset();
     pause.hide();
     gameOver.hide();
     picks.hide();
@@ -271,11 +303,29 @@ export class GameSession {
       hud.setStage(run.stage);
     });
 
-    // A stage clear's picks (GAME_DESIGN §15.5): a trial, then a blessing.
-    events.on('pickOffered', (e) => this.showPick(run, e.kind, e.options));
-    events.on('pickChosen', () => this.parts.picks.hide());
+    // A stage clear's picks (GAME_DESIGN §7.1, §15.5): the doors shut, then a trial and a
+    // blessing; the doors open again before the zoom (choosePick).
+    const { doors } = this.parts;
+    events.on('pickOffered', () =>
+      doors.close(() => {
+        const offer = run.pickOffer;
+        if (this.current === run && offer) this.showPick(run, offer.kind, offer.options);
+      }),
+    );
+    events.on('pickChosen', () => {
+      this.parts.picks.hide();
+      // Picks made some other way (the debug tools) open the doors as the run moves on.
+      queueMicrotask(() => {
+        if (this.current === run && run.state !== 'choosing' && run.state !== 'paused') {
+          doors.open();
+        }
+      });
+    });
     events.on('paused', () => banners.setPaused(true));
-    events.on('resumed', () => banners.setPaused(false));
+    events.on('resumed', () => {
+      banners.setPaused(false);
+      this.releasePick(run);
+    });
     events.on('gameOver', (e) => this.onGameOver(e));
 
     // First-run hints (GAME_DESIGN §2.3), remembered in the save.
@@ -340,6 +390,8 @@ export class GameSession {
     this.parts.pause.hide();
     this.parts.gameOver.hide();
     this.parts.picks.hide();
+    this.heldPick = null;
+    this.parts.doors.reset();
     this.parts.hint.hide();
     this.parts.banners.clear();
     this.parts.coins.clear();
@@ -370,6 +422,8 @@ export class GameSession {
     this.parts.banners.clear();
     this.parts.pause.hide();
     this.parts.picks.hide();
+    this.heldPick = null;
+    this.parts.doors.reset();
     this.parts.runSave.clear();
     const records = newRecords(this.recordsBefore, e);
     this.parts.gameOver.show({
