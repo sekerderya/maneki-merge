@@ -2,6 +2,22 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.29.0] - 2026-10-10
+
+### Added
+
+- Stage doors (the owner's idea, GAME_DESIGN §7.1): after a stage clear, four tall shoji doors fold in from the sides like an accordion and shut over the screen. The trial and blessing are picked in front of them; then they fold open and the jar's zoom plays as before, from its first frame.
+- The doors' art is the owner's (docs/ART_ASSETS.md phase 6): a shrine-garden picture that runs across the four doors, and one door frame laid over each, stretched to any screen height.
+- With reduced motion the doors fade in and out instead of folding. A run saved while a pick waits comes back behind shut doors.
+
+### Changed
+
+- The blessing now applies as the doors finish opening (0.75 s after Choose), just before the zoom.
+
+### Notes
+
+- The picture is 768 px wide, a little soft on a 3× phone; an upscaled copy can replace it with `npm run art`.
+
 ## [0.28.0] - 2026-10-10
 
 ### Added
