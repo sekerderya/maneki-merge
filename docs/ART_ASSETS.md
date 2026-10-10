@@ -1114,6 +1114,8 @@ Plain flat solid white background (#FFFFFF), no gradient, no texture, no checker
 shadow, no glow. No text, no letters, no numbers, no watermark, no signature. Landscape 3:2.
 ```
 
+**Done (2026-10-10):** both sheets are in the game (v0.31), with Big Catch and Second Chance from the icon kit (`art-source/icons/`). Big Catch raises the paw on the viewer's left, unlike the cats; the owner may regenerate it.
+
 Claude cuts them like the menu's pieces (§4.5): the card becomes a nine-slice frame (its tan strip
 inside the bottom slice), the Buy button and the title card three-slice strips that stretch to
 their text, the icons and the close button single sprites.

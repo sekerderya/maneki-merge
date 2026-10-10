@@ -314,6 +314,9 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
 - [x] Batch 14 (v0.30.0), special balls' art (GAME_DESIGN §13.1, §15, docs/ART_ASSETS.md phase 7):
   - [x] the owner's magnet, hanabi, joker cat and boulder (0–3 iron bands) in the jar, the paw and NEXT
   - [x] the code-drawn looks stay for `?skin=vector`
+- [x] Batch 15 (v0.31.0), the Upgrades screen in the owner's art (GAME_DESIGN §2.2, §13.1, docs/ART_ASSETS.md §4.9, §5):
+  - [x] built from the approved mockup: the title pill, the close button, the menu's coins pill, the cards with their stat strips, the gold Buy buttons; no level pips
+  - [x] the four upgrade icons, and the icon kit for every later icon
 
 ## M13: Final art integration
 
