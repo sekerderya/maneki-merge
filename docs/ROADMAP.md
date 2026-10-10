@@ -311,6 +311,9 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
   - [x] four shoji doors slide in from the sides, unfolding, after a stage clear and stay shut while the trial and blessing are picked (v0.29.1: sliding, not swinging like a door)
   - [x] they slide back out, folding up, before the zoom, which then plays from its first frame; with reduced motion they fade
   - [x] the owner's picture across the doors and the owner's frame on each, stretched to any screen height
+- [x] Batch 14 (v0.30.0), special balls' art (GAME_DESIGN §13.1, §15, docs/ART_ASSETS.md phase 7):
+  - [x] the owner's magnet, hanabi, joker cat and boulder (0–3 iron bands) in the jar, the paw and NEXT
+  - [x] the code-drawn looks stay for `?skin=vector`
 
 ## M13: Final art integration
 

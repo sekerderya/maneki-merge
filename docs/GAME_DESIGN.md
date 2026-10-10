@@ -292,6 +292,7 @@ The owner chose the scene in a design canvas (v0.14): a cream shrine garden, ink
 - **Background** (v0.17 art): a painted sakura shrine garden: sakura branches and clouds on a cream sky, a torii and a shrine seen through the glass, stone lanterns either side, and a rug on the wooden floor where the jar stands. It moves and scales with the jar so the feet stay on the rug; it always spans the screen's width, its top fades into the sky colour, and the floor colour fills the screen below it. The separate rug image is unused: the background has its own.
 - **HUD** (v0.19 art, v0.19.2 cards after the owner's reference image, v0.22 score card and bubble copied from the owner's references `art-source/hud/ref-score.png` and `ref-next.png`): the score card is the owner's image (66 px tall, 141 px wide, wider for a long score): cream with a dark chocolate outline, a white highlight inside its top edge and a tan base, a white beckoning paw with pink pads sticking out of its left end, "SCORE:" (#7F3D2A, 17 px, centred on the card's body, v0.23.2) over a caramel well with the score in it. The coins card is CSS in the reference's style: cream with a thin dark outline, rounded corners and a tan bottom edge. The coins card comes out of the screen's right edge (rounded on the left only), only as wide as its coins need (about 98 px on screen, v0.23.2), with "COINS:" (17 px) over the art's small gold coin and the run's coins, centred. The NEXT bubble hangs 14 px under it (v0.23.2). Both numbers are white with a thin brown edge. The stage is plain words at the top in the middle (22 px, dark brown #813c2d with a cream edge, like "NEXT"). The next cat sits in a round glass bubble (v0.22: a dark outline, a cream rim, mint fading to pink, white shines), with "NEXT" in dark brown with a cream edge on its top rim; the pause button is the art's glossy pink square, its outline recoloured to the reference's rose brown. Flying coins land on the coin. The vector HUD of v0.14 stays for `?skin=vector`.
 - **Main menu** (v0.20 art, §2.1): the owner first generated a whole-screen mockup, then every piece as an edit of it, so they keep its look: the garden without the interface (it added a stone path, kept by the owner's call), the logo, the cat on its cushion (its cushion turned from the generated peach back to the mockup's pink by the tool), the buttons and a record card, and the small icons (torii, coin, arrow, sparkles). PLAY, UPGRADES, the coins pill and the cards' wells stretch as three-slice strips and the cards as nine-slice frames, so they take any width; the paw badge is the HUD's. The glow and the twinkling sparkles are drawn in code.
+- **Special balls** (v0.30 art, §15): the owner's magnet (a red horseshoe magnet on a cream coin with a gold rim), hanabi (a navy firework shell), joker cat (a rainbow-striped maneki-neko in a jester hat, winking) and boulder (a grey stone with 0–3 iron bands). They are scaled and outlined like the cats, their body circle on the physics radius (the hanabi's fuse and the joker's ears and hat stick out above it), and NEXT shows them too. The code-drawn looks of v0.21–v0.29 stay for `?skin=vector`; `?skin=placeholder` still shows a boulder's merges left as a number.
 - **Stage doors** (v0.29 art, §7.1): two images the owner generated: a 9:16 picture (a sakura shrine garden with a torii, a shrine, a big gold sun in the middle and gold coins hanging from the top) and one empty door frame (glossy rose-brown wood, gold corner caps, two rows of cream lattice windows at the top and at the bottom). The game cuts the picture into four strips and lays the frame over each; the frame's sides stretch to the screen's height and its lattice stays whole. The picture covers the screen (its sides are cropped on a narrow phone). Each wing folds in perspective, the inner doors darker as they turn from the light.
 - **Palette**: cream ground, paper plates, ink outlines and text, cocoa for labels; coral only for the primary button of a screen (PLAY, Resume, Play Again), gold for coins, rewards and progress, red for danger and badges, mint for secondary buttons and "on". One font: Fredoka (700 for titles, numbers and buttons; 500–600 for labels).
 
@@ -368,7 +369,7 @@ A boulder is a stone ball that only takes up room.
 - **Size:** size 2 (radius 49), one size bigger per Big Boulders level. The size is fixed when the boulder is queued.
 - **Hits:** a boulder takes a hit from every merge in which at least one of the two merging cats is within 15 world units of it, edge to edge, when the merge resolves: touching, or so close the gap doesn't show (v0.21: cats resting side by side on the floor often leave a gap of a few units). A Jackpot counts as a merge. One merge hits each boulder it reaches once.
 - **Breaking:** a boulder needs 1 hit, plus 1 per Iron Bands level at the time it was queued. The last hit breaks it.
-- **Look:** grey stone with an ink outline like the cats. Every extra hit it needs is one iron band (a metal plate) round it.
+- **Look:** grey stone with an ink outline like the cats. Every extra hit it needs is one iron band (a metal plate) round it. Since v0.30 it is the owner's art (§13.1): the same stone with 0, 1, 2 or 3 riveted steel bands.
   - Each hit knocks one band off, with a clang and a few sparks.
   - The bare stone breaks on the next hit, with a crunch and stone chips.
   - So the bands show at a glance how many merges are left.
@@ -428,7 +429,7 @@ Then the zoom follows (§7.1 step 3). At the last stage there is no zoom: play r
 
 ### 15.6 Hanabi
 
-> The owner's pick (2026-10-10), built in v0.28 with the numbers proposed in chat. Its look is a code-drawn placeholder: the owner's art comes later.
+> The owner's pick (2026-10-10), built in v0.28 with the numbers proposed in chat. Its look is the owner's art since v0.30 (§13.1): a Japanese firework shell (hanabi-dama) in navy washi with a painted firework burst and a short fuse.
 
 A firework ball that clears space.
 
@@ -444,7 +445,7 @@ A firework ball that clears space.
 
 ### 15.7 Joker cat
 
-> The owner's pick (2026-10-10), built in v0.28 with the rules proposed in chat. Its look is a code-drawn placeholder: the owner's art comes later.
+> The owner's pick (2026-10-10), built in v0.28 with the rules proposed in chat. Its look is the owner's art since v0.30 (§13.1): a maneki-neko with pastel rainbow stripes, a wink and a jester hat.
 
 A wild cat that merges with any cat.
 

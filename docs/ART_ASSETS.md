@@ -894,8 +894,10 @@ the painting, but leave the top two and bottom two rows of lattice cells plain c
 
 ### 4.8 Phase 7: special balls
 
-The magnet, the hanabi, the joker cat and the boulder (GAME_DESIGN §15) are code-drawn
-placeholders until these come in. Each is a ball like the cats, so the art goes through the cats'
+**Done (2026-10-10):** all four are in the game (v0.30), from the first generation. The boulders' bands and the hanabi's red band stick out of the circle by a few pixels, which the circle fit leaves out.
+
+The magnet, the hanabi, the joker cat and the boulder (GAME_DESIGN §15) were code-drawn
+placeholders until these came in. Each is a ball like the cats, so the art goes through the cats'
 pipeline: the white is cut, the round body is fitted (a fuse or a hat sticking out of the top is
 left out of the fit, like the cats' ears) and scaled onto the ball's physics radius. The game adds
 the effects in code: a lit hanabi's flickering glow, the magnet's gold selection ring, sparks and
