@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.29.3] - 2026-10-10
+
+### Changed
+
+- A slower stage transition (the owner's call, GAME_DESIGN §7.1): after the stage's last cat is made, "The shrine grows!" stays 2 s before the stage doors start to slide in, and they cover it as they shut. The doors now take 1.1 s to shut (0.7 s before) and 1.2 s to open (0.75 s).
+
 ## [0.29.2] - 2026-10-10
 
 ### Added
