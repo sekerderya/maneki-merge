@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.29.5] - 2026-10-10
+
+### Removed
+
+- The "New cats unlocked!" banner with the next goal at the start of a new stage (the owner's call). The new stage starts with just the bell chime, and NEXT shows its cats.
+
 ## [0.29.4] - 2026-10-10
 
 ### Changed
