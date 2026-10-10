@@ -1088,6 +1088,13 @@ shadow, no glow, no sparkles outside the medallions. No text, no watermark, no s
 Square 1:1.
 ```
 
+**Icons, first sheet (2026-10-10):** `art-source/ui/upgrade-icons.webp`. The owner kept the left
+column (Lucky Paw, Combo Charm) and turned down the right one (the tai fish and the daruma looked
+foreign to the game), so Big Catch and Second Chance come as single icons from the icon kit (§5),
+in `art-source/icons/bigCatch.*` and `art-source/icons/secondChance.*`, which win over the
+sheet's quarters: Big Catch is a big lucky-cat ball beside a small one with a gold up arrow;
+Second Chance is the cats' gold collar bell on its red cord with a small pink heart.
+
 Card, button, title and close pieces (`ui/upgrade-pieces.png`):
 
 ```text
