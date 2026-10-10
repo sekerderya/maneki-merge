@@ -367,6 +367,15 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
       action('Picks', () => hooks.offerPicks()),
     ),
     row(
+      // A real stage clear (GAME_DESIGN §7.1): two of the stage's size 8 meet at the dropper and
+      // make its last cat, so the pops, the doors, the picks and the zoom all play.
+      action('Clear stage', () => {
+        const tier = hooks.state().lastTier - 1;
+        hooks.spawnTier(tier, 0);
+        hooks.spawnTier(tier, 0);
+      }),
+    ),
+    row(
       pick,
       pickLevel,
       action('Set run', () => hooks.setPickLevel(pick.value as PickId, Number(pickLevel.value))),
