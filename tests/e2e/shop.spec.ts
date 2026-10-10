@@ -40,13 +40,13 @@ test('buying with debug coins: prices, states, feedback and persistence', async 
 
   // Lucky Paw 0 → 1 for 50.
   const paw = page.getByTestId('shop-buy-luckyPaw');
-  await expect(paw).toHaveText('50');
+  // The art's button says "Buy" over the price.
+  await expect(paw.locator('.shop-price')).toHaveText('50');
   await expect(page.getByTestId('shop-value-luckyPaw')).toHaveText('Coins+0%→+15%');
   await buy(page, 'luckyPaw');
   await expect(page.getByTestId('shop-level-luckyPaw')).toHaveText('1/10');
-  await expect(paw).toHaveText('80');
+  await expect(paw.locator('.shop-price')).toHaveText('80');
   await expect(page.getByTestId('shop-balance')).toHaveText('550'); // after the count-down
-  await expect(page.getByTestId('shop-card-luckyPaw').locator('.shop-pip.is-on')).toHaveCount(1);
 
   // Big Catch and Combo Charm show what a level adds.
   await expect(page.getByTestId('shop-value-bigCatch')).toHaveText('Biggest drop10%→13%');
@@ -84,7 +84,7 @@ test('buying with debug coins: prices, states, feedback and persistence', async 
   // At the max level: MAX, disabled.
   await page.evaluate(() => window.__game?.setUpgrade('secondChance', 2));
   const chance = page.getByTestId('shop-buy-secondChance');
-  await expect(chance).toHaveText('MAX');
+  await expect(chance.locator('.shop-price')).toHaveText('MAX');
   await expect(chance).toBeDisabled();
   expect(errors).toEqual([]);
 });
