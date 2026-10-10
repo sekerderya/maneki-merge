@@ -2,6 +2,17 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.32.4] - 2026-10-10
+
+### Changed
+
+- Choosing a trial or blessing no longer dims the other cards (the owner's call). The ring round the chosen card is drawn behind it and only fades in, instead of a glow filter on the whole card.
+- More Boulders' card shows a neat pyramid of three boulders, and Big Boulders' a big boulder with a small one and an arrow (the owner's pictures).
+
+### Fixed
+
+- Switching between cards could stutter: the jar behind the shut doors was still drawn every frame. The game loop now sleeps while the doors are shut (on a software-GPU stand-in: 30 → 60 fps, worst frame 233 → 33 ms).
+
 ## [0.32.3] - 2026-10-10
 
 ### Changed
