@@ -60,4 +60,25 @@ export const BACKGROUND_SPRITES: readonly BackgroundSprite[] = [
     sky: '#f7f0d4',
     ground: '#ebbb8a',
   },
+  {
+    file: 'background-2.webp',
+    width: 768,
+    height: 1376,
+    sky: '#fee5c6',
+    ground: '#dbd1c8',
+  },
+  {
+    file: 'background-3.webp',
+    width: 768,
+    height: 1376,
+    sky: '#ffe4c6',
+    ground: '#dbcec6',
+  },
+  {
+    file: 'background-4.webp',
+    width: 768,
+    height: 1376,
+    sky: '#ffe3c3',
+    ground: '#af9588',
+  },
 ];
