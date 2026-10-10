@@ -10,6 +10,8 @@ import {
   BANNER_JAR_OFFSET,
   BANNER_NEW_CATS_MS,
   COMBO_JAR_OFFSET,
+  DOORS_CLOSE_MS,
+  STAGE_CLEAR_BANNER_MS,
   HINT_MERGE_DELAY_MS,
   GOLDEN_COIN_FLIGHTS,
   JACKPOT_COIN_FLIGHTS,
@@ -73,6 +75,10 @@ export class GameSession {
   private runSavePending = false;
   /** The last pick, chosen but held back until the doors are open (then the zoom starts). */
   private heldPick: PickId | null = null;
+  /** When the last stage clear started (performance.now()), so the doors wait for its banner. */
+  private clearedAt = 0;
+  /** The doors' wait for the stage-clear banner. */
+  private doorsTimer = 0;
   /** The records as they were when the current run started, for the Game Over badges. */
   private recordsBefore: Records;
 
@@ -217,6 +223,8 @@ export class GameSession {
   private reset(): void {
     const { hint, banners, coins, pause, gameOver, picks, doors } = this.parts;
     this.heldPick = null;
+    this.clearedAt = 0;
+    window.clearTimeout(this.doorsTimer);
     doors.reset();
     pause.hide();
     gameOver.hide();
@@ -283,9 +291,14 @@ export class GameSession {
     );
 
     // Stage clears and expansions (GAME_DESIGN §7, §7.1, §7.2): "Stage clear!" at the last stage.
+    // The banner stays STAGE_CLEAR_BANNER_MS, then the doors shut over it (§7.1).
     events.on('stageCleared', (e) => {
       banners.combo(0, 0);
-      banners.show(e.next === 'expand' ? 'The shrine grows!' : 'Stage clear!', { y: bannerY() });
+      banners.show(e.next === 'expand' ? 'The shrine grows!' : 'Stage clear!', {
+        y: bannerY(),
+        durationMs: STAGE_CLEAR_BANNER_MS + DOORS_CLOSE_MS,
+      });
+      this.clearedAt = performance.now();
     });
     events.on('expansionRevealed', (e) => {
       showPreview();
@@ -306,12 +319,18 @@ export class GameSession {
     // A stage clear's picks (GAME_DESIGN §7.1, §15.5): the doors shut, then a trial and a
     // blessing; the doors open again before the zoom (choosePick).
     const { doors } = this.parts;
-    events.on('pickOffered', () =>
-      doors.close(() => {
-        const offer = run.pickOffer;
-        if (this.current === run && offer) this.showPick(run, offer.kind, offer.options);
-      }),
-    );
+    events.on('pickOffered', () => {
+      const shut = (): void =>
+        doors.close(() => {
+          const offer = run.pickOffer;
+          if (this.current === run && offer) this.showPick(run, offer.kind, offer.options);
+        });
+      const wait = this.clearedAt + STAGE_CLEAR_BANNER_MS - performance.now();
+      this.clearedAt = 0;
+      window.clearTimeout(this.doorsTimer);
+      if (wait > 0) this.doorsTimer = window.setTimeout(shut, wait);
+      else shut();
+    });
     events.on('pickChosen', () => {
       this.parts.picks.hide();
       // Picks made some other way (the debug tools) open the doors as the run moves on.
@@ -391,6 +410,8 @@ export class GameSession {
     this.parts.gameOver.hide();
     this.parts.picks.hide();
     this.heldPick = null;
+    this.clearedAt = 0;
+    window.clearTimeout(this.doorsTimer);
     this.parts.doors.reset();
     this.parts.hint.hide();
     this.parts.banners.clear();
@@ -423,6 +444,8 @@ export class GameSession {
     this.parts.pause.hide();
     this.parts.picks.hide();
     this.heldPick = null;
+    this.clearedAt = 0;
+    window.clearTimeout(this.doorsTimer);
     this.parts.doors.reset();
     this.parts.runSave.clear();
     const records = newRecords(this.recordsBefore, e);

@@ -270,8 +270,13 @@ export const TAKE_BUTTON_GAP = 10;
  * slide in from the sides, unfolding, and stay shut while the trial and blessing are picked; then
  * they slide back out, folding up, before the zoom.
  */
-export const DOORS_CLOSE_MS = 700;
-export const DOORS_OPEN_MS = 750;
+export const DOORS_CLOSE_MS = 1100;
+export const DOORS_OPEN_MS = 1200;
+/**
+ * The stage-clear banner ("The shrine grows!") stays this long after the last cat is made before
+ * the doors start to shut over it (v0.29.3, the owner's call).
+ */
+export const STAGE_CLEAR_BANNER_MS = 2000;
 /** With reduced motion the doors fade in and out instead of folding. */
 export const DOORS_FADE_MS = 250;
 /** How far each door turns when a wing is folded up, degrees (90 would be flat shut). */
