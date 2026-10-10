@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.32.2] - 2026-10-10
+
+### Changed
+
+- A clearer pick (the owner's call): the chosen card pops forward with a little overshoot in a thick ring of light (blue for a trial, gold for a blessing), and the other cards dim.
+
 ## [0.32.1] - 2026-10-10
 
 ### Changed
