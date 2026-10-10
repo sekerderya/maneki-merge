@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.33.3] - 2026-10-11
+
+### Changed
+
+- The shrine grows through the clouds (the owner's choice and art): a wall of the owner's clouds wells up over the screen, the new place comes in behind them, and they part from the middle out while it settles from a little close. The jar stays still; it no longer shrinks and slides back up, and the old garden no longer shrinks away. With reduced motion the clouds only fade in and out.
+
 ## [0.33.2] - 2026-10-11
 
 ### Added
