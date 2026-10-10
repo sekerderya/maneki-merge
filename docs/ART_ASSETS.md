@@ -90,6 +90,9 @@ narrower than their canvas: Claude crops the empty space.
 | 18  | 7 specials | `specials/hanabi.png`              | The firework ball                                         | 1:1, 1024×1024    |
 | 19  | 7 specials | `specials/joker.png`               | The joker cat, a rainbow maneki-neko in a jester hat      | 1:1, 1024×1024    |
 | 20  | 7 specials | `specials/boulders.png`            | Sheet: the boulder with 0, 1, 2 and 3 iron bands          | 1:1, 1024×1024    |
+| 21  | 8 screens  | `ui/upgrades-mockup.png`           | Whole Upgrades screen, design reference                   | 9:16 or 2:3       |
+| 22  | 8 screens  | `ui/trial-mockup.png`              | Trial pick over the shut doors, design reference          | 9:16 or 2:3       |
+| 23  | 8 screens  | `ui/blessing-mockup.png`           | Blessing pick, an edit of the trial mockup                | 9:16 or 2:3       |
 
 How the pieces go into the game:
 
@@ -996,3 +999,126 @@ Checks for these: the outline is a closed circle (only the hanabi's fuse and the
 hat stick out at the top); a plain white background with nothing cropped; the joker has exactly
 one raised paw on the viewer's right, a collar and a bell; the four boulders are the same stone at
 the same size, with 0, 1, 2 and 3 bands.
+
+### 4.9 Phase 8: Upgrades and the stage-clear picks
+
+The Upgrades screen and the trial and blessing picks are still the code-drawn cards of v0.14–v0.21,
+plainer than the raster menu and game. As for the main menu (§4.5), the owner first generates a
+**whole-screen mockup** of each (a design reference, words allowed); Claude builds the screen from
+the approved mockup in CSS and then asks for the pieces that need art (icons, frames, the title
+plaque), as edits of the mockup. Generate at portrait 9:16 if the tool offers it, else 2:3.
+
+Attach to every mockup request: the approved main-menu mockup (`art-source/menu/mockup.jpg`), the
+game screen (`docs/screenshots/v0.26.0/390-1-hud.png`) and the lineup sheet
+(`art-source/style/lineup.webp`), plus the screen's current version for its content (named below).
+
+**Upgrades mockup** (`ui/upgrades-mockup.png`); also attach
+`docs/screenshots/v0.30.0/shop-current-390x844.png`:
+
+```text
+Style: match the attached main-menu mockup and game screenshot exactly. Polished casual
+mobile-game art, cute chibi kawaii illustration, thick warm dark-brown outlines (never black),
+soft pastel cel shading with gentle gradients and small glossy highlights, light from the upper
+left, warm cream and sakura-pink palette, crisp clean edges. It must look like the same game as
+the attached main menu.
+
+A complete portrait "Upgrades" screen for the cute casual mobile game "Maneki Merge", shown flat
+and full-bleed: no phone frame, no hands, no device mockup. It is a lucky-charm shop at the
+shrine, where coins buy permanent upgrades. Use the content of the attached current screen, but
+redesign its look to match the main menu.
+
+Background: the main menu's sakura shrine garden, softly blurred and a little darker, so the
+panel in front reads clearly.
+
+Layout, top to bottom:
+1. A title plaque at the top centre: a small wooden shrine signboard (warm brown wood, a tiny
+   red-and-gold roof edge, gold corner caps) with the word "Upgrades" in chunky rounded cream
+   letters with a dark-brown outline. To its right a round cream close button with a dark-brown X,
+   like the menu's gear button. Under the plaque, a coin counter card like the menu's: a shiny gold
+   coin with a small embossed paw print and the number "1,250".
+2. Four upgrade cards stacked down the screen, each a cream card (#fff6e7) with a thin dark-brown
+   outline, soft rounded corners and a tan bottom edge, like the menu's record cards. Each card:
+   on the left, a round illustrated icon in a cream medallion with a gold rim; to its right the
+   name, the level ("2/10") and a row of level marks drawn as small gold coins (earned) and pale
+   empty coin outlines (not yet); under them a short description in brown; at the bottom the stat
+   in small caps with its change ("COINS +30% → +45%"); on the right a glossy gold pill-shaped buy
+   button with a darker gold bottom edge, a small gold coin and the price.
+   - "Lucky Paw", 2/10, "+15% coins from everything", COINS +30% → +45%, price 125. Icon: a white
+     maneki-neko paw with pink pads holding a gold koban coin.
+   - "Big Catch", 0/5, "Bigger cats come more often", BIGGEST DROP 10% → 13%, price 100. Icon: a
+     big red sea bream (tai fish) hanging from a bamboo fishing rod.
+   - "Combo Charm", 1/5, "+8% coins per combo step (up to 5 steps)", PER COMBO STEP +8% → +16%,
+     price 160. Icon: a red omamori charm bag with a gold knot and little sparkles.
+   - "Second Chance", 0/2, "+1 Lucky Save per run", LUCKY SAVES 0 → 1, price 500. Icon: a red
+     daruma doll with one eye painted in.
+A rounded friendly font like Fredoka. Only these words and numbers; no other buttons, no tabs, no
+ads, no stars, no characters besides what is listed, no watermark, no signature. Keep the cards in
+the middle of the canvas with some garden above and below, so it can stretch to taller phones.
+Portrait 9:16 (or 2:3).
+```
+
+**Trial pick mockup** (`ui/trial-mockup.png`); also attach
+`docs/screenshots/v0.30.0/trial-current-390x844.png` (the shut stage doors behind it) and the
+boulder sheet (`art-source/specials/boulders.jpg`):
+
+```text
+Style: match the attached main-menu mockup and game screenshot exactly. Polished casual
+mobile-game art, cute chibi kawaii illustration, thick warm dark-brown outlines (never black),
+soft pastel cel shading with gentle gradients and small glossy highlights, light from the upper
+left, warm cream and sakura-pink palette, crisp clean edges. It must look like the same game as
+the attached main menu.
+
+A complete portrait screen of the cute casual mobile game "Maneki Merge", shown flat and
+full-bleed: no phone frame, no hands, no device mockup. After a stage is cleared, the player picks
+one trial that makes the coming stages harder. Use the content of the attached current screen,
+but redesign its look to match the main menu.
+
+Background: the four shut shoji doors from the attached screen (rose-brown frames, lattice windows
+at the top and bottom, a painted shrine garden with a big gold sun across them), slightly dimmed
+so the panel in front reads clearly.
+
+In the middle, one panel: a cream card (#fff6e7) with a thick dark-brown outline, soft rounded
+corners and a tan bottom edge, like the main menu's cards, with a small grey stone ornament and a
+few pebbles on its top edge (the trial is about boulders). Inside, top to bottom:
+1. The title "Choose a trial" in chunky rounded dark-brown letters with a cool grey shadow, and
+   under it "The coming stages get harder" in smaller brown letters.
+2. Three option cards, cream with a thin dark-brown outline and a tan bottom edge. Each: on the
+   left a round illustrated icon in a cool grey stone medallion; to its right the name and the
+   level change ("Lv 0 → 1"), a short description and the stat with its change in small caps.
+   The first card is selected: a pale stone-grey fill and a thicker outline.
+   - "More Boulders", "+3% boulder chance (from stage 2)", BOULDERS 3% → 6%. Icon: three of the
+     attached grey boulders in a little pile.
+   - "Iron Bands", "Boulders need one more merge to break", MERGES TO BREAK 1 → 2. Icon: one
+     attached boulder with a riveted iron band.
+   - "Big Boulders", "Boulders one size bigger", BOULDER SIZE Size 2 → Size 3. Icon: a big
+     boulder next to a small one.
+3. A wide glossy coral-pink pill-shaped "Choose" button with a darker pink bottom edge, white
+   rounded letters with a dark-brown outline, like the menu's PLAY button.
+A rounded friendly font like Fredoka. Only these words and numbers; no other buttons, no ads, no
+watermark, no signature. Portrait 9:16 (or 2:3).
+```
+
+**Blessing pick mockup** (`ui/blessing-mockup.png`): an edit of the approved trial mockup, in the
+same thread, so the two stay alike. Also attach `docs/screenshots/v0.30.0/blessing-current-390x844.png`
+and the special balls' art (`art-source/specials/magnet.jpg`, `hanabi.jpg`, `joker.jpg`):
+
+```text
+Edit the trial screen you made: keep exactly the same layout, panel, card shapes, outlines,
+fonts, button and the shut doors behind it. This is the blessing pick that comes right after it,
+so it is warm and golden instead of stone grey:
+- the panel's top-edge ornament is a small gold koban coin with a sprig of sakura instead of the
+  stones;
+- the title is "Choose a blessing" with a gold shadow, the line under it "It lasts for the whole
+  run";
+- the icon medallions are gold-rimmed cream instead of grey stone, and the selected card has a
+  pale gold fill;
+- the three cards: "More Magnets", "+1.5% magnet chance", MAGNETS 1% → 2.5%, icon: the attached
+  magnet coin; "Joker Cat", "Merges with any cat and makes it one size bigger", JOKERS 0% → 1.5%,
+  icon: the attached rainbow joker cat; "Hanabi", "Fireworks that pop the small cats around
+  them", HANABI 0% →
+  1.5%, icon: the attached firework shell.
+Everything else stays as it is. Portrait, the same size.
+```
+
+The other blessings' icons (Big Drops, Golden Cats) and the pieces for the game come after the
+mockups are approved, as edits of them.
