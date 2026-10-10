@@ -690,6 +690,8 @@ the middle. The screen stays closed while the trial and blessing are picked (the
 their own UI on top, not part of this art), then folds open again and the zoom plays as before
 (GAME_DESIGN §7.1). The fold is CSS 3D in code; the art is the screen seen flat and closed.
 
+**Done (2026-10-10):** the picture and the panel are in the game (v0.29), from the two-piece plan below. The picture is 768 px wide; a 2× upscaled copy would be sharper on phones.
+
 **Current plan (2026-10-10): two pieces.** Every one-image attempt below came out folded at an
 angle: asked for four panels, the tools draw a folding screen as furniture, and an attached angled
 image makes them copy its shape. So the art is now two separate images, and the game puts them

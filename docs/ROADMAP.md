@@ -307,6 +307,10 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
   - [x] Hanabi: a firework ball that goes off 1 s after it lands, pops the small cats (sizes 1–4) around it into coins, breaks boulders and pushes bigger cats away
   - [x] Joker Cat: merges with the first cat it touches and makes it one size bigger (a size 8 makes the stage's last cat)
   - [x] the blessing pick shows 3 of the 5 blessings; code-drawn placeholder looks until the owner's art
+- [x] Batch 13 (v0.29.0), stage doors (GAME_DESIGN §7.1, §13.1, docs/ART_ASSETS.md phase 6):
+  - [x] four shoji doors fold shut after a stage clear and stay shut while the trial and blessing are picked
+  - [x] they fold open before the zoom, which then plays from its first frame; with reduced motion they fade
+  - [x] the owner's picture across the doors and the owner's frame on each, stretched to any screen height
 
 ## M13: Final art integration
 
