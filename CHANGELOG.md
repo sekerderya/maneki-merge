@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.33.4] - 2026-10-11
+
+### Changed
+
+- The growth clouds come and part 30% slower (the owner's call), and the new place shows on its own for 1.5 s more before the doors shut for the picks. "The shrine grows!" leaves as the clouds clear.
+
 ## [0.33.3] - 2026-10-11
 
 ### Changed
