@@ -1381,14 +1381,14 @@ new one.
 |   1 | 1–5    | `background.jpg` (done)       | The sakura shrine garden, on a veranda                    |
 |   2 | 6–10   | `background-2.jpg` (done)     | A grand temple courtyard: as tall as a pagoda             |
 |   3 | 11–15  | `background-3.jpg` (done)     | A hilltop terrace above a whole shrine town               |
-|   4 | 16–20  | `background-4.png` (to make)  | A wooden temple stage high on a mountainside              |
+|   4 | 16–20  | `background-4.jpg` (done)     | A wooden temple stage high on a mountainside              |
 |   5 | 21 on  | `background-5.jpg` (done)     | A mountain peak above a sea of clouds (kept from then on) |
 
 **Done (2026-10-11):** backgrounds 2, 3 and the mountain peak are in the game (v0.33.1). The owner
 turned down a sixth, the heavens (it also drew a jar): the mountain peak is high enough to be the
-last, and a step between the hilltop and the peak comes instead. Until that step is painted the
-peak ships as `background-4.jpg` (stages 16 on); when it comes, the peak becomes
-`background-5.jpg`.
+last, and a step between the hilltop and the peak comes instead. The step (background 4, the
+temple stage on a mountainside) came the same day (v0.33.2), and the peak moved to
+`background-5.jpg`. Phase 9 is done.
 
 **How to generate.** One image per request, full-bleed (this is a scene, so it has no white
 background). Attach two images: the style reference, and the game's current background
@@ -1497,8 +1497,7 @@ through it. A few sakura petals in the air. No jar, no cats, no people, no user 
 airy, a sense of great height.
 ```
 
-**Background 5** (`scene/background-5.jpg`, done; shipped as `background-4.jpg` until background 4
-comes), a mountain peak above a sea of clouds, kept for every jar after it:
+**Background 5** (`scene/background-5.jpg`, done), a mountain peak above a sea of clouds, kept for every jar after it:
 
 ```text
 A vertical mobile-game background, portrait 9:16, the same shape and layout as the attached game
