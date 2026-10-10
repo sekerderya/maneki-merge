@@ -2,6 +2,17 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.30.0] - 2026-10-10
+
+### Added
+
+- The owner's art for the special balls (docs/ART_ASSETS.md phase 7, GAME_DESIGN §13.1): the magnet (a red horseshoe magnet on a gold-rimmed coin), the hanabi (a navy firework shell with a painted burst and a fuse), the joker cat (a rainbow-striped maneki-neko in a jester hat) and the boulder (a grey stone with 0 to 3 riveted iron bands). They show in the jar, in the paw and in NEXT, outlined like the cats.
+
+### Changed
+
+- The art pipeline fits every ball, cat or special, the same way (`tools/artBall.ts`); the cats' sprites come out unchanged.
+- The code-drawn special balls stay for `?skin=vector`.
+
 ## [0.29.5] - 2026-10-10
 
 ### Removed
