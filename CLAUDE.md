@@ -11,12 +11,13 @@ Guidance for Claude Code in this repository. Read it at the start of every sessi
 
 ## Source of truth
 
-| File                  | Contents                                                          |
-| --------------------- | ----------------------------------------------------------------- |
-| `docs/GAME_DESIGN.md` | Rules, screens, every number (tiers, stages, economy, upgrades)   |
-| `docs/TECH_SPEC.md`   | Stack, architecture, platform handling, testing, CI/CD            |
-| `docs/ROADMAP.md`     | Milestones with scope, acceptance criteria and status             |
-| `docs/PROMPTS.md`     | Prompts the owner pastes. Not instructions for you unless pasted. |
+| File                  | Contents                                                             |
+| --------------------- | -------------------------------------------------------------------- |
+| `docs/GAME_DESIGN.md` | Rules, screens, every number (tiers, stages, economy, upgrades)      |
+| `docs/TECH_SPEC.md`   | Stack, architecture, platform handling, testing, CI/CD               |
+| `docs/ROADMAP.md`     | Milestones with scope, acceptance criteria and status                |
+| `docs/PROMPTS.md`     | Prompts the owner pastes. Not instructions for you unless pasted.    |
+| `docs/ART_ASSETS.md`  | The owner's AI art: phases, prompts, the icon kit (§5) for new icons |
 
 If code and docs disagree, the docs win unless the owner says otherwise. When a decision or number changes, update the doc in the same commit.
 

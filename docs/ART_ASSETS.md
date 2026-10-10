@@ -90,7 +90,9 @@ narrower than their canvas: Claude crops the empty space.
 | 18  | 7 specials | `specials/hanabi.png`              | The firework ball                                         | 1:1, 1024×1024    |
 | 19  | 7 specials | `specials/joker.png`               | The joker cat, a rainbow maneki-neko in a jester hat      | 1:1, 1024×1024    |
 | 20  | 7 specials | `specials/boulders.png`            | Sheet: the boulder with 0, 1, 2 and 3 iron bands          | 1:1, 1024×1024    |
-| 21  | 8 screens  | `ui/upgrades-mockup.png`           | Whole Upgrades screen, design reference                   | 9:16 or 2:3       |
+| 21  | 8 screens  | `ui/upgrades-mockup.png`           | Whole Upgrades screen, design reference (approved)        | 9:16 or 2:3       |
+| 21a | 8 screens  | `ui/upgrade-icons.png`             | Sheet: the four upgrade icons, the icon kit's style (§5)  | 1:1, 1024×1024    |
+| 21b | 8 screens  | `ui/upgrade-pieces.png`            | Sheet: empty card, Buy button, title card, close button   | 3:2, 1536×1024    |
 | 22  | 8 screens  | `ui/trial-mockup.png`              | Trial pick over the shut doors, design reference          | 9:16 or 2:3       |
 | 23  | 8 screens  | `ui/blessing-mockup.png`           | Blessing pick, an edit of the trial mockup                | 9:16 or 2:3       |
 
@@ -1012,7 +1014,7 @@ Attach to every mockup request: the approved main-menu mockup (`art-source/menu/
 game screen (`docs/screenshots/v0.26.0/390-1-hud.png`) and the lineup sheet
 (`art-source/style/lineup.webp`), plus the screen's current version for its content (named below).
 
-**Upgrades mockup** (`ui/upgrades-mockup.png`); also attach
+**Upgrades mockup** (`ui/upgrades-mockup.png`, approved as `ui/upgrades-mockup.jpg`); also attach
 `docs/screenshots/v0.30.0/shop-current-390x844.png`:
 
 ```text
@@ -1056,6 +1058,58 @@ ads, no stars, no characters besides what is listed, no watermark, no signature.
 the middle of the canvas with some garden above and below, so it can stretch to taller phones.
 Portrait 9:16 (or 2:3).
 ```
+
+**Upgrades mockup approved (2026-10-10):** `art-source/ui/upgrades-mockup.jpg` (768×1376), after one
+edit of the first generation: the owner removed the row of gold level coins under each name and
+the wooden signboard with a roof behind the title (the title now sits on a plain cream pill). The
+level stays as text ("2/10"). Every word and number on the screen is live text (Fredoka), so the
+mockup's text slips (the buttons say "+ 125") don't matter. The garden behind is the menu's
+background, blurred in CSS, and the coin counter is the menu's coins pill (`menu/buttons.jpg`).
+
+**Upgrades pieces, cut from the mockup.** Attach **only the mockup**, one request per image, and
+paste the whole prompt:
+
+Icons (`ui/upgrade-icons.png`; they also set the style of every later icon, §5):
+
+```text
+The attached image is the approved Upgrades screen mockup of my mobile game. I need its four
+round upgrade icons as a separate game asset. Copy each one exactly as it is drawn in the mockup:
+the cream medallion with its gold rim and thick dark-brown outline, and the picture inside it,
+with the same shape, proportions, colours, outlines, shading and highlights. Do not redesign them.
+Lay them out in a 2×2 grid, all exactly the same size, evenly spaced, with white space between
+them; each medallion a perfect circle filling most of its quarter:
+- top left: the Lucky Paw icon (the white beckoning paw holding a gold koban coin);
+- top right: the Big Catch icon (the red tai fish on the bamboo fishing rod);
+- bottom left: the Combo Charm icon (the red omamori charm bag with the gold knot);
+- bottom right: the Second Chance icon (the red daruma doll).
+The koban coin and the charm bag are blank: no characters, no kanji, no letters on them.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard. No cast
+shadow, no glow, no sparkles outside the medallions. No text, no watermark, no signature.
+Square 1:1.
+```
+
+Card, button, title and close pieces (`ui/upgrade-pieces.png`):
+
+```text
+The attached image is the approved Upgrades screen mockup of my mobile game. I need some of its
+pieces as separate game assets, all empty. Copy each one exactly as it is drawn in the mockup:
+same shape, proportions, colours, outlines, shading and highlights. Do not redesign them.
+Spread them far apart on one sheet:
+1. top, across most of the width: one empty upgrade card, the cream card with the thin dark-brown
+   outline, rounded corners and the tan strip along its bottom, at the mockup's proportions, with
+   nothing inside it: no icon, no words, no numbers, no button;
+2. bottom left: the empty gold Buy button (the glossy gold pill with its darker bottom edge), with
+   no words, no coin and no numbers on it;
+3. bottom middle: the empty title card, the cream pill behind the word "Upgrades", with no words
+   on it;
+4. bottom right: the round cream close button with its dark-brown X.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard. No cast
+shadow, no glow. No text, no letters, no numbers, no watermark, no signature. Landscape 3:2.
+```
+
+Claude cuts them like the menu's pieces (§4.5): the card becomes a nine-slice frame (its tan strip
+inside the bottom slice), the Buy button and the title card three-slice strips that stretch to
+their text, the icons and the close button single sprites.
 
 **Trial pick mockup** (`ui/trial-mockup.png`); also attach
 `docs/screenshots/v0.30.0/trial-current-390x844.png` (the shut stage doors behind it) and the
@@ -1122,3 +1176,56 @@ Everything else stays as it is. Portrait, the same size.
 
 The other blessings' icons (Big Drops, Golden Cats) and the pieces for the game come after the
 mockups are approved, as edits of them.
+
+## 5. Icon kit (every new icon)
+
+> Read this before writing a prompt for any new icon: an upgrade, a trial or blessing card, a
+> setting, a new special ball's card. It keeps every icon in the game one family.
+
+**The family.** Every icon is a **round medallion**, drawn like the four upgrade icons cut from the
+approved Upgrades mockup (`ui/upgrade-icons.png`, §4.9):
+
+- a perfect circle: a cream face (#fff6e7) inside a gold rim, with the game's thick warm dark-brown
+  outline round it (never black);
+- inside, one subject, big and centred, filling most of the face: a Japanese lucky charm or a piece
+  of the game (a paw, a koban, a tai fish, an omamori, a daruma, the game's own balls);
+- the game's cel shading: soft pastel gradients, one small glossy highlight, light from the upper
+  left;
+- readable at 48 px: one clear shape, a few colours, no fine detail;
+- no text, letters, numbers or kanji anywhere, not even on coins, charms or bags (they are blank);
+- generated alone on plain white, one icon per image, square 1:1 (1024×1024).
+
+**Rim variants.** The gold rim is the default (upgrades, blessings, anything good). Other kinds of
+icon keep the medallion and change only the rim, named in the prompt below: trials (they make the
+game harder) get a **cool grey stone rim**; more variants are added here when a mockup approves
+them.
+
+**References to attach.** Always the approved icon sheet (`art-source/ui/upgrade-icons.*`); for a
+subject that is a game piece, its art too (a cat from `art-source/cats/`, a special ball from
+`art-source/specials/`). Until the icon sheet exists, attach the Upgrades mockup
+(`art-source/ui/upgrades-mockup.jpg`) instead.
+
+**The prompt.** Fill in the three `<…>` parts and paste the whole block:
+
+```text
+Style: match the attached icons exactly. Polished casual mobile-game art, cute chibi kawaii
+illustration, thick warm dark-brown outlines (never black) of even weight, soft pastel cel shading
+with gentle gradients and one small glossy highlight, light from the upper left, clean crisp
+vector-like edges, readable at 48 px.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow
+under the icon. No text, no letters, no numbers, no kanji, no watermark, no signature.
+
+One round icon for the mobile game "Maneki Merge", drawn exactly like the attached icons: a
+perfect circle, centred, filling about 80% of the canvas, with a cream face inside a
+<gold / cool grey stone> rim and the same thick dark-brown outline round it. Inside, big and
+centred: <the subject, e.g. "a red daruma doll with one eye painted in">. It stands for
+<what the icon means in the game, e.g. "an extra life">. Any coin, charm or bag in it is blank.
+Nothing sticks out of the circle. Square 1:1.
+```
+
+**Into the game.** Save the result as `art-source/icons/<id>.png` (or .jpg/.webp), where `<id>` is
+the id the code uses (an upgrade's, a pick's, …), and tell Claude. The art pipeline (`npm run art`)
+cuts the white, fits the medallion's circle and writes `public/assets/icons/<id>.webp`; a sheet like
+`ui/upgrade-icons.png` is split into its named quarters the same way. Check each icon against §2 and
+the list above; when one comes out wrong, fix the prompt and generate it again (Claude never
+retouches the art).
