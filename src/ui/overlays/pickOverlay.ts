@@ -18,9 +18,6 @@ export interface PickView {
   hide(): void;
 }
 
-/** A card's ball fills this share of its medallion's width (the art skin). */
-const PICK_BALL_SHARE = 0.62;
-
 const TITLES: Readonly<Record<PickKind, { title: string; detail: string }>> = {
   trial: { title: 'Choose a trial', detail: 'The coming stages get harder' },
   blessing: { title: 'Choose a blessing', detail: 'It lasts for the whole run' },
@@ -118,10 +115,10 @@ function createCard(card: PickCard, art: boolean, onSelect: () => void): HTMLBut
     icon.classList.add('is-art');
     icon.append(artImage(`${ICON_SPRITE_DIR}${sprite.file}`, 'pick-icon-art'));
   } else if (art) {
-    // The ball itself, its body PICK_BALL_SHARE of the medallion's width.
+    // The ball itself (or the pick's own picture), centred in the medallion.
     const ball = pickArt(card.id, card.level);
-    const image = artImage(`${ball.dir}${ball.sprite.file}`, 'pick-icon-ball');
-    image.style.width = `${(PICK_BALL_SHARE * 100 * ball.sprite.side) / (2 * ball.sprite.radius)}%`;
+    const image = artImage(ball.path, 'pick-icon-ball');
+    image.style.width = `${ball.width * 100}%`;
     icon.classList.toggle('is-golden', ball.golden);
     icon.append(image);
   } else {

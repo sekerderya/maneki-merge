@@ -9,6 +9,7 @@ import { DOOR_ART, DOOR_SPRITE_DIR } from '../config/doorSprites';
 import { HUD_BADGE_ART, HUD_SPRITE_DIR } from '../config/hudSprites';
 import { ICON_SPRITE_DIR, iconSprites } from '../config/iconSprites';
 import { MENU_SPRITE_DIR, menuSprites } from '../config/menuSprites';
+import { PICK_SPRITE_DIR, pickPictures } from '../config/pickSprites';
 import { JAR_ART, PAW_ART, SCENE_SPRITE_DIR } from '../config/sceneSprites';
 import { SHOP_ART, SHOP_SPRITE_DIR } from '../config/shopSprites';
 import { SPECIAL_ART, SPECIAL_SPRITE_DIR } from '../config/specialSprites';
@@ -68,10 +69,11 @@ export function loadArt(baseUrl: string): Promise<ArtImages> {
       ),
     ),
     specials,
-    // The Upgrades screen's pieces and icons (DOM), so it opens whole.
+    // The Upgrades screen's pieces and icons and the pick cards' pictures (DOM).
     Promise.all([
       ...Object.values(SHOP_ART).map(({ file }) => image(`${baseUrl}${SHOP_SPRITE_DIR}${file}`)),
       ...iconSprites().map(({ file }) => image(`${baseUrl}${ICON_SPRITE_DIR}${file}`)),
+      ...pickPictures().map(({ file }) => image(`${baseUrl}${PICK_SPRITE_DIR}${file}`)),
     ]),
   ]).then(([cats, jarBack, jarFront, paw, , , , specials]) => ({
     cats,
