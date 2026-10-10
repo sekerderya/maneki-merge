@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.29.2] - 2026-10-10
+
+### Added
+
+- Debug panel (`?debug=1`): a "Clear stage" button. It makes the stage's last cat from two size-8 cats at the dropper, so a whole stage clear plays at once: the pops, the stage doors, the picks and the zoom. Handy for trying the doors on a phone without playing a stage through.
+
 ## [0.29.1] - 2026-10-10
 
 ### Fixed
