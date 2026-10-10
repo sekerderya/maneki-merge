@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.33.2] - 2026-10-11
+
+### Added
+
+- The owner's last background: a wooden temple stage high on a mountainside, from stage 16. The mountain peak now comes from stage 21.
+
+### Changed
+
+- The shrine grows right after the stage clear, before the doors and the picks (the owner's call): "Stage clear!" slides away, "The shrine grows!" shows with the zoom and the new background, then the doors shut for the picks and open onto the new stage. The stage at the top changes as the jar finishes growing.
+
 ## [0.33.1] - 2026-10-11
 
 ### Added
