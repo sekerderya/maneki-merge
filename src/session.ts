@@ -10,8 +10,8 @@ import {
   BANNER_JAR_OFFSET,
   BANNER_NEW_CATS_MS,
   COMBO_JAR_OFFSET,
-  DOORS_CLOSE_MS,
   STAGE_CLEAR_BANNER_MS,
+  STAGE_CLEAR_EXIT_MS,
   HINT_MERGE_DELAY_MS,
   GOLDEN_COIN_FLIGHTS,
   JACKPOT_COIN_FLIGHTS,
@@ -291,12 +291,13 @@ export class GameSession {
     );
 
     // Stage clears and expansions (GAME_DESIGN §7, §7.1, §7.2): "Stage clear!" at the last stage.
-    // The banner stays STAGE_CLEAR_BANNER_MS, then the doors shut over it (§7.1).
-    events.on('stageCleared', (e) => {
+    // "Stage clear!" at every clear; it slides up off the screen as the doors come (§7.1).
+    events.on('stageCleared', () => {
       banners.combo(0, 0);
-      banners.show(e.next === 'expand' ? 'The shrine grows!' : 'Stage clear!', {
+      banners.show('Stage clear!', {
         y: bannerY(),
-        durationMs: STAGE_CLEAR_BANNER_MS + DOORS_CLOSE_MS,
+        durationMs: STAGE_CLEAR_BANNER_MS + STAGE_CLEAR_EXIT_MS,
+        exit: 'up',
       });
       this.clearedAt = performance.now();
     });
@@ -325,6 +326,8 @@ export class GameSession {
           const offer = run.pickOffer;
           if (this.current === run && offer) this.showPick(run, offer.kind, offer.options);
         });
+      // The doors set off as the banner slides away: they come in from off the screen, slowly at
+      // first, so the banner is gone before they show.
       const wait = this.clearedAt + STAGE_CLEAR_BANNER_MS - performance.now();
       this.clearedAt = 0;
       window.clearTimeout(this.doorsTimer);

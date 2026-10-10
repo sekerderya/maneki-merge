@@ -16,6 +16,8 @@ export interface BannerOptions {
   readonly tone?: 'jackpot';
   /** Where the banner's centre goes, in CSS pixels from the top of the play area. */
   readonly y?: number | undefined;
+  /** 'up': it leaves by sliding up off the screen instead of fading (a stage clear). */
+  readonly exit?: 'up';
 }
 
 export interface BannerView {
@@ -75,6 +77,7 @@ export function createBanners(root: HTMLElement): BannerView {
       node.setAttribute('role', 'status');
       node.append(el('p', 'banner-text', text));
       if (options.tone) node.classList.add(`is-${options.tone}`);
+      if (options.exit) node.classList.add(`is-exit-${options.exit}`);
       if (options.coins !== undefined) {
         const coins = el('p', 'banner-coins');
         coins.dataset['testid'] = 'banner-coins';

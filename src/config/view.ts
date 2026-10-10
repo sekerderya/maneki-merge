@@ -273,10 +273,13 @@ export const TAKE_BUTTON_GAP = 10;
 export const DOORS_CLOSE_MS = 1100;
 export const DOORS_OPEN_MS = 1200;
 /**
- * The stage-clear banner ("The shrine grows!") stays this long after the last cat is made before
- * the doors start to shut over it (v0.29.3, the owner's call).
+ * "Stage clear!" shows this long after the last cat is made, then slides up off the screen in
+ * STAGE_CLEAR_EXIT_MS as the doors set off; they come from off the screen, so it is gone before
+ * they show (v0.29.4, the owner's call). The
+ * banner's keyframes (`banner-exit-up` in game.css) hold until 75% = 1500 / (1500 + 500).
  */
-export const STAGE_CLEAR_BANNER_MS = 2000;
+export const STAGE_CLEAR_BANNER_MS = 1500;
+export const STAGE_CLEAR_EXIT_MS = 500;
 /** With reduced motion the doors fade in and out instead of folding. */
 export const DOORS_FADE_MS = 250;
 /** How far each door turns when a wing is folded up, degrees (90 would be flat shut). */

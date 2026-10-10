@@ -709,6 +709,36 @@
   }
 }
 
+/*
+ * "Stage clear!" (GAME_DESIGN §7.1): it pops in, holds, then slides up off the screen before the
+ * stage doors shut. The hold ends at 75%: STAGE_CLEAR_BANNER_MS / (+ STAGE_CLEAR_EXIT_MS).
+ */
+.banner.is-exit-up {
+  animation-name: banner-exit-up;
+}
+
+@keyframes banner-exit-up {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+  9% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.08);
+  }
+  15% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  75% {
+    transform: translate(-50%, -50%) scale(1);
+    animation-timing-function: cubic-bezier(0.55, 0, 0.8, 0.4);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, calc(-50% - 100vh)) scale(1);
+  }
+}
+
 /* Banner extras: a Jackpot's coins, a Lucky Save's "1 left". */
 .banner-coins {
   display: inline-flex;
@@ -851,7 +881,8 @@
 }
 
 /* Reduced motion: banners fade instead of popping; decorations stand still. */
-.reduce-motion .banner {
+.reduce-motion .banner,
+.reduce-motion .banner.is-exit-up {
   animation-name: banner-fade;
 }
 
