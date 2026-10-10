@@ -204,3 +204,22 @@
   opacity: 1;
   filter: grayscale(0.6) brightness(1.05);
 }
+
+/* The ball a card is about, centred in its medallion (pickArt.ts); a golden cat glows. */
+.pick-overlay.is-art .pick-icon {
+  position: relative;
+}
+
+.pick-icon-ball {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  height: auto;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 0 calc(1.5 * var(--u)) #4e2416);
+}
+
+.pick-icon.is-golden .pick-icon-ball {
+  filter: drop-shadow(0 0 calc(1.5 * var(--u)) #4e2416) drop-shadow(0 0 calc(8 * var(--u)) #ffc93c)
+    drop-shadow(0 0 calc(5 * var(--u)) #ffe08a);
+}

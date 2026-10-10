@@ -4,6 +4,7 @@ import { PICK_ARM_MS } from '../../config/view';
 import type { PickCard } from '../../core/picks';
 import { button, el } from '../dom';
 import { PICK_ICONS } from '../icons';
+import { pickArt } from '../pickArt';
 import { artImage, setUiArtProperties } from '../uiArt';
 
 export interface PickActions {
@@ -17,6 +18,9 @@ export interface PickView {
   hide(): void;
 }
 
+/** A card's ball fills this share of its medallion's width (the art skin). */
+const PICK_BALL_SHARE = 0.62;
+
 const TITLES: Readonly<Record<PickKind, { title: string; detail: string }>> = {
   trial: { title: 'Choose a trial', detail: 'The coming stages get harder' },
   blessing: { title: 'Choose a blessing', detail: 'It lasts for the whole run' },
@@ -27,7 +31,8 @@ const TITLES: Readonly<Record<PickKind, { title: string; detail: string }>> = {
  * a card, Choose confirms it; taps in the panel's first PICK_ARM_MS are ignored, so a tap still in
  * flight from the last drop can't pick. There is no skip and no reroll. With `art` (the art skin) it
  * is built from the Upgrades screen's pieces (pick-art.css): the title on its cream pill, the cards
- * with their stat strips and the icons of the icon kit, over the shut stage doors.
+ * with their stat strips, over the shut stage doors; each card's icon is the ball it is about, in a
+ * cream medallion (pickArt.ts), unless the icon kit has an icon for it.
  */
 export function createPickOverlay(root: HTMLElement, actions: PickActions, art = false): PickView {
   const overlay = el('div', 'overlay game-overlay pick-overlay');
@@ -109,6 +114,13 @@ function createCard(card: PickCard, art: boolean, onSelect: () => void): HTMLBut
   if (sprite) {
     icon.classList.add('is-art');
     icon.append(artImage(`${ICON_SPRITE_DIR}${sprite.file}`, 'pick-icon-art'));
+  } else if (art) {
+    // The ball itself, its body PICK_BALL_SHARE of the medallion's width.
+    const ball = pickArt(card.id, card.level);
+    const image = artImage(`${ball.dir}${ball.sprite.file}`, 'pick-icon-ball');
+    image.style.width = `${(PICK_BALL_SHARE * 100 * ball.sprite.side) / (2 * ball.sprite.radius)}%`;
+    icon.classList.toggle('is-golden', ball.golden);
+    icon.append(image);
   } else {
     icon.insertAdjacentHTML('beforeend', PICK_ICONS[card.id]);
   }
