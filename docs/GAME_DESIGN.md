@@ -67,7 +67,7 @@ Layout: everything sits where it is in the mockup, on a stage of the mockup's si
 - Overlays:
   - **Pause**: Resume, Sound, Haptics, Quit to Menu.
   - **Game Over**: score, best score, stage reached, the biggest cat made this run, coins earned this run, new-record badges (best score, best stage, biggest cat ever), Play Again, Menu.
-- Short banners: Combo, Jackpot, Stage clear! (every stage clear; until v0.29.4 a clear that grew the jar said "The shrine grows!"), Lucky Save!. (Until v0.29.5 the reveal of a new stage showed "New cats unlocked!" with the next goal; the owner removed it.)
+- Short banners: Combo, Jackpot, Stage clear! (every stage clear), The shrine grows! (as the jar grows, every 5 stages, v0.33; from v0.29.4 to v0.32 no banner, and until v0.29.4 it replaced "Stage clear!" at a clear that grew the jar), Lucky Save!. (Until v0.29.5 the reveal of a new stage showed "New cats unlocked!" with the next goal; the owner removed it.)
 - First-run hints: "Drag to aim, release to drop" and "Merge two identical cats".
 
 ## 3. Controls
@@ -83,7 +83,7 @@ Layout: everything sits where it is in the mockup, on a stage of the mockup's si
 
 ## 4. Cats: sizes and tiers
 
-Every stage holds the same 9 **sizes** of cat. A cat's **tier** is its number (the cat art doesn't show it, §13.1): it only ever goes up, from 1 at stage 1 to 45 at stage 5, and it sets the score and coins. A cat's size is its place in the current stage: `size = tier − firstTier(stage) + 1`, 1–9. Each stage starts right after the previous one's last tier, so stage 1 holds tiers 1–9, stage 2 tiers 10–18, stage 3 19–27, stage 4 28–36 and stage 5 37–45 (§7). (Until v0.12 a stage held 12 sizes, until v0.15 11 and until v0.24 10, and its last cat was the next stage's first; sizes 12 (radius 250), 11 (205) and 10 (163) are gone.)
+Every stage holds the same 9 **sizes** of cat. A cat's **tier** is its number (the cat art doesn't show it, §13.1): it only ever goes up, from 1 at stage 1 and without end (until v0.33 a run ended at stage 5, tier 45), and it sets the score and coins. A cat's size is its place in the current stage: `size = tier − firstTier(stage) + 1`, 1–9. Each stage starts right after the previous one's last tier, so stage 1 holds tiers 1–9, stage 2 tiers 10–18, stage 3 19–27, stage 4 28–36, stage 5 37–45, and so on: stage n holds tiers 9n − 8 to 9n (§7). (Until v0.12 a stage held 12 sizes, until v0.15 11 and until v0.24 10, and its last cat was the next stage's first; sizes 12 (radius 250), 11 (205) and 10 (163) are gone.)
 
 The radius depends on the size only: `r(s) = round(41 × 1.19^(s−1))` in world units; the jar is 600 × 870 at every stage. v0.24 (owner): every cat is 20% bigger, because a stage now ends at size 9 and needs half the cats (§7). With the same step, sizes 1–8 together cover as much of the jar as sizes 1–9 did, and size 9 (165, 0.28 of the jar's width) is as big as the old size 10. A test bot that drops each cat on a matching one clears stage 1 about as often as before (13 runs in 48 against 11), in half the drops (median 138 against 275); with 23% or 26% it cleared only 7. From v0.19.3 to v0.23 it was `round(34 × 1.19^(s−1))` (34 to 163: size 1 grew to what size 2 was and size 9 kept its radius). Before that it was `round(28 × 1.22^(s−1))` (28 to 168), chosen, when a stage still held 11 sizes, so that sizes 11, 9, 8, 7, 6 and 5 covered about as much of the jar as the same six fruits do in Suika Game's box (55% of its area).
 
@@ -117,15 +117,17 @@ When two tier-`t` cats merge, they pay score `S(t) = 2^t` and base coins `C(t) =
 |   27 |  1.3 × 10⁸ |    981,007 |    490,503.5 |
 |   36 | 6.9 × 10¹⁰ |  1.2 × 10⁸ |    5.8 × 10⁷ |
 |   45 | 3.5 × 10¹³ | 1.4 × 10¹⁰ |    6.9 × 10⁹ |
+|   54 | 1.8 × 10¹⁶ | 1.6 × 10¹² |   8.2 × 10¹¹ |
+|   90 | 1.2 × 10²⁷ | 3.2 × 10²⁰ |   1.6 × 10²⁰ |
 
-Values are rounded only when paid (§5). Implement the formulas. Unit tests assert these tables.
+Values are rounded only when paid (§5). Score and coins are doubles: `S(t)` stays exact at every tier, sums lose only digits too small to show, and both would overflow only past tier 1000 (stage 111). Implement the formulas. Unit tests assert these tables.
 
 ## 5. Merging
 
 - Two touching cats of the same tier merge into one cat of the next tier, with a pop. The new cat is born at rest exactly at their midpoint and grows from the old size to its new size over about 120 ms, so neighbours get pushed but never launched.
 - The new cat starts to turn gently, as if another cat had clipped it: the way its parents slid past each other (when a cat lands on the right shoulder of another, the new cat turns clockwise), small cats faster than big ones. On the floor it rolls a short way.
 - A cat takes part in at most one merge per physics step. Merges are queued during collision handling and resolved after the step. When pairs compete for a cat, the oldest cats merge first.
-- **The last cat.** Two size-8 cats merge into the stage's last cat (size 9). That clears the stage (§7): every other cat in the jar pops into its value, the last cat pops too once it has settled, and the jar grows, empty, into the next stage (at stage 5, the last, it stays).
+- **The last cat.** Two size-8 cats merge into the stage's last cat (size 9). That clears the stage (§7): every other cat in the jar pops into its value, the last cat pops too once it has settled, and the run moves on, with an empty jar, to the next stage (every 5 stages the jar grows on the way, §7).
 - **Jackpot.** Two of a stage's last cat don't merge upward: both vanish with a big celebration, paying score `2 × S(last)` and coins `5 × C(last)` before multipliers. In play this needs two last cats in the jar at once, which a clear prevents (the last cat pops), so in practice only the debug tools make one.
 - **Combo.** A merge within 1.0 s of the previous merge raises the combo counter; otherwise the counter resets to 1. "Combo ×N" shows from N = 2. Combos pay extra coins only with the Combo Charm upgrade. Jackpots count as merges for the combo; pops (stage clears, Lucky Save) neither raise it nor get a combo bonus.
 - **Golden cats** (§15.4) skip a tier when they merge. Until v0.21 the Golden Merge upgrade gave every merge a chance to pay ×3 coins; it is gone (§10).
@@ -143,31 +145,37 @@ Values are rounded only when paid (§5). Implement the formulas. Unit tests asse
 
 ## 7. Stages (signature mechanic)
 
-Every stage plays the same way: the same 600 × 870 jar (aspect 1 : 1.45), the same 9 sizes, the same drop pool of sizes 1–4 (§8) and the same goal, **making the stage's last cat** (size 9, from two size-8 cats). Every stage starts with an empty jar: the last cat isn't carried over (until v0.24 a stage's last cat, size 10, became the next stage's first; the owner ended that loop). Only the cats' tiers, and so the score and coins, keep growing. Every stage is open from the start: there are no stage locks (Shrine Expansion was removed in v0.12).
+Every stage plays the same way: the same 600 × 870 jar (aspect 1 : 1.45), the same 9 sizes, the same drop pool of sizes 1–4 (§8) and the same goal, **making the stage's last cat** (size 9, from two size-8 cats). Every stage starts with an empty jar: the last cat isn't carried over (until v0.24 a stage's last cat, size 10, became the next stage's first; the owner ended that loop). Only the cats' tiers, and so the score and coins, keep growing. Every stage is open from the start: there are no stage locks (Shrine Expansion was removed in v0.12). **Stages have no end** (v0.33, the owner's call): every clear moves the run on to the next stage, and the stage words at the top keep counting (until v0.33 the run stayed at stage 5, §7.2).
 
-| Stage | Tiers | Drops (sizes 1–4) | Last cat (the goal) |
-| ----: | ----- | ----------------- | ------------------: |
-|     1 | 1–9   | 1–4               |                   9 |
-|     2 | 10–18 | 10–13             |                  18 |
-|     3 | 19–27 | 19–22             |                  27 |
-|     4 | 28–36 | 28–31             |                  36 |
-|     5 | 37–45 | 37–40             |                  45 |
+| Stage | Tiers     | Drops (sizes 1–4) | Last cat (the goal) |
+| ----: | --------- | ----------------- | ------------------: |
+|     1 | 1–9       | 1–4               |                   9 |
+|     2 | 10–18     | 10–13             |                  18 |
+|     3 | 19–27     | 19–22             |                  27 |
+|     4 | 28–36     | 28–31             |                  36 |
+|     5 | 37–45     | 37–40             |                  45 |
+|     6 | 46–54     | 46–49             |                  54 |
+|     n | 9n−8 … 9n | 9n−8 … 9n−5       |                  9n |
 
-**The jar grows.** At a stage clear the empty jar grows on screen by 4.8 in every direction and the camera zooms out by as much. It is a look only: the grown jar is the same jar in world units, so every stage plays the same. The floor stays at the bottom of the jar, and the jar looks the same on screen at every stage. Later, a background per stage is meant to carry the feeling of growth. Until v0.24 the zoom was `r(10) / r(1)`, so the last cat shrank on screen to exactly the first cat's size and became the next stage's size 1.
+**The jar grows every 5 stages** (v0.33, the owner's call; until then at every clear). Stages 1–5 play in the first jar, 6–10 in the second, 11–15 in the third, and so on: clearing stage 5, 10, 15, … grows the jar into the next one, and the other clears move on to the next stage in the same jar, right after the picks (no zoom). When the jar grows, "The shrine grows!" shows, the empty jar grows on screen by 4.8 in every direction and the camera zooms out by as much. It is a look only: the grown jar is the same jar in world units, so every stage plays the same. The floor stays at the bottom of the jar, and the jar looks the same on screen at every stage.
+
+**A background per jar** carries the feeling of growth: each grown jar stands in a bigger place. Jar 1 (stages 1–5) stands in the sakura shrine garden; jar 2 (6–10) towers over a grand temple courtyard; jar 3 (11–15) stands on a hilltop above a whole shrine town; jar 4 (16–20) on a mountain peak above a sea of clouds; jar 5 (21 on) on a cloud island in the heavens (docs/ART_ASSETS.md phase 9). A jar after the last painted background keeps it. During the zoom the old garden shrinks towards the jar's feet and fades out (1.2 s, ease in-out, like the camera; with reduced motion it only fades), uncovering the new one. Until v0.24 the zoom was `r(10) / r(1)`, so the last cat shrank on screen to exactly the first cat's size and became the next stage's size 1.
 
 ### 7.1 Stage clear and expansion (about 2.1 s, plus the stage doors and the picks)
 
+Every clear runs steps 1 and 2 and the picks. A clear that doesn't grow the jar then moves on to the next stage at once: the jar is empty, the dropper's cats move to the new stage's pool (each keeps its size), and play resumes. Only every 5th clear runs steps 3–5.
+
 1. **Stage clear.** The moment the last cat is made (its merge pays as usual), every other cat in the jar pops into its value (§4, §5), oldest first, one after another within a quarter of a second, with a "+coins" each and a fanfare. "Stage clear!" shows for 1.5 s, then slides up off the screen (0.5 s) as the stage doors set off (v0.29.4, the owner's call; until then a clear that grew the jar said "The shrine grows!").
 2. Input is disabled and the dropper hides. For 0.5 s the last cat finishes growing and settles alone in the jar; the danger timer is reset. Then it pops into its value too (§5), and the jar is empty.
-3. **Zoom** (about 1.2 s): time stops (physics, the drop cooldown and the combo window freeze), with a whoosh and gold sparks along the rim. The camera zooms out by about 4.8, at an even rate on screen (ease in-out), while the walls slide outward and the rim rises. The camera leads a little, so the jar visibly widens into the new frame; both arrive together. The floor stays put.
+3. **Zoom** (about 1.2 s): "The shrine grows!" shows (2 s) and the next jar's background comes in (§7). Time stops (physics, the drop cooldown and the combo window freeze), with a whoosh and gold sparks along the rim. The camera zooms out by about 4.8, at an even rate on screen (ease in-out), while the walls slide outward and the rim rises. The camera leads a little, so the jar visibly widens into the new frame; both arrive together. The floor stays put.
 4. **Reveal** (0.4 s): the world is now the next stage's, with an empty jar. The dropper's cats move to the new stage's pool (§8), with a bell chime; no banner (v0.29.5, the owner's call; until then "New cats unlocked!" showed the new goal, the new stage's last cat).
 5. Physics resumes, the dropper returns, and input is enabled again.
 
-The trial and blessing picks (§15.5) come between steps 2 and 3, behind the **stage doors** (v0.29, the owner's idea): as "Stage clear!" (step 1) slides away, 1.5 s after the last cat is made, two folding screens of two tall shoji doors each slide in from the screen's sides, unfolding as they come (1.1 s), and shut over the whole screen, the HUD too. They come from off the screen, slowly at first, so the banner is gone before they show (v0.29.4; v0.29.3 kept the banner 2 s and shut the doors over it; until then the doors came at once and took 0.7 s). Like a byobu pushed along the floor, a wing's outer edges stay on the screen's plane while the hinge between its doors comes forward (v0.29.1, the owner's call; v0.29.0 swung each wing on the screen's edge like a door). The owner's picture, a shrine garden with a gold sun split between the two middle doors, runs across them (§13.1). The pick cards show in front of the shut doors. After the blessing the wings slide back out, folding up (1.2 s; 0.75 s until v0.29.3), and only then does the zoom start, so it shows from its first frame; at the last stage they open onto the empty jar. With reduced motion they fade in and out (0.25 s) instead of folding. A run saved while a pick waits comes back behind shut doors.
+The trial and blessing picks (§15.5) come between steps 2 and 3, behind the **stage doors** (v0.29, the owner's idea): as "Stage clear!" (step 1) slides away, 1.5 s after the last cat is made, two folding screens of two tall shoji doors each slide in from the screen's sides, unfolding as they come (1.1 s), and shut over the whole screen, the HUD too. They come from off the screen, slowly at first, so the banner is gone before they show (v0.29.4; v0.29.3 kept the banner 2 s and shut the doors over it; until then the doors came at once and took 0.7 s). Like a byobu pushed along the floor, a wing's outer edges stay on the screen's plane while the hinge between its doors comes forward (v0.29.1, the owner's call; v0.29.0 swung each wing on the screen's edge like a door). The owner's picture, a shrine garden with a gold sun split between the two middle doors, runs across them (§13.1). The pick cards show in front of the shut doors. After the blessing the wings slide back out, folding up (1.2 s; 0.75 s until v0.29.3), and only then does the zoom start, so it shows from its first frame; when the jar doesn't grow they open onto the next stage's empty jar. With reduced motion they fade in and out (0.25 s) instead of folding. A run saved while a pick waits comes back behind shut doors.
 
-### 7.2 The last stage
+### 7.2 No last stage
 
-At stage 5 there is no next stage: the clear still happens the same way (every other cat pops into its value and "Stage clear!" shows, the last cat settles for 0.5 s and pops, then the picks come), but the jar doesn't grow. The run goes on in the empty jar, and the next 45 clears the stage again.
+Since v0.33 there is none. From v0.24 to v0.32 stage 5 was the last: its clear happened the same way, but the jar didn't grow and the run stayed at stage 5, where the next 45 cleared it again. A run saved in the middle of such a clear goes on to stage 6.
 
 ## 8. Drop pool
 
@@ -193,7 +201,7 @@ At stage 5 there is no next stage: the clear still happens the same way (every o
 
 - Score: `S(t)` per merge and `2 × S(last)` per Jackpot. Score only drives best-score records (the stage clears, not the score, grow the jar).
 - Coins: merges, Jackpots, stage-clear pops and Lucky Save pops all pay out by the rule in §5.
-- Number formatting: thousands separators below 10,000, short format from 10,000 (12.5K, 125K, 3.2M, then B, T, Qa for 10^15 and Qi for 10^18): one decimal below 100 units, none from 100. The short format truncates instead of rounding, so a balance never looks bigger than it is (59,960 shows 59.9K, not 60K).
+- Number formatting: thousands separators below 10,000, short format from 10,000 (12.5K, 125K, 3.2M, then B, T, Qa for 10^15, Qi for 10^18, Sx, Sp, Oc, No and Dc for 10^33): one decimal below 100 units, none from 100. From 10^36 a mantissa and an exponent, truncated the same way ("1.2e36"; v0.33, stages have no end). The short format truncates instead of rounding, so a balance never looks bigger than it is (59,960 shows 59.9K, not 60K).
 
 ## 10. Upgrades (permanent, bought in the shop)
 
@@ -392,14 +400,14 @@ A boulder is a stone ball that only takes up room.
 
 ### 15.5 Stage-clear picks
 
-At every stage clear, including the repeated clears of the last stage, two picks come after the last cat settles alone and pops (§7.1 step 2) and before the zoom:
+At every stage clear two picks come after the last cat settles alone and pops (§7.1 step 2) and before the run moves on (with the zoom, every 5 stages):
 
 The cards show in front of the shut stage doors (§7.1). With the art skin (v0.32) they are built from the Upgrades screen's pieces (§13.1): the title on its cream pill with a line under it, three cards with the icon, the name and the level change ("Lv 0 → 1"), the effect and the stat in the tan strip, and Choose on the menu's coral PLAY pill, faded until a card is chosen. The chosen card pops forward (0.22 s, overshooting a little) in a thick ring of light, blue for a trial and gold for a blessing (v0.32.2, the owner found the first glow too faint; v0.32.4 dropped the dimming of the other cards, the owner's call). While the doors are shut the jar behind them isn't drawn, so the picks run smoothly on slow phones. Each card's icon is the game's own art for the ball it is about, in a cream medallion, stone-grey rimmed for a trial and gold for a blessing (v0.32.1, the owner's call): a pyramid of three boulders for More Boulders and a big boulder with a small one and an arrow for Big Boulders (the owner's pictures, v0.32.4); for Iron Bands the boulder as the pick will make it, with one band more than now; the magnet, the hanabi and the joker for theirs; the biggest drop (the size-4 cat) for Big Drops; a white cat with a gold glow for Golden Cats. An icon made later with the icon kit (docs/ART_ASSETS.md §5) would take its card's place.
 
 1. **Choose a trial:** 3 cards; the player picks one.
 2. **Choose a blessing:** 3 cards; the player picks one.
 
-Then the zoom follows (§7.1 step 3). At the last stage there is no zoom: play resumes after the picks, in the empty jar.
+Then the zoom follows when the jar grows (§7.1 step 3); after the other clears the next stage starts at once, in the same empty jar.
 
 - **Options:** each pick shows up to 3 different options, drawn at random from those not at their max level, with the run's seeded RNG. Today there are 3 trials, so the trial pick shows all of them in random order, and 5 blessings (v0.28), so the blessing pick shows 3 of the 5. With fewer than 3 left it shows fewer cards; with none left the pick is skipped.
 - The player must pick exactly one: no skip, no reroll, no rarities.

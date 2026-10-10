@@ -320,6 +320,12 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
 - [x] Batch 16 (v0.32.0), the trial and blessing picks in the owner's art (GAME_DESIGN §15.5):
   - [x] built from the Upgrades pieces over the shut doors: the title pill, the cards with their stat strips, Choose on the PLAY pill, a glow on the chosen card
   - [x] the cards' icons are the game's own balls (v0.32.1, the owner's call); Iron Bands shows the boulder with one band more than now
+- [x] Batch 17 (v0.33.0), endless stages (GAME_DESIGN §4, §7, §9, docs/ART_ASSETS.md phase 9):
+  - [x] stages and tiers have no end: every clear moves on to the next stage, and the stage words keep counting
+  - [x] the jar grows only every 5 stages, with "The shrine grows!" once the doors open; the other clears go on in the same jar
+  - [x] a background per jar (up to five), the old one shrinking away during the zoom; prompts for the four new ones in the art plan
+  - [x] numbers past 10^18: Sx, Sp, Oc, No, Dc, then "1.2e36"; a saved clear of the old last stage goes on to stage 6
+  - [ ] the owner's four backgrounds (`art-source/scene/background-2` to `-5`)
 
 ## M13: Final art integration
 
