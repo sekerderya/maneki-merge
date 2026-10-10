@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.29.1] - 2026-10-10
+
+### Fixed
+
+- The stage doors slide instead of swinging (the owner's call): each wing, a folding screen of two doors, slides in from the side and unfolds as it comes, then slides back out, folding up, before the zoom. Its outer edges stay on the screen's plane and the hinge between its doors comes forward, like a byobu pushed along the floor. In v0.29.0 each wing turned on the screen's edge like a door.
+- The first frame of the doors no longer flashes a dark shape: they were measured while still hidden.
+
 ## [0.29.0] - 2026-10-10
 
 ### Added
