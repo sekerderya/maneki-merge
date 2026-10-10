@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.33.1] - 2026-10-11
+
+### Added
+
+- The owner's backgrounds for the grown jars: a grand temple courtyard from stage 6, a hilltop above a shrine town from stage 11, and a mountain peak above a sea of clouds from stage 16. A step between the hilltop and the peak will come before the peak (docs/ART_ASSETS.md §4.10).
+
 ## [0.33.0] - 2026-10-11
 
 ### Added
