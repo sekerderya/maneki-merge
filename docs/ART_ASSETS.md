@@ -84,6 +84,7 @@ narrower than their canvas: Claude crops the empty space.
 | 12  | 4 menu  | `menu/settings-icons.png`          | Sheet: sound, haptics, reduce motion, how to play         | 1:1, 1024×1024    |
 | 13  | 4 menu  | `menu/banner.png`                  | Blank ribbon banner for "The shrine grows!" etc.          | 3:2, 1536×1024    |
 | 14  | 5 app   | `app-icon.png`                     | App icon                                                  | 1:1, 1024×1024    |
+| 15  | 6 doors | `doors/screen.png`                 | Four-panel folding screen for the stage-clear transition  | 2:3, 1024×1536 ×2 |
 
 How the pieces go into the game:
 
@@ -679,3 +680,69 @@ attached lineup sheet, big and centered, with its red collar and gold bell, on a
 sakura-pink background filling the whole square. Keep everything important inside the centre 80%
 (the corners get rounded and cropped). No text. Square 1:1.
 ```
+
+### 4.7 Phase 6: stage doors
+
+At a stage clear a folding screen (byōbu) closes over the game: two wings of two panels each fold
+in from the sides like an accordion and meet in the middle. The trial and blessing picks show in
+front of the closed screen; then it folds open again and the zoom plays as before (GAME_DESIGN
+§7.1). The fold is CSS 3D in code; the art is the screen seen flat and closed.
+
+Claude cuts the four panels apart at the white gaps and stretches each panel to the phone's height
+by repeating the plain lattice rows in the middle zone (a 390×844 screen needs about 45% more height
+than the 2:3 image), so the middle zone must be plain and its cells identical. The pick cards cover
+that zone anyway; the painting shows above and below them. Upscale ×2: it fills the whole screen.
+
+Attach the reference image, the lineup sheet and a game screenshot
+(`docs/screenshots/v0.26.0/390-2-trial.png`). Style block, then **one** of the two paintings
+(generate both if unsure and compare).
+
+**Variant A: gold clouds and sakura** (`doors/screen.png`):
+
+```text
+A Japanese folding screen (byobu) with four tall panels standing side by side, a game prop for a
+cute maneki-neko mobile game, shown completely flat: strictly front orthographic view, all four
+panels unfolded in one straight line, no perspective, no zigzag, no angle, no room around it.
+PANELS: four identical tall rectangular panels of exactly equal width, each with its own frame,
+separated by a narrow straight vertical gap of plain white background (about 1% of the image
+width), so each panel can be cut out on its own. No hinges, no metal between the panels. Together
+they fill the whole width of the canvas and about 96% of its height; nothing is cropped.
+FRAME: every panel has a chunky frame of glossy lacquered rose-brown wood (#813C2D), soft rounded
+outer corners, a warm lighter highlight along its top and left edges, and small gold corner caps
+on all four corners.
+PAPER AND LATTICE: inside each frame, warm cream washi paper (#FFF4E2, never pure white) behind a
+lattice of thin caramel-brown wooden bars: two vertical bars split each panel into three equal
+columns, and evenly spaced horizontal bars split it into tall rectangular cells, every row of
+cells exactly the same height from the top of the panel to the bottom.
+PAINTING: one picture painted on the paper behind the lattice bars, flowing across all four panels:
+- Top quarter: soft gold-leaf clouds (rounded, scalloped Japanese cloud bands) across all four
+  panels, with a sakura branch with pink blossoms reaching in from the left and from the right.
+- Middle (from 25% to 70% of the height): nothing painted. Only plain cream paper and identical
+  lattice cells, no petals, no stains, no shading change from top to bottom.
+- Bottom 30%: gold-leaf cloud bands again, gentle sakura-pink and cream wave arcs (seigaiha) along
+  the bottom, a few blank round gold coins and drifting pink petals.
+No cats on the screen. No text, no kanji, no calligraphy, no seal stamp. Plain flat solid white
+background around the screen, no floor, no cast shadow. Portrait 2:3.
+```
+
+**Variant B: the lucky cat** (`doors/screen-cat.png`): the same prompt, with the PAINTING part
+replaced by:
+
+```text
+PAINTING: one picture painted on the paper behind the lattice bars, flowing across all four panels:
+- Top quarter: soft gold-leaf clouds (rounded, scalloped Japanese cloud bands) across all four
+  panels, with blank round gold coins falling from them like gentle rain.
+- Middle (from 25% to 70% of the height): nothing painted. Only plain cream paper and identical
+  lattice cells, no coins, no petals, no shading change from top to bottom.
+- Bottom 30%: a big cute white maneki-neko like cat 1 of the attached lineup (round body, one
+  raised beckoning paw, red collar, gold bell) sitting on a pink cushion, painted across the two
+  middle panels so the gap between panel 2 and panel 3 runs straight down the middle of the cat,
+  with small piles of gold coins and sakura branches on both sides and gold cloud bands behind.
+```
+
+Checks for this one: four panels of equal width with straight white gaps between them; the
+panels are flat (no angle or zigzag); the paper is cream, not white; the middle zone is plain with
+at least four identical rows of cells; no kanji or stamp anywhere. If the tool draws the screen at
+an angle or the middle rows uneven, edit the image in the same thread: "Keep everything the same;
+make the four panels completely flat and facing the viewer" or "make every lattice row in the
+middle exactly the same height, with nothing painted there".
