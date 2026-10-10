@@ -182,7 +182,7 @@ describe('saved runs (GAME_DESIGN §11)', () => {
     run.jumpToStage(5);
     for (let i = 0; i < 5000 && (run.stage < 5 || run.state !== 'playing'); i++) run.tick();
     clearStage(run);
-    for (let i = 0; i < 600 && run.state === 'expanding'; i++) run.tick();
+    for (let i = 0; i < 2000 && run.state === 'expanding'; i++) run.tick();
     expect(run.state).toBe('choosing');
     const saved = roundTrip(run.snapshot());
     // v0.32 saved the last stage's clear as 5 → 5.

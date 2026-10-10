@@ -62,8 +62,9 @@ describe('growth clouds (GAME_DESIGN §7.1)', () => {
     expect(cloudLayout(0, 844)).toEqual([]);
   });
 
-  it('covers the screen, then parts, within the zoom and the reveal', () => {
+  it('covers the screen, then parts, in the zoom phase; the doors come 1.5 s later', () => {
     expect(CLOUDS_COVER_MS).toBeLessThan(CLOUDS_PART_MS);
-    expect(CLOUDS_TOTAL_MS).toBe(EXPANSION_ZOOM_MS + EXPANSION_REVEAL_MS);
+    expect(CLOUDS_TOTAL_MS).toBe(EXPANSION_ZOOM_MS);
+    expect(EXPANSION_REVEAL_MS).toBe(1500);
   });
 });

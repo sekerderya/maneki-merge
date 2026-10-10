@@ -268,11 +268,11 @@ export const STAGE_CLEAR_BANNER_MS = 1500;
 export const STAGE_CLEAR_EXIT_MS = 500;
 /**
  * "The shrine grows!" shows as the jar starts growing, right after "Stage clear!" has slid away
- * (every JAR_GROWTH_STAGES stages, v0.33.2): it holds through the zoom (1.2 s) and the reveal
- * (0.4 s), then slides up like "Stage clear!" as the doors come for the picks. The banner's
- * keyframes hold until 75%, so 2.1 s holds it about 1.6 s.
+ * (every JAR_GROWTH_STAGES stages, v0.33.2): it holds while the clouds come and part (2.05 s),
+ * then slides up like "Stage clear!", leaving the new place clear before the doors come. The
+ * banner's keyframes hold until 75%, so 2.75 s holds it about 2.05 s.
  */
-export const SHRINE_GROWS_BANNER_MS = 2100;
+export const SHRINE_GROWS_BANNER_MS = 2750;
 
 /**
  * The growth clouds (GAME_DESIGN §7.1, v0.33.3): when the jar grows, the owner's clouds well up
@@ -281,14 +281,15 @@ export const SHRINE_GROWS_BANNER_MS = 2100;
  * the new background settles from GROWTH_BG_START_SCALE to its size. Each cloud starts rising up
  * to CLOUD_RISE_JITTER_MS late and parting up to CLOUD_PART_STAGGER_MS late (the ones at the sides
  * last); the background changes halfway through the hold, when every cloud is up. The whole
- * transition lasts about as long as the zoom phase and the reveal (1.6 s), so the doors come as
- * it ends.
+ * transition (2.05 s) is the timeline's `zoom` phase (EXPANSION_ZOOM_MS); the doors come 1.5 s
+ * after it (EXPANSION_REVEAL_MS). v0.33.4 (the owner's call): rising and parting 30% slower than
+ * in v0.33.3 (0.55 + 0.08 s and 0.75 + 0.1 s), and the doors 1.5 s later.
  */
-export const CLOUD_RISE_MS = 550;
-export const CLOUD_RISE_JITTER_MS = 80;
+export const CLOUD_RISE_MS = 715;
+export const CLOUD_RISE_JITTER_MS = 110;
 export const CLOUD_HOLD_MS = 120;
-export const CLOUD_PART_MS = 750;
-export const CLOUD_PART_STAGGER_MS = 100;
+export const CLOUD_PART_MS = 975;
+export const CLOUD_PART_STAGGER_MS = 130;
 /** A big cloud is this share of the play area's width (the small ones a little less). */
 export const CLOUD_WIDTH_RATIO = 0.72;
 /** Cloud centres sit this share of a cloud's width apart in a row, and rows this share of its height. */

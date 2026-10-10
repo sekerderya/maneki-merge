@@ -1041,9 +1041,7 @@ function restoreExpansion(saved: ExpansionSnapshot, stage: number): Expansion {
   if (!valid) {
     throw new RangeError(`Invalid saved expansion ${from} → ${saved.to} at stage ${stage}`);
   }
-  const early =
-    (phase === 'zoom' && saved.elapsedSteps < ZOOM_START_STEPS) ||
-    (phase === 'reveal' && saved.elapsedSteps < ZOOM_START_STEPS + ZOOM_STEPS);
+  const early = (phase === 'zoom' || phase === 'reveal') && saved.elapsedSteps < ZOOM_START_STEPS;
   const elapsedSteps = saved.elapsedSteps + (early ? ZOOM_START_STEPS - CLEAR_STEPS : 0);
   const picks = saved.picks && !early;
   // Any time is safe: the next tick moves an overdue phase on.
