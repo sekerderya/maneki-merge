@@ -800,6 +800,12 @@ the shape:
 If the edit keeps the old size, ask for it as a new image in the same thread ("Generate this same
 picture again as a new image", then the same list).
 
+The edit only widened the canvas to 9:16 and left the folded screen as it was. Asked for a
+"folding screen" or "byobu", the tools draw folded furniture at an angle, because that is how
+every byobu photo looks. What to use instead: a new thread, size 9:16, attaching the restyled image
+(for its scene) and the two screenshots (for the style); style block, then:
+
+\
 Checks for this one: four panels of equal width with straight white gaps between them; the
 panels are flat (no angle or zigzag); the paper is cream, not white; the top two and bottom two
 rows of cells are plain and the same height as the others; no kanji or stamp anywhere. If the tool
