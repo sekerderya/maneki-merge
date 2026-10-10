@@ -5,7 +5,7 @@ import { el } from '../dom';
 import { ICON_COIN } from '../icons';
 
 export interface BannerOptions {
-  /** Cat icons shown under the text (e.g. the tiers "New cats unlocked!" announces). */
+  /** Cat icons shown under the text. */
   readonly tiers?: readonly number[];
   readonly durationMs?: number;
   /** A smaller line under the text, e.g. "1 left" for a Lucky Save. */

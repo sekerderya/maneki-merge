@@ -152,7 +152,6 @@ export const BANNER_MS = 1300;
  * expansion the top of the jar is empty, and the dropper above the rim stays visible.
  */
 export const BANNER_JAR_OFFSET = 0.15;
-export const BANNER_NEW_CATS_MS = 2000;
 
 /** "Combo ×N" (GAME_DESIGN §5) centres this far below the rim, as a fraction of the jar's height. */
 export const COMBO_JAR_OFFSET = 0.3;

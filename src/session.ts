@@ -8,7 +8,6 @@
 import { COMBO_BANNER_MIN } from './config/economy';
 import {
   BANNER_JAR_OFFSET,
-  BANNER_NEW_CATS_MS,
   COMBO_JAR_OFFSET,
   STAGE_CLEAR_BANNER_MS,
   STAGE_CLEAR_EXIT_MS,
@@ -301,17 +300,8 @@ export class GameSession {
       });
       this.clearedAt = performance.now();
     });
-    events.on('expansionRevealed', (e) => {
-      showPreview();
-      // The new stage's last cat is the next goal.
-      const goal = e.newTiers[e.newTiers.length - 1];
-      banners.show('New cats unlocked!', {
-        detail: 'Next goal',
-        tiers: goal === undefined ? [] : [goal],
-        durationMs: BANNER_NEW_CATS_MS,
-        y: bannerY(),
-      });
-    });
+    // The new stage's cats in NEXT; no banner (v0.29.5, the owner's call).
+    events.on('expansionRevealed', showPreview);
     events.on('expansionFinished', () => {
       showPreview();
       hud.setStage(run.stage);

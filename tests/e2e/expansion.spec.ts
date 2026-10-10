@@ -101,17 +101,14 @@ test('making the last cat (two 8s) clears stage 1 and grows an empty jar', async
     .toBe(2);
   await expect(page.getByTestId('doors')).toBeHidden();
 
-  // The reveal: stage 2 starts empty, and 18 is the next goal.
-  // One wait for the banner and its cat: it only shows for 2 s, and a slow software renderer
-  // can take most of that between two separate checks.
-  const banner = page.getByTestId('banner').filter({ hasText: 'New cats unlocked!' });
-  await expect(banner.locator('.cat-icon')).toHaveAttribute('data-tier', '18', WAIT);
+  // The reveal: stage 2 starts empty, with 18 as its last cat, and no banner announces it.
   await expect
     .poll(async () => {
       const s = await state(page);
       return [s.stage, s.lastTier];
-    })
+    }, WAIT)
     .toEqual([2, 18]);
+  await expect(page.getByTestId('banner').filter({ hasText: 'New cats unlocked!' })).toHaveCount(0);
 
   await expect.poll(async () => (await state(page)).runState, WAIT).toBe('playing');
   const s = await state(page);

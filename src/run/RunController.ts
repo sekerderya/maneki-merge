@@ -91,7 +91,7 @@ export interface SpawnOptions {
 /**
  * The stage-clear sequence (GAME_DESIGN §7.1). `clear`: the other cats have popped and the last
  * cat settles alone, then pops too (the picks come at its end); `zoom`: time stops and the camera
- * zooms out while the jar grows; `reveal`: the world is the new stage's ("New cats unlocked!").
+ * zooms out while the jar grows; `reveal`: the world is the new stage's.
  * At the last stage (`to` equals `from`) the jar doesn't grow: play goes on after the clear and
  * the picks. The scene derives camera and jar visuals from it.
  */
@@ -1009,7 +1009,7 @@ function restoreExpansion(saved: ExpansionSnapshot, stage: number): Expansion {
   return e;
 }
 
-/** The tiers a stage adds ("New cats unlocked!"), up to its last cat; none at the last stage. */
+/** The tiers a stage adds, up to its last cat; none at the last stage. */
 function newTiers(from: number, to: number): number[] {
   const fromLast = stageInfo(from).lastTier;
   const toLast = stageInfo(to).lastTier;

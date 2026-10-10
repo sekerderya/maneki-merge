@@ -134,7 +134,7 @@ export const RECIPES: Readonly<Record<SoundName, Recipe>> = {
     noise(v, { filter: 'bandpass', from: 260, to: 2600, q: 1.4, attack: 0.45, decay: 0.5 });
     tone(v, { from: 110, to: 220, glide: 0.9, attack: 0.3, decay: 0.6, gain: 0.25 });
   },
-  // New cats unlocked, Lucky Save: two bell notes.
+  // The new stage revealed, Lucky Save: two bell notes.
   chime(v) {
     bell(v, 1046.5, 0);
     bell(v, 1318.5, 0.14, 0.8);

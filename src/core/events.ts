@@ -176,7 +176,7 @@ export interface GameEvents {
   /**
    * The zoom has ended: the world is rescaled to the new stage (its last cat is now the new
    * stage's first) and the drop pool is the new stage's. Physics stays paused until
-   * `expansionFinished`. `newTiers`: the tiers the new stage adds ("New cats unlocked!").
+   * `expansionFinished`. `newTiers`: the tiers the new stage adds.
    */
   expansionRevealed: { readonly stage: number; readonly newTiers: readonly number[] };
   expansionFinished: { readonly stage: number; readonly newTiers: readonly number[] };
