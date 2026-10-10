@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.29.4] - 2026-10-10
+
+### Changed
+
+- Every stage clear says "Stage clear!" (the owner's call); "The shrine grows!" is gone. It shows for 1.5 s, then slides up off the screen in 0.5 s.
+- The stage doors set off as the banner slides away. They come in from off the screen, so the banner is gone before they show, and there is no pause between the two.
+
 ## [0.29.3] - 2026-10-10
 
 ### Changed
