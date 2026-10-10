@@ -9,10 +9,16 @@
  *   glass's inner edge, the rail) goes behind the cats, the bamboo frame in front of them.
  * - Paw: the white is cut, the image is cropped, and a plain row of the arm is found for the game
  *   to stretch (the vector skin's arm reaches up to the top of the screen; the art's fades out).
- * - Background: converted as is; its sky and floor colours are sampled for the screen around it.
+ * - Backgrounds: their sky and floor colours are sampled for the screen around them.
+ *   `background` is the first jar's (stages 1–5), converted as is; `background-2` to
+ *   `background-5` are the grown jars' (GAME_DESIGN §7), each optional until it is painted. They
+ *   are painted with the jar's spot where the first one has it, so each is scaled to the first's
+ *   size, cropped from the top (plain sky) or the sides if its shape differs, and the game places
+ *   them all the same way (BACKGROUND_JAR).
  */
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import sharp from 'sharp';
 import {
   alphaAt,
   clearRegion,
@@ -31,6 +37,14 @@ import type { Rect, Rgba } from './artImage.ts';
 const SOURCE_DIR = 'art-source/scene';
 const OUT_DIR = 'public/assets/scene';
 const DATA_FILE = 'src/config/sceneSpriteData.ts';
+/** The backgrounds' source names, the first jar's first (GAME_DESIGN §7). */
+const BACKGROUNDS = [
+  'background',
+  'background-2',
+  'background-3',
+  'background-4',
+  'background-5',
+] as const;
 
 /** The bamboo's ink outline: red channel below this. */
 const INK_MAX_RED = 150;
@@ -81,8 +95,15 @@ export async function buildScene(): Promise<void> {
   await mkdir(OUT_DIR, { recursive: true });
   const jar = await buildJar(await findSource(SOURCE_DIR, 'jar'));
   const paw = await buildPaw(await findSource(SOURCE_DIR, 'paw'));
-  const background = await buildBackground(await findSource(SOURCE_DIR, 'background'));
-  await writeFile(DATA_FILE, dataModule(jar, paw, background));
+  const backgrounds: BackgroundData[] = [];
+  const files = await readdir(SOURCE_DIR);
+  for (const name of BACKGROUNDS) {
+    // The first is required; a later one stops the list where it is missing.
+    if (backgrounds.length > 0 && !files.some((f) => f.startsWith(`${name}.`))) break;
+    const first = backgrounds[0];
+    backgrounds.push(await buildBackground(await findSource(SOURCE_DIR, name), name, first));
+  }
+  await writeFile(DATA_FILE, dataModule(jar, paw, backgrounds));
   console.log(`Wrote the scene to ${OUT_DIR} and ${DATA_FILE}`);
 }
 
@@ -221,9 +242,14 @@ async function buildPaw(path: string): Promise<PawData> {
   return data;
 }
 
-async function buildBackground(path: string): Promise<BackgroundData> {
-  const image = await loadRgba(path);
-  await saveWebp(image, join(OUT_DIR, 'background.webp'), 85);
+async function buildBackground(
+  path: string,
+  name: string,
+  size?: { readonly width: number; readonly height: number },
+): Promise<BackgroundData> {
+  const image = size ? await loadSized(path, size.width, size.height) : await loadRgba(path);
+  const file = `${name}.webp`;
+  await saveWebp(image, join(OUT_DIR, file), 85);
   const sample = (y0: number, y1: number): string => {
     const samples: number[][] = [];
     for (let y = y0; y < y1; y++) {
@@ -232,7 +258,7 @@ async function buildBackground(path: string): Promise<BackgroundData> {
     return median(samples);
   };
   const data: BackgroundData = {
-    file: 'background.webp',
+    file,
     width: image.width,
     height: image.height,
     sky: sample(0, 6),
@@ -240,6 +266,20 @@ async function buildBackground(path: string): Promise<BackgroundData> {
   };
   console.log(`${path}: ${image.width}×${image.height}, sky ${data.sky}, ground ${data.ground}`);
   return data;
+}
+
+/** `path` scaled to cover width × height, keeping its bottom (the floor) and centre. */
+async function loadSized(path: string, width: number, height: number): Promise<Rgba> {
+  const { data, info } = await sharp(path)
+    .resize(width, height, { fit: 'cover', position: 'bottom' })
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  return {
+    data: new Uint8ClampedArray(data.buffer, data.byteOffset, data.length),
+    width: info.width,
+    height: info.height,
+  };
 }
 
 /** A copy of `image` keeping only the pixels where `keep` holds. */
@@ -316,7 +356,18 @@ function rects(list: readonly Rect[]): string {
   return list.map((r) => `{ x: ${r.x}, y: ${r.y}, w: ${r.w}, h: ${r.h} }`).join(', ');
 }
 
-function dataModule(jar: JarData, paw: PawData, bg: BackgroundData): string {
+function dataModule(jar: JarData, paw: PawData, backgrounds: readonly BackgroundData[]): string {
+  const bgs = backgrounds
+    .map(
+      (bg) => `  {
+    file: '${bg.file}',
+    width: ${bg.width},
+    height: ${bg.height},
+    sky: '${bg.sky}',
+    ground: '${bg.ground}',
+  },`,
+    )
+    .join('\n');
   return `/**
  * Generated by tools/build-art.ts (\`npm run art\`) from art-source/scene/: do not edit by hand.
  * Image pixels of the sprites in public/assets/scene/ (see sceneSprites.ts for each field).
@@ -347,13 +398,10 @@ export const PAW_SPRITE: PawSprite = {
   armRow: ${paw.armRow},
 };
 
-export const BACKGROUND_SPRITE: BackgroundSprite = {
-  file: '${bg.file}',
-  width: ${bg.width},
-  height: ${bg.height},
-  sky: '${bg.sky}',
-  ground: '${bg.ground}',
-};
+/** The first jar's background first, then the grown jars' painted so far. */
+export const BACKGROUND_SPRITES: readonly BackgroundSprite[] = [
+${bgs}
+];
 
 `;
 }

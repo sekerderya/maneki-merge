@@ -9,8 +9,11 @@ import { createHud } from '../hud/hud';
 import type { HudActions, HudView } from '../hud/hud';
 import { JAR_GLASS } from '../../config/jarArt';
 import { JAR_WIDTH } from '../../config/stages';
-import { BACKGROUND_ART, BACKGROUND_JAR, SCENE_SPRITE_DIR } from '../../config/sceneSprites';
-import { TAKE_ARM_MS, TAKE_BUTTON_GAP } from '../../config/view';
+import { BACKGROUND_JAR, backgroundArt, SCENE_SPRITE_DIR } from '../../config/sceneSprites';
+import type { BackgroundSprite } from '../../config/sceneSprites';
+import { EXPANSION_ZOOM_MS } from '../../config/timings';
+import { STAGE_ZOOM, TAKE_ARM_MS, TAKE_BUTTON_GAP } from '../../config/view';
+import { reducedMotion } from '../../platform';
 import { SCENERY_JAR, SCENERY_VIEW, sceneryMarkup } from '../scenery';
 
 export interface GameScreenActions extends HudActions {
@@ -55,6 +58,12 @@ export interface GameScreenView {
    * ignores taps for TAKE_ARM_MS, so a quick double tap can't take a ball by mistake.
    */
   setTakePrompt(prompt: ScreenTakePrompt): void;
+  /**
+   * Shows jar `jar`'s background (GAME_DESIGN §7: 1 for stages 1–5, 2 for 6–10, …). With `grow`
+   * the old garden shrinks towards the jar's feet and fades out over the zoom, as the camera pulls
+   * back, uncovering the new one; else it just switches. Only the painted backgrounds change.
+   */
+  setJar(jar: number, grow: boolean): void;
 }
 
 /**
@@ -73,15 +82,26 @@ export function createGameScreen(
   const playArea = el('div', 'play-area');
   playArea.dataset['testid'] = 'play-area';
   let scenery: HTMLElement | SVGSVGElement;
+  let art: BackgroundSprite = backgroundArt(1);
+  const showArt = (image: HTMLImageElement): void => {
+    image.src = `${import.meta.env.BASE_URL}${SCENE_SPRITE_DIR}${art.file}`;
+    playArea.style.setProperty('--scene-sky', art.sky);
+    playArea.style.setProperty('--scene-ground', art.ground);
+  };
+  // The old background while it leaves after the jar grew (setJar).
+  let leaving: Animation | null = null;
+  let lastBox: ScreenJarBox | null = null;
   if (sceneArt) {
     const image = el('img', 'play-scenery is-art');
-    image.src = `${import.meta.env.BASE_URL}${SCENE_SPRITE_DIR}${BACKGROUND_ART.file}`;
     image.alt = '';
     image.draggable = false;
+    showArt(image);
     playArea.append(image);
+    // The grown jars' gardens load ahead, so the first growth never shows a blank one.
+    for (let jar = 2; backgroundArt(jar) !== backgroundArt(jar - 1); jar++) {
+      new Image().src = `${import.meta.env.BASE_URL}${SCENE_SPRITE_DIR}${backgroundArt(jar).file}`;
+    }
     playArea.classList.add('has-scene-art');
-    playArea.style.setProperty('--scene-sky', BACKGROUND_ART.sky);
-    playArea.style.setProperty('--scene-ground', BACKGROUND_ART.ground);
     scenery = image;
   } else {
     playArea.insertAdjacentHTML('beforeend', sceneryMarkup());
@@ -115,6 +135,21 @@ export function createGameScreen(
     for (const listener of hudListeners) listener();
   }).observe(hudRoot);
 
+  /** Scales and moves the drawing so its jar lands on the real one. */
+  const placeScenery = (box: ScreenJarBox): void => {
+    // The painted background also always spans the play area's width (on wide screens its rug
+    // is then wider than the jar).
+    const jar = sceneArt ? BACKGROUND_JAR : SCENERY_JAR;
+    const view = sceneArt ? art : SCENERY_VIEW;
+    let scale = (box.right - box.left) / jar.width;
+    if (sceneArt) scale = Math.max(scale, playArea.clientWidth / view.width);
+    const style = scenery.style;
+    style.left = `${(box.left + box.right) / 2 - jar.cx * scale}px`;
+    style.top = `${box.bottom - jar.floor * scale}px`;
+    style.width = `${view.width * scale}px`;
+    style.height = `${view.height * scale}px`;
+  };
+
   return {
     hud,
     hint,
@@ -128,17 +163,8 @@ export function createGameScreen(
       hudListeners.push(listener);
     },
     setJarBox(box, growing) {
-      // Scale and move the drawing so its jar lands on the real one. The painted background also
-      // always spans the play area's width (on wide screens its rug is then wider than the jar).
-      const jar = sceneArt ? BACKGROUND_JAR : SCENERY_JAR;
-      const view = sceneArt ? BACKGROUND_ART : SCENERY_VIEW;
-      let scale = (box.right - box.left) / jar.width;
-      if (sceneArt) scale = Math.max(scale, playArea.clientWidth / view.width);
-      const style = scenery.style;
-      style.left = `${(box.left + box.right) / 2 - jar.cx * scale}px`;
-      style.top = `${box.bottom - jar.floor * scale}px`;
-      style.width = `${view.width * scale}px`;
-      style.height = `${view.height * scale}px`;
+      lastBox = box;
+      placeScenery(box);
       // World units → CSS pixels for the glass.
       const unit = (box.right - box.left) / JAR_WIDTH;
       const g = glass.style;
@@ -149,6 +175,36 @@ export function createGameScreen(
       g.setProperty('--glass-inset', `${JAR_GLASS.lineInset * unit}px`);
       g.setProperty('--glass-line', `${JAR_GLASS.lineWidth * unit}px`);
       glass.classList.toggle('is-hidden', growing);
+    },
+    setJar(jar, grow) {
+      const next = backgroundArt(jar);
+      if (!sceneArt || next === art || !(scenery instanceof HTMLImageElement)) return;
+      leaving?.finish();
+      if (grow) {
+        // A copy of the old garden on top: it shrinks towards the jar's feet as it fades out.
+        const old = scenery.cloneNode() as HTMLImageElement;
+        old.classList.add('is-leaving');
+        old.style.transformOrigin = `${(BACKGROUND_JAR.cx / art.width) * 100}% ${(BACKGROUND_JAR.floor / art.height) * 100}%`;
+        scenery.after(old);
+        const end = reducedMotion()
+          ? { opacity: 0 }
+          : { opacity: 0, transform: `scale(${1 / STAGE_ZOOM})` };
+        const animation = old.animate([{ opacity: 1, transform: 'scale(1)' }, end], {
+          duration: EXPANSION_ZOOM_MS,
+          easing: 'ease-in-out',
+          fill: 'forwards',
+        });
+        leaving = animation;
+        const done = (): void => {
+          old.remove();
+          if (leaving === animation) leaving = null;
+        };
+        animation.addEventListener('finish', done);
+        animation.addEventListener('cancel', done);
+      }
+      art = next;
+      showArt(scenery);
+      if (lastBox) placeScenery(lastBox);
     },
     setTakePrompt(prompt) {
       if (!prompt) {

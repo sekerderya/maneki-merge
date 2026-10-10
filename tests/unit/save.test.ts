@@ -171,7 +171,7 @@ describe('sanitize', () => {
     const result = sanitize({
       wallet: { coins: -5 },
       upgrades: { luckyPaw: 99, bigCatch: 2.7, comboCharm: null, secondChance: 'max' },
-      records: { bestScore: Number.NaN, bestStage: 0, highestTier: 99 },
+      records: { bestScore: Number.NaN, bestStage: 0, highestTier: 2.5 },
       stats: 'lots',
       settings: { sound: 'yes', haptics: false },
       flags: { hintsSeen: { aim: 1, merge: true } },
@@ -195,7 +195,7 @@ describe('sanitize', () => {
     expect(d.upgrades.bigCatch).toBe(2); // floored
     expect(d.upgrades.comboCharm).toBe(0);
     expect(d.upgrades.secondChance).toBe(0);
-    expect(d.records).toEqual({ bestScore: 0, bestStage: 1, highestTier: 45 });
+    expect(d.records).toEqual({ bestScore: 0, bestStage: 1, highestTier: 2 });
     expect(d.stats).toEqual(defaultSave().stats);
     expect(d.settings).toEqual({ sound: true, haptics: false, reduceMotion: false });
     expect(d.flags.hintsSeen).toEqual({ aim: false, merge: true, magnet: false });
@@ -374,7 +374,7 @@ describe('v3 → v4: 10 cats per stage (v0.15)', () => {
     expect(shrinkStages({ records: { highestTier: '51' } })).toEqual({
       records: { highestTier: '51' },
     });
-    const broken = migrate(v3(99));
+    const broken = migrate(v3(-3));
     expect(broken.status).toBe('repaired');
     expect(broken.issues).toEqual(['records.highestTier']);
   });
@@ -448,7 +448,7 @@ describe('v5 → v6: 9 cats per stage, no loop (v0.24)', () => {
   it('leaves malformed data for the repair', () => {
     expect(endStageLoop(null)).toBeNull();
     expect(endStageLoop({ records: 'none' })).toEqual({ records: 'none' });
-    const broken = migrate(v5(99));
+    const broken = migrate(v5(-3));
     expect(broken.status).toBe('repaired');
     expect(broken.issues).toEqual(['records.highestTier']);
   });

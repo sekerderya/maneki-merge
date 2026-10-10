@@ -5,8 +5,7 @@
  */
 import { HINT_IDS, SAVE_BACKUP_LIMIT, SAVE_BACKUP_PREFIX, SAVE_KEY } from '../config/app';
 import type { HintId } from '../config/app';
-import { FIRST_STAGE, STAGE_COUNT } from '../config/stages';
-import { TIER_COUNT } from '../config/tiers';
+import { FIRST_STAGE } from '../config/stages';
 import { UPGRADE_IDS, UPGRADES } from '../config/upgrades';
 import type { UpgradeId } from '../config/upgrades';
 
@@ -88,6 +87,8 @@ const V2_TIER_COUNT = 56;
 const V3_TIER_COUNT = 51;
 /** The highest tier from v0.15 to v0.23, when stages held 10 cats (stage 5 ended at tier 46). */
 const V4_TIER_COUNT = 46;
+/** The highest tier from v0.24 to v0.32, when a run ended at stage 5 (its last cat was tier 45). */
+const V5_TIER_COUNT = 45;
 
 /**
  * v2 → v3 (v0.12): Shrine Expansion and Fortune Teller are gone, and the coins spent on their
@@ -136,7 +137,7 @@ export function retireGoldenMerge(data: unknown): unknown {
  * (tiers up to 45), so a higher record tier is capped. Anything malformed is left for `sanitize`.
  */
 export function endStageLoop(data: unknown): unknown {
-  return isRecord(data) ? capRecordTier(data, V4_TIER_COUNT, TIER_COUNT) : data;
+  return isRecord(data) ? capRecordTier(data, V4_TIER_COUNT, V5_TIER_COUNT) : data;
 }
 
 /** Lowers a record tier in (`max`, `oldMax`] to `max`: the stages shrank from `oldMax` to `max`. */
@@ -284,14 +285,15 @@ export function sanitize(data: Record<string, unknown>): { data: SaveData; issue
 
   const records = r.section(data, 'records');
   out.records.bestScore = r.count(records, 'records.bestScore', 0);
+  // Stages and tiers have no end since v0.33.
   out.records.bestStage = r.count(
     records,
     'records.bestStage',
     FIRST_STAGE,
-    STAGE_COUNT,
+    Number.MAX_SAFE_INTEGER,
     FIRST_STAGE,
   );
-  out.records.highestTier = r.count(records, 'records.highestTier', 0, TIER_COUNT);
+  out.records.highestTier = r.count(records, 'records.highestTier', 0, Number.MAX_SAFE_INTEGER);
 
   const stats = r.section(data, 'stats');
   for (const key of ['runsPlayed', 'totalMerges', 'totalCoinsEarned', 'jackpots'] as const) {

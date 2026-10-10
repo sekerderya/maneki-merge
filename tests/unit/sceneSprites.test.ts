@@ -1,8 +1,9 @@
 import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
-  BACKGROUND_ART,
+  BACKGROUND_ARTS,
   BACKGROUND_JAR,
+  backgroundArt,
   JAR_ART,
   JAR_ART_SCALE_X,
   JAR_ART_SCALE_Y,
@@ -21,7 +22,8 @@ const inside = (r: PxRect, w: number, h: number): boolean =>
 
 describe('scene art sprites (GAME_DESIGN §13.1)', () => {
   it('ships every image', () => {
-    for (const file of [JAR_ART.back, JAR_ART.front, PAW_ART.file, BACKGROUND_ART.file]) {
+    const backgrounds = BACKGROUND_ARTS.map((art) => art.file);
+    for (const file of [JAR_ART.back, JAR_ART.front, PAW_ART.file, ...backgrounds]) {
       expect(existsSync(`public/${SCENE_SPRITE_DIR}${file}`), file).toBe(true);
     }
   });
@@ -67,10 +69,22 @@ describe('scene art sprites (GAME_DESIGN §13.1)', () => {
     expect(PAW_ART.pawWidth).toBeLessThanOrEqual(PAW_ART.width);
   });
 
-  it('stands the jar inside the background, with its sky and floor colours', () => {
-    expect(BACKGROUND_JAR.cx).toBeLessThan(BACKGROUND_ART.width);
-    expect(BACKGROUND_JAR.floor).toBeLessThan(BACKGROUND_ART.height);
-    expect(BACKGROUND_ART.sky).toMatch(HEX);
-    expect(BACKGROUND_ART.ground).toMatch(HEX);
+  it('stands the jar inside every background, with its sky and floor colours', () => {
+    expect(BACKGROUND_ARTS.length).toBeGreaterThanOrEqual(1);
+    expect(BACKGROUND_ARTS.length).toBeLessThanOrEqual(5);
+    for (const art of BACKGROUND_ARTS) {
+      expect(BACKGROUND_JAR.cx).toBeLessThan(art.width);
+      expect(BACKGROUND_JAR.floor).toBeLessThan(art.height);
+      expect(art.sky).toMatch(HEX);
+      expect(art.ground).toMatch(HEX);
+    }
+  });
+
+  it('gives each jar its background, the last one for every jar after it', () => {
+    expect(backgroundArt(1)).toBe(BACKGROUND_ARTS[0]);
+    expect(backgroundArt(0)).toBe(BACKGROUND_ARTS[0]);
+    const last = BACKGROUND_ARTS[BACKGROUND_ARTS.length - 1];
+    expect(backgroundArt(BACKGROUND_ARTS.length)).toBe(last);
+    expect(backgroundArt(50)).toBe(last);
   });
 });

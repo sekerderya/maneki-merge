@@ -135,7 +135,7 @@ export interface GameEvents {
     readonly coins: number;
     readonly combo: number;
   };
-  /** Two of a stage's last cat met (only at the last stage): both vanished. */
+  /** Two of a stage's last cat met (only the debug tools make that): both vanished. */
   jackpot: {
     readonly tier: number;
     readonly at: WorldPoint;
@@ -163,19 +163,19 @@ export interface GameEvents {
   dangerTick: { readonly secondsLeft: number };
   /**
    * A stage's last cat was made (GAME_DESIGN §7): every other cat has just popped (`catPopped`,
-   * reason `cashOut`). `next` says what follows: the jar grows (the run is now `expanding`), or
-   * this is the last stage and play goes on.
+   * reason `cashOut`), and the run is now `expanding`. `grows`: the jar grows into the next stage
+   * (every JAR_GROWTH_STAGES stages); else the next stage plays in the same jar.
    */
   stageCleared: {
     readonly stage: number;
     readonly tier: number;
-    readonly next: 'expand' | 'final';
+    readonly grows: boolean;
   };
   /** The stage clear is over and the camera starts zooming out (whoosh, rim sparks). */
   expansionStarted: { readonly from: number; readonly to: number };
   /**
-   * The zoom has ended: the world is rescaled to the new stage (its last cat is now the new
-   * stage's first) and the drop pool is the new stage's. Physics stays paused until
+   * The run moved on to the next stage (after the zoom when the jar grew, else right after the
+   * picks): the jar is empty and the drop pool is the new stage's. Physics stays paused until
    * `expansionFinished`. `newTiers`: the tiers the new stage adds.
    */
   expansionRevealed: { readonly stage: number; readonly newTiers: readonly number[] };

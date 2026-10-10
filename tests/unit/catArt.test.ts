@@ -10,7 +10,7 @@ import {
   numberOffset,
 } from '../../src/config/catArt';
 import type { ArtShape } from '../../src/config/catArt';
-import { STAGES } from '../../src/config/stages';
+import { stageInfo } from '../../src/config/stages';
 import { SIZE_COUNT, STAGE_TIER_STEP } from '../../src/config/tiers';
 import { catSvg } from '../../src/ui/catIcon';
 
@@ -21,7 +21,8 @@ describe('lucky-cat art (GAME_DESIGN §13)', () => {
   it('has one look per size of a stage, and size 10 wears size 1’s', () => {
     expect(CAT_LOOKS).toHaveLength(STAGE_TIER_STEP);
     expect(new Set(CAT_LOOKS.map((l) => l.name)).size).toBe(CAT_LOOKS.length);
-    for (const { stage, firstTier } of STAGES) {
+    for (let stage = 1; stage <= 12; stage++) {
+      const { firstTier } = stageInfo(stage);
       for (let size = 1; size <= SIZE_COUNT; size++) {
         const look = catLook(firstTier + size - 1);
         expect(look, `stage ${stage} size ${size}`).toBe(CAT_LOOKS[(size - 1) % STAGE_TIER_STEP]);

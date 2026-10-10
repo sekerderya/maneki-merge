@@ -20,16 +20,17 @@ import {
 import { TIER_COLORS, tierColor } from '../../src/config/skin';
 import {
   catRadius,
+  clearGrowsJar,
   DROP_SIZES,
   DROP_WEIGHTS,
   DROPPER_HEADROOM_RATIO,
   isStage,
   JAR_HEIGHT,
   JAR_WIDTH,
-  STAGE_COUNT,
+  JAR_GROWTH_STAGES,
   stageHoldsTier,
   stageInfo,
-  STAGES,
+  stageJar,
   tierSize,
 } from '../../src/config/stages';
 import {
@@ -40,9 +41,7 @@ import {
   STAGE_TIER_STEP,
   SIZE_BASE_RADIUS,
   SIZE_RADIUS_GROWTH,
-  TIER_COUNT,
   tierInfo,
-  TIERS,
 } from '../../src/config/tiers';
 import * as timings from '../../src/config/timings';
 import { UPGRADE_IDS, UPGRADES } from '../../src/config/upgrades';
@@ -113,10 +112,10 @@ describe('tiers (GAME_DESIGN §4)', () => {
     [45, 35_184_372_088_832, 13_795_979_509],
   ];
 
-  it('has 45 tiers: stage 5 ends at tier 45', () => {
-    expect(TIER_COUNT).toBe(45);
-    expect(TIERS).toHaveLength(45);
-    expect(TIER_COUNT).toBe(stageInfo(STAGE_COUNT).lastTier);
+  it('has no last tier: tier 9n ends stage n', () => {
+    expect(stageInfo(5).lastTier).toBe(45);
+    expect(stageInfo(20).lastTier).toBe(180);
+    expect(tierInfo(100)).toEqual({ tier: 100, score: 2 ** 100, coins: Math.round(1.7 ** 99) });
   });
 
   it.each(TABLE)('tier %i: score %i, coins %i', (tier, score, coins) => {
@@ -125,16 +124,18 @@ describe('tiers (GAME_DESIGN §4)', () => {
 
   it('rejects unknown tiers', () => {
     expect(isTier(0)).toBe(false);
-    expect(isTier(46)).toBe(false);
+    expect(isTier(46)).toBe(true);
     expect(isTier(2.5)).toBe(false);
+    expect(isTier(Infinity)).toBe(false);
     expect(() => tierInfo(0)).toThrow(RangeError);
-    expect(() => tierInfo(46)).toThrow(RangeError);
+    expect(() => tierInfo(-1)).toThrow(RangeError);
   });
 
   it('repeats the colours with the sizes, so every stage looks the same', () => {
     expect(TIER_COLORS).toHaveLength(STAGE_TIER_STEP);
     expect(new Set(TIER_COLORS).size).toBe(TIER_COLORS.length);
-    for (const info of STAGES) {
+    for (let stage = 1; stage <= 12; stage++) {
+      const info = stageInfo(stage);
       for (let size = 1; size <= SIZE_COUNT; size++) {
         expect(tierColor(info.firstTier + size - 1)).toBe(tierColor(size));
       }
@@ -152,11 +153,23 @@ describe('stages (GAME_DESIGN §7)', () => {
     [3, 19, 27, [19, 22]],
     [4, 28, 36, [28, 31]],
     [5, 37, 45, [37, 40]],
+    [6, 46, 54, [46, 49]],
+    [11, 91, 99, [91, 94]],
   ];
 
-  it('has 5 stages', () => {
-    expect(STAGE_COUNT).toBe(5);
-    expect(STAGES).toHaveLength(5);
+  it('grows the jar every 5 stages', () => {
+    expect(JAR_GROWTH_STAGES).toBe(5);
+    expect([1, 4, 5, 6, 10, 11, 15].map(clearGrowsJar)).toEqual([
+      false,
+      false,
+      true,
+      false,
+      true,
+      false,
+      true,
+    ]);
+    expect([1, 5, 6, 10, 11, 16, 100].map(stageJar)).toEqual([1, 1, 2, 2, 3, 4, 20]);
+    expect(clearGrowsJar(0)).toBe(false);
   });
 
   it.each(TABLE)('stage %i: tiers %i–%i, pool %j', (stage, firstTier, lastTier, [min, max]) => {
@@ -187,8 +200,10 @@ describe('stages (GAME_DESIGN §7)', () => {
 
   it('rejects unknown stages', () => {
     expect(isStage(0)).toBe(false);
-    expect(isStage(6)).toBe(false);
-    expect(() => stageInfo(6)).toThrow(RangeError);
+    expect(isStage(6)).toBe(true);
+    expect(isStage(1.5)).toBe(false);
+    expect(() => stageInfo(0)).toThrow(RangeError);
+    expect(() => stageJar(0)).toThrow(RangeError);
   });
 });
 

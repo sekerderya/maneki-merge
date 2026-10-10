@@ -165,7 +165,7 @@ describe('the joker in a run', () => {
     run.spawnBall(8, -100, -r(8));
     run.spawnBall(2, -100 + beside(8, 2), -r(2), { kind: 'joker' });
     run.tick();
-    expect(of('stageCleared')).toEqual([{ stage: 1, tier: 9, next: 'expand' }]);
+    expect(of('stageCleared')).toEqual([{ stage: 1, tier: 9, grows: false }]);
   });
 
   it('drops from the paw as a joker', () => {

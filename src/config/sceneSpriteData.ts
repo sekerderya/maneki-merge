@@ -51,10 +51,13 @@ export const PAW_SPRITE: PawSprite = {
   armRow: 4,
 };
 
-export const BACKGROUND_SPRITE: BackgroundSprite = {
-  file: 'background.webp',
-  width: 768,
-  height: 1376,
-  sky: '#f7f0d4',
-  ground: '#ebbb8a',
-};
+/** The first jar's background first, then the grown jars' painted so far. */
+export const BACKGROUND_SPRITES: readonly BackgroundSprite[] = [
+  {
+    file: 'background.webp',
+    width: 768,
+    height: 1376,
+    sky: '#f7f0d4',
+    ground: '#ebbb8a',
+  },
+];

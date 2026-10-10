@@ -1,6 +1,6 @@
 import { PICK_IDS, PICKS } from '../config/picks';
 import type { PickId } from '../config/picks';
-import { STAGE_COUNT, stageHoldsTier, stageInfo } from '../config/stages';
+import { stageHoldsTier, stageInfo } from '../config/stages';
 import { SIZE_COUNT } from '../config/tiers';
 import { AudioEngine } from '../audio';
 import type { SoundName } from '../audio';
@@ -11,6 +11,9 @@ import type { GameView } from '../game';
 import type { GameSession } from '../session';
 import { button, el } from '../ui/dom';
 import type { ScreenId } from '../ui/screenManager';
+
+/** The stage jump lists stages 2 to this + 1 (the jar grows at 5, 10, 15 and 20). */
+const DEBUG_STAGE_JUMPS = 20;
 
 export interface DebugContext {
   readonly flags: UrlFlags;
@@ -309,8 +312,9 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
   size.title = "Size (1 = the stage's smallest cat)";
   const tierOfSize = (): number =>
     stageInfo(hooks.state().stage).firstTier + Number(size.value) - 1;
+  // Stages have no end; the list goes far enough to see a few jar growths (every 5 stages).
   const stage = select(
-    Array.from({ length: STAGE_COUNT - 1 }, (_, i) => i + 2),
+    Array.from({ length: DEBUG_STAGE_JUMPS }, (_, i) => i + 2),
     2,
   );
   const score = el('input', 'debug-input');

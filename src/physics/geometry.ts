@@ -11,7 +11,6 @@ import {
   JAR_HEIGHT,
   JAR_WIDTH,
   stageInfo,
-  STAGES,
 } from '../config/stages';
 import { sizeRadius } from '../config/tiers';
 
@@ -30,8 +29,10 @@ export interface JarGeometry {
 
 const HEADROOM = DROPPER_HEADROOM_RATIO * JAR_WIDTH;
 
-const GEOMETRY: readonly JarGeometry[] = STAGES.map(({ stage }) =>
-  Object.freeze({
+const geometryCache = new Map<number, JarGeometry>();
+
+function makeGeometry(stage: number): JarGeometry {
+  return Object.freeze({
     stage,
     width: JAR_WIDTH,
     height: JAR_HEIGHT,
@@ -39,12 +40,17 @@ const GEOMETRY: readonly JarGeometry[] = STAGES.map(({ stage }) =>
     rimY: -JAR_HEIGHT,
     headroom: HEADROOM,
     dropY: -JAR_HEIGHT - HEADROOM / 2,
-  }),
-);
+  });
+}
 
 export function jarGeometry(stage: number): JarGeometry {
   stageInfo(stage); // throws for an unknown stage
-  return GEOMETRY[stage - 1] as JarGeometry;
+  let geometry = geometryCache.get(stage);
+  if (!geometry) {
+    geometry = makeGeometry(stage);
+    geometryCache.set(stage, geometry);
+  }
+  return geometry;
 }
 
 /** The biggest drop's radius (size 4): the dropper band above the rim is sized for it. */

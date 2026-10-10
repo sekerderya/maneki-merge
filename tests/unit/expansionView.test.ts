@@ -23,6 +23,7 @@ function view(from: number, steps: number): ExpansionView {
   return {
     from,
     to: from + 1,
+    grows: true,
     elapsedMs: (elapsed / EXPANSION_STEPS) * EXPANSION_DURATION_MS,
     progress: elapsed / EXPANSION_STEPS,
     zoomProgress: Math.min(1, Math.max(0, steps / ZOOM_STEPS)),

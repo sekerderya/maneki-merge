@@ -136,6 +136,9 @@ describe('saved runs (GAME_DESIGN §11)', () => {
 
   it('continue an expansion where it stood', () => {
     const run = new RunController({ seed: 3 });
+    // The jar grows when stage 5 is cleared.
+    run.jumpToStage(5);
+    for (let i = 0; i < 5000 && (run.stage < 5 || run.state !== 'playing'); i++) run.tick();
     clearStage(run);
     for (let i = 0; i < 5000 && run.expansion?.phase !== 'zoom'; i++) {
       if (run.state === 'choosing') run.choose(run.pickOffer!.options[0]!);
@@ -152,7 +155,28 @@ describe('saved runs (GAME_DESIGN §11)', () => {
     back.resume();
     expect(back.state).toBe('expanding');
     for (let i = 0; i < 2000 && back.state !== 'playing'; i++) back.tick();
-    expect(back.stage).toBe(2);
+    expect(back.stage).toBe(6);
+  });
+
+  it('turn an old clear of the last stage (before v0.33) into a move on to stage 6', () => {
+    const run = new RunController({ seed: 4 });
+    run.jumpToStage(5);
+    for (let i = 0; i < 5000 && (run.stage < 5 || run.state !== 'playing'); i++) run.tick();
+    clearStage(run);
+    for (let i = 0; i < 600 && run.state === 'expanding'; i++) run.tick();
+    expect(run.state).toBe('choosing');
+    const saved = roundTrip(run.snapshot());
+    // v0.32 saved the last stage's clear as 5 → 5.
+    const old = { ...saved, expansion: { ...saved.expansion!, to: 5 } };
+    const back = RunController.restore(old);
+    expect(back.expansion).toMatchObject({ from: 5, to: 6, grows: true });
+    back.resume();
+    while (back.state === 'choosing') back.choose(back.pickOffer!.options[0]!);
+    for (let i = 0; i < 2000 && back.state !== 'playing'; i++) back.tick();
+    expect(back.stage).toBe(6);
+    // Anything else that doesn't fit is refused.
+    const wrong = { ...saved, expansion: { ...saved.expansion!, to: 7 } };
+    expect(() => RunController.restore(wrong)).toThrow(RangeError);
   });
 
   it('keep a growing cat growing and a boulder its bands', () => {

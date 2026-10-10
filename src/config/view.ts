@@ -279,6 +279,11 @@ export const DOORS_OPEN_MS = 1200;
  */
 export const STAGE_CLEAR_BANNER_MS = 1500;
 export const STAGE_CLEAR_EXIT_MS = 500;
+/**
+ * "The shrine grows!" shows this long when the jar starts growing, after the doors open (every
+ * JAR_GROWTH_STAGES stages, v0.33): through the zoom (1.2 s) and the reveal.
+ */
+export const SHRINE_GROWS_BANNER_MS = 2000;
 /** With reduced motion the doors fade in and out instead of folding. */
 export const DOORS_FADE_MS = 250;
 /** How far each door turns when a wing is folded up, degrees (90 would be flat shut). */

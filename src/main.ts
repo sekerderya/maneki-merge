@@ -258,6 +258,7 @@ async function boot(): Promise<void> {
     gameOver,
     picks,
     doors,
+    scenery: gameScreen,
     feedback: {
       play: (name, value) => audio.play(name, value),
       vibrate: (name) => haptics.play(name),

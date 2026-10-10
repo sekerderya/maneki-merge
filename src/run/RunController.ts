@@ -25,7 +25,7 @@ import {
   PICKS,
 } from '../config/picks';
 import type { PickId, PickKind } from '../config/picks';
-import { catRadius, STAGE_COUNT, stageHoldsTier, stageInfo } from '../config/stages';
+import { catRadius, clearGrowsJar, stageHoldsTier, stageInfo } from '../config/stages';
 import {
   DROP_COOLDOWN_MS,
   EXPANSION_CLEAR_MS,
@@ -92,13 +92,16 @@ export interface SpawnOptions {
  * The stage-clear sequence (GAME_DESIGN §7.1). `clear`: the other cats have popped and the last
  * cat settles alone, then pops too (the picks come at its end); `zoom`: time stops and the camera
  * zooms out while the jar grows; `reveal`: the world is the new stage's.
- * At the last stage (`to` equals `from`) the jar doesn't grow: play goes on after the clear and
- * the picks. The scene derives camera and jar visuals from it.
+ * The jar only grows every JAR_GROWTH_STAGES stages (`grows`): after the other clears the run
+ * moves on to the next stage in the same jar right after the picks, with no zoom.
+ * The scene derives camera and jar visuals from it.
  */
 export interface ExpansionView {
   readonly from: number;
-  /** The next stage, or `from` at the last stage (no zoom, no reveal). */
+  /** The next stage: always `from` + 1. */
   readonly to: number;
+  /** True when the jar grows (a zoom comes after the picks). */
+  readonly grows: boolean;
   readonly elapsedMs: number;
   /** 0 → 1 over the whole sequence (EXPANSION_DURATION_MS). */
   readonly progress: number;
@@ -110,6 +113,7 @@ export interface ExpansionView {
 interface Expansion {
   from: number;
   to: number;
+  grows: boolean;
   /** The picks come between the clear and the zoom (a debug jump skips them). */
   picks: boolean;
   elapsedSteps: number;
@@ -407,7 +411,8 @@ export class RunController {
   /**
    * Chooses one of the waiting pick's options (GAME_DESIGN §15.5): its level goes up for the rest
    * of the run and applies to the balls queued from now on. The next pick follows, then the zoom
-   * (at the last stage: play). Returns false when no pick waits or `id` isn't one of its options.
+   * when the jar grows, else the next stage. Returns false when no pick waits or `id` isn't one
+   * of its options.
    */
   choose(id: PickId): boolean {
     const offer = this.offer;
@@ -494,7 +499,7 @@ export class RunController {
     this.queue.setOdds(this.odds());
   }
 
-  /** Opens a stage clear's picks now, as at the last stage: play goes on after them. */
+  /** Debug: opens a stage clear's picks now; play goes on in the same stage after them. */
   offerPicks(): void {
     if (this.runState !== 'playing') return;
     this.beginPicks();
@@ -511,7 +516,7 @@ export class RunController {
    * expansion then plays in turn, one stage at a time, until the run reaches `stage`.
    */
   jumpToStage(stage: number): void {
-    if (!Number.isInteger(stage) || stage <= this.world.stage || stage > STAGE_COUNT) return;
+    if (!Number.isSafeInteger(stage) || stage <= this.world.stage) return;
     this.debugTargetStage = Math.max(this.debugTargetStage, stage);
     if (this.runState === 'playing') this.debugClear();
   }
@@ -765,8 +770,9 @@ export class RunController {
   /**
    * The stage's last cat exists (GAME_DESIGN §7): every other ball pops into its value (boulders
    * crumble), oldest first, and the last cat pops after it settles, so the next stage starts with
-   * an empty jar. The picks come then, before the jar grows into the next stage; at the last stage
-   * play goes on after them in the same jar. A queued magnet becomes a cat (`DropQueue.newStage`).
+   * an empty jar. The picks come then, before the run moves on to the next stage: in a grown jar
+   * every JAR_GROWTH_STAGES stages, else in the same one. A queued magnet becomes a cat
+   * (`DropQueue.newStage`).
    */
   private clearStage(last: Ball, picks = true): void {
     const stage = this.world.stage;
@@ -776,8 +782,8 @@ export class RunController {
     );
     this.queue.newStage();
     const next = nextStage(stage);
-    this.events.emit('stageCleared', { stage, tier: last.tier, next: next.kind });
-    this.startExpansion(next.kind === 'expand' ? next.stage : stage, picks);
+    this.events.emit('stageCleared', { stage, tier: last.tier, grows: next.grows });
+    this.startExpansion(next.stage, next.grows, picks);
   }
 
   /** Debug: puts the stage's last cat on the floor and clears the stage with it, without picks. */
@@ -882,7 +888,7 @@ export class RunController {
     return false;
   }
 
-  /** The picks are done: the expansion's zoom starts, or play goes on at the last stage. */
+  /** The picks are done: the expansion's zoom starts, or the next stage starts in the same jar. */
   private afterPicks(): void {
     const e = this.expansionState;
     if (e) {
@@ -901,7 +907,7 @@ export class RunController {
 
   // ── Expansion timeline (GAME_DESIGN §7.1) ─────────────────────────────────
 
-  private startExpansion(to: number, picks: boolean): void {
+  private startExpansion(to: number, grows: boolean, picks: boolean): void {
     const from = this.world.stage;
     this.runState = 'expanding';
     this.danger.reset();
@@ -909,6 +915,7 @@ export class RunController {
     this.expansionState = {
       from,
       to,
+      grows,
       picks,
       elapsedSteps: 0,
       elapsedMs: 0,
@@ -949,10 +956,15 @@ export class RunController {
     if (e.elapsedSteps >= EXPANSION_STEPS) this.finishExpansion(e);
   }
 
-  /** After the clear and its picks: the zoom, or at the last stage straight back to play. */
+  /** After the clear and its picks: the zoom, or straight on to the next stage in the same jar. */
   private afterClear(e: Expansion): void {
-    if (e.to === e.from) this.finishExpansion(e);
-    else this.startZoom(e);
+    if (e.grows) {
+      this.startZoom(e);
+      return;
+    }
+    e.phase = 'reveal';
+    this.reveal(e);
+    this.finishExpansion(e);
   }
 
   /** Time stops and the camera starts zooming out. */
@@ -985,7 +997,9 @@ export class RunController {
     // The dropper comes back with the new stage's cats.
     this.dropAnnounced = false;
     this.announceDropIfReady();
+    // A debug jump goes on to the next stage until it reaches its target, then forgets it.
     if (this.world.stage < this.debugTargetStage) this.debugClear();
+    else this.debugTargetStage = 0;
   }
 }
 
@@ -996,20 +1010,27 @@ function timeExpansion(e: Expansion): void {
   e.zoomProgress = Math.min(1, Math.max(0, (e.elapsedSteps - CLEAR_STEPS) / ZOOM_STEPS));
 }
 
-/** A saved expansion at a world of `stage`: before the reveal it is the old stage, then the new. */
+/**
+ * A saved expansion at a world of `stage`: before the reveal it is the old stage, then the new.
+ * A save from before v0.33 may hold a clear of the old last stage (`to` equals `from`, 5): it
+ * now leads on to stage 6.
+ */
 function restoreExpansion(saved: ExpansionSnapshot, stage: number): Expansion {
-  const { from, to, phase } = saved;
-  const growing = to === from + 1 && to <= STAGE_COUNT;
-  if ((!growing && to !== from) || stage !== (phase === 'reveal' ? to : from)) {
-    throw new RangeError(`Invalid saved expansion ${from} → ${to} at stage ${stage}`);
+  const { from, phase } = saved;
+  const to = saved.to === from ? from + 1 : saved.to;
+  const grows = clearGrowsJar(from);
+  const valid =
+    to === from + 1 && stage === (phase === 'reveal' ? to : from) && (grows || phase === 'clear');
+  if (!valid) {
+    throw new RangeError(`Invalid saved expansion ${from} → ${saved.to} at stage ${stage}`);
   }
   // Any time is safe: the next tick moves an overdue phase on.
-  const e: Expansion = { ...saved, elapsedMs: 0, progress: 0, zoomProgress: 0 };
+  const e: Expansion = { ...saved, to, grows, elapsedMs: 0, progress: 0, zoomProgress: 0 };
   timeExpansion(e);
   return e;
 }
 
-/** The tiers a stage adds, up to its last cat; none at the last stage. */
+/** The tiers a stage adds, up to its last cat. */
 function newTiers(from: number, to: number): number[] {
   const fromLast = stageInfo(from).lastTier;
   const toLast = stageInfo(to).lastTier;

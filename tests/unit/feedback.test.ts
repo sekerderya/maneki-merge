@@ -30,7 +30,7 @@ describe('run feedback wiring (GAME_DESIGN §12)', () => {
     events.emit('comboChanged', { combo: 3 });
     events.emit('jackpot', { tier: 7, at, score: 1, coins: 1, combo: 1 });
     events.emit('catPopped', { id: 2, tier: 1, at, coins: 1, reason: 'cashOut' });
-    events.emit('stageCleared', { stage: 1, tier: 11, next: 'expand' });
+    events.emit('stageCleared', { stage: 1, tier: 11, grows: false });
     events.emit('expansionStarted', { from: 1, to: 2 });
     events.emit('expansionRevealed', { stage: 2, newTiers: [12, 21] });
     events.emit('luckySave', { savesLeft: 0 });

@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { STAGE_COUNT, stageInfo } from '../../src/config/stages';
+import { stageInfo } from '../../src/config/stages';
 import { catRadius } from '../../src/config/stages';
 import { clampDropX, jarGeometry } from '../../src/physics/geometry';
 
 describe('jarGeometry (GAME_DESIGN §7, TECH_SPEC §4)', () => {
   it('is the same 600 × 870 jar at every stage, with the rim at y = −H', () => {
-    for (let s = 1; s <= STAGE_COUNT; s++) {
+    for (let s = 1; s <= 12; s++) {
       const g = jarGeometry(s);
       expect(g.stage).toBe(s);
       expect([g.width, g.height, g.rimY, g.halfWidth]).toEqual([600, 870, -870, 300]);
@@ -19,7 +19,7 @@ describe('jarGeometry (GAME_DESIGN §7, TECH_SPEC §4)', () => {
   });
 
   it('keeps every stage’s biggest dropped cat above the rim', () => {
-    for (let s = 1; s <= STAGE_COUNT; s++) {
+    for (let s = 1; s <= 12; s++) {
       const g = jarGeometry(s);
       const pool = stageInfo(s).dropPool;
       const biggest = catRadius(pool[pool.length - 1]!, s);
@@ -29,7 +29,7 @@ describe('jarGeometry (GAME_DESIGN §7, TECH_SPEC §4)', () => {
 
   it('rejects unknown stages', () => {
     expect(() => jarGeometry(0)).toThrow(RangeError);
-    expect(() => jarGeometry(6)).toThrow(RangeError);
+    expect(() => jarGeometry(1.5)).toThrow(RangeError);
   });
 
   it('is shared and frozen', () => {

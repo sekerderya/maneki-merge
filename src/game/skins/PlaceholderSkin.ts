@@ -13,7 +13,7 @@ import {
   OUTLINE_DARKEN,
   tierColor,
 } from '../../config/skin';
-import { FIRST_STAGE, STAGES, tierSize } from '../../config/stages';
+import { FIRST_STAGE, tierSize } from '../../config/stages';
 import { SIZE_COUNT, sizeRadius } from '../../config/tiers';
 import {
   NUMBER_HEIGHT_RATIO,
@@ -34,7 +34,7 @@ type FrameKind = 'b' | 'n';
 type FrameItem = readonly [tier: number, kind: FrameKind];
 
 /** Every frame a stage needs, the dropper's tiers first (they show right after the expansion). */
-const STAGE_ITEMS: readonly (readonly FrameItem[])[] = STAGES.map(({ stage }) => {
+function stageItems(stage: number): readonly FrameItem[] {
   const set = stageSkinSet(stage);
   const items: FrameItem[] = [];
   for (const tier of set.drops) items.push([tier, 'b'], [tier, 'n']);
@@ -42,7 +42,7 @@ const STAGE_ITEMS: readonly (readonly FrameItem[])[] = STAGES.map(({ stage }) =>
     if (!set.drops.includes(tier)) items.push([tier, 'b'], [tier, 'n']);
   }
   return items;
-});
+}
 
 /** The size a tier is drawn at on `stage` (kept in 1–9, so a stray tier still renders). */
 function drawnSize(tier: number, stage: number): number {
@@ -84,7 +84,7 @@ export class PlaceholderSkin implements BallSkin {
   prepare(stage: number, budgetMs: number): boolean {
     const start = performance.now();
     let drew = false;
-    for (const [tier, kind] of STAGE_ITEMS[stage - 1] ?? []) {
+    for (const [tier, kind] of stageItems(stage)) {
       if (this.has(stage, tier, kind)) continue;
       if (drew && performance.now() - start >= budgetMs) return false;
       if (kind === 'n') this.numberFrame(stage, tier);

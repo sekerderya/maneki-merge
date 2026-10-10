@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { STAGE_COUNT, stageInfo } from '../../src/config/stages';
+import { stageInfo } from '../../src/config/stages';
 import { SIZE_COUNT } from '../../src/config/tiers';
 import { POP_STAGGER_MAX_MS, POP_STAGGER_MS } from '../../src/config/view';
 import { fitCamera, worldToView } from '../../src/game/cameraFit';
@@ -19,7 +19,7 @@ describe('cat textures per stage (TECH_SPEC §6)', () => {
       tiers: [10, 11, 12, 13, 14, 15, 16, 17, 18],
       drops: [10, 11, 12, 13],
     });
-    for (let stage = 1; stage <= STAGE_COUNT; stage++) {
+    for (let stage = 1; stage <= 12; stage++) {
       const set = stageSkinSet(stage);
       expect(set.tiers).toHaveLength(SIZE_COUNT);
       expect(set.tiers[0]).toBe(stageInfo(stage).firstTier);

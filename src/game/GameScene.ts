@@ -332,8 +332,12 @@ export class GameScene extends Phaser.Scene {
       this.aiming = false;
       this.clearSelection();
     });
+    on('stageCleared', (e) => {
+      // The next stage's textures get drawn while the last cat settles and the picks wait.
+      this.preparing = e.stage + 1;
+    });
     on('expansionStarted', (e) => {
-      // The zoom starts: the rim sparkles, and the next stage's textures get drawn meanwhile.
+      // The zoom starts: the rim sparkles (the next stage's textures may still be drawing).
       this.preparing = e.to;
       const geo = jarGeometry(e.from);
       this.sparks.rim(geo.width, geo.rimY);

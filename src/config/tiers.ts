@@ -13,10 +13,11 @@ export const SIZE_COUNT = 9;
 /** A stage's tiers start this many tiers after the previous stage's: right after its last cat. */
 export const STAGE_TIER_STEP = SIZE_COUNT;
 
-/** Tiers 1–45: stage 5's last cat is tier 5 × 9 (a config test checks it against STAGE_COUNT). */
-export const TIER_COUNT = 45;
+/**
+ * Tiers start at 1 and have no end, like the stages (v0.33; until then 1–45, five stages). Score
+ * and coins are doubles: S(t) = 2^t stays exact, and both only overflow past tier 1000 (stage 111).
+ */
 export const MIN_TIER = 1;
-export const MAX_TIER = TIER_COUNT;
 
 /**
  * r(size) = round(BASE × GROWTH^(size−1)) in world units; the jar is 600 wide. v0.24: every cat is
@@ -42,7 +43,7 @@ export interface TierInfo {
 }
 
 export function isTier(value: number): boolean {
-  return Number.isInteger(value) && value >= MIN_TIER && value <= MAX_TIER;
+  return Number.isSafeInteger(value) && value >= MIN_TIER;
 }
 
 export function isSize(value: number): boolean {
@@ -62,14 +63,7 @@ export function tierCoins(tier: number): number {
   return Math.round(TIER_COIN_BASE ** (tier - 1));
 }
 
-/** Index 0 is tier 1. */
-export const TIERS: readonly TierInfo[] = Array.from({ length: TIER_COUNT }, (_, i) => {
-  const tier = i + 1;
-  return { tier, score: tierScore(tier), coins: tierCoins(tier) };
-});
-
 export function tierInfo(tier: number): TierInfo {
-  const info = isTier(tier) ? TIERS[tier - 1] : undefined;
-  if (!info) throw new RangeError(`Unknown tier: ${tier}`);
-  return info;
+  if (!isTier(tier)) throw new RangeError(`Unknown tier: ${tier}`);
+  return { tier, score: tierScore(tier), coins: tierCoins(tier) };
 }

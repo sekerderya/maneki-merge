@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { MAX_SPEED_BASE, PHYSICS_STEP_MS, stepsFor } from '../../src/config/physics';
-import { STAGE_COUNT, stageInfo } from '../../src/config/stages';
+import { clearGrowsJar, stageInfo } from '../../src/config/stages';
 import { tierCoins, tierScore } from '../../src/config/tiers';
 import { EXPANSION_DURATION_MS } from '../../src/config/timings';
 import { coinPayout, popCoins } from '../../src/core/economy';
@@ -174,7 +174,8 @@ describe('clearing stages under a pile (GAME_DESIGN §7.1)', () => {
       expect(maxWallPenetration(run.balls, run.geometry.halfWidth)).toBeLessThan(0.15);
     };
 
-    for (let stage = 1; stage < STAGE_COUNT; stage++) {
+    // Five clears: four in the same jar, then the jar grows (GAME_DESIGN §7).
+    for (let stage = 1; stage <= 5; stage++) {
       addPile(30);
       play(2.5);
       // The last cat is made on top of the pile: the whole pile pops at once.
@@ -185,7 +186,8 @@ describe('clearing stages under a pile (GAME_DESIGN §7.1)', () => {
     }
     addPile(30);
     play(2.5);
-    expect(expansions).toBe(STAGE_COUNT - 1);
+    expect(expansions).toBe(5);
+    expect(run.stage).toBe(6);
     // Upward speeds stay far below the limit (TECH_SPEC §5), and nothing teleports.
     expect(worstUpward).toBeLessThan(0.2);
     expect(worstStep).toBeLessThan(1.5);
@@ -199,7 +201,7 @@ describe('stage clear payouts (GAME_DESIGN §7)', () => {
     const multiplier = run.stats.coinMultiplier;
     expect(multiplier).toBeCloseTo(1.6, 12);
 
-    for (let stage = 1; stage < STAGE_COUNT; stage++) {
+    for (let stage = 1; stage <= 5; stage++) {
       expect(run.stage).toBe(stage);
       // Two cats apart from each other, so they can't merge.
       spawnAtWall(run, 3, -1);
@@ -226,7 +228,7 @@ describe('stage clear payouts (GAME_DESIGN §7)', () => {
 
       playUntilStage(run, stage + 1);
       // Order: the merge, the pops and their total, the clear, the last cat's pop once it
-      // settled, then the expansion.
+      // settled, then the zoom when the jar grows (stage 5), and the next stage.
       const sequence = log
         .slice(logStart)
         .map((e) => e[0])
@@ -239,7 +241,7 @@ describe('stage clear payouts (GAME_DESIGN §7)', () => {
         'stageCleared',
         'catPopped',
         'runCoinsChanged',
-        'expansionStarted',
+        ...(clearGrowsJar(stage) ? ['expansionStarted'] : []),
         'expansionRevealed',
         'expansionFinished',
       ]);
@@ -249,16 +251,21 @@ describe('stage clear payouts (GAME_DESIGN §7)', () => {
     expect(popCoins(21, multiplier)).toBe(32_514);
   });
 
-  it('announces the tiers each stage adds when the zoom ends and when play resumes', () => {
+  it('announces the tiers each stage adds as it starts, and grows the jar every 5 stages', () => {
     const { run, of } = setup();
-    run.jumpToStage(STAGE_COUNT);
-    playUntilStage(run, STAGE_COUNT);
+    run.jumpToStage(11);
+    playUntilStage(run, 11);
     const range = (from: number, to: number) =>
       Array.from({ length: to - from + 1 }, (_, i) => from + i);
-    const expected = [range(10, 18), range(19, 27), range(28, 36), range(37, 45)];
+    const expected = Array.from({ length: 10 }, (_, i) => range(10 + 9 * i, 18 + 9 * i));
     expect(of('expansionRevealed').map((e) => e.newTiers)).toEqual(expected);
     expect(of('expansionFinished').map((e) => e.newTiers)).toEqual(expected);
-    expect(of('expansionRevealed').map((e) => e.stage)).toEqual([2, 3, 4, 5]);
+    expect(of('expansionRevealed').map((e) => e.stage)).toEqual(range(2, 11));
+    expect(of('stageCleared').map((e) => e.grows)).toEqual(range(1, 10).map((s) => s % 5 === 0));
+    expect(of('expansionStarted')).toEqual([
+      { from: 5, to: 6 },
+      { from: 10, to: 11 },
+    ]);
   });
 });
 
@@ -281,7 +288,7 @@ describe('time stop (GAME_DESIGN §7.1)', () => {
 });
 
 describe('every stage: Jackpots and drop pools (GAME_DESIGN §5, §7, §8)', () => {
-  it.each([1, 2, 3, 4, 5])('stage %i', (stage) => {
+  it.each([1, 2, 3, 4, 5, 6, 11])('stage %i', (stage) => {
     const { run, of } = setup({ luckyPaw: 2 }, { instantExpansion: true });
     if (stage > 1) run.jumpToStage(stage);
     run.tick();

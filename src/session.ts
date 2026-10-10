@@ -11,11 +11,13 @@ import {
   COMBO_JAR_OFFSET,
   STAGE_CLEAR_BANNER_MS,
   STAGE_CLEAR_EXIT_MS,
+  SHRINE_GROWS_BANNER_MS,
   HINT_MERGE_DELAY_MS,
   GOLDEN_COIN_FLIGHTS,
   JACKPOT_COIN_FLIGHTS,
 } from './config/view';
 import { PICK_ORDER } from './config/picks';
+import { stageJar } from './config/stages';
 import type { PickId, PickKind } from './config/picks';
 import type { UpgradeId } from './config/upgrades';
 import { EventBus } from './core/events';
@@ -60,6 +62,8 @@ export interface SessionParts {
   readonly picks: PickView;
   /** The doors that shut over the game while the picks are made (GAME_DESIGN §7.1). */
   readonly doors: DoorsView;
+  /** The garden behind the jar: a new one each time the jar grows (GAME_DESIGN §7). */
+  readonly scenery: { setJar(jar: number, grow: boolean): void };
   /** Sound effects and haptics for the run's events. */
   readonly feedback: FeedbackOutputs;
   /** A fixed seed (`?seed=`) for every run, or null for a fresh one each time. */
@@ -74,7 +78,7 @@ export class GameSession {
   private runSavePending = false;
   /** The last pick, chosen but held back until the doors are open (then the zoom starts). */
   private heldPick: PickId | null = null;
-  /** When the last stage clear started (performance.now()), so the doors wait for its banner. */
+  /** When the latest stage clear started (performance.now()), so the doors wait for its banner. */
   private clearedAt = 0;
   /** The doors' wait for the stage-clear banner. */
   private doorsTimer = 0;
@@ -256,6 +260,7 @@ export class GameSession {
     hud.setScore(run.score);
     hud.setCoins(run.coins);
     hud.setStage(run.stage);
+    this.parts.scenery.setJar(stageJar(run.stage), false);
     showPreview();
 
     events.on('scoreChanged', (e) => hud.setScore(e.score));
@@ -292,8 +297,8 @@ export class GameSession {
       }),
     );
 
-    // Stage clears and expansions (GAME_DESIGN §7, §7.1, §7.2): "Stage clear!" at the last stage.
-    // "Stage clear!" at every clear; it slides up off the screen as the doors come (§7.1).
+    // Stage clears and expansions (GAME_DESIGN §7, §7.1): "Stage clear!" at every clear; it slides
+    // up off the screen as the doors come.
     events.on('stageCleared', () => {
       banners.combo(0, 0);
       banners.show('Stage clear!', {
@@ -303,11 +308,19 @@ export class GameSession {
       });
       this.clearedAt = performance.now();
     });
+    // Every JAR_GROWTH_STAGES stages the jar grows once the doors are open: "The shrine grows!"
+    // and the next garden (v0.33, the owner's call).
+    events.on('expansionStarted', (e) => {
+      banners.show('The shrine grows!', { y: bannerY(), durationMs: SHRINE_GROWS_BANNER_MS });
+      this.parts.scenery.setJar(stageJar(e.to), true);
+    });
     // The new stage's cats in NEXT; no banner (v0.29.5, the owner's call).
     events.on('expansionRevealed', showPreview);
     events.on('expansionFinished', () => {
       showPreview();
       hud.setStage(run.stage);
+      // A run restored in the middle of a zoom gets its new garden here.
+      this.parts.scenery.setJar(stageJar(run.stage), false);
     });
 
     // A stage clear's picks (GAME_DESIGN §7.1, §15.5): the doors shut, then a trial and a

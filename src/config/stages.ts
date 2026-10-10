@@ -1,8 +1,15 @@
 /** Jar stages and drop pools (GAME_DESIGN §7 and §8). */
 import { isSize, SIZE_COUNT, sizeRadius, STAGE_TIER_STEP } from './tiers';
 
-export const STAGE_COUNT = 5;
+/** Stages have no end (v0.33): every clear moves the run on to the next stage. */
 export const FIRST_STAGE = 1;
+
+/**
+ * The jar grows (the camera zooms out and the next background shows) only when a stage that is a
+ * multiple of this is cleared (v0.33, the owner's call): stages 1–5 play in the first jar, 6–10 in
+ * the second, and so on. The other clears move on to the next stage in the same jar.
+ */
+export const JAR_GROWTH_STAGES = 5;
 
 /**
  * The jar in world units, the same at every stage: the jar grows on screen, then the new stage
@@ -40,24 +47,35 @@ export interface StageInfo {
 }
 
 export function isStage(value: number): boolean {
-  return Number.isInteger(value) && value >= FIRST_STAGE && value <= STAGE_COUNT;
+  return Number.isSafeInteger(value) && value >= FIRST_STAGE;
 }
 
-/** Index 0 is stage 1. */
-export const STAGES: readonly StageInfo[] = Array.from({ length: STAGE_COUNT }, (_, i) => {
-  const firstTier = 1 + i * STAGE_TIER_STEP;
-  return {
-    stage: i + 1,
-    firstTier,
-    lastTier: firstTier + SIZE_COUNT - 1,
-    dropPool: Array.from({ length: DROP_SIZES }, (_, s) => firstTier + s),
-  };
-});
+const stageCache = new Map<number, StageInfo>();
 
 export function stageInfo(stage: number): StageInfo {
-  const info = isStage(stage) ? STAGES[stage - 1] : undefined;
-  if (!info) throw new RangeError(`Unknown stage: ${stage}`);
+  if (!isStage(stage)) throw new RangeError(`Unknown stage: ${stage}`);
+  let info = stageCache.get(stage);
+  if (!info) {
+    const firstTier = 1 + (stage - 1) * STAGE_TIER_STEP;
+    info = Object.freeze({
+      stage,
+      firstTier,
+      lastTier: firstTier + SIZE_COUNT - 1,
+      dropPool: Object.freeze(Array.from({ length: DROP_SIZES }, (_, s) => firstTier + s)),
+    });
+    stageCache.set(stage, info);
+  }
   return info;
+}
+
+/** True when clearing `stage` grows the jar into the next one (every JAR_GROWTH_STAGES stages). */
+export function clearGrowsJar(stage: number): boolean {
+  return isStage(stage) && stage % JAR_GROWTH_STAGES === 0;
+}
+
+/** The jar a stage plays in, from 1: stages 1–5 are jar 1, 6–10 jar 2, and so on. */
+export function stageJar(stage: number): number {
+  return Math.floor((stageInfo(stage).stage - 1) / JAR_GROWTH_STAGES) + 1;
 }
 
 /** A tier's size (1–9) at `stage`; outside 1–9 when the stage can't hold that tier. */

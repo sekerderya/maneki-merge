@@ -73,7 +73,9 @@ async function makeLastCat(page: Page): Promise<void> {
   });
 }
 
-test('making the last cat (two 8s) clears stage 1 and grows an empty jar', async ({ page }) => {
+test('making the last cat (two 8s) clears stage 1 and moves on in the same jar', async ({
+  page,
+}) => {
   const errors = watchConsole(page);
   await startRun(page, 3);
   await expect
@@ -85,14 +87,14 @@ test('making the last cat (two 8s) clears stage 1 and grows an empty jar', async
 
   await makeLastCat(page);
   await expect(page.getByTestId('banner')).toHaveText('Stage clear!', WAIT);
-  // The other cats popped into coins; drops wait until the jar has grown.
+  // The other cats popped into coins; drops wait until stage 2 starts.
   const clearing = await state(page);
   expect(clearing.expansion?.to).toBe(2);
   expect(clearing.runCoins).toBeGreaterThanOrEqual(41);
   expect(await page.evaluate(() => window.__game?.dropAt(0))).toBe(false);
-  // The last cat pops too, then the picks: a trial, then a blessing, before the jar grows.
+  // The last cat pops too, then the picks: a trial, then a blessing, before stage 2.
   await chooseThroughPanel(page);
-  // The doors fold open first, then the blessing applies and the zoom starts (GAME_DESIGN §7.1).
+  // The doors fold open first, then the blessing applies and stage 2 starts (GAME_DESIGN §7.1).
   await expect
     .poll(async () => {
       const levels = (await state(page)).pickLevels ?? {};
@@ -109,6 +111,8 @@ test('making the last cat (two 8s) clears stage 1 and grows an empty jar', async
     }, WAIT)
     .toEqual([2, 18]);
   await expect(page.getByTestId('banner').filter({ hasText: 'New cats unlocked!' })).toHaveCount(0);
+  // The jar only grows every 5 stages (GAME_DESIGN §7).
+  await expect(page.getByTestId('banner').filter({ hasText: 'The shrine grows!' })).toHaveCount(0);
 
   await expect.poll(async () => (await state(page)).runState, WAIT).toBe('playing');
   const s = await state(page);
@@ -120,11 +124,11 @@ test('making the last cat (two 8s) clears stage 1 and grows an empty jar', async
   expect(errors).toEqual([]);
 });
 
-test('with no upgrades, clearing stage 2 grows the jar into stage 3', async ({ page }) => {
+test('with no upgrades, clearing stage 2 moves on into stage 3', async ({ page }) => {
   test.setTimeout(300_000);
   const errors = watchConsole(page);
   await startRun(page, 4);
-  // Two expansions in a row take long in software rendering (WebKit especially).
+  // Two clears in a row take long in software rendering (WebKit especially).
   const long = { timeout: 120_000 };
   for (const stage of [2, 3]) {
     await makeLastCat(page);
@@ -147,8 +151,12 @@ test('a resize and a pause in the middle of an expansion are safe', async ({ pag
   const size = page.viewportSize();
   if (!size) throw new Error('No viewport');
 
-  await page.evaluate(() => window.__game?.setStage(2));
-  await expect.poll(async () => (await state(page)).expansion?.phase ?? null, WAIT).toBe('zoom');
+  // The jar grows when stage 5 is cleared: "The shrine grows!" and the zoom.
+  await page.evaluate(() => window.__game?.setStage(6));
+  await expect
+    .poll(async () => (await state(page)).expansion?.phase ?? null, { timeout: 80_000 })
+    .toBe('zoom');
+  await expect(page.getByTestId('banner')).toHaveText('The shrine grows!');
 
   // Turn into a bigger phone and back while the camera zooms.
   await page.setViewportSize({ width: size.width + 40, height: size.height + 90 });
@@ -164,7 +172,7 @@ test('a resize and a pause in the middle of an expansion are safe', async ({ pag
   expect((await state(page)).ticks).toBe(paused.ticks);
 
   await page.getByTestId('resume').click();
-  await expect.poll(async () => (await state(page)).stage, WAIT).toBe(2);
+  await expect.poll(async () => (await state(page)).stage, WAIT).toBe(6);
   await expect.poll(async () => (await state(page)).runState, WAIT).toBe('playing');
   expect((await state(page)).expansion).toBeNull();
   expect(errors).toEqual([]);

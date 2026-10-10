@@ -4,7 +4,7 @@
  * files. The measured data is in sceneSpriteData.ts; the choices here place the art. Pure data.
  */
 import { JAR_HEIGHT, JAR_WIDTH } from './stages';
-import { BACKGROUND_SPRITE, JAR_SPRITE, PAW_SPRITE } from './sceneSpriteData';
+import { BACKGROUND_SPRITES, JAR_SPRITE, PAW_SPRITE } from './sceneSpriteData';
 
 /** A rectangle in an image's pixels. */
 export interface PxRect {
@@ -63,7 +63,17 @@ export const SCENE_SPRITE_DIR = 'assets/scene/';
 
 export const JAR_ART: JarSprite = JAR_SPRITE;
 export const PAW_ART: PawSprite = PAW_SPRITE;
-export const BACKGROUND_ART: BackgroundSprite = BACKGROUND_SPRITE;
+/**
+ * The backgrounds, one per jar (GAME_DESIGN §7): the jar grows every JAR_GROWTH_STAGES stages and
+ * each grown jar stands in a bigger place, up to five. Jars past the last painted one keep it.
+ */
+export const BACKGROUND_ARTS: readonly BackgroundSprite[] = BACKGROUND_SPRITES;
+
+/** The background of jar `jar` (1 for stages 1–5, 2 for 6–10, …; config/stages.ts stageJar). */
+export function backgroundArt(jar: number): BackgroundSprite {
+  const index = Math.min(Math.max(1, Math.floor(jar)), BACKGROUND_ARTS.length) - 1;
+  return BACKGROUND_ARTS[index] as BackgroundSprite;
+}
 
 /** World units per jar image pixel, across and down (the opening fills JAR_WIDTH × JAR_HEIGHT). */
 export const JAR_ART_SCALE_X = JAR_WIDTH / (JAR_ART.right - JAR_ART.left);
@@ -88,6 +98,7 @@ export const PAW_ART_FADE = 55;
 
 /**
  * Where the jar stands in the background image (px): the centre of its inside, its inside's width
- * and its floor. Chosen so the feet stand on the painted rug, between the lanterns.
+ * and its floor. Chosen so the feet stand on the painted rug, between the lanterns. Every
+ * background is painted with the jar's place in the same spot (docs/ART_ASSETS.md phase 9).
  */
 export const BACKGROUND_JAR = { cx: 384, width: 560, floor: 1200 } as const;
