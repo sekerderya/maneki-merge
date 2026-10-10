@@ -23,6 +23,11 @@ export interface GameView {
   show(run: RunController): void;
   /** Stops rendering (menu visible). */
   sleep(): void;
+  /**
+   * Whether something opaque covers the whole canvas (the shut stage doors, GAME_DESIGN §7.1): the
+   * loop sleeps meanwhile, so the hidden jar costs nothing while the picks are made.
+   */
+  setCovered(covered: boolean): void;
   /** Re-reads the play area's size (also done automatically on resize). */
   refit(): void;
   /** The jar's inner walls, rim and floor in CSS pixels of the play area, or null. */
@@ -73,6 +78,8 @@ export function createGame(
   let scene: GameScene | null = null;
   /** Whether the loop should run (a run is on screen). */
   let awake = false;
+  /** The canvas is covered (the stage doors): nothing to draw. */
+  let covered = false;
   /** Set after the first frame: before it, Phaser hasn't started its loop yet. */
   let looping = false;
   let coinsListener: ((x: number, y: number, kind: PayoutKind) => void) | null = null;
@@ -111,7 +118,7 @@ export function createGame(
         // The loop starts right after postBoot; put it to sleep until a run is shown.
         booted.events.once(Phaser.Core.Events.POST_RENDER, () => {
           looping = true;
-          if (!awake) booted.loop.sleep();
+          syncLoop();
         });
         // Only frames of play count; anything else (pause, picks, the zoom) starts the watch over.
         booted.events.on(Phaser.Core.Events.STEP, () => {
@@ -175,7 +182,15 @@ export function createGame(
     awake = true;
     scene.attach(run);
     refit();
-    if (looping && !game.loop.running) game.loop.wake();
+    syncLoop();
+  }
+
+  /** The loop runs while a run is on screen and not covered. */
+  function syncLoop(): void {
+    if (!looping) return;
+    const run = awake && !covered;
+    if (run && !game.loop.running) game.loop.wake();
+    else if (!run && game.loop.running) game.loop.sleep();
   }
 
   new ResizeObserver(() => refit()).observe(parent);
@@ -185,7 +200,11 @@ export function createGame(
     show,
     sleep() {
       awake = false;
-      if (looping && game.loop.running) game.loop.sleep();
+      syncLoop();
+    },
+    setCovered(value) {
+      covered = value;
+      syncLoop();
     },
     refit,
     onCoins(listener) {

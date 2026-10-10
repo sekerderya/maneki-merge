@@ -2,8 +2,7 @@
  * A stage clear's picks in the owner's art (GAME_DESIGN §15.5), built from the Upgrades screen's
  * pieces (docs/ART_ASSETS.md §4.9) over the shut stage doors: the title on its cream pill, three
  * cards with their tan stat strips, and the menu's coral PLAY pill as Choose. Sizes are mockup
- * pixels times --u, as in shop-art.css. A trial's selection glows stone blue-grey, a blessing's
- * gold.
+ * pixels times --u, as in shop-art.css. A trial's selection glows blue, a blessing's gold.
  */
 .pick-overlay.is-art {
   container-type: inline-size;
@@ -77,37 +76,47 @@
     calc(var(--shop-card-corner) * var(--s)) calc(var(--shop-card-bottom) * var(--s)) stretch;
   background: none;
   box-shadow: none;
+  position: relative;
+  isolation: isolate;
   color: #4e2416;
-  transition:
-    transform 220ms cubic-bezier(0.2, 1.6, 0.4, 1),
-    filter 160ms ease-out;
+  will-change: transform;
+  transition: transform 220ms cubic-bezier(0.2, 1.6, 0.4, 1);
 }
 
-/* The chosen card lifts and glows round its outline. */
 /*
- * The chosen card pops forward (it overshoots a little, then settles) inside a thick ring of
- * light; the other cards dim a little.
+ * The ring of light round the chosen card: always there behind the card, shown by its opacity, so
+ * choosing animates only transform and opacity (cheap on phones; a filter glow stuttered).
  */
+.pick-overlay.is-art .pick-card::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: calc(-6 * var(--u));
+  border: calc(7 * var(--u)) solid var(--glow);
+  border-radius: calc(32 * var(--u));
+  box-shadow: 0 0 calc(18 * var(--u)) var(--glow);
+  opacity: 0;
+  transition: opacity 140ms ease-out;
+  pointer-events: none;
+}
+
+/* The chosen card pops forward (it overshoots a little, then settles) inside the ring. */
 .pick-overlay.is-art .pick-card.is-selected {
   border-width: 0;
   background: none;
   box-shadow: none;
   transform: translateY(calc(-6 * var(--u))) scale(1.04);
-  filter: drop-shadow(0 0 calc(2.5 * var(--u)) var(--glow))
-    drop-shadow(0 0 calc(2.5 * var(--u)) var(--glow))
-    drop-shadow(0 0 calc(2.5 * var(--u)) var(--glow))
-    drop-shadow(0 0 calc(14 * var(--u)) var(--glow));
   animation: pick-card-pop 220ms cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+
+.pick-overlay.is-art .pick-card.is-selected::before {
+  opacity: 1;
 }
 
 @keyframes pick-card-pop {
   from {
     transform: translateY(0) scale(1);
   }
-}
-
-.pick-overlay.is-art .pick-cards.has-selection .pick-card:not(.is-selected) {
-  filter: saturate(0.5) brightness(0.86);
 }
 
 .reduce-motion .pick-overlay.is-art .pick-card.is-selected {

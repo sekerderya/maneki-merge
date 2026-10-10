@@ -61,8 +61,6 @@ export function createPickOverlay(root: HTMLElement, actions: PickActions, art =
       card.classList.toggle('is-selected', on);
       card.setAttribute('aria-pressed', String(on));
     }
-    // The other cards step back once one is chosen.
-    list.classList.add('has-selection');
     choose.disabled = false;
   };
 
@@ -85,7 +83,6 @@ export function createPickOverlay(root: HTMLElement, actions: PickActions, art =
       overlay.setAttribute('aria-label', text.title);
       overlay.dataset['kind'] = kind;
       list.replaceChildren(...cards.map((card) => createCard(card, art, () => select(card.id))));
-      list.classList.remove('has-selection');
       selected = null;
       choose.disabled = true;
       armedAt = performance.now() + PICK_ARM_MS;

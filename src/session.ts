@@ -140,6 +140,7 @@ export class GameSession {
     }
     this.parts.picks.hide();
     this.heldPick = id;
+    this.parts.game.setCovered(false);
     this.parts.doors.open(() => this.releasePick(run));
   }
 
@@ -211,6 +212,7 @@ export class GameSession {
     const offer = run.pickOffer;
     if (offer) {
       this.parts.doors.closeNow();
+      this.parts.game.setCovered(true);
       this.showPick(run, offer.kind, offer.options);
     }
     this.parts.banners.setPaused(true);
@@ -225,6 +227,7 @@ export class GameSession {
     this.clearedAt = 0;
     window.clearTimeout(this.doorsTimer);
     doors.reset();
+    this.parts.game.setCovered(false);
     pause.hide();
     gameOver.hide();
     picks.hide();
@@ -314,7 +317,10 @@ export class GameSession {
       const shut = (): void =>
         doors.close(() => {
           const offer = run.pickOffer;
-          if (this.current === run && offer) this.showPick(run, offer.kind, offer.options);
+          if (this.current !== run || !offer) return;
+          // The doors hide the jar: it needn't be drawn until they open.
+          this.parts.game.setCovered(true);
+          this.showPick(run, offer.kind, offer.options);
         });
       // The doors set off as the banner slides away: they come in from off the screen, slowly at
       // first, so the banner is gone before they show.
@@ -329,6 +335,7 @@ export class GameSession {
       // Picks made some other way (the debug tools) open the doors as the run moves on.
       queueMicrotask(() => {
         if (this.current === run && run.state !== 'choosing' && run.state !== 'paused') {
+          this.parts.game.setCovered(false);
           doors.open();
         }
       });
@@ -406,6 +413,7 @@ export class GameSession {
     this.clearedAt = 0;
     window.clearTimeout(this.doorsTimer);
     this.parts.doors.reset();
+    this.parts.game.setCovered(false);
     this.parts.hint.hide();
     this.parts.banners.clear();
     this.parts.coins.clear();
@@ -440,6 +448,7 @@ export class GameSession {
     this.clearedAt = 0;
     window.clearTimeout(this.doorsTimer);
     this.parts.doors.reset();
+    this.parts.game.setCovered(false);
     this.parts.runSave.clear();
     const records = newRecords(this.recordsBefore, e);
     this.parts.gameOver.show({
