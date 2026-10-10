@@ -84,7 +84,7 @@ test('making the last cat (two 8s) clears stage 1 and grows an empty jar', async
     .toEqual([1, 9]);
 
   await makeLastCat(page);
-  await expect(page.getByTestId('banner')).toHaveText('The shrine grows!', WAIT);
+  await expect(page.getByTestId('banner')).toHaveText('Stage clear!', WAIT);
   // The other cats popped into coins; drops wait until the jar has grown.
   const clearing = await state(page);
   expect(clearing.expansion?.to).toBe(2);
