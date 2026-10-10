@@ -2,7 +2,8 @@
  * Final art pipeline (TECH_SPEC §14, docs/ART_ASSETS.md): turns the owner's generated images into
  * game sprites. Run it with `npm run art` after adding or replacing a file in `art-source/`. The
  * scene (jar, paw, background) is built by tools/buildScene.ts, the HUD by tools/buildHud.ts,
- * the main menu by tools/buildMenu.ts, the stage doors by tools/buildDoors.ts.
+ * the main menu by tools/buildMenu.ts, the stage doors by tools/buildDoors.ts, the special balls by
+ * tools/buildSpecials.ts. Cats and special balls go through tools/artBall.ts.
  *
  * For each `art-source/cats/size-NN.{png,jpg,jpeg,webp}` (NN = 01–09, one per look):
  *   1. removes the plain white background: the near-white region connected to the image border,
@@ -13,35 +14,18 @@
  * The measurements go to `src/config/catSpriteData.ts`, which the game reads.
  */
 import { mkdir, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
-import {
-  crop,
-  cutBackground,
-  findSource,
-  kasa,
-  loadRgba,
-  median,
-  pixel,
-  round,
-  saveWebp,
-} from './artImage.ts';
-import type { Circle, Rgba } from './artImage.ts';
+import { buildBall } from './artBall.ts';
+import { findSource } from './artImage.ts';
 import { buildDoors } from './buildDoors.ts';
 import { buildHud } from './buildHud.ts';
 import { buildMenu } from './buildMenu.ts';
 import { buildScene } from './buildScene.ts';
+import { buildSpecials } from './buildSpecials.ts';
 
 const SOURCE_DIR = 'art-source/cats';
 const OUT_DIR = 'public/assets/cats';
 const DATA_FILE = 'src/config/catSpriteData.ts';
 const LOOK_COUNT = 9;
-
-/** Contour points above this fraction of the radius over the centre are ears, not body. */
-const EAR_CUTOFF = 0.45;
-/** Contour points further than this (px) from the fitted circle are dropped before refitting. */
-const FIT_TOLERANCE = 4;
-/** Transparent margin around the sprite, px. */
-const MARGIN = 2;
 
 interface LookData {
   readonly look: number;
@@ -57,7 +41,7 @@ async function main(): Promise<void> {
   for (let look = 1; look <= LOOK_COUNT; look++) {
     const nn = String(look).padStart(2, '0');
     const source = await findSource(SOURCE_DIR, `size-${nn}`);
-    looks.push(await buildLook(look, source, `look-${nn}.webp`));
+    looks.push({ look, ...(await buildBall(source, OUT_DIR, `look-${nn}.webp`)) });
   }
   await writeFile(DATA_FILE, dataModule(looks));
   console.log(`Wrote ${looks.length} cats to ${OUT_DIR} and ${DATA_FILE}`);
@@ -65,91 +49,7 @@ async function main(): Promise<void> {
   await buildHud();
   await buildMenu();
   await buildDoors();
-}
-
-async function buildLook(look: number, path: string, file: string): Promise<LookData> {
-  const image = await loadRgba(path);
-  const depth = cutBackground(image);
-  const circle = fitCircle(image, depth);
-  const sprite = cropAround(image, circle);
-  const radius = circle.r;
-  await saveWebp(sprite, join(OUT_DIR, file));
-  const centre = sprite.width / 2;
-  const result: LookData = {
-    look,
-    file,
-    side: sprite.width,
-    radius: round(radius),
-    color: ringColor(sprite, centre, radius),
-  };
-  console.log(
-    `${path}: circle r=${result.radius} (${round((2 * radius) / image.width)} of the width), ` +
-      `sprite ${sprite.width}px, body ${result.color}`,
-  );
-  return result;
-}
-
-/** Least-squares circle through the silhouette's edge below the ears, refitted without outliers. */
-function fitCircle(image: Rgba, depth: Uint8Array): Circle {
-  const { width, height } = image;
-  const edge: [number, number][] = [];
-  let minX = width;
-  let maxX = 0;
-  let maxY = 0;
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      if (depth[y * width + x] === 1) {
-        edge.push([x, y]);
-        minX = Math.min(minX, x);
-        maxX = Math.max(maxX, x);
-        maxY = Math.max(maxY, y);
-      }
-    }
-  }
-  const r0 = (maxX - minX) / 2;
-  let circle: Circle = { cx: (minX + maxX) / 2, cy: maxY - r0, r: r0 };
-  let points = edge.filter(([, y]) => y > circle.cy - EAR_CUTOFF * circle.r);
-  for (let pass = 0; pass < 4; pass++) {
-    circle = kasa(points);
-    const c = circle;
-    points = points.filter(
-      ([x, y]) => Math.abs(Math.hypot(x - c.cx, y - c.cy) - c.r) <= FIT_TOLERANCE * (4 - pass),
-    );
-  }
-  return kasa(points);
-}
-
-/** A square of opaque content centred on the circle (the sprite's origin is the cat's centre). */
-function cropAround(image: Rgba, circle: Circle): Rgba {
-  const { data, width, height } = image;
-  let half = 0;
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      if ((data[4 * (y * width + x) + 3] ?? 0) > 8) {
-        half = Math.max(half, Math.abs(x + 0.5 - circle.cx), Math.abs(y + 0.5 - circle.cy));
-      }
-    }
-  }
-  const side = 2 * Math.ceil(half + MARGIN);
-  const x = Math.round(circle.cx - side / 2);
-  const y = Math.round(circle.cy - side / 2);
-  return crop(image, { x, y, w: side, h: side });
-}
-
-/** The body's colour: the median of the left and right sides of a ring inside the outline. */
-function ringColor(image: Rgba, centre: number, radius: number): string {
-  const samples: number[][] = [];
-  for (let a = 0; a < 360; a += 2) {
-    const t = (a * Math.PI) / 180;
-    // The sides only: the top is the head between the ears, the bottom is often the belly.
-    if (Math.abs(Math.cos(t)) < 0.7) continue;
-    for (const f of [0.8, 0.85, 0.9]) {
-      const x = Math.round(centre + Math.cos(t) * radius * f);
-      const y = Math.round(centre + Math.sin(t) * radius * f);
-      samples.push(pixel(image, x, y));
-    }
-  }
-  return median(samples);
+  await buildSpecials();
 }
 
 function dataModule(looks: readonly LookData[]): string {
