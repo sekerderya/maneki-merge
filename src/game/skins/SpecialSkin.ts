@@ -3,7 +3,7 @@
  * (config/specialSprites.ts), scaled and outlined like the cats (ArtSkin), so their body circle
  * lands on the physics radius. Otherwise they are drawn in code with the 2D canvas API: the magnet
  * (a cream disc with a red horseshoe magnet), boulders (grey stone with one iron band per extra
- * merge they need; with  a grey circle showing the merges left), the hanabi
+ * merge they need; with `?skin=placeholder` a grey circle showing the merges left), the hanabi
  * (a navy ball with a firework burst and a fuse) and the joker (a white ball with a rainbow ring
  * and a gold star). The gold glow behind golden cats is always drawn in code. Like the cats, each
  * texture is drawn at CAT_PX_PER_UNIT for the radius of its size, with the outline's outer edge on
