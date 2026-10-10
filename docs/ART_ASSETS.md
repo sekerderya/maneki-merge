@@ -1190,6 +1190,8 @@ mockups are approved, as edits of them.
 
 **More Boulders and Big Boulders pictures (2026-10-10).** Both showed the same plain boulder, so the owner asked for art that tells them apart. They are not medallions: like the other cards' balls, each is drawn alone on white and the game puts it in the card's grey medallion. Attach `art-source/specials/boulders.jpg` and the lineup sheet, one per request, square 1:1, and save them as `art-source/picks/moreBoulders.png` and `art-source/picks/bigBoulders.png`.
 
+**More Boulders done (v0.32.3):** `art-source/picks/moreBoulders.jpg`, a heap of four. The first Big Boulders came back as the attached boulder sheet with a small boulder and an arrow pasted in: the tool edited the sheet instead of drawing. Ask for it in a new chat with only one bare boulder attached (`public/assets/specials/boulder-0.webp`) and the prompt below the More Boulders one, which says to draw a new picture.
+
 More Boulders:
 
 ```text
@@ -1217,6 +1219,8 @@ vector-like edges, readable at 48 px.
 Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow
 under the objects. No text, no letters, no numbers, no kanji, no watermark, no signature.
 
+Draw a brand-new picture. The attached image only shows what one boulder looks like: do not copy
+its layout and do not edit it.
 A small game picture for a Suika-style merge game: one big grey boulder like the attached one (the
 bare stone, no iron bands) and, at its lower left, a small one half its size, both resting on the
 same invisible line; between them, above the small one, a chunky light-grey up arrow with the same
