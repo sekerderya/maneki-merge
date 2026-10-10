@@ -1190,6 +1190,8 @@ mockups are approved, as edits of them.
 
 **More Boulders and Big Boulders pictures (2026-10-10).** Both showed the same plain boulder, so the owner asked for art that tells them apart. They are not medallions: like the other cards' balls, each is drawn alone on white and the game puts it in the card's grey medallion. Attach `art-source/specials/boulders.jpg` and the lineup sheet, one per request, square 1:1, and save them as `art-source/picks/moreBoulders.png` and `art-source/picks/bigBoulders.png`.
 
+**Both in the game (v0.32.4):** the pyramid of three (`art-source/picks/moreBoulders.jpg`) and Big Boulders (`bigBoulders.jpg`, its arrow drawn on the big stone; small in the card, may be redone).
+
 **More Boulders in v0.32.3:** `art-source/picks/moreBoulders.jpg`, a heap of four; the owner didn't like it (crowded, one boulder half hidden), so it is asked for again as a neat pyramid of three, the same way as Big Boulders. The first Big Boulders came back as the attached boulder sheet with a small boulder and an arrow pasted in: the tool edited the sheet instead of drawing. Ask for it in a new chat with only one bare boulder attached (`public/assets/specials/boulder-0.webp`) and the prompts below, which say to draw a new picture.
 
 More Boulders:
