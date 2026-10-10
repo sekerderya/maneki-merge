@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.32.1] - 2026-10-10
+
+### Changed
+
+- The trial and blessing cards show the game's own art as their icons (the owner's call): boulders for the boulder trials, the magnet, the hanabi and the joker for theirs, the size-4 cat for Big Drops and a glowing white cat for Golden Cats. Iron Bands shows the boulder as the pick will make it, with one band more than now.
+
 ## [0.32.0] - 2026-10-10
 
 ### Changed
