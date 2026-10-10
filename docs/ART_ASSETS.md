@@ -683,18 +683,18 @@ sakura-pink background filling the whole square. Keep everything important insid
 
 ### 4.7 Phase 6: stage doors
 
-At a stage clear a folding screen (byōbu) closes over the game: two wings of two panels each fold
-in from the sides like an accordion and meet in the middle. The trial and blessing picks show in
-front of the closed screen; then it folds open again and the zoom plays as before (GAME_DESIGN
-§7.1). The fold is CSS 3D in code; the art is the screen seen flat and closed.
+The folding screen (byōbu) is an interstitial between stages, a picture in its own right. When a
+stage is cleared, two wings of two panels each fold in from the sides like an accordion and meet in
+the middle. The screen stays closed while the trial and blessing are picked (the pick cards are
+their own UI on top, not part of this art), then folds open again and the zoom plays as before
+(GAME_DESIGN §7.1). The fold is CSS 3D in code; the art is the screen seen flat and closed.
 
-Claude cuts the four panels apart at the white gaps and stretches each panel to the phone's height
-by repeating the plain lattice rows in the middle zone (a 390×844 screen needs about 45% more height
-than the 2:3 image), so the middle zone must be plain and its cells identical. The pick cards cover
-that zone anyway; the painting shows above and below them. Upscale ×2: it fills the whole screen.
+Claude cuts the four panels apart at the white gaps. Phones are taller than the 2:3 image (a
+390×844 screen needs about 45% more height), so each panel gets taller by repeating its plain
+lattice rows at the very top and bottom; the painting stays whole in the middle. If the tool offers
+a taller portrait size (9:16), use it: less needs repeating. Upscale ×2: it fills the whole screen.
 
-Attach the reference image, the lineup sheet and a game screenshot
-(`docs/screenshots/v0.26.0/390-2-trial.png`). Style block, then **one** of the two paintings
+Attach the reference image and the lineup sheet. Style block, then **one** of the two paintings
 (generate both if unsure and compare).
 
 **Variant A: gold clouds and sakura** (`doors/screen.png`):
@@ -714,13 +714,13 @@ PAPER AND LATTICE: inside each frame, warm cream washi paper (#FFF4E2, never pur
 lattice of thin caramel-brown wooden bars: two vertical bars split each panel into three equal
 columns, and evenly spaced horizontal bars split it into tall rectangular cells, every row of
 cells exactly the same height from the top of the panel to the bottom.
-PAINTING: one picture painted on the paper behind the lattice bars, flowing across all four panels:
-- Top quarter: soft gold-leaf clouds (rounded, scalloped Japanese cloud bands) across all four
-  panels, with a sakura branch with pink blossoms reaching in from the left and from the right.
-- Middle (from 25% to 70% of the height): nothing painted. Only plain cream paper and identical
-  lattice cells, no petals, no stains, no shading change from top to bottom.
-- Bottom 30%: gold-leaf cloud bands again, gentle sakura-pink and cream wave arcs (seigaiha) along
-  the bottom, a few blank round gold coins and drifting pink petals.
+PAINTING: one big picture painted on the paper behind the lattice bars, flowing across all four
+panels as a single composition: a blossoming sakura tree whose dark trunk rises from the lower
+left and whose branches spread across all four panels, full of pink blossoms; soft gold-leaf
+clouds (rounded, scalloped Japanese cloud bands) drifting behind it; a big pale gold sun behind
+the two middle panels; a few blank round gold coins hanging among the blossoms like lucky charms;
+drifting pink petals. The painting fills the panels except the top two and bottom two rows of
+lattice cells, which stay plain cream paper with nothing painted on them.
 No cats on the screen. No text, no kanji, no calligraphy, no seal stamp. Plain flat solid white
 background around the screen, no floor, no cast shadow. Portrait 2:3.
 ```
@@ -729,20 +729,20 @@ background around the screen, no floor, no cast shadow. Portrait 2:3.
 replaced by:
 
 ```text
-PAINTING: one picture painted on the paper behind the lattice bars, flowing across all four panels:
-- Top quarter: soft gold-leaf clouds (rounded, scalloped Japanese cloud bands) across all four
-  panels, with blank round gold coins falling from them like gentle rain.
-- Middle (from 25% to 70% of the height): nothing painted. Only plain cream paper and identical
-  lattice cells, no coins, no petals, no shading change from top to bottom.
-- Bottom 30%: a big cute white maneki-neko like cat 1 of the attached lineup (round body, one
-  raised beckoning paw, red collar, gold bell) sitting on a pink cushion, painted across the two
-  middle panels so the gap between panel 2 and panel 3 runs straight down the middle of the cat,
-  with small piles of gold coins and sakura branches on both sides and gold cloud bands behind.
+PAINTING: one big picture painted on the paper behind the lattice bars, flowing across all four
+panels as a single composition: in the centre a big cute white maneki-neko like cat 1 of the
+attached lineup (round body, one raised beckoning paw, red collar, gold bell) sitting on a pink
+cushion, painted across the two middle panels so the gap between panel 2 and panel 3 runs straight
+down the middle of the cat; around it soft gold-leaf clouds (rounded, scalloped Japanese cloud
+bands), sakura branches with pink blossoms reaching in from the outer panels, blank round gold
+coins falling like gentle rain and small piles of gold coins at the cat's sides, drifting pink
+petals. The painting fills the panels except the top two and bottom two rows of lattice cells,
+which stay plain cream paper with nothing painted on them.
 ```
 
 Checks for this one: four panels of equal width with straight white gaps between them; the
-panels are flat (no angle or zigzag); the paper is cream, not white; the middle zone is plain with
-at least four identical rows of cells; no kanji or stamp anywhere. If the tool draws the screen at
-an angle or the middle rows uneven, edit the image in the same thread: "Keep everything the same;
-make the four panels completely flat and facing the viewer" or "make every lattice row in the
-middle exactly the same height, with nothing painted there".
+panels are flat (no angle or zigzag); the paper is cream, not white; the top two and bottom two
+rows of cells are plain and the same height as the others; no kanji or stamp anywhere. If the tool
+draws the screen at an angle or paints into the plain rows, edit the image in the same thread:
+"Keep everything the same; make the four panels completely flat and facing the viewer" or "keep
+the painting, but leave the top two and bottom two rows of lattice cells plain cream paper".
