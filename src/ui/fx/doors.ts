@@ -1,6 +1,7 @@
 /**
- * The stage doors (GAME_DESIGN §7.1): four doors over the game screen that fold shut after a stage
- * clear, stay shut while the trial and blessing are picked, and fold open before the zoom. The
+ * The stage doors (GAME_DESIGN §7.1): two folding screens of two doors each, over the game screen.
+ * After a stage clear they slide in from the sides, unfolding, and stay shut while the trial and
+ * blessing are picked; before the zoom they slide back out, folding up. The
  * owner's picture spans the four doors; each door is the owner's frame stretched to the screen's
  * height (doorSprites.ts). With reduced motion they fade instead of folding.
  */
@@ -76,6 +77,9 @@ export function createDoors(root: HTMLElement, baseUrl: string): DoorsView {
   let waiting: (() => void)[] = [];
 
   const draw = (): void => {
+    // Shown before it is measured: hidden, it has no width.
+    doors.hidden = fold === OPEN;
+    if (doors.hidden) return;
     const width = doors.clientWidth;
     doors.style.perspective = `${Math.round(DOORS_PERSPECTIVE * width)}px`;
     const pose = wingPose(fading ? SHUT : fold);
@@ -85,7 +89,6 @@ export function createDoors(root: HTMLElement, baseUrl: string): DoorsView {
       shade.style.opacity = String(p.shade);
     }
     doors.style.opacity = fading ? String(1 - fold) : '';
-    doors.hidden = fold === OPEN;
   };
 
   const settle = (): void => {
