@@ -319,7 +319,7 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
   - [x] the four upgrade icons, and the icon kit for every later icon
 - [x] Batch 16 (v0.32.0), the trial and blessing picks in the owner's art (GAME_DESIGN §15.5):
   - [x] built from the Upgrades pieces over the shut doors: the title pill, the cards with their stat strips, Choose on the PLAY pill, a glow on the chosen card
-  - [ ] the eight card icons from the icon kit (prompts in docs/ART_ASSETS.md §4.9)
+  - [x] the cards' icons are the game's own balls (v0.32.1, the owner's call); Iron Bands shows the boulder with one band more than now
 
 ## M13: Final art integration
 

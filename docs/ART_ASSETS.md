@@ -1186,6 +1186,8 @@ Everything else stays as it is. Portrait, the same size.
 The other blessings' icons (Big Drops, Golden Cats) and the pieces for the game come after the
 mockups are approved, as edits of them.
 
+**Pick icons: not needed (v0.32.1).** The owner chose the game's own art instead: each card shows the ball it is about (`src/ui/pickArt.ts`). The prompts below stay for a pick that gets its own icon later.
+
 **Pick icons (icon kit, §5).** The trial and blessing screens are built from the Upgrades pieces (v0.32, without the trial and blessing mockups above: the approved pieces fit them, so Claude built the screens straight away for the owner to judge on the phone). Their cards' icons come from the icon kit, one per request, square 1:1; trials get the cool grey stone rim, blessings the gold one. Attach the icon sheet (`art-source/ui/upgrade-icons.webp`), the lineup sheet and the art named with each icon, and save the result as `art-source/icons/<id>.png`. Until an icon exists the card shows its code-drawn icon in a cream medallion.
 
 More Boulders (`icons/moreBoulders.png`, trial; also attach `art-source/specials/boulders.jpg`):
