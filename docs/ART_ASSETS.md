@@ -1190,7 +1190,7 @@ mockups are approved, as edits of them.
 
 **More Boulders and Big Boulders pictures (2026-10-10).** Both showed the same plain boulder, so the owner asked for art that tells them apart. They are not medallions: like the other cards' balls, each is drawn alone on white and the game puts it in the card's grey medallion. Attach `art-source/specials/boulders.jpg` and the lineup sheet, one per request, square 1:1, and save them as `art-source/picks/moreBoulders.png` and `art-source/picks/bigBoulders.png`.
 
-**More Boulders done (v0.32.3):** `art-source/picks/moreBoulders.jpg`, a heap of four. The first Big Boulders came back as the attached boulder sheet with a small boulder and an arrow pasted in: the tool edited the sheet instead of drawing. Ask for it in a new chat with only one bare boulder attached (`public/assets/specials/boulder-0.webp`) and the prompt below the More Boulders one, which says to draw a new picture.
+**More Boulders in v0.32.3:** `art-source/picks/moreBoulders.jpg`, a heap of four; the owner didn't like it (crowded, one boulder half hidden), so it is asked for again as a neat pyramid of three, the same way as Big Boulders. The first Big Boulders came back as the attached boulder sheet with a small boulder and an arrow pasted in: the tool edited the sheet instead of drawing. Ask for it in a new chat with only one bare boulder attached (`public/assets/specials/boulder-0.webp`) and the prompts below, which say to draw a new picture.
 
 More Boulders:
 
@@ -1202,11 +1202,15 @@ vector-like edges, readable at 48 px.
 Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow
 under the objects. No text, no letters, no numbers, no kanji, no watermark, no signature.
 
-A small game picture for a Suika-style merge game: three of the attached grey boulders (the bare
-stone, no iron bands), all the same size, piled in a little heap: two side by side at the bottom,
-touching, and one resting on top between them. Each one keeps the attached boulder's round shape,
-colours, speckles and highlight. The heap is centred and fills about 80% of the canvas. No frame,
-no circle, no medallion, no ground, nothing else. Square 1:1.
+Draw a brand-new picture. The attached image only shows what one boulder looks like: do not copy
+its layout and do not edit it.
+A small game picture for a Suika-style merge game: exactly three grey boulders like the attached
+one (the bare stone, no iron bands), all the same size, stacked in a neat little pyramid: two side
+by side at the bottom, just touching, and the third sitting in the dip between their tops. All
+three are fully visible: none is hidden behind another, and each keeps its own complete
+dark-brown outline. Each keeps the attached boulder's round shape, colours, speckles and
+highlight. The pyramid is centred, as wide as it is tall, and fills about 75% of the canvas. No
+frame, no circle, no medallion, no ground, nothing else. Square 1:1.
 ```
 
 Big Boulders:
