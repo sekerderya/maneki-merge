@@ -328,6 +328,7 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
   - [x] the owner's backgrounds 2 (temple courtyard), 3 (hilltop town) and 5 (mountain peak, shown from stage 16 for now) (v0.33.1)
   - [x] background 4, a temple stage on a mountainside between the hilltop and the peak (v0.33.2)
   - [x] the jar grows right after "Stage clear!", before the doors and the picks (v0.33.2, the owner's call)
+  - [ ] the growth transition through the owner's clouds (docs/ART_ASSETS.md §4.11): they well up and cover the screen, the background changes behind them, they part and the new place settles; the jar stays still (the owner's choice over the old shrink-and-fade)
 
 ## M13: Final art integration
 

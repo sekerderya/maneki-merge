@@ -63,6 +63,7 @@ narrower than their canvas: Claude crops the empty space.
 | 1   | 1 cats     | `cats/size-01.png` … `size-09.png` | One cat per size (GAME_DESIGN §4)                         | 1:1, 1024×1024    |
 | 2   | 2 scene    | `scene/background.png`             | Shrine garden behind and around the jar                   | 2:3, 1024×1536 ×2 |
 | 2a  | 9 jars     | `scene/background-2` … `-5`        | The grown jars' backgrounds, a bigger place each (§4.10)  | 9:16              |
+| 2b  | 10 clouds  | `transition/clouds.png`            | Sheet: six clouds for the growth transition (§4.11)       | 3:2, 1536×1024    |
 | 3   | 2 scene    | `scene/jar.png`                    | Empty bamboo-framed glass jar, front view                 | 2:3, 1024×1536    |
 | 4   | 2 scene    | `scene/rug.png`                    | Mint rug the jar stands on                                | 3:2, 1536×1024    |
 | 5   | 2 scene    | `scene/paw.png`                    | Calico dropper arm hanging from the top                   | 2:3, 1024×1536    |
@@ -1526,6 +1527,45 @@ If the rug moves or changes size, ask in the same chat: "Keep everything, but pu
 exactly where it is in the attached game background, the same size, its middle at 87% of the
 height." If the scene doesn't feel bigger than the last one, ask for the buildings to be smaller
 and further away, so the empty jar spot looks huge beside them.
+
+### 4.11 Phase 10: the growth clouds
+
+When the jar grows (every 5 stages, GAME_DESIGN §7.1) the shrine rises through the clouds: soft
+clouds well up from the bottom of the screen and cover it, the next background comes in behind
+them, and they part to the left and right, uncovering the new place, which settles from a little
+close to its normal size, as if the camera pulled back. The clouds are the owner's art; the game
+only moves them (the owner's choice, 2026-10-11, over a light burst or a ring of light drawn in
+code).
+
+The game builds the cloud wall from separate puffs, so it fits any screen: about fifteen of them in
+three layers, the small ones behind, overlapping so no gap shows, each rising and parting on its
+own path. One sheet holds them all.
+
+**Clouds** (`transition/clouds.png`, a sheet). Attach the style reference and the game's last
+background (`art-source/scene/background-5.jpg`, the peak above the sea of clouds), whose clouds
+these must match:
+
+```text
+Style: match the attached images exactly (the game's style reference and the clouds in the attached
+game background). Polished casual mobile-game art, cute chibi kawaii illustration, thick warm
+dark-brown outlines (never black) of even weight, soft pastel cel shading with gentle gradients,
+light from the upper left, clean crisp vector-like edges.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow
+under the objects. No text, no letters, no numbers, no kanji, no watermark.
+
+A sheet of six separate fluffy cartoon clouds for a mobile game, in a 3×2 grid, evenly spaced, with
+plenty of plain white space between them so they don't touch. They look exactly like the clouds in
+the attached game background: warm cream (#FFF3DC) with soft peach shading on their lower bulges,
+one thick dark-brown outline closed all the way round each cloud. Each cloud is a round puffy
+cluster of five to seven bulges of different sizes, round on every side, the bottom too (no flat
+or cut-off bottom), filled solid all the way through (no holes, no see-through parts), no face, no
+sparkles, no sky around them. Top row: three big clouds, each wider than it is tall, about 1.6 : 1.
+Bottom row: three smaller clouds, about 1.3 : 1. All six have different shapes. Nothing cropped at
+the edges. Landscape 3:2.
+```
+
+Checks: six clouds with closed outlines on plain white, nothing touching or cropped; solid fill
+with no holes; round bottoms; the same cream, peach and outline as the background's clouds.
 
 ## 5. Icon kit (every new icon)
 
