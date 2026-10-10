@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.31.0] - 2026-10-10
+
+### Added
+
+- The Upgrades screen in the owner's art (GAME_DESIGN §2.2, the approved mockup): the menu blurred behind, "Upgrades" on a cream pill, a round close button, the menu's coins pill, and cream cards with a tan stat strip and a gold Buy button ("Buy" over the coin and the price).
+- Upgrade icons: Lucky Paw (a beckoning paw with a koban), Big Catch (a big lucky cat with a small one), Combo Charm (an omamori) and Second Chance (the cats' gold bell with a heart).
+- The icon kit (docs/ART_ASSETS.md §5): one style and one prompt for every later icon, and a pipeline step that turns `art-source/icons/<id>` into the game's icon.
+
+### Changed
+
+- The level pips are gone; the level shows as a number ("2/10").
+- Not enough coins: the Buy button fades to grey and says "Need N more" where "Buy" was.
+- `?skin=vector` keeps the code-drawn shop.
+
 ## [0.30.0] - 2026-10-10
 
 ### Added
