@@ -779,6 +779,27 @@ No text, no kanji, no stamp. Plain flat solid white background around the screen
 If the edit keeps too much of the old look, start a new thread with the two screenshots and the
 text prompt above (with the style line at its end).
 
+The restyled screen (a garden scene with a torii, a shrine and a sun split between the two
+middle panels) matched the game, but came out at 3:4, filling only about 78% of the height (panels
+about 1 : 4.4 against 1 : 8.7 on a 390×844 phone), with its panels drawn folded at an angle. Fix in
+the same thread, with the size set to portrait 9:16 (or 2:3):
+
+```text
+Keep the art style, the colours, the scene and everything in it exactly the same. Change only
+the shape:
+- Draw the folding screen completely flat, seen straight from the front: all four panels are
+  plain upright rectangles of exactly the same width and height, their top edges on one straight
+  horizontal line and their bottom edges on another. No zigzag, no fold, no angle, no perspective.
+- Make the screen much taller: it fills the whole height of the portrait canvas (about 96%),
+  with the same narrow white gaps between the panels. Use the extra height for the scene: more
+  sky above it (the sun, the hanging coins and the clouds higher up) and a little more ground
+  below it, so the painting stays one picture. Keep exactly two rows of lattice windows at the
+  top and two at the bottom of every panel.
+```
+
+If the edit keeps the old size, ask for it as a new image in the same thread ("Generate this same
+picture again as a new image", then the same list).
+
 Checks for this one: four panels of equal width with straight white gaps between them; the
 panels are flat (no angle or zigzag); the paper is cream, not white; the top two and bottom two
 rows of cells are plain and the same height as the others; no kanji or stamp anywhere. If the tool
