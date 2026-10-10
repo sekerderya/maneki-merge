@@ -5,9 +5,14 @@
 import type { PickPicture } from './pickSprites';
 
 export const PICK_SPRITE_DATA: Readonly<Record<string, PickPicture>> = {
+  bigBoulders: {
+    file: 'bigBoulders.webp',
+    width: 1012,
+    height: 1008,
+  },
   moreBoulders: {
     file: 'moreBoulders.webp',
-    width: 910,
-    height: 904,
+    width: 909,
+    height: 815,
   },
 };
