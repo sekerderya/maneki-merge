@@ -33,9 +33,13 @@ async function startRun(page: Page, seed: number): Promise<void> {
   }
 }
 
-/** Picks the first card of the trial, then of the blessing, through the panel (GAME_DESIGN §15.5). */
+/**
+ * Picks the first card of the trial, then of the blessing, through the panel (GAME_DESIGN §15.5),
+ * in front of the shut doors (§7.1).
+ */
 async function chooseThroughPanel(page: Page): Promise<void> {
   const overlay = page.getByTestId('pick-overlay');
+  await expect(page.getByTestId('doors')).toBeVisible(WAIT);
   for (const kind of ['trial', 'blessing']) {
     await expect(overlay).toHaveAttribute('data-kind', kind, WAIT);
     await expect(overlay).toBeVisible();
@@ -88,8 +92,14 @@ test('making the last cat (two 8s) clears stage 1 and grows an empty jar', async
   expect(await page.evaluate(() => window.__game?.dropAt(0))).toBe(false);
   // The last cat pops too, then the picks: a trial, then a blessing, before the jar grows.
   await chooseThroughPanel(page);
-  const levels = (await state(page)).pickLevels ?? {};
-  expect(Object.values(levels).reduce((a, b) => a + b, 0)).toBe(2);
+  // The doors fold open first, then the blessing applies and the zoom starts (GAME_DESIGN §7.1).
+  await expect
+    .poll(async () => {
+      const levels = (await state(page)).pickLevels ?? {};
+      return Object.values(levels).reduce((a, b) => a + b, 0);
+    }, WAIT)
+    .toBe(2);
+  await expect(page.getByTestId('doors')).toBeHidden();
 
   // The reveal: stage 2 starts empty, and 18 is the next goal.
   // One wait for the banner and its cat: it only shows for 2 s, and a slow software renderer
