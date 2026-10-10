@@ -57,35 +57,39 @@ the background 2× (the tool's upscale, or the free Upscayl app) to 2048×3072, 
 whole screen; the rest is sharp enough at the generated size. Rug, paw, logo and banner are
 narrower than their canvas: Claude crops the empty space.
 
-| #   | Phase   | File (in `art-source/`)            | What                                                      | Generate          |
-| --- | ------- | ---------------------------------- | --------------------------------------------------------- | ----------------- |
-| 0   | 0 style | `style/lineup.png`                 | The 9 cats on one sheet (style lock, not used in game)    | 1:1, 1024×1024    |
-| 1   | 1 cats  | `cats/size-01.png` … `size-09.png` | One cat per size (GAME_DESIGN §4)                         | 1:1, 1024×1024    |
-| 2   | 2 scene | `scene/background.png`             | Shrine garden behind and around the jar                   | 2:3, 1024×1536 ×2 |
-| 3   | 2 scene | `scene/jar.png`                    | Empty bamboo-framed glass jar, front view                 | 2:3, 1024×1536    |
-| 4   | 2 scene | `scene/rug.png`                    | Mint rug the jar stands on                                | 3:2, 1536×1024    |
-| 5   | 2 scene | `scene/paw.png`                    | Calico dropper arm hanging from the top                   | 2:3, 1024×1536    |
-| 5a  | 2 scene | `scene/noren-mockup.webp`          | Game screen with the noren, design reference (done)       | –                 |
-| 5b  | 2 scene | `scene/noren.jpg`                  | Noren curtain over the jar (v0.22–v0.24; gone in v0.25)   | 3:2, 1536×1024    |
-| 6   | 3 HUD   | `hud/hud-kit.png`                  | Sheet: card, sunken well, pause button, NEXT bubble, …    | 1:1, 1024×1024    |
-| 7   | 3 HUD   | `hud/icons.png`                    | Sheet: coin, paw badge, sparkle, petals, puff             | 1:1, 1024×1024    |
-| 7a  | 3 HUD   | `hud/score-card.png`               | The whole score card, blank, copied from `ref-score.png`  | 3:2, 1536×1024    |
-| 7b  | 3 HUD   | `hud/next-bubble.png`              | The round NEXT bubble, empty, copied from `ref-next.png`  | 1:1, 1024×1024    |
-| 7c  | 3 HUD   | `hud/xp-empty`, `hud/xp-full`      | XP card, an edit of the score card (v0.25 only)           | 4:3, 1024×768     |
-| 7b  | 4 menu  | `menu/mockup.jpg`                  | Whole main-menu screen, design reference (done)           | 2:3, 1024×1536    |
-| 7c  | 4 menu  | `menu/background.png`              | Menu garden, the mockup without UI, logo and cat          | 2:3, 1024×1536    |
-| 8   | 4 menu  | `menu/logo.png`                    | "Maneki Merge" logo (the only image with text)            | 3:2, 1536×1024    |
-| 9   | 4 menu  | `menu/hero.png`                    | Big golden maneki-neko on a pink cushion                  | 1:1, 1024×1024    |
-| 9b  | 4 menu  | `menu/buttons.png`                 | Sheet: blank PLAY, UPGRADES, record card, gear, coin pill | 3:2, 1536×1024    |
-| 9c  | 4 menu  | `menu/menu-icons.png`              | Sheet: torii, paw badge, arrow, coin, sparkles, petals    | 1:1, 1024×1024    |
-| 9d  | 4 menu  | `menu/record-card.png`             | One empty record card with its sunken well                | 3:2, 1536×1024    |
-| 10  | 4 menu  | `menu/ui-kit.png`                  | Sheet: PLAY, secondary button, panel, card, close, gear   | 3:2, 1536×1024    |
-| 11  | 4 menu  | `menu/upgrade-icons.png`           | Sheet: 5 upgrade icons                                    | 3:2, 1536×1024    |
-| 12  | 4 menu  | `menu/settings-icons.png`          | Sheet: sound, haptics, reduce motion, how to play         | 1:1, 1024×1024    |
-| 13  | 4 menu  | `menu/banner.png`                  | Blank ribbon banner for "The shrine grows!" etc.          | 3:2, 1536×1024    |
-| 14  | 5 app   | `app-icon.png`                     | App icon                                                  | 1:1, 1024×1024    |
-| 15  | 6 doors | `doors/picture.png`                | Stage-door picture, cut into four strips by the game      | 9:16              |
-| 16  | 6 doors | `doors/panel.png`                  | One empty door frame, laid over each strip                | 2:3, 1024×1536    |
+| #   | Phase      | File (in `art-source/`)            | What                                                      | Generate          |
+| --- | ---------- | ---------------------------------- | --------------------------------------------------------- | ----------------- |
+| 0   | 0 style    | `style/lineup.png`                 | The 9 cats on one sheet (style lock, not used in game)    | 1:1, 1024×1024    |
+| 1   | 1 cats     | `cats/size-01.png` … `size-09.png` | One cat per size (GAME_DESIGN §4)                         | 1:1, 1024×1024    |
+| 2   | 2 scene    | `scene/background.png`             | Shrine garden behind and around the jar                   | 2:3, 1024×1536 ×2 |
+| 3   | 2 scene    | `scene/jar.png`                    | Empty bamboo-framed glass jar, front view                 | 2:3, 1024×1536    |
+| 4   | 2 scene    | `scene/rug.png`                    | Mint rug the jar stands on                                | 3:2, 1536×1024    |
+| 5   | 2 scene    | `scene/paw.png`                    | Calico dropper arm hanging from the top                   | 2:3, 1024×1536    |
+| 5a  | 2 scene    | `scene/noren-mockup.webp`          | Game screen with the noren, design reference (done)       | –                 |
+| 5b  | 2 scene    | `scene/noren.jpg`                  | Noren curtain over the jar (v0.22–v0.24; gone in v0.25)   | 3:2, 1536×1024    |
+| 6   | 3 HUD      | `hud/hud-kit.png`                  | Sheet: card, sunken well, pause button, NEXT bubble, …    | 1:1, 1024×1024    |
+| 7   | 3 HUD      | `hud/icons.png`                    | Sheet: coin, paw badge, sparkle, petals, puff             | 1:1, 1024×1024    |
+| 7a  | 3 HUD      | `hud/score-card.png`               | The whole score card, blank, copied from `ref-score.png`  | 3:2, 1536×1024    |
+| 7b  | 3 HUD      | `hud/next-bubble.png`              | The round NEXT bubble, empty, copied from `ref-next.png`  | 1:1, 1024×1024    |
+| 7c  | 3 HUD      | `hud/xp-empty`, `hud/xp-full`      | XP card, an edit of the score card (v0.25 only)           | 4:3, 1024×768     |
+| 7b  | 4 menu     | `menu/mockup.jpg`                  | Whole main-menu screen, design reference (done)           | 2:3, 1024×1536    |
+| 7c  | 4 menu     | `menu/background.png`              | Menu garden, the mockup without UI, logo and cat          | 2:3, 1024×1536    |
+| 8   | 4 menu     | `menu/logo.png`                    | "Maneki Merge" logo (the only image with text)            | 3:2, 1536×1024    |
+| 9   | 4 menu     | `menu/hero.png`                    | Big golden maneki-neko on a pink cushion                  | 1:1, 1024×1024    |
+| 9b  | 4 menu     | `menu/buttons.png`                 | Sheet: blank PLAY, UPGRADES, record card, gear, coin pill | 3:2, 1536×1024    |
+| 9c  | 4 menu     | `menu/menu-icons.png`              | Sheet: torii, paw badge, arrow, coin, sparkles, petals    | 1:1, 1024×1024    |
+| 9d  | 4 menu     | `menu/record-card.png`             | One empty record card with its sunken well                | 3:2, 1536×1024    |
+| 10  | 4 menu     | `menu/ui-kit.png`                  | Sheet: PLAY, secondary button, panel, card, close, gear   | 3:2, 1536×1024    |
+| 11  | 4 menu     | `menu/upgrade-icons.png`           | Sheet: 5 upgrade icons                                    | 3:2, 1536×1024    |
+| 12  | 4 menu     | `menu/settings-icons.png`          | Sheet: sound, haptics, reduce motion, how to play         | 1:1, 1024×1024    |
+| 13  | 4 menu     | `menu/banner.png`                  | Blank ribbon banner for "The shrine grows!" etc.          | 3:2, 1536×1024    |
+| 14  | 5 app      | `app-icon.png`                     | App icon                                                  | 1:1, 1024×1024    |
+| 15  | 6 doors    | `doors/picture.png`                | Stage-door picture, cut into four strips by the game      | 9:16              |
+| 16  | 6 doors    | `doors/panel.png`                  | One empty door frame, laid over each strip                | 2:3, 1024×1536    |
+| 17  | 7 specials | `specials/magnet.png`              | The magnet token (in the paw and NEXT)                    | 1:1, 1024×1024    |
+| 18  | 7 specials | `specials/hanabi.png`              | The firework ball                                         | 1:1, 1024×1024    |
+| 19  | 7 specials | `specials/joker.png`               | The joker cat, a rainbow maneki-neko in a jester hat      | 1:1, 1024×1024    |
+| 20  | 7 specials | `specials/boulders.png`            | Sheet: the boulder with 0, 1, 2 and 3 iron bands          | 1:1, 1024×1024    |
 
 How the pieces go into the game:
 
@@ -887,3 +891,106 @@ rows of cells are plain and the same height as the others; no kanji or stamp any
 draws the screen at an angle or paints into the plain rows, edit the image in the same thread:
 "Keep everything the same; make the four panels completely flat and facing the viewer" or "keep
 the painting, but leave the top two and bottom two rows of lattice cells plain cream paper".
+
+### 4.8 Phase 7: special balls
+
+The magnet, the hanabi, the joker cat and the boulder (GAME_DESIGN §15) are code-drawn
+placeholders until these come in. Each is a ball like the cats, so the art goes through the cats'
+pipeline: the white is cut, the round body is fitted (a fuse or a hat sticking out of the top is
+left out of the fit, like the cats' ears) and scaled onto the ball's physics radius. The game adds
+the effects in code: a lit hanabi's flickering glow, the magnet's gold selection ring, sparks and
+chips. Boulders have four looks, one per iron band left (Iron Bands has 3 levels), so they come
+on one sheet to stay alike.
+
+Attach the lineup sheet (`art-source/style/lineup.webp`) and the game screenshot
+`docs/screenshots/v0.26.0/390-1-hud.png` to every request. Each prompt is complete (the style
+block is inside it). One image per request, square 1:1 (1024×1024).
+
+**Magnet** (`specials/magnet.png`):
+
+```text
+Style: match the attached images exactly (the game's cat lineup and a game screenshot). Polished
+casual mobile-game art, cute chibi kawaii illustration, thick warm dark-brown outlines (never
+black) of even weight, soft pastel cel shading with gentle gradients and one small glossy
+highlight, light from the upper left, clean crisp vector-like edges, readable at small sizes.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow
+under the object. No text, no letters, no numbers, no kanji, no watermark.
+
+A magnet token for a Suika-style merge game, the same size and drawing style as the cats in the
+attached lineup: strictly front view, its outline a perfect circle, centred, filling about 80% of
+the canvas. A round cream disc with a thin gold rim, like a lucky coin, and in its middle a big
+glossy red horseshoe magnet, opening downwards, with shiny silver-white tips, and two or three
+small curved gold lines beside each tip showing its pull. Everything stays inside the circle.
+Square 1:1.
+```
+
+**Hanabi** (`specials/hanabi.png`):
+
+```text
+Style: match the attached images exactly (the game's cat lineup and a game screenshot). Polished
+casual mobile-game art, cute chibi kawaii illustration, thick warm dark-brown outlines (never
+black) of even weight, soft pastel cel shading with gentle gradients and one small glossy
+highlight, light from the upper left, clean crisp vector-like edges, readable at small sizes.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow
+under the object. No text, no letters, no numbers, no kanji, no watermark.
+
+A Japanese firework shell (hanabi-dama) drawn as a cute ball for a Suika-style merge game, the
+same size and drawing style as the cats in the attached lineup: strictly front view, its outline a
+perfect circle, centred, filling about 80% of the canvas. The ball is wrapped in deep navy washi
+paper with a bright firework burst painted on it: rays and dots in pink, gold, mint and white
+spreading from the centre. A thin red paper band goes round its middle. A short twisted brown
+paper fuse with a tiny red tip sticks up from the very top, only as big as a cat's ear; nothing
+else sticks out of the circle. No flame, no sparks, no glow around it (the game adds them).
+Square 1:1.
+```
+
+**Joker cat** (`specials/joker.png`):
+
+```text
+Style: match the attached images exactly (the game's cat lineup and a game screenshot). Polished
+casual mobile-game art, cute chibi kawaii illustration, thick warm dark-brown outlines (never
+black) of even weight, soft pastel cel shading with gentle gradients and one small glossy
+highlight, light from the upper left, clean crisp vector-like edges, readable at small sizes.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow
+under the object. No text, no letters, no numbers, no kanji, no watermark.
+
+The joker cat, the wild card of a Suika-style merge game: a maneki-neko (Japanese lucky cat) with
+exactly the same round body, pose, size and drawing style as the cats in the attached lineup.
+SHAPE: head and body are one perfect round ball; only the two ears and a small hat stick out
+above the circle; no feet, no tail. POSE: exactly ONE raised beckoning paw, the cat's left (on
+the viewer's right), held up beside the cheek with the palm and pink paw pads facing the viewer;
+the other paw rests down on the belly. A collar with a round gold bell under the chin.
+WHAT MAKES IT THE JOKER: its body has soft pastel rainbow stripes (red, orange, yellow, green,
+blue and purple bands curving across the ball) with a plain cream belly patch; a playful winking
+face with a little pink tongue out; a small jester hat between its ears with two floppy points,
+one pink and one purple, each tipped with a tiny gold bell. It must look clearly different from
+all nine cats in the lineup at a glance. Square 1:1.
+```
+
+**Boulders** (`specials/boulders.png`, a sheet):
+
+```text
+Style: match the attached images exactly (the game's cat lineup and a game screenshot). Polished
+casual mobile-game art, cute chibi kawaii illustration, thick warm dark-brown outlines (never
+black) of even weight, soft pastel cel shading with gentle gradients and one small glossy
+highlight, light from the upper left, clean crisp vector-like edges, readable at small sizes.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow
+under the objects. No text, no letters, no numbers, no kanji, no watermark.
+
+A sheet of four game balls for a Suika-style merge game in a 2×2 grid, evenly spaced, all exactly
+the same size, each one a perfect circle seen strictly from the front, with white space between
+them. All four are the SAME boulder: a round grey stone ball like a smooth river stone, cool soft
+grey with a few darker speckles and one soft highlight, no face. Only the iron bands differ:
+- top left: the bare stone, no band;
+- top right: one iron band, a dark steel strap with two round rivets, wrapped straight across the
+  middle of the stone from edge to edge;
+- bottom left: two iron bands, evenly spaced;
+- bottom right: three iron bands, evenly spaced.
+The bands are horizontal and curve slightly with the ball's round surface; nothing sticks out of
+the circles. Square 1:1.
+```
+
+Checks for these: the outline is a closed circle (only the hanabi's fuse and the joker's ears and
+hat stick out at the top); a plain white background with nothing cropped; the joker has exactly
+one raised paw on the viewer's right, a collar and a bell; the four boulders are the same stone at
+the same size, with 0, 1, 2 and 3 bands.
