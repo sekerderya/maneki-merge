@@ -63,7 +63,7 @@ narrower than their canvas: Claude crops the empty space.
 | 1   | 1 cats     | `cats/size-01.png` … `size-09.png` | One cat per size (GAME_DESIGN §4)                         | 1:1, 1024×1024    |
 | 2   | 2 scene    | `scene/background.png`             | Shrine garden behind and around the jar                   | 2:3, 1024×1536 ×2 |
 | 2a  | 9 jars     | `scene/background-2` … `-5`        | The grown jars' backgrounds, a bigger place each (§4.10)  | 9:16              |
-| 2b  | 10 clouds  | `transition/clouds.png`            | Sheet: six clouds for the growth transition (§4.11)       | 3:2, 1536×1024    |
+| 2b  | 10 clouds  | `transition/clouds.jpg`            | Sheet: the clouds for the growth transition (§4.11)       | 3:2, 1536×1024    |
 | 3   | 2 scene    | `scene/jar.png`                    | Empty bamboo-framed glass jar, front view                 | 2:3, 1024×1536    |
 | 4   | 2 scene    | `scene/rug.png`                    | Mint rug the jar stands on                                | 3:2, 1536×1024    |
 | 5   | 2 scene    | `scene/paw.png`                    | Calico dropper arm hanging from the top                   | 2:3, 1024×1536    |
@@ -1563,6 +1563,9 @@ sparkles, no sky around them. Top row: three big clouds, each wider than it is t
 Bottom row: three smaller clouds, about 1.3 : 1. All six have different shapes. Nothing cropped at
 the edges. Landscape 3:2.
 ```
+
+**Done (2026-10-11):** the owner's sheet came with nine clouds in a 3×3 grid (all clean and closed)
+and is in the game (v0.33.3); the pipeline takes any number of them.
 
 Checks: six clouds with closed outlines on plain white, nothing touching or cropped; solid fill
 with no holes; round bottoms; the same cream, peach and outline as the background's clouds.
