@@ -4,9 +4,9 @@
  * it sends back are `drop(x)` and, with a magnet in the paw, `take(id)` for the ball the player
  * selected and confirmed (GAME_DESIGN §15.2).
  *
- * Expansions (GAME_DESIGN §7.1) are drawn from the run's timeline every frame: the stage clear as
- * staggered pops, then camera, walls and rim from `expansionFrames`, with the next stage's
- * textures prepared during the zoom and switched in at the reveal.
+ * Stage clears (GAME_DESIGN §7.1) are drawn from the run's timeline every frame: the staggered
+ * pops, with the next stage's textures prepared during the clear and switched in at the reveal.
+ * The jar stays still when it grows (v0.33.3): the DOM's clouds and background show the growth.
  */
 import Phaser from 'phaser';
 import {
@@ -52,7 +52,6 @@ import { BallRenderer, glowAlpha } from './BallRenderer';
 import type { CatSprite } from './BallRenderer';
 import { fitCamera, worldToView } from './cameraFit';
 import type { CameraFit, JarFrame } from './cameraFit';
-import { expansionFrames } from './expansionView';
 import { MergeFx } from './fx/MergeFx';
 import type { PayoutKind } from './fx/MergeFx';
 import { PopFx } from './fx/PopFx';
@@ -465,24 +464,23 @@ export class GameScene extends Phaser.Scene {
   // ── Rendering ──────────────────────────────────────────────────────────────
 
   private render(run: RunController): void {
-    // Camera, walls and rim all come from the run's timeline (TECH_SPEC §4), so a resize or a
-    // pause in the middle of an expansion simply shows the right frame next time.
-    const frames = expansionFrames(run.geometry, run.expansion, run.renderAlpha);
+    // The camera frames the jar (TECH_SPEC §4); it holds still through a growth too.
+    const geo = run.geometry;
     const cam = this.cameras.main;
-    this.fit = fitCamera(frames.camera, cam.width, cam.height, undefined, this.insetTop);
-    this.reportJarBox(run.expansion !== null);
+    this.fit = fitCamera(geo, cam.width, cam.height, undefined, this.insetTop);
+    this.reportJarBox(false);
     const shake = this.shake.offset(this.nowMs, this.shakeOffset);
     cam.setZoom(this.fit.zoom).centerOn(this.fit.centerX + shake.x, this.fit.centerY + shake.y);
     this.fx.setResolution(this.fit.zoom);
 
     const danger = run.dangerActive;
     const flash = danger ? Math.floor(this.nowMs / (DANGER_FLASH_PERIOD_MS / 2)) % 2 === 0 : null;
-    this.jar.draw(frames.jar.width, flash, run.expansion !== null);
+    this.jar.draw(geo.width, flash, false);
     this.balls.sync(run.balls, this.nowMs);
     this.renderDropper(run);
     this.renderSelection(run);
     this.renderFlights(run);
-    this.renderCountdown(run, frames.jar);
+    this.renderCountdown(run, geo);
     this.pops.update(this.nowMs);
     this.fx.update(this.nowMs);
   }

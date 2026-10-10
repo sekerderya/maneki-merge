@@ -18,6 +18,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { buildBall } from './artBall.ts';
 import { findSource } from './artImage.ts';
+import { buildClouds } from './buildClouds.ts';
 import { buildDoors } from './buildDoors.ts';
 import { buildHud } from './buildHud.ts';
 import { buildIcons } from './buildIcons.ts';
@@ -58,6 +59,7 @@ async function main(): Promise<void> {
   await buildShop();
   await buildIcons();
   await buildPicks();
+  await buildClouds();
 }
 
 function dataModule(looks: readonly LookData[]): string {

@@ -63,7 +63,7 @@ export interface SessionParts {
   /** The doors that shut over the game while the picks are made (GAME_DESIGN §7.1). */
   readonly doors: DoorsView;
   /** The garden behind the jar: a new one each time the jar grows (GAME_DESIGN §7). */
-  readonly scenery: { setJar(jar: number, grow: boolean): void };
+  readonly scenery: { setJar(jar: number, grow: boolean): void; setPaused(paused: boolean): void };
   /** Sound effects and haptics for the run's events. */
   readonly feedback: FeedbackOutputs;
   /** A fixed seed (`?seed=`) for every run, or null for a fresh one each time. */
@@ -220,6 +220,7 @@ export class GameSession {
       this.showPick(run, offer.kind, offer.options);
     }
     this.parts.banners.setPaused(true);
+    this.parts.scenery.setPaused(true);
     this.parts.pause.show();
     return true;
   }
@@ -363,9 +364,13 @@ export class GameSession {
         }
       });
     });
-    events.on('paused', () => banners.setPaused(true));
+    events.on('paused', () => {
+      banners.setPaused(true);
+      this.parts.scenery.setPaused(true);
+    });
     events.on('resumed', () => {
       banners.setPaused(false);
+      this.parts.scenery.setPaused(false);
       this.releasePick(run);
     });
     events.on('gameOver', (e) => this.onGameOver(e));

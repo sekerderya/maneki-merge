@@ -117,19 +117,6 @@ export const POP_SCALE = 1.3;
 export const POP_STAGGER_MS = 30;
 export const POP_STAGGER_MAX_MS = 240;
 
-/**
- * How much the jar grows on screen (the camera zooms out by as much) from one stage to the next
- * (GAME_DESIGN §7.1). A look only: the grown jar is emptied and rescaled to the same world jar at
- * the reveal. Until v0.24 it was r(10) / r(1), so the last cat shrank to the first cat's size.
- */
-export const STAGE_ZOOM = 4.8;
-
-/**
- * Expansion (GAME_DESIGN §7.1): the drawn walls and rim trail the camera by this fraction of the
- * zoom, so the view pulls back first and the jar then widens into the new frame. Both arrive
- * together when the zoom ends. 0 keeps the jar locked to the frame.
- */
-export const EXPANSION_WALL_LAG = 0.25;
 /** Gold sparks along the rim when the zoom starts and at the reveal, in world units. */
 export const EXPANSION_SPARKS = {
   count: 44,
@@ -286,6 +273,42 @@ export const STAGE_CLEAR_EXIT_MS = 500;
  * keyframes hold until 75%, so 2.1 s holds it about 1.6 s.
  */
 export const SHRINE_GROWS_BANNER_MS = 2100;
+
+/**
+ * The growth clouds (GAME_DESIGN §7.1, v0.33.3): when the jar grows, the owner's clouds well up
+ * from below the screen and cover the play area (under the HUD and the banners), the next
+ * background comes in behind them, and they part to the left and right, the middle first, while
+ * the new background settles from GROWTH_BG_START_SCALE to its size. Each cloud starts rising up
+ * to CLOUD_RISE_JITTER_MS late and parting up to CLOUD_PART_STAGGER_MS late (the ones at the sides
+ * last); the background changes halfway through the hold, when every cloud is up. The whole
+ * transition lasts about as long as the zoom phase and the reveal (1.6 s), so the doors come as
+ * it ends.
+ */
+export const CLOUD_RISE_MS = 550;
+export const CLOUD_RISE_JITTER_MS = 80;
+export const CLOUD_HOLD_MS = 120;
+export const CLOUD_PART_MS = 750;
+export const CLOUD_PART_STAGGER_MS = 100;
+/** A big cloud is this share of the play area's width (the small ones a little less). */
+export const CLOUD_WIDTH_RATIO = 0.72;
+/** Cloud centres sit this share of a cloud's width apart in a row, and rows this share of its height. */
+export const CLOUD_COLUMN_STEP = 0.55;
+export const CLOUD_ROW_STEP = 0.4;
+/** Clouds sit at random within this share of a step around their place, so the wall looks natural. */
+export const CLOUD_JITTER = 0.1;
+/** The three layers' sizes, back to front: the back clouds look further away. */
+export const CLOUD_LAYER_SCALES: readonly number[] = [0.92, 1, 1.15];
+/**
+ * Parting, each cloud travels sideways the play area's width times this, plus its distance from
+ * the middle, rises this share of the height, and grows by this much, as if passing the camera.
+ */
+export const CLOUD_PART_DISTANCE = 0.8;
+export const CLOUD_PART_RISE = 0.08;
+export const CLOUD_PART_GROW = 0.25;
+/** The new background starts this much bigger (around the jar's feet) and settles to 1. */
+export const GROWTH_BG_START_SCALE = 1.15;
+/** The cloud layout's seed: the same wall every time (no gameplay randomness involved). */
+export const CLOUD_LAYOUT_SEED = 715;
 /** With reduced motion the doors fade in and out instead of folding. */
 export const DOORS_FADE_MS = 250;
 /** How far each door turns when a wing is folded up, degrees (90 would be flat shut). */

@@ -81,26 +81,3 @@ export function worldToView(
     y: (y - fit.centerY) * fit.zoom + viewHeight / 2,
   };
 }
-
-/** `jar` grown by `factor` in every direction (the floor stays at y = 0). */
-export function scaleFrame(jar: JarFrame, factor: number): JarFrame {
-  return {
-    width: jar.width * factor,
-    height: jar.height * factor,
-    headroom: jar.headroom * factor,
-  };
-}
-
-/**
- * `jar` grown by `zoom^t` (t = 0 → jar, t = 1 → zoom × jar). Growing by a constant ratio per
- * moment looks like an even zoom on screen, even when the jar grows sixfold.
- */
-export function growFrame(jar: JarFrame, zoom: number, t: number): JarFrame {
-  return scaleFrame(jar, zoom ** t);
-}
-
-/** Smooth ease in-out on 0–1. */
-export function easeInOut(t: number): number {
-  const c = Math.min(1, Math.max(0, t));
-  return c * c * (3 - 2 * c);
-}

@@ -1,14 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { STAGE_ZOOM } from '../../src/config/view';
 import { CAMERA_SHARED_HEADROOM_RATIO, CAMERA_SPARE_BELOW_RATIO } from '../../src/config/view';
-import {
-  easeInOut,
-  fitCamera,
-  framedRegion,
-  growFrame,
-  scaleFrame,
-  worldToView,
-} from '../../src/game/cameraFit';
+import { fitCamera, framedRegion, worldToView } from '../../src/game/cameraFit';
 import { jarGeometry } from '../../src/physics/geometry';
 
 /** The world rectangle a fit shows in a viewport. */
@@ -90,43 +82,9 @@ describe('camera fit (TECH_SPEC §4)', () => {
     expect(worldToView(fit, w, h, 0, framedRegion(geo).bottom).y).toBeLessThanOrEqual(h + 1e-6);
   });
 
-  it('keeps the floor and the jar width still on screen while the jar grows', () => {
-    const [w, h] = [975, 1750];
-    const at = (t: number) => {
-      const frame = growFrame(geo, STAGE_ZOOM, t);
-      const fit = fitCamera(frame, w, h);
-      return { floor: worldToView(fit, w, h, 0, 0).y, width: frame.width * fit.zoom };
-    };
-    for (const t of [0.25, 0.5, 1]) {
-      expect(at(t).floor).toBeCloseTo(at(0).floor, 6);
-      expect(at(t).width).toBeCloseTo(at(0).width, 6);
-    }
-  });
-
   it('survives a zero-sized viewport', () => {
     const fit = fitCamera(geo, 0, 0);
     expect(Number.isFinite(fit.zoom)).toBe(true);
     expect(fit.zoom).toBeGreaterThan(0);
-  });
-
-  it('grows a jar by a constant ratio and eases in and out', () => {
-    const frame = { width: geo.width, height: geo.height, headroom: geo.headroom };
-    expect(growFrame(geo, STAGE_ZOOM, 0)).toEqual(frame);
-    expect(growFrame(geo, STAGE_ZOOM, 1).width).toBeCloseTo(geo.width * STAGE_ZOOM, 9);
-    expect(growFrame(geo, STAGE_ZOOM, 0.5).height).toBeCloseTo(
-      geo.height * Math.sqrt(STAGE_ZOOM),
-      9,
-    );
-    expect(scaleFrame(geo, 2)).toEqual({
-      width: 2 * geo.width,
-      height: 2 * geo.height,
-      headroom: 2 * geo.headroom,
-    });
-    expect(easeInOut(0)).toBe(0);
-    expect(easeInOut(1)).toBe(1);
-    expect(easeInOut(0.5)).toBe(0.5);
-    expect(easeInOut(-1)).toBe(0);
-    expect(easeInOut(2)).toBe(1);
-    expect(easeInOut(0.1)).toBeLessThan(0.1);
   });
 });

@@ -622,6 +622,30 @@
   }
 }
 
+/* The growth clouds (GAME_DESIGN §7.1, ui/fx/growthClouds.ts): over the jar and the garden, under
+   the hint, the banners and the HUD; they never take a touch. */
+.growth-clouds {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.growth-cloud {
+  position: absolute;
+  max-width: none;
+  will-change: transform, opacity;
+}
+
+/* The cream of the clouds, under them while they cover the screen. */
+.growth-clouds-wash {
+  position: absolute;
+  inset: 0;
+  background: #fbe9cf;
+  opacity: 0;
+}
+
 /* Banners (GAME_DESIGN §2.3): over the jar, never in the way of a touch. Each runs one
    animation for its whole life, so pausing the animation pauses the banner. */
 .banners {

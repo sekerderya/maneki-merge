@@ -11,9 +11,15 @@ import { JAR_GLASS } from '../../config/jarArt';
 import { JAR_WIDTH } from '../../config/stages';
 import { BACKGROUND_JAR, backgroundArt, SCENE_SPRITE_DIR } from '../../config/sceneSprites';
 import type { BackgroundSprite } from '../../config/sceneSprites';
-import { EXPANSION_ZOOM_MS } from '../../config/timings';
-import { STAGE_ZOOM, TAKE_ARM_MS, TAKE_BUTTON_GAP } from '../../config/view';
+import {
+  CLOUD_PART_MS,
+  CLOUD_PART_STAGGER_MS,
+  GROWTH_BG_START_SCALE,
+  TAKE_ARM_MS,
+  TAKE_BUTTON_GAP,
+} from '../../config/view';
 import { reducedMotion } from '../../platform';
+import { createGrowthClouds } from '../fx/growthClouds';
 import { SCENERY_JAR, SCENERY_VIEW, sceneryMarkup } from '../scenery';
 
 export interface GameScreenActions extends HudActions {
@@ -60,10 +66,12 @@ export interface GameScreenView {
   setTakePrompt(prompt: ScreenTakePrompt): void;
   /**
    * Shows jar `jar`'s background (GAME_DESIGN §7: 1 for stages 1–5, 2 for 6–10, …). With `grow`
-   * the old garden shrinks towards the jar's feet and fades out over the zoom, as the camera pulls
-   * back, uncovering the new one; else it just switches. Only the painted backgrounds change.
+   * the growth clouds well up, the background changes behind them, and it settles from a little
+   * close as they part (§7.1); else it just switches. Only with the painted backgrounds.
    */
   setJar(jar: number, grow: boolean): void;
+  /** Freezes the growth clouds while the run is paused. */
+  setPaused(paused: boolean): void;
 }
 
 /**
@@ -88,8 +96,8 @@ export function createGameScreen(
     playArea.style.setProperty('--scene-sky', art.sky);
     playArea.style.setProperty('--scene-ground', art.ground);
   };
-  // The old background while it leaves after the jar grew (setJar).
-  let leaving: Animation | null = null;
+  // The new background settling after the jar grew (setJar).
+  let settling: Animation | null = null;
   let lastBox: ScreenJarBox | null = null;
   if (sceneArt) {
     const image = el('img', 'play-scenery is-art');
@@ -110,6 +118,8 @@ export function createGameScreen(
   // The jar's glass: it never moves on screen while playing, so the DOM draws it once.
   const glass = el('div', 'jar-glass');
   playArea.append(glass);
+  // Over the jar and the garden, under the hint, the banners and the HUD.
+  const clouds = createGrowthClouds(playArea);
   const hint = createHint(playArea);
   const banners = createBanners(playArea);
   // The magnet's Take button floats over the play area, above the selected ball.
@@ -177,34 +187,41 @@ export function createGameScreen(
       glass.classList.toggle('is-hidden', growing);
     },
     setJar(jar, grow) {
-      const next = backgroundArt(jar);
-      if (!sceneArt || next === art || !(scenery instanceof HTMLImageElement)) return;
-      leaving?.finish();
-      if (grow) {
-        // A copy of the old garden on top: it shrinks towards the jar's feet as it fades out.
-        const old = scenery.cloneNode() as HTMLImageElement;
-        old.classList.add('is-leaving');
-        old.style.transformOrigin = `${(BACKGROUND_JAR.cx / art.width) * 100}% ${(BACKGROUND_JAR.floor / art.height) * 100}%`;
-        scenery.after(old);
-        const end = reducedMotion()
-          ? { opacity: 0 }
-          : { opacity: 0, transform: `scale(${1 / STAGE_ZOOM})` };
-        const animation = old.animate([{ opacity: 1, transform: 'scale(1)' }, end], {
-          duration: EXPANSION_ZOOM_MS,
-          easing: 'ease-in-out',
-          fill: 'forwards',
-        });
-        leaving = animation;
-        const done = (): void => {
-          old.remove();
-          if (leaving === animation) leaving = null;
-        };
-        animation.addEventListener('finish', done);
-        animation.addEventListener('cancel', done);
+      if (!sceneArt || !(scenery instanceof HTMLImageElement)) return;
+      const image = scenery;
+      const show = (): void => {
+        const next = backgroundArt(jar);
+        if (next === art) return;
+        art = next;
+        showArt(image);
+        if (lastBox) placeScenery(lastBox);
+      };
+      if (!grow) {
+        clouds.clear();
+        settling?.cancel();
+        show();
+        return;
       }
-      art = next;
-      showArt(scenery);
-      if (lastBox) placeScenery(lastBox);
+      clouds.play(() => {
+        show();
+        if (reducedMotion()) return;
+        // Behind the clouds the new place starts a little close, around the jar's feet, and
+        // settles as they part: the camera pulls back.
+        image.style.transformOrigin = `${(BACKGROUND_JAR.cx / art.width) * 100}% ${(BACKGROUND_JAR.floor / art.height) * 100}%`;
+        settling?.cancel();
+        settling = image.animate(
+          [{ transform: `scale(${GROWTH_BG_START_SCALE})` }, { transform: 'none' }],
+          {
+            duration: CLOUD_PART_MS + CLOUD_PART_STAGGER_MS,
+            easing: 'cubic-bezier(0.25, 0.6, 0.3, 1)',
+          },
+        );
+      });
+    },
+    setPaused(paused) {
+      clouds.setPaused(paused);
+      if (paused && settling?.playState === 'running') settling.pause();
+      else if (!paused && settling?.playState === 'paused') settling.play();
     },
     setTakePrompt(prompt) {
       if (!prompt) {
