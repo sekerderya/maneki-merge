@@ -134,6 +134,36 @@ export const ECHO_MAX_SIZE = 7;
  */
 export const SPAWN_START_RADIUS_SHARE = 0.25;
 
+/**
+ * Cursed Bell (GAME_DESIGN §15.12): with it taken, the stage's CURSE_FIRST_DROP-th drop brings the
+ * first curse, and each next one comes CURSE_INTERVALS[More Curses level] drops after the last one
+ * began. A cursed cat's bell counts down from CURSE_DROPS[Quick Curse level] drops; at the drop
+ * after 0 it turns to stone, a boulder that breaks after CURSE_STONE_HITS merges whatever Iron
+ * Bands says. Only cats of sizes 1 to CURSE_MAX_SIZE are cursed. A merge that lifts a curse pays
+ * CURSE_LIFT_BONUS times its own coins on top.
+ */
+export const CURSE_FIRST_DROP = 15;
+export const CURSE_INTERVALS = [30, 25, 20, 15] as const;
+export const CURSE_DROPS = [10, 8, 7, 6] as const;
+export const CURSE_MAX_SIZE = 6;
+export const CURSE_LIFT_BONUS = 1;
+export const CURSE_STONE_HITS = 1;
+
+/**
+ * Copycat (GAME_DESIGN §15.13): the cat in NEXT takes the size of the stage's latest merge, at
+ * most this size (the biggest drop).
+ */
+export const COPYCAT_MAX_SIZE = 4;
+
+/**
+ * Dice (GAME_DESIGN §15.14): every merge of cats rolls a die. It is lucky (one size more) or
+ * fizzles (one cat of the size that met) with these chances; otherwise the merge is normal.
+ */
+export const DICE_LUCKY_CHANCE = 1 / 6;
+export const DICE_FIZZLE_CHANCE = 1 / 6;
+/** What a merge's die showed; null when it didn't roll or rolled a normal merge. */
+export type DiceRoll = 'lucky' | 'fizzle' | null;
+
 export const TRIAL_IDS = [
   'moreBoulders',
   'ironBands',
@@ -141,8 +171,11 @@ export const TRIAL_IDS = [
   'wind',
   'heavyDrop',
   'porcelain',
+  'cursedBell',
+  'quickCurse',
+  'moreCurses',
 ] as const;
-export const RULE_IDS = ['hubris', 'echo'] as const;
+export const RULE_IDS = ['hubris', 'echo', 'copycat', 'dice'] as const;
 export const BLESSING_IDS = ['moreMagnets', 'bigDrops', 'goldenCats', 'hanabi', 'joker'] as const;
 export const PICK_IDS = [...TRIAL_IDS, ...BLESSING_IDS, ...RULE_IDS] as const;
 
@@ -176,6 +209,8 @@ export interface PickDef {
   readonly maxLevel: number;
   /** The effect of one level, in the unit of the value it changes. */
   readonly perLevel: number;
+  /** A follow-up: it is offered only once this pick has been taken (GAME_DESIGN §15.5). */
+  readonly requires?: PickId;
 }
 
 export const PICKS: Readonly<Record<PickId, PickDef>> = {
@@ -234,6 +269,35 @@ export const PICKS: Readonly<Record<PickId, PickDef>> = {
     maxLevel: 4,
     perLevel: PORCELAIN_CHANCE_PER_LEVEL,
   },
+  cursedBell: {
+    id: 'cursedBell',
+    kind: 'trial',
+    name: 'Cursed Bell',
+    description: 'Now and then a cat is cursed: merge it in time, or it turns to stone',
+    statLabel: 'Curse',
+    maxLevel: 1,
+    perLevel: 1,
+  },
+  quickCurse: {
+    id: 'quickCurse',
+    kind: 'trial',
+    name: 'Quick Curse',
+    description: 'Cursed cats turn to stone sooner',
+    statLabel: 'Drops to stone',
+    maxLevel: CURSE_DROPS.length - 1,
+    perLevel: 1,
+    requires: 'cursedBell',
+  },
+  moreCurses: {
+    id: 'moreCurses',
+    kind: 'trial',
+    name: 'More Curses',
+    description: 'Curses come more often',
+    statLabel: 'Drops between curses',
+    maxLevel: CURSE_INTERVALS.length - 1,
+    perLevel: 1,
+    requires: 'cursedBell',
+  },
   hubris: {
     id: 'hubris',
     kind: 'rule',
@@ -249,6 +313,24 @@ export const PICKS: Readonly<Record<PickId, PickDef>> = {
     name: 'Echo',
     description: 'Merges of sizes 5–7 leave a cat of their size behind, once per drop',
     statLabel: 'Echo',
+    maxLevel: 1,
+    perLevel: 1,
+  },
+  copycat: {
+    id: 'copycat',
+    kind: 'rule',
+    name: 'Copycat',
+    description: 'The next cat copies the size of your last merge',
+    statLabel: 'Next cat',
+    maxLevel: 1,
+    perLevel: 1,
+  },
+  dice: {
+    id: 'dice',
+    kind: 'rule',
+    name: 'Dice',
+    description: 'Every merge rolls a die: sometimes a size more, sometimes it fizzles',
+    statLabel: 'Merges',
     maxLevel: 1,
     perLevel: 1,
   },

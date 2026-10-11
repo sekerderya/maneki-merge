@@ -193,8 +193,10 @@ export function boulderSvg(bands: number): string {
   return markup;
 }
 
-/** One glyph per trial and blessing for the pick cards (GAME_DESIGN §15.5). */
-export const PICK_ICONS: Readonly<Record<PickId, string>> = {
+type GlyphPick = Exclude<PickId, 'cursedBell' | 'quickCurse' | 'moreCurses' | 'copycat' | 'dice'>;
+
+/** One glyph per trial and blessing for the pick cards (GAME_DESIGN §15.5); see `pickIcon`. */
+const PICK_ICONS: Readonly<Record<GlyphPick, string>> = {
   moreBoulders: svg(
     '<circle cx="8.5" cy="15" r="5.5" fill="currentColor"/>' +
       '<circle cx="16.5" cy="10" r="5" fill="currentColor"/>' +
@@ -248,3 +250,18 @@ export const PICK_ICONS: Readonly<Record<PickId, string>> = {
       '<path d="M16.5 5.5a7.5 7.5 0 0 1 3 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
   ),
 };
+
+/**
+ * Batch 19's picks have no glyph of their own (their looks are the owner's art only, GAME_DESIGN
+ * §15.12–§15.14): without the art skin they borrow the nearest one, the stone for the curses.
+ */
+export const pickIcon = (id: PickId): string =>
+  PICK_ICONS[
+    id === 'cursedBell' || id === 'quickCurse' || id === 'moreCurses'
+      ? 'bigBoulders'
+      : id === 'copycat'
+        ? 'echo'
+        : id === 'dice'
+          ? 'goldenCats'
+          : id
+  ];

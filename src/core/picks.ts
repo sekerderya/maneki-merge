@@ -8,6 +8,10 @@ import {
   BOULDER_BASE_HITS,
   BOULDER_BASE_SIZE,
   BOULDER_FIRST_STAGE,
+  CURSE_DROPS,
+  CURSE_INTERVALS,
+  DICE_FIZZLE_CHANCE,
+  DICE_LUCKY_CHANCE,
   HEAVY_DROP_FALL_TIMES,
   HUBRIS_PAIR_WAIT_MS,
   MAGNET_BASE_CHANCE,
@@ -18,7 +22,7 @@ import {
   PICKS,
   WIND_NAMES,
 } from '../config/picks';
-import type { PickId, PickKind, WindDirection } from '../config/picks';
+import type { DiceRoll, PickId, PickKind, WindDirection } from '../config/picks';
 import { dropWeights } from './dropQueue';
 import type { DropOdds } from './dropQueue';
 import { roundStable } from './math';
@@ -68,8 +72,18 @@ export function pickMaxed(id: PickId, levels: PickLevels, bigCatchLevel: number)
 }
 
 /**
- * The cards of a pick: up to PICK_OPTIONS different options of `kind` that aren't maxed, drawn at
- * random in random order. Empty when every option is maxed (the pick is skipped).
+ * True when a pick may offer the option: it isn't maxed, and a follow-up's pick has been taken
+ * (Quick Curse and More Curses need Cursed Bell, GAME_DESIGN §15.5).
+ */
+export function pickOpen(id: PickId, levels: PickLevels, bigCatchLevel: number): boolean {
+  const needs = PICKS[id].requires;
+  if (needs !== undefined && levels[needs] <= 0) return false;
+  return !pickMaxed(id, levels, bigCatchLevel);
+}
+
+/**
+ * The cards of a pick: up to PICK_OPTIONS different open options of `kind` (`pickOpen`), drawn at
+ * random in random order. Empty when none is open (the pick is skipped).
  */
 export function drawOffer(
   kind: PickKind,
@@ -77,13 +91,23 @@ export function drawOffer(
   bigCatchLevel: number,
   rng: Rng,
 ): PickId[] {
-  const open = pickIds(kind).filter((id) => !pickMaxed(id, levels, bigCatchLevel));
+  const open = pickIds(kind).filter((id) => pickOpen(id, levels, bigCatchLevel));
   // Fisher–Yates: each option lands on each place equally often.
   for (let i = open.length - 1; i > 0; i--) {
     const j = rng.int(0, i);
     [open[i], open[j]] = [open[j] as PickId, open[i] as PickId];
   }
   return open.slice(0, PICK_OPTIONS);
+}
+
+/**
+ * Dice (GAME_DESIGN §15.14): one merge's die, one draw from `rng`: lucky with DICE_LUCKY_CHANCE,
+ * a fizzle with DICE_FIZZLE_CHANCE, else null (a normal merge).
+ */
+export function diceRoll(rng: Rng): DiceRoll {
+  const roll = rng.next();
+  if (roll < DICE_LUCKY_CHANCE) return 'lucky';
+  return roll < DICE_LUCKY_CHANCE + DICE_FIZZLE_CHANCE ? 'fizzle' : null;
 }
 
 /** What a pick card shows (GAME_DESIGN §15.5), like a shop card. */
@@ -157,7 +181,16 @@ export function pickValue(id: PickId, levels: PickLevels, bigCatchLevel: number)
     case 'hubris':
       return levels.hubris > 0 ? `After ${HUBRIS_PAIR_WAIT_MS / 1000} s` : 'At once';
     case 'echo':
-      return levels.echo > 0 ? 'On' : 'Off';
+    case 'cursedBell':
+      return levels[id] > 0 ? 'On' : 'Off';
+    case 'quickCurse':
+      return String(CURSE_DROPS[levels.quickCurse] ?? '');
+    case 'moreCurses':
+      return String(CURSE_INTERVALS[levels.moreCurses] ?? '');
+    case 'copycat':
+      return levels.copycat > 0 ? 'Copied' : 'Random';
+    case 'dice':
+      return levels.dice > 0 ? 'Rolled' : 'Sure';
   }
 }
 

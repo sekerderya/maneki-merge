@@ -70,13 +70,19 @@ export function pickArt(id: PickId, level: number): PickArt {
       return cat(DROP_SIZES, false);
     case 'goldenCats':
       return cat(1, true);
-    // Until their own pictures come (docs/ART_ASSETS.md §4.12): the cat each is about.
+    // Until their own pictures come (docs/ART_ASSETS.md §4.12–§4.13): the cat each is about.
     case 'wind':
     case 'porcelain':
     case 'hubris':
+    case 'dice':
       return cat(1, false);
     case 'heavyDrop':
+    case 'copycat':
       return cat(2, false);
+    case 'cursedBell':
+    case 'quickCurse':
+    case 'moreCurses':
+      return cat(3, false);
     case 'echo':
       return cat(4, false);
   }

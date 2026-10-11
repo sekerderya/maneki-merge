@@ -18,11 +18,14 @@ import {
   isPickId,
   pickCard,
   pickMaxed,
+  pickOpen,
   pickValue,
   tiltLevel,
 } from '../../src/core/picks';
 import type { PickLevels } from '../../src/core/picks';
 import { Rng } from '../../src/core/rng';
+
+const followUps = (id: PickId): boolean => PICKS[id].requires !== undefined;
 
 const levels = (overrides: Partial<Record<PickId, number>> = {}): PickLevels => ({
   ...defaultPickLevels(),
@@ -38,6 +41,9 @@ describe('the trials, rules and blessings (GAME_DESIGN §15.5)', () => {
     ['wind', 'trial', 'Wind', 5, 100],
     ['heavyDrop', 'trial', 'Heavy Drop', 5, 1],
     ['porcelain', 'trial', 'Porcelain', 4, 0.1],
+    ['cursedBell', 'trial', 'Cursed Bell', 1, 1],
+    ['quickCurse', 'trial', 'Quick Curse', 3, 1],
+    ['moreCurses', 'trial', 'More Curses', 3, 1],
     ['moreMagnets', 'blessing', 'More Magnets', 5, 0.015],
     ['bigDrops', 'blessing', 'Big Drops', 5, 2],
     ['goldenCats', 'blessing', 'Golden Cats', 5, 0.04],
@@ -45,9 +51,11 @@ describe('the trials, rules and blessings (GAME_DESIGN §15.5)', () => {
     ['joker', 'blessing', 'Joker Cat', 5, 0.015],
     ['hubris', 'rule', 'Hubris', 1, 1],
     ['echo', 'rule', 'Echo', 1, 1],
+    ['copycat', 'rule', 'Copycat', 1, 1],
+    ['dice', 'rule', 'Dice', 1, 1],
   ];
 
-  it('lists six trials, five blessings and two rules, in card order', () => {
+  it('lists nine trials, five blessings and four rules, in card order', () => {
     expect([...PICK_IDS]).toEqual(TABLE.map(([id]) => id));
     expect(pickIds('trial')).toEqual(TRIAL_IDS);
     expect(pickIds('blessing')).toEqual(BLESSING_IDS);
@@ -121,26 +129,63 @@ describe('the cards', () => {
     expect(pickMaxed('bigDrops', levels({ bigDrops: 3 }), 5)).toBe(true); // 5 + 6 ≥ 10
   });
 
-  it('offers three of the six trials, each of them at times', () => {
+  it('offers three of the seven trials open at first, each of them at times', () => {
     const seen = new Set<string>();
-    for (let seed = 0; seed < 60; seed++) {
+    for (let seed = 0; seed < 80; seed++) {
       const offer = drawOffer('trial', levels(), 0, new Rng(seed));
       expect(new Set(offer).size).toBe(3);
       for (const id of offer) seen.add(id);
     }
-    expect([...seen].sort()).toEqual([...TRIAL_IDS].sort());
+    const followUps = ['quickCurse', 'moreCurses'];
+    expect([...seen].sort()).toEqual(TRIAL_IDS.filter((id) => !followUps.includes(id)).sort());
   });
 
-  it('offers both rules in random order, then the one left, then none', () => {
-    const seen = new Set<string>();
-    for (let seed = 0; seed < 20; seed++) {
-      const offer = drawOffer('rule', levels(), 0, new Rng(seed));
-      expect([...offer].sort()).toEqual([...RULE_IDS].sort());
-      seen.add(offer.join());
+  it("never offers Cursed Bell's follow-ups before it is taken, and offers them after", () => {
+    for (const id of ['quickCurse', 'moreCurses'] as const) {
+      expect(PICKS[id].requires).toBe('cursedBell');
+      expect(pickOpen(id, levels(), 0)).toBe(false);
+      expect(pickOpen(id, levels({ cursedBell: 1 }), 0)).toBe(true);
+      expect(pickOpen(id, levels({ cursedBell: 1, [id]: 3 }), 0)).toBe(false);
     }
-    expect(seen.size).toBe(2);
-    expect(drawOffer('rule', levels({ hubris: 1 }), 0, new Rng(1))).toEqual(['echo']);
-    expect(drawOffer('rule', levels({ hubris: 1, echo: 1 }), 0, new Rng(1))).toEqual([]);
+    const seen = new Set<string>();
+    for (let seed = 0; seed < 80; seed++) {
+      for (const id of drawOffer('trial', levels(), 0, new Rng(seed))) seen.add(id);
+    }
+    expect(seen.has('quickCurse') || seen.has('moreCurses')).toBe(false);
+    const after = new Set<string>();
+    for (let seed = 0; seed < 80; seed++) {
+      const offer = drawOffer('trial', levels({ cursedBell: 1 }), 0, new Rng(seed));
+      expect(offer).not.toContain('cursedBell');
+      for (const id of offer) after.add(id);
+    }
+    expect(after.has('quickCurse') && after.has('moreCurses')).toBe(true);
+    // Only the follow-ups left: both of them, then the one not maxed.
+    const others = Object.fromEntries(
+      TRIAL_IDS.filter((id) => !followUps(id)).map((id) => [id, PICKS[id].maxLevel]),
+    );
+    expect([...drawOffer('trial', levels(others), 0, new Rng(3))].sort()).toEqual([
+      'moreCurses',
+      'quickCurse',
+    ]);
+    expect(drawOffer('trial', levels({ ...others, quickCurse: 3 }), 0, new Rng(3))).toEqual([
+      'moreCurses',
+    ]);
+  });
+
+  it('offers three of the four rules in random order, then fewer, then none', () => {
+    const seen = new Set<string>();
+    for (let seed = 0; seed < 60; seed++) {
+      const offer = drawOffer('rule', levels(), 0, new Rng(seed));
+      expect(new Set(offer).size).toBe(3);
+      for (const id of offer) seen.add(id);
+    }
+    expect([...seen].sort()).toEqual([...RULE_IDS].sort());
+    expect([...drawOffer('rule', levels({ hubris: 1, dice: 1 }), 0, new Rng(1))].sort()).toEqual([
+      'copycat',
+      'echo',
+    ]);
+    const all = { hubris: 1, echo: 1, copycat: 1, dice: 1 };
+    expect(drawOffer('rule', levels(all), 0, new Rng(1))).toEqual([]);
   });
 
   it('offers three of the five blessings, each of them at times', () => {
@@ -188,6 +233,13 @@ describe('the cards', () => {
     ['porcelain', { porcelain: 3 }, 0, '30%', '40%'],
     ['hubris', {}, 0, 'At once', 'After 0.5 s'],
     ['echo', {}, 0, 'Off', 'On'],
+    ['cursedBell', {}, 0, 'Off', 'On'],
+    ['quickCurse', {}, 0, '10', '8'],
+    ['quickCurse', { quickCurse: 2 }, 0, '7', '6'],
+    ['moreCurses', {}, 0, '30', '25'],
+    ['moreCurses', { moreCurses: 2 }, 0, '20', '15'],
+    ['copycat', {}, 0, 'Random', 'Copied'],
+    ['dice', {}, 0, 'Sure', 'Rolled'],
   ])('%s with %j (Big Catch %i) shows %s → %s', (id, over, bigCatch, current, next) => {
     const card = pickCard(id, levels(over), bigCatch);
     expect(card).toMatchObject({ id, current, next, kind: PICKS[id].kind, name: PICKS[id].name });

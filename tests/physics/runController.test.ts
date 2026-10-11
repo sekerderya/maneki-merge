@@ -18,7 +18,7 @@ import type { UpgradeLevels } from '../../src/core/upgrades';
 import { RunController } from '../../src/run/RunController';
 import type { RunOptions } from '../../src/run/RunController';
 import { MAGNET_TAKE_MS } from '../../src/config/timings';
-import { PICKS, TRIAL_IDS } from '../../src/config/picks';
+import { PICKS, RULE_IDS, TRIAL_IDS } from '../../src/config/picks';
 import type { PickId } from '../../src/config/picks';
 import { MAX_DROP_RADIUS } from '../../src/physics/geometry';
 
@@ -408,7 +408,9 @@ describe('stage clears (GAME_DESIGN §7)', () => {
     run.tick();
     expect(run.state).toBe('choosing');
     expect(of('pickOffered')).toEqual([{ kind: 'rule', options: expect.any(Array) }]);
-    expect([...run.pickOffer!.options].sort()).toEqual(['echo', 'hubris']);
+    // Three of the four rules.
+    expect(run.pickOffer!.options).toHaveLength(3);
+    expect(run.pickOffer!.options.every((id) => PICKS[id].kind === 'rule')).toBe(true);
     ticks(run, 100);
     run.update(1000);
     expect(run.playTimeMs).toBe(settled);
@@ -901,9 +903,8 @@ describe('trials and blessings (GAME_DESIGN §15.5)', () => {
     makeLastCat(run);
     expect(of('pickOffered').at(-1)!.kind).toBe('trial');
     chooseAll(run);
-    // With both rules taken, a growth clear offers a trial instead.
-    run.setPickLevel('hubris', 1);
-    run.setPickLevel('echo', 1);
+    // With every rule taken, a growth clear offers a trial instead.
+    for (const id of RULE_IDS) run.setPickLevel(id, 1);
     expect(run.pickLevels.hubris).toBe(1);
     run.offerPicks(true);
     expect(run.pickOffer?.kind).toBe('trial');

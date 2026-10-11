@@ -3,7 +3,7 @@ import type { PickId, PickKind } from '../../config/picks';
 import { PICK_ARM_MS } from '../../config/view';
 import type { PickCard } from '../../core/picks';
 import { button, el } from '../dom';
-import { PICK_ICONS } from '../icons';
+import { pickIcon } from '../icons';
 import { pickArt } from '../pickArt';
 import { artImage, setUiArtProperties } from '../uiArt';
 
@@ -122,7 +122,7 @@ function createCard(card: PickCard, art: boolean, onSelect: () => void): HTMLBut
     icon.classList.toggle('is-mirrored', card.mirror && ball.picture);
     icon.append(image);
   } else {
-    icon.insertAdjacentHTML('beforeend', PICK_ICONS[card.id]);
+    icon.insertAdjacentHTML('beforeend', pickIcon(card.id));
   }
 
   const info = el('span', 'pick-info');
