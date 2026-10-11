@@ -2,7 +2,7 @@
  * Typed event bus. The run emits, and the presentation layers (HUD, FX, audio, haptics, save)
  * listen; `game` and `ui` only talk to each other through it (TECH_SPEC §3).
  */
-import type { PickId, PickKind, WindDirection } from '../config/picks';
+import type { DiceRoll, PickId, PickKind, WindDirection } from '../config/picks';
 import type { UpgradeId } from '../config/upgrades';
 import type { DropKind } from './dropQueue';
 
@@ -134,6 +134,13 @@ export interface GameEvents {
     readonly parts: 2 | 3;
     /** A cracked cat merged (Porcelain, §15.10): gold seams flash on the whole new cat. */
     readonly kintsugi: boolean;
+    /** Dice (§15.14): the merge was lucky (a size more) or fizzled (no size up); null otherwise. */
+    readonly dice: DiceRoll;
+    /**
+     * The cursed cat merged (Cursed Bell, §15.12): the curse is lifted and `coins` includes the
+     * bonus (`curseEnded` follows).
+     */
+    readonly curseLifted: boolean;
     readonly at: WorldPoint;
     readonly score: number;
     readonly coins: number;
@@ -222,6 +229,39 @@ export interface GameEvents {
     readonly from: number;
     readonly at: WorldPoint;
   };
+  /**
+   * Cursed Bell (GAME_DESIGN §15.12): the cat `id` is cursed; it turns to stone at the drop after
+   * its bell shows 0. `dropsLeft`: what the bell shows now.
+   */
+  curseBegan: {
+    readonly id: number;
+    readonly tier: number;
+    readonly dropsLeft: number;
+    readonly at: WorldPoint;
+  };
+  /** A drop took one off the cursed cat's bell. */
+  curseTicked: { readonly id: number; readonly dropsLeft: number };
+  /**
+   * The curse on `id` is over: `lifted` by a merge (which paid `bonus` coins more), `taken` by
+   * the magnet, `gone` with the cat (a hanabi, a Lucky Save, a break, a stage clear), or `stone`.
+   */
+  curseEnded: {
+    readonly id: number;
+    readonly reason: 'lifted' | 'taken' | 'gone' | 'stone';
+    readonly bonus: number;
+  };
+  /**
+   * The cursed cat `id` turned to stone: the boulder `boulder` of its size, needing one merge to
+   * break, took its place (its sprite fades into the boulder's).
+   */
+  catPetrified: {
+    readonly id: number;
+    readonly boulder: number;
+    readonly tier: number;
+    readonly at: WorldPoint;
+  };
+  /** Copycat (GAME_DESIGN §15.13): the cat in NEXT took the size of the latest merge. */
+  nextChanged: { readonly kind: DropKind; readonly tier: number; readonly golden: boolean };
   /** The wind (GAME_DESIGN §15.8) changed: its level (0: none) or, with the debug tools, its way. */
   windChanged: { readonly level: number; readonly direction: WindDirection };
   paused: Record<string, never>;

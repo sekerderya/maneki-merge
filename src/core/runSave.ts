@@ -35,6 +35,8 @@ export interface QueueSnapshot {
   /** Items rolled so far (the first ones are always the smallest cat). */
   readonly generated: number;
   readonly stageDrops: number;
+  /** Copycat: the tier the queued cats follow (missing: none, as before Batch 19). */
+  readonly follow?: number;
 }
 
 export interface EconomySnapshot {
@@ -137,6 +139,16 @@ export interface RunSnapshot {
    * touching, the step they were last seen touching].
    */
   readonly hubrisWaits?: readonly (readonly [number, number, number, number])[];
+  /**
+   * Cursed Bell (GAME_DESIGN §15.12): the cursed cat's id and the drops left on its bell, or null;
+   * the stage's drop at which the next curse comes due; the curses' generator. Missing before
+   * Batch 19: no curse, the first one due at CURSE_FIRST_DROP, a fresh generator.
+   */
+  readonly curse?: { readonly id: number; readonly dropsLeft: number } | null;
+  readonly curseDue?: number;
+  readonly curseRng?: RngState;
+  /** Dice's rolls (GAME_DESIGN §15.14; missing before Batch 19: fresh from the seed). */
+  readonly diceRng?: RngState;
   readonly queue: QueueSnapshot;
   readonly economy: EconomySnapshot;
   readonly danger: DangerSnapshot;
@@ -211,6 +223,10 @@ function runSnapshot(value: unknown): RunSnapshot {
     ...(r['echoRng'] === undefined ? {} : { echoRng: rngState(r['echoRng'], 'echoRng') }),
     ...(r['echoUsed'] === undefined ? {} : { echoUsed: bool(r['echoUsed'], 'echoUsed') }),
     ...(r['hubrisWaits'] === undefined ? {} : { hubrisWaits: waits(r['hubrisWaits']) }),
+    ...(r['curse'] === undefined ? {} : { curse: curse(r['curse']) }),
+    ...(r['curseDue'] === undefined ? {} : { curseDue: count(r['curseDue'], 'curseDue') }),
+    ...(r['curseRng'] === undefined ? {} : { curseRng: rngState(r['curseRng'], 'curseRng') }),
+    ...(r['diceRng'] === undefined ? {} : { diceRng: rngState(r['diceRng'], 'diceRng') }),
     queue: queue(r['queue']),
     economy: economy(r['economy']),
     danger: danger(r['danger']),
@@ -230,6 +246,12 @@ function waits(value: unknown): [number, number, number, number][] {
     }
     return [a, b, since, seen];
   });
+}
+
+function curse(value: unknown): { id: number; dropsLeft: number } | null {
+  if (value === null) return null;
+  const c = record(value, 'curse');
+  return { id: count(c['id'], 'curse.id'), dropsLeft: count(c['dropsLeft'], 'curse.dropsLeft') };
 }
 
 function wind(value: unknown): WindDirection {
@@ -265,6 +287,7 @@ function queue(value: unknown): QueueSnapshot {
     next: drop(q['next'], 'queue.next'),
     generated: count(q['generated'], 'queue.generated'),
     stageDrops: count(q['stageDrops'], 'queue.stageDrops'),
+    ...(q['follow'] === undefined ? {} : { follow: int(q['follow'], 'queue.follow') }),
   };
 }
 

@@ -20,6 +20,10 @@
  *    crack, except cats of the merging size and of the last size; the caller rolls and applies it.
  * 7. A broken cat's two pieces (shard mates) don't merge with each other until they have been
  *    apart: more than PORCELAIN_MATE_GAP between their edges once both have grown in.
+ * 8. Dice (GAME_DESIGN §15.14, `dice`): every merge of two or three cats rolls before its new cat
+ *    is made, in resolution order, unless it is a joker's merge or would make the cap's cat. A
+ *    lucky roll makes the new cat one size bigger (never above the cap); a fizzle makes one cat of
+ *    the size that met, at the same spot. Either way it is a merge (hits, cracks).
  *
  * Hubris (GAME_DESIGN §15.11, `threesUpTo`): three cats up to that size that touch in a chain
  * merge at once into a cat two sizes bigger (three for a golden one) at their centroid; two of them
@@ -32,6 +36,7 @@
  * Scores, coins, events and the hits' effect are the caller's job (RunController).
  */
 import { MERGE_SPIN_MIN_SLIDE, MERGE_SPIN_RIM_SPEED } from '../config/physics';
+import type { DiceRoll } from '../config/picks';
 import {
   BOULDER_HIT_REACH,
   HUBRIS_SIZE_STEP,
@@ -56,6 +61,10 @@ export interface MergeOutcome {
   readonly parts: 2 | 3;
   /** One of the cats was cracked (Porcelain): the new cat is whole, with a flash of gold seams. */
   readonly cracked: boolean;
+  /** What the merge's die showed (Dice, GAME_DESIGN §15.14); null without a roll or for a normal one. */
+  readonly dice: DiceRoll;
+  /** The ids of the balls that merged (a joker's too). */
+  readonly from: readonly number[];
   /** Their midpoint (the three's centroid), in world units. */
   readonly x: number;
   readonly y: number;
@@ -76,6 +85,11 @@ export interface MergeRules {
   readonly pairGraceSteps: number;
   /** Porcelain is on: list the cats each merge may crack (`cracks`). */
   readonly porcelain: boolean;
+  /**
+   * Dice is on: rolls each merge's die (one call per merge that may roll, in resolution order);
+   * null when off.
+   */
+  readonly dice?: (() => DiceRoll) | null;
 }
 
 const PLAIN_RULES: MergeRules = {
@@ -83,6 +97,7 @@ const PLAIN_RULES: MergeRules = {
   pairWaitSteps: 0,
   pairGraceSteps: 0,
   porcelain: false,
+  dice: null,
 };
 
 /** Hubris: a small pair's wait, from the step it started touching to the step it was last seen. */
@@ -136,6 +151,8 @@ export class MergeResolver {
   private readonly tiers: number[] = [];
   /** Hubris: since when each pair of small cats (by `pairKey`) has been touching. */
   private readonly touching = new Map<string, Wait>();
+  /** Dice: this `resolve`'s roller, or null. */
+  private dice: (() => DiceRoll) | null = null;
 
   /**
    * The boulders the last `resolve` hit, once per merge that hit each (a boulder two merges hit is
@@ -185,6 +202,7 @@ export class MergeResolver {
     this.members.length = 0;
     this.tiers.length = 0;
     const contacts = world.mergeContacts;
+    this.dice = rules.dice ?? null;
     this.releaseMates(world.balls);
     this.forgetWaits(world, rules);
     if (contacts.length === 0) {
@@ -272,11 +290,16 @@ export class MergeResolver {
       world.removeBall(a);
       world.removeBall(b);
       const jackpot = { kind: 'jackpot', tier: a.tier, newTier: a.tier, golden, x, y } as const;
-      outcomes.push({ ...jackpot, joker: false, parts: 2, cracked, ball: null });
+      const from = [a.id, b.id];
+      outcomes.push({ ...jackpot, joker: false, parts: 2, cracked, dice: null, from, ball: null });
       return;
     }
     const startRadius = Math.max(a.radius, b.radius);
-    const tier = Math.min(a.tier + (golden ? 2 : 1), tierCap);
+    const [tier, dice] = this.rollFor(
+      a.tier,
+      Math.min(a.tier + (golden ? 2 : 1), tierCap),
+      tierCap,
+    );
     const spin = (mergeSpinDirection(a, b) * MERGE_SPIN_RIM_SPEED) / sizeRadius(world.sizeOf(tier));
     world.removeBall(a);
     world.removeBall(b);
@@ -294,8 +317,22 @@ export class MergeResolver {
       joker: false,
       parts: 2,
       cracked,
+      dice,
+      from: [a.id, b.id],
       ball,
     });
+  }
+
+  /**
+   * Dice: the new cat's tier for a merge of `tier` cats that would make `normal`, and what its die
+   * showed. No roll without Dice or when `normal` is the cap's (the stage's last cat).
+   */
+  private rollFor(tier: number, normal: number, tierCap: number): [number, DiceRoll] {
+    if (!this.dice || normal >= tierCap) return [normal, null];
+    const roll = this.dice();
+    if (roll === 'lucky') return [Math.min(normal + 1, tierCap), roll];
+    if (roll === 'fizzle') return [tier, roll];
+    return [normal, null];
   }
 
   /**
@@ -406,7 +443,8 @@ export class MergeResolver {
     const y = (a.y + b.y + c.y) / 3;
     const golden = a.golden || b.golden || c.golden;
     const cracked = a.cracked || b.cracked || c.cracked;
-    const tier = Math.min(a.tier + HUBRIS_SIZE_STEP + (golden ? 1 : 0), tierCap);
+    const normal = Math.min(a.tier + HUBRIS_SIZE_STEP + (golden ? 1 : 0), tierCap);
+    const [tier, dice] = this.rollFor(a.tier, normal, tierCap);
     const startRadius = Math.max(a.radius, b.radius, c.radius);
     // It turns the way its two oldest cats slid past each other.
     const spin = (mergeSpinDirection(a, b) * MERGE_SPIN_RIM_SPEED) / sizeRadius(world.sizeOf(tier));
@@ -423,6 +461,8 @@ export class MergeResolver {
       joker: false,
       parts: 3,
       cracked,
+      dice,
+      from: [a.id, b.id, c.id],
       ball,
     });
   }
@@ -463,6 +503,8 @@ export class MergeResolver {
       joker: true,
       parts: 2,
       cracked,
+      dice: null,
+      from: [cat.id, joker.id],
       ball,
     });
   }

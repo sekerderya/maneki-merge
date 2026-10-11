@@ -76,6 +76,8 @@ export interface BallSpec {
   readonly vy?: number;
   /** Radians per second; positive turns clockwise on screen (y grows downward). */
   readonly spin?: number;
+  /** Radians (a cat turned to stone keeps its angle, GAME_DESIGN §15.12). */
+  readonly angle?: number;
   /** Start smaller and grow into the tier's radius over MERGE_GROW_MS (merged cats). */
   readonly startRadius?: number;
   /** Play time of the first contact, if the cat counts as landed already. */
@@ -237,6 +239,7 @@ export function createBall(id: number, spec: BallSpec): Ball {
   }
   (body.plugin as { circle?: Ball }).circle = ball;
   setCircleMass(body, spec.size, radius);
+  if (spec.angle) Matter.Body.setAngle(body, spec.angle);
   if (spec.vx || spec.vy) {
     Matter.Body.setVelocity(body, {
       x: (spec.vx ?? 0) / MATTER_TICKS_PER_SECOND,

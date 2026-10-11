@@ -190,6 +190,16 @@ export class RunEconomy {
     this.comboCounter.restore(saved.combo, saved.comboAtMs);
   }
 
+  /**
+   * Extra coins on top of a payout (a lifted curse's bonus, GAME_DESIGN §15.12): `base` coins,
+   * rounded, no score and no combo. Returns the coins paid.
+   */
+  bonus(base: number): number {
+    const coins = roundStable(base);
+    this.coinsTotal += coins;
+    return coins;
+  }
+
   /** A single cat popped into coins (stage clear or Lucky Save). */
   pop(tier: number): Payout {
     const coins = popCoins(tier, this.stats.coinMultiplier);

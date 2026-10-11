@@ -142,6 +142,16 @@ describe('determinism (TECH_SPEC §5)', { timeout: 30_000 }, () => {
     expect(run.score).toBeGreaterThan(0);
   });
 
+  it("replays a run with Batch 19's picks: curses, stones, Copycat's NEXT and Dice's rolls", () => {
+    const extra: Extra = { cursedBell: 1, quickCurse: 3, moreCurses: 3, copycat: 1, dice: 1 };
+    const recorded = playWithFrames(14, 3, Infinity, Infinity, extra);
+    const ticks = recorded.hashes.map((h) => Number(h.split(':')[0]));
+    new PhysicsWorld().addBall({ tier: 3, x: 0, y: -100 });
+    const { run, hashes } = replay(14, recorded.inputs, ticks, extra);
+    expect(hashes).toEqual(recorded.hashes);
+    expect(run.score).toBeGreaterThan(0);
+  });
+
   it('gives different runs for different seeds', () => {
     const a = replay(1, [{ tick: 0, input: { drop: 0 } }], [600]);
     const b = replay(2, [{ tick: 0, input: { drop: 0 } }], [600]);

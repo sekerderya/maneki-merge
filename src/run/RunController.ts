@@ -3,17 +3,20 @@
  * payouts, the combo timer, stage clears and the expansion timeline, the danger line, Lucky Saves
  * and game over; and the special balls, trials and blessings of GAME_DESIGN §15 (magnets taking a
  * ball out of the jar, boulders breaking, golden cats, hanabi going off, joker cats merging with any
- * cat, the picks at every stage clear). The game
- * scene renders it and forwards input; the HUD, FX, audio and save listen to its events.
+ * cat, the picks at every stage clear, cursed cats turning to stone, Copycat's NEXT and Dice's
+ * rolls). The game scene renders it and forwards input; the HUD, FX, audio and save listen to its
+ * events.
  *
  * Time comes in fixed ticks of PHYSICS_STEP_MS. `update(frameMs)` only decides how many ticks a
  * frame runs, and every timer counts ticks, so a run is a pure function of its seed and of the
  * tick at which each input arrives: the same inputs replay the same run at any frame rate.
  *
  * Tick pipeline while playing: physics step → merges (payouts and events, oldest first, each with
- * its echo) → boulder hits → porcelain cracks → hanabi blasts → combo expiry → stage clear → drop
- * ready → danger. The stage clear goes first, so making the stage's last cat saves the jar even on
- * the step the danger timer would run out.
+ * its echo, a lifted curse's bonus) → Copycat's NEXT → boulder hits → porcelain cracks → hanabi
+ * blasts → a curse whose cat is gone ends → combo expiry → stage clear → drop ready → danger.
+ * The stage clear goes first, so making the stage's last cat saves the jar even on the step the
+ * danger timer would run out. A drop first counts down a curse (or turns its cat to stone), then
+ * may begin the next one.
  */
 import {
   HEAVY_DROP_GRAVITY_BONUS,
@@ -24,6 +27,13 @@ import {
   stepsFor,
 } from '../config/physics';
 import {
+  COPYCAT_MAX_SIZE,
+  CURSE_DROPS,
+  CURSE_FIRST_DROP,
+  CURSE_INTERVALS,
+  CURSE_LIFT_BONUS,
+  CURSE_MAX_SIZE,
+  CURSE_STONE_HITS,
   ECHO_MAX_SIZE,
   ECHO_MIN_SIZE,
   HANABI_REACH,
@@ -40,7 +50,7 @@ import {
   SPAWN_START_RADIUS_SHARE,
   WIND_ACCEL_PER_LEVEL,
 } from '../config/picks';
-import type { PickId, PickKind, WindDirection } from '../config/picks';
+import type { DiceRoll, PickId, PickKind, WindDirection } from '../config/picks';
 import { catRadius, clearGrowsJar, stageHoldsTier, stageInfo } from '../config/stages';
 import { sizeRadius } from '../config/tiers';
 import {
@@ -58,7 +68,7 @@ import { RunEconomy } from '../core/economy';
 import { EventBus } from '../core/events';
 import type { GameEvents } from '../core/events';
 import { StateHasher } from '../core/hash';
-import { defaultPickLevels, drawOffer, dropOdds } from '../core/picks';
+import { defaultPickLevels, diceRoll, drawOffer, dropOdds } from '../core/picks';
 import type { PickLevels } from '../core/picks';
 import { nextStage, stageProgress } from '../core/progression';
 import type { StageProgress } from '../core/progression';
@@ -67,7 +77,7 @@ import type { ExpansionSnapshot, RunSnapshot } from '../core/runSave';
 import { defaultUpgradeLevels, deriveStats } from '../core/upgrades';
 import type { DerivedStats, UpgradeLevels } from '../core/upgrades';
 import type { Ball, BallKind, BallView } from '../physics/balls';
-import { DangerMonitor, luckySaveVictims } from '../physics/danger';
+import { DangerMonitor, isOverLine, luckySaveVictims } from '../physics/danger';
 import { clampDropX, dropStartY } from '../physics/geometry';
 import { fuseBurntOut, hanabiBlast } from '../physics/hanabi';
 import type { JarGeometry } from '../physics/geometry';
@@ -99,6 +109,12 @@ export interface RunOptions {
    * after the last `choose` the rest runs at once too.
    */
   readonly instantExpansion?: boolean;
+}
+
+/** A curse on a cat (GAME_DESIGN §15.12): the cat's id and what its bell shows. */
+export interface CurseView {
+  readonly id: number;
+  readonly dropsLeft: number;
 }
 
 /** Debug and test balls (`spawnBall`): a cat by default. */
@@ -168,6 +184,9 @@ const WIND_SEED_SALT = 0x2545f491;
 /** Porcelain's crack rolls and Echo's sides (GAME_DESIGN §15.10–§15.11). */
 const PORCELAIN_SEED_SALT = 0x6c8e9cf5;
 const ECHO_SEED_SALT = 0x3c6ef372;
+/** Which cat a curse falls on, and Dice's rolls (GAME_DESIGN §15.12, §15.14). */
+const CURSE_SEED_SALT = 0x5be0cd19;
+const DICE_SEED_SALT = 0x1f83d9ab;
 
 /** Which way a run's wind blows: one roll on its own generator, so it never moves another roll. */
 export function windDirectionOf(seed: number): WindDirection {
@@ -191,6 +210,10 @@ export class RunController {
   private readonly porcelainRng: Rng;
   /** Rolls the side each echo cat appears on. */
   private readonly echoRng: Rng;
+  /** Picks the cat each curse falls on. */
+  private readonly curseRng: Rng;
+  /** Rolls each merge's die (Dice). */
+  private readonly diceRng: Rng;
   private readonly queue: DropQueue;
   private readonly economy: RunEconomy;
   private readonly merges = new MergeResolver();
@@ -224,6 +247,21 @@ export class RunController {
   private wind: WindDirection;
   /** Echo: a merge has echoed since the last drop (only one does per drop). */
   private echoUsed = false;
+  /** Cursed Bell: the cursed cat and the drops left on its bell (it turns to stone after 0). */
+  private cursed: Ball | null = null;
+  private curseDropsLeft = 0;
+  /** The stage's drop count at which the next curse comes due. */
+  private curseDue = CURSE_FIRST_DROP;
+  /** Debug only: what the next die shows. */
+  private forcedDice: 'lucky' | 'fizzle' | 'normal' | null = null;
+  /** Dice: one draw per merge that may roll (MergeRules.dice). */
+  private readonly rollDice = (): DiceRoll => {
+    const roll = diceRoll(this.diceRng);
+    const forced = this.forcedDice;
+    if (!forced) return roll;
+    this.forcedDice = null;
+    return forced === 'normal' ? null : forced;
+  };
 
   /**
    * Starts a run, or continues the saved one (`RunController.restore` passes it): it comes back
@@ -245,6 +283,8 @@ export class RunController {
     this.wind = windDirectionOf(options.seed);
     this.porcelainRng = new Rng((Math.trunc(options.seed) ^ PORCELAIN_SEED_SALT) >>> 0);
     this.echoRng = new Rng((Math.trunc(options.seed) ^ ECHO_SEED_SALT) >>> 0);
+    this.curseRng = new Rng((Math.trunc(options.seed) ^ CURSE_SEED_SALT) >>> 0);
+    this.diceRng = new Rng((Math.trunc(options.seed) ^ DICE_SEED_SALT) >>> 0);
     this.queue = new DropQueue({
       rng: this.rng,
       specialRng: this.specialRng,
@@ -377,6 +417,12 @@ export class RunController {
     return this.wind;
   }
 
+  /** The cursed cat and what its bell shows (GAME_DESIGN §15.12), or null. */
+  get curse(): CurseView | null {
+    const cat = this.cursed;
+    return cat && !cat.removed ? { id: cat.id, dropsLeft: this.curseDropsLeft } : null;
+  }
+
   /** The HUD's progress bar: the biggest cat in the jar against the stage's last cat. */
   get progress(): StageProgress {
     let biggest = 0;
@@ -430,6 +476,8 @@ export class RunController {
   drop(x: number): boolean {
     const { kind } = this.queue.current;
     if (!this.canDrop || !Number.isFinite(x) || kind === 'magnet') return false;
+    // A cursed cat's bell counts the drop first; at 0 the cat turns to stone before the ball goes.
+    this.countCurse();
     const item = this.queue.take();
     const geo = this.world.geometry;
     const radius = this.radiusOf(item.tier);
@@ -450,6 +498,7 @@ export class RunController {
     this.dropAnnounced = false;
     this.echoUsed = false;
     this.events.emit('catDropped', { kind, tier: item.tier, golden: item.golden, x: at });
+    this.curseIfDue();
     return true;
   }
 
@@ -465,6 +514,8 @@ export class RunController {
     if (!ball || !this.takeable(ball)) return false;
     const at = { x: ball.x, y: ball.y };
     this.world.removeBall(ball);
+    // The magnet lifts a curse, with no bonus: the cat goes into the paw as a normal cat.
+    if (this.cursed === ball) this.endCurse('taken', 0);
     const { kind, tier, golden, hitsLeft } = ball;
     this.queue.replaceCurrent({ kind, tier, golden, hits: hitsLeft });
     this.dropAllowedAt = this.world.steps + TAKE_STEPS;
@@ -566,6 +617,35 @@ export class RunController {
     this.queue.setOdds(this.odds());
     this.world.setFallForces(this.fallForces());
     if (id === 'wind') this.announceWind();
+    if (id === 'copycat' && this.levels.copycat <= 0) this.queue.follow(null);
+  }
+
+  /**
+   * Debug: curses the cat `id` (the newest cat that can be cursed when omitted) with `dropsLeft`
+   * on its bell (Quick Curse's count by default), ending any other curse. Returns whether it did.
+   */
+  curseCat(id?: number, dropsLeft?: number): boolean {
+    if (this.runState === 'over') return false;
+    const cats = this.world.balls.filter((b) => b.kind === 'cat' && b.size <= CURSE_MAX_SIZE);
+    const cat = id === undefined ? cats[cats.length - 1] : cats.find((b) => b.id === id);
+    if (!cat) return false;
+    if (this.cursed) this.endCurse('gone', 0);
+    this.beginCurse(cat, dropsLeft ?? this.curseDrops());
+    return true;
+  }
+
+  /** Debug: sets what the cursed cat's bell shows. Returns false when no cat is cursed. */
+  setCurseDrops(dropsLeft: number): boolean {
+    const cat = this.cursed;
+    if (!cat || cat.removed || !Number.isFinite(dropsLeft)) return false;
+    this.curseDropsLeft = Math.max(0, Math.round(dropsLeft));
+    this.events.emit('curseTicked', { id: cat.id, dropsLeft: this.curseDropsLeft });
+    return true;
+  }
+
+  /** Debug: the next merge that rolls (Dice) shows this. */
+  forceDice(roll: 'lucky' | 'fizzle' | 'normal'): void {
+    this.forcedDice = roll;
   }
 
   /**
@@ -576,6 +656,7 @@ export class RunController {
     const cat = this.world.balls.find((ball) => ball.id === id);
     if (!cat || cat.kind !== 'cat' || this.runState === 'over') return false;
     this.crack(cat, this.world.timeMs);
+    this.curseGone();
     return true;
   }
 
@@ -661,6 +742,10 @@ export class RunController {
       echoRng: this.echoRng.state(),
       echoUsed: this.echoUsed,
       hubrisWaits: this.merges.waits,
+      curse: this.curse,
+      curseDue: this.curseDue,
+      curseRng: this.curseRng.state(),
+      diceRng: this.diceRng.state(),
       queue: this.queue.snapshot(),
       economy: this.economy.snapshot(),
       danger: this.danger.snapshot(),
@@ -680,6 +765,13 @@ export class RunController {
     for (const value of this.porcelainRng.state()) h.number(value);
     for (const value of this.echoRng.state()) h.number(value);
     h.bool(this.echoUsed);
+    for (const value of this.curseRng.state()) h.number(value);
+    for (const value of this.diceRng.state()) h.number(value);
+    const curse = this.curse;
+    h.number(curse?.id ?? 0)
+      .number(curse?.dropsLeft ?? 0)
+      .number(this.curseDue);
+    h.number(this.queue.followTier ?? 0);
     for (const wait of this.merges.waits) for (const n of wait) h.number(n);
     for (const item of [this.queue.current, this.queue.next]) {
       h.string(item.kind).number(item.tier).bool(item.golden).number(item.hits);
@@ -709,6 +801,19 @@ export class RunController {
     if (saved.echoRng) this.echoRng.setState(saved.echoRng);
     this.echoUsed = saved.echoUsed ?? false;
     this.merges.restoreWaits(saved.hubrisWaits ?? []);
+    // Runs saved before Batch 19 have no curse and never rolled a curse or a die.
+    if (saved.curseRng) this.curseRng.setState(saved.curseRng);
+    if (saved.diceRng) this.diceRng.setState(saved.diceRng);
+    this.curseDue = saved.curseDue ?? CURSE_FIRST_DROP;
+    if (saved.curse) {
+      const { id, dropsLeft } = saved.curse;
+      const cat = this.world.balls.find((ball) => ball.id === id);
+      if (!cat || cat.kind !== 'cat' || cat.size > CURSE_MAX_SIZE) {
+        throw new RangeError(`No cat ${id} to curse`);
+      }
+      this.cursed = cat;
+      this.curseDropsLeft = dropsLeft;
+    }
     for (const id of PICK_IDS) this.levels[id] = Math.min(PICKS[id].maxLevel, saved.levels[id]);
     // A run saved before Batch 18 has no wind yet: the seed's.
     this.wind = saved.windDirection ?? this.wind;
@@ -719,6 +824,10 @@ export class RunController {
       if (!stageHoldsTier(stage, item.tier) || (item.kind === 'boulder' && item.hits < 1)) {
         throw new RangeError(`Stage ${stage} can't queue ${item.kind} ${item.tier}`);
       }
+    }
+    const follow = this.queue.followTier;
+    if (follow !== null && !stageInfo(stage).dropPool.includes(follow)) {
+      throw new RangeError(`Stage ${stage} doesn't drop tier ${follow}`);
     }
     this.economy.restore(saved.economy);
     this.danger.restore(saved.danger);
@@ -765,7 +874,11 @@ export class RunController {
       const at = { x: o.x, y: o.y };
       if (o.kind === 'merge') {
         const p = this.economy.merge(o.tier, now, o.newTier, o.parts);
-        this.bankCoins(p.coins);
+        // A merge with the cursed cat lifts the curse and pays its coins again (GAME_DESIGN §15.12).
+        const cursed = this.cursed;
+        const lifted = cursed !== null && o.from.includes(cursed.id);
+        const bonus = lifted ? this.economy.bonus(CURSE_LIFT_BONUS * p.coins) : 0;
+        this.bankCoins(p.coins + bonus);
         if (o.ball && o.ball.tier === last) cleared ??= o.ball;
         this.events.emit('merged', {
           id: o.ball?.id ?? -1,
@@ -776,9 +889,13 @@ export class RunController {
           joker: o.joker,
           parts: o.parts,
           kintsugi: o.cracked,
+          dice: o.dice,
+          curseLifted: lifted,
           at,
           ...p,
+          coins: p.coins + bonus,
         });
+        if (lifted) this.endCurse('lifted', bonus);
         this.echo(o, last);
       } else {
         const p = this.economy.jackpot(last, now);
@@ -789,10 +906,12 @@ export class RunController {
     if (outcomes.length > 0) {
       this.events.emit('scoreChanged', { score: this.economy.score });
       this.events.emit('runCoinsChanged', { coins: this.economy.coins });
+      if (this.levels.copycat > 0 && !cleared) this.copyLatestMerge(outcomes);
     }
     this.hitBoulders(this.merges.hits);
     this.crackPorcelain(this.merges.cracks, now);
     this.fireHanabi(now);
+    this.curseGone();
     const combo = this.economy.comboAt(now);
     if (combo !== this.shownCombo) {
       this.shownCombo = combo;
@@ -804,6 +923,112 @@ export class RunController {
     }
     this.announceDropIfReady();
     this.updateDanger(now);
+  }
+
+  // ── Cursed Bell (GAME_DESIGN §15.12), Copycat (§15.13) ─────────────────────
+
+  /** What a new curse's bell shows: Quick Curse's count. */
+  private curseDrops(): number {
+    return CURSE_DROPS[Math.min(this.levels.quickCurse, CURSE_DROPS.length - 1)] as number;
+  }
+
+  /**
+   * After a drop: with Cursed Bell taken and no curse on, a curse that is due falls on a random cat
+   * that has landed, isn't growing, is of sizes 1 to CURSE_MAX_SIZE and isn't over the line. When
+   * none fits, it tries again after the next drop. The next one comes due CURSE_INTERVALS drops
+   * after this one began.
+   */
+  private curseIfDue(): void {
+    if (this.levels.cursedBell <= 0 || this.cursed) return;
+    const drops = this.queue.dropsThisStage;
+    if (drops < this.curseDue) return;
+    const rim = this.world.geometry.rimY;
+    const fits = this.world.balls.filter(
+      (b) =>
+        b.kind === 'cat' &&
+        b.landedMs >= 0 &&
+        !b.growing &&
+        b.size <= CURSE_MAX_SIZE &&
+        !isOverLine(b, rim),
+    );
+    if (fits.length === 0) return;
+    const cat = fits[this.curseRng.int(0, fits.length - 1)] as Ball;
+    const interval = CURSE_INTERVALS[this.levels.moreCurses] ?? CURSE_INTERVALS[0];
+    this.curseDue = drops + interval;
+    this.beginCurse(cat, this.curseDrops());
+  }
+
+  private beginCurse(cat: Ball, dropsLeft: number): void {
+    this.cursed = cat;
+    this.curseDropsLeft = Math.max(0, Math.round(dropsLeft));
+    const at = { x: cat.x, y: cat.y };
+    const event = { id: cat.id, tier: cat.tier, dropsLeft: this.curseDropsLeft, at };
+    this.events.emit('curseBegan', event);
+  }
+
+  /** A drop counts down the cursed cat's bell; at the drop after 0 the cat turns to stone. */
+  private countCurse(): void {
+    const cat = this.cursed;
+    if (!cat) return;
+    if (cat.removed) {
+      this.endCurse('gone', 0);
+      return;
+    }
+    if (this.curseDropsLeft > 0) {
+      this.curseDropsLeft--;
+      this.events.emit('curseTicked', { id: cat.id, dropsLeft: this.curseDropsLeft });
+      return;
+    }
+    this.petrify(cat);
+  }
+
+  /**
+   * The cursed cat turns to stone: a bare boulder of its size (one merge breaks it, whatever Iron
+   * Bands and Big Boulders say) takes its place, with its speed, spin and angle.
+   */
+  private petrify(cat: Ball): void {
+    const at = { x: cat.x, y: cat.y };
+    const { tier, vx, vy, spin, angle, landedMs } = cat;
+    this.world.removeBall(cat);
+    const stone = this.world.addBall({
+      kind: 'boulder',
+      tier,
+      hits: CURSE_STONE_HITS,
+      ...at,
+      vx,
+      vy,
+      spin,
+      angle,
+      landedMs,
+    });
+    this.events.emit('catPetrified', { id: cat.id, boulder: stone.id, tier, at });
+    this.endCurse('stone', 0);
+  }
+
+  /** A curse whose cat left the jar some other way (a hanabi, a Lucky Save, a break) just ends. */
+  private curseGone(): void {
+    if (this.cursed?.removed) this.endCurse('gone', 0);
+  }
+
+  private endCurse(reason: 'lifted' | 'taken' | 'gone' | 'stone', bonus: number): void {
+    const cat = this.cursed;
+    if (!cat) return;
+    this.cursed = null;
+    this.events.emit('curseEnded', { id: cat.id, reason, bonus });
+  }
+
+  /**
+   * Copycat: NEXT, and every cat queued after it, takes the size of the step's latest merge (the
+   * size that met), at most COPYCAT_MAX_SIZE.
+   */
+  private copyLatestMerge(outcomes: readonly MergeOutcome[]): void {
+    let latest: MergeOutcome | null = null;
+    for (const o of outcomes) if (o.kind === 'merge') latest = o;
+    if (!latest) return;
+    const size = Math.min(this.world.sizeOf(latest.tier), COPYCAT_MAX_SIZE);
+    if (!this.queue.follow(stageInfo(this.world.stage).firstTier + size - 1)) return;
+    const { kind, tier, golden } = this.queue.next;
+    this.events.emit('nextChanged', { kind, tier, golden });
   }
 
   /** Heavy Drop's falling balls that touched something this step (their fire goes out). */
@@ -895,6 +1120,7 @@ export class RunController {
       pairWaitSteps: stepsFor(HUBRIS_PAIR_WAIT_MS),
       pairGraceSteps: stepsFor(HUBRIS_TOUCH_GRACE_MS),
       porcelain: this.levels.porcelain > 0,
+      dice: this.levels.dice > 0 ? this.rollDice : null,
     };
   }
 
@@ -902,11 +1128,13 @@ export class RunController {
    * Echo (GAME_DESIGN §15.11): a merge of cats of ECHO_MIN_SIZE–ECHO_MAX_SIZE leaves a cat of their
    * size beside the new cat, on a side the seed picks, growing in from small; only the first such
    * merge after each drop does, so an echo can't set off a chain. Never for a joker's merge or the
-   * stage's last cat. It pays nothing and isn't a merge.
+   * stage's last cat, nor a fizzle. It pays nothing and isn't a merge.
    */
   private echo(o: MergeOutcome, last: number): void {
     const ball = o.ball;
     if (this.levels.echo <= 0 || this.echoUsed || !ball || o.joker || o.newTier >= last) return;
+    // A fizzled merge (Dice) never echoes.
+    if (o.dice === 'fizzle') return;
     const size = this.world.sizeOf(o.tier);
     if (size < ECHO_MIN_SIZE || size > ECHO_MAX_SIZE) return;
     this.echoUsed = true;
@@ -996,6 +1224,9 @@ export class RunController {
       this.world.balls.filter((ball) => ball !== last),
       'cashOut',
     );
+    // The curses count the next stage's drops from the start.
+    this.curseGone();
+    this.curseDue = CURSE_FIRST_DROP;
     this.queue.newStage();
     const next = nextStage(stage);
     this.events.emit('stageCleared', { stage, tier: last.tier, grows: next.grows });
@@ -1033,6 +1264,7 @@ export class RunController {
     this.events.emit('luckySave', { savesLeft: this.savesLeft });
     const victims = luckySaveVictims(this.world.balls, this.world.geometry.rimY);
     this.pop(victims, 'luckySave');
+    this.curseGone();
     this.danger.reset(LUCKY_SAVE_GRACE_MS);
     this.showDanger();
   }

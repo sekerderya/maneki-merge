@@ -23,6 +23,8 @@ describe('run feedback wiring (GAME_DESIGN §12)', () => {
       joker: false,
       parts: 2,
       kintsugi: false,
+      dice: null,
+      curseLifted: false,
       at,
       score: 1,
       coins: 1,
@@ -72,7 +74,7 @@ describe('run feedback wiring (GAME_DESIGN §12)', () => {
     });
     const at = { x: 0, y: 0 };
     const merge = { id: 1, tier: 3, newTier: 4, newSize: 4, at, score: 1, coins: 3, combo: 1 };
-    const plain = { parts: 2, kintsugi: false } as const;
+    const plain = { parts: 2, kintsugi: false, dice: null, curseLifted: false } as const;
     const joker = false;
     events.emit('merged', { ...merge, ...plain, golden: true, joker });
     events.emit('jackpot', { tier: 46, at, score: 1, coins: 1, combo: 1 });
@@ -121,7 +123,15 @@ describe('run feedback wiring (GAME_DESIGN §12)', () => {
     events.emit('catBroken', { id: 1, tier: 3, at, pieces: [2, 3] });
     events.emit('echoed', { id: 4, tier: 4, from: 5, at });
     const merge = { id: 6, tier: 2, newTier: 4, newSize: 4, at, score: 6, coins: 3, combo: 1 };
-    events.emit('merged', { ...merge, golden: false, joker: false, parts: 3, kintsugi: false });
+    events.emit('merged', {
+      ...merge,
+      golden: false,
+      joker: false,
+      parts: 3,
+      kintsugi: false,
+      dice: null,
+      curseLifted: false,
+    });
     expect(log).toEqual([
       'tink',
       'shatter',
