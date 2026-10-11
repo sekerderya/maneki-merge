@@ -92,9 +92,17 @@ export const HEAVY_FIREBALL_LEVEL = 5;
  * Porcelain (GAME_DESIGN §15.10): every merge may crack each cat whose edge is within this many
  * world units of one of the merging cats' edges (touching, or so close the gap doesn't show), with
  * PORCELAIN_CHANCE_PER_LEVEL per level. A cracked cat that cracks again breaks in two.
+ * v0.34 (the owner's call after playing it): 10% per level, first built at 20%, where a test bot
+ * lost 26 of 90 runs of stage 1 at level 1 against 13 without Porcelain (now 20).
  */
 export const PORCELAIN_REACH = BOULDER_HIT_REACH;
-export const PORCELAIN_CHANCE_PER_LEVEL = 0.2;
+export const PORCELAIN_CHANCE_PER_LEVEL = 0.1;
+/**
+ * A broken cat's two pieces (shard mates) are born touching and don't merge with each other; once
+ * both have grown in and their edges are more than this many world units apart, they are two
+ * ordinary cats and merge when they meet again.
+ */
+export const PORCELAIN_MATE_GAP = 10;
 
 /**
  * Hubris (GAME_DESIGN §15.11): three cats up to this size that touch in a chain merge at once into

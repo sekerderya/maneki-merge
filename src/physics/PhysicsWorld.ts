@@ -23,6 +23,7 @@ import {
   VELOCITY_ITERATIONS,
   WALL_HEIGHT_FACTOR,
   WALL_THICKNESS,
+  WALL_TOUCH_SLOP,
 } from '../config/physics';
 import { FIRST_STAGE, tierSize } from '../config/stages';
 import type { StateHasher } from '../core/hash';
@@ -431,14 +432,21 @@ export class PhysicsWorld {
     contacts.length = 0;
     const struck = this.jokerBoulderContacts;
     struck.length = 0;
+    // With the wind or Heavy Drop, a ball sliding down a wall is still falling (GAME_DESIGN §15.8).
+    const wallsKeepFalling = this.windAccel !== 0 || this.gravityBonus !== 0;
 
     for (const pair of (this.engine.pairs as unknown as PairList).list) {
       if (!pair.isActive) continue;
       const a = ballOf(pair.bodyA);
       const b = ballOf(pair.bodyB);
-      if (a && a.landedMs < 0) a.landedMs = now;
-      if (b && b.landedMs < 0) b.landedMs = now;
-      if (!a || !b) continue;
+      if (!a || !b) {
+        if (wallsKeepFalling && (this.isWall(pair.bodyA) || this.isWall(pair.bodyB))) continue;
+        if (a && a.landedMs < 0) a.landedMs = now;
+        if (b && b.landedMs < 0) b.landedMs = now;
+        continue;
+      }
+      if (a.landedMs < 0) a.landedMs = now;
+      if (b.landedMs < 0) b.landedMs = now;
       if (a.kind === 'cat' && b.kind === 'cat') {
         if (a.tier === b.tier) contacts.push(a, b);
       } else if (a.kind === 'joker' || b.kind === 'joker') {
@@ -451,23 +459,45 @@ export class PhysicsWorld {
     }
   }
 
+  private isWall(body: Matter.Body): boolean {
+    return body === this.leftWall || body === this.rightWall;
+  }
+
+  /** Whether a ball at `x` of `radius` touches the wall on the `side` (its sign) the wind blows. */
+  private againstWall(x: number, radius: number, side: number): boolean {
+    return side !== 0 && Math.sign(side) * x + radius >= this.wallInnerX - WALL_TOUCH_SLOP;
+  }
+
+  /**
+   * The sideways speed the wind gives a ball shot down out of the paw at `vy` (Heavy Drop): it
+   * tilts the shot as it tilts the fall (GAME_DESIGN §15.8), except into a wall the ball touches.
+   */
+  windLaunch(x: number, radius: number, vy: number): number {
+    const tilt = this.windAccel / (this.engine.gravity.y * MATTER_GRAVITY_SCALE);
+    return this.againstWall(x, radius, tilt) ? 0 : vy * tilt;
+  }
+
   /** A falling ball's limit is the fall's (Heavy Drop); from its first contact the normal one. */
   private speedCap(ball: Ball): number {
     return ball.landedMs < 0 ? this.maxFallSpeed : this.maxSpeed;
   }
 
   /**
-   * The wind and Heavy Drop act on every ball that hasn't touched anything yet, as forces that
-   * matter-js integrates in this step. A heavy ball that could sink too deep into something this
-   * step starts further back along its path (fallGuard.ts).
+   * The wind and Heavy Drop act on every ball that hasn't touched a ball or the floor yet, as
+   * forces that matter-js integrates in this step. The wind tilts the whole fall: Heavy Drop's
+   * extra gravity gets the same sideways share as the base gravity, so a heavy ball comes down the
+   * line a plain one would, only faster. A ball against the wall the wind blows toward slides down
+   * it freely. A heavy ball that could sink too deep into something this step starts further back
+   * along its path (fallGuard.ts).
    */
   private pushFalling(): void {
-    const ax = this.windAccel;
-    const ay = this.gravityBonus;
     const gravity = this.engine.gravity.y * MATTER_GRAVITY_SCALE;
+    const ay = this.gravityBonus;
+    const wind = this.windAccel * (1 + ay / gravity);
     for (const ball of this.list) {
       if (ball.landedMs >= 0) continue;
       const body = ball.body;
+      const ax = this.againstWall(ball.x, ball.radius, wind) ? 0 : wind;
       body.force.x += body.mass * ax;
       body.force.y += body.mass * ay;
       if (ay > 0) {

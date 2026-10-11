@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { PHYSICS_STEP_MS } from '../../src/config/physics';
 import { WIND_ACCEL_PER_LEVEL } from '../../src/config/picks';
+import type { WindDirection } from '../../src/config/picks';
 import { decodeRunSave, RUN_SAVE_VERSION } from '../../src/core/runSave';
 import type { RunSnapshot } from '../../src/core/runSave';
 import type { BallView } from '../../src/physics/balls';
@@ -26,6 +28,15 @@ function dropAndLand(run: RunController, x = 0): { ball: BallView; fallMs: numbe
   const ball = run.balls.find((b) => !before.has(b.id))!;
   for (let i = 0; i < 400 && ball.landedMs < 0; i++) run.tick();
   return { ball, fallMs: ball.landedMs - start };
+}
+
+/** A run with Wind and Heavy Drop at these levels, blowing `direction`. */
+function windRun(wind: number, heavy: number, direction: WindDirection): RunController {
+  const run = new RunController({ seed: 4 });
+  run.setPickLevel('wind', wind);
+  run.setPickLevel('heavyDrop', heavy);
+  run.setWindDirection(direction);
+  return run;
 }
 
 describe('Wind (GAME_DESIGN §15.8)', () => {
@@ -84,20 +95,49 @@ describe('Wind (GAME_DESIGN §15.8)', () => {
     expect(dropAndLand(run).ball.x).toBe(0);
   });
 
-  it('pushes a ball against a wall, where it slides down', () => {
-    const run = new RunController({ seed: 4 });
-    run.setPickLevel('wind', 5);
-    run.setWindDirection(1);
-    const { ball } = dropAndLand(run, 200);
-    // Its first contact is the wall, well above the floor.
-    expect(ball.x).toBeCloseTo(run.geometry.halfWidth - ball.radius, 0);
-    expect(ball.y).toBeLessThan(-300);
-    for (let i = 0; i < 180; i++) {
+  it('pushes a ball against a wall, where it slides down, still falling', () => {
+    const run = windRun(5, 0, 1);
+    while (!run.canDrop) run.tick();
+    run.drop(200);
+    const ball = run.balls.at(-1)!;
+    const wall = run.geometry.halfWidth - ball.radius;
+    let reached = false;
+    for (let i = 0; i < 400 && ball.landedMs < 0; i++) {
       run.tick();
-      expect(ball.x).toBeLessThanOrEqual(run.geometry.halfWidth - ball.radius + 1);
+      reached ||= ball.x >= wall - 1;
+      expect(ball.x).toBeLessThanOrEqual(wall + 1);
     }
-    expect(ball.y).toBeCloseTo(-ball.radius, 0);
+    // It reached the wall well above the floor, but only the floor ended its fall.
+    expect(reached).toBe(true);
+    expect(Math.abs(ball.y + ball.radius)).toBeLessThan(2);
   });
+
+  it.each([0, 1, 3, 5])(
+    'with Heavy Drop %i, drops beside the wall it blows toward as fast as in the open',
+    (heavy) => {
+      const open = dropAndLand(windRun(5, heavy, 1), -150).fallMs;
+      const run = windRun(5, heavy, 1);
+      const { ball, fallMs } = dropAndLand(run, 1e9);
+      // It slid down against the wall from the paw on: the wall didn't slow it or end its fall.
+      expect(ball.x).toBeCloseTo(run.geometry.halfWidth - ball.radius, 0);
+      expect(Math.abs(ball.y + ball.radius)).toBeLessThan(2);
+      expect(Math.abs(fallMs - open)).toBeLessThanOrEqual(PHYSICS_STEP_MS);
+    },
+  );
+
+  it.each([1, 3, 5])(
+    'with Heavy Drop %i, tilts a fall as much as a plain one: the same line, only faster',
+    (heavy) => {
+      for (const direction of [1, -1] as const) {
+        const plain = dropAndLand(windRun(5, 0, direction));
+        const fast = dropAndLand(windRun(5, heavy, direction));
+        expect(fast.fallMs).toBeLessThan(0.7 * plain.fallMs);
+        expect(Math.abs(fast.ball.x - plain.ball.x)).toBeLessThan(2);
+        // It shoots out of the paw already slanted the wind's way.
+        expect(direction * fast.ball.vx).toBeGreaterThan(direction * plain.ball.vx);
+      }
+    },
+  );
 
   it("keeps its direction through a save, and an old save takes the seed's", () => {
     const run = new RunController({ seed: 11 });

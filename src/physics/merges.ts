@@ -18,7 +18,8 @@
  *    too, once in its life. The caller applies the hits.
  * 6. Porcelain (GAME_DESIGN §15.10): every cat within PORCELAIN_REACH of a merge's balls may
  *    crack, except cats of the merging size and of the last size; the caller rolls and applies it.
- * 7. A broken cat's two pieces (shard mates) never merge with each other.
+ * 7. A broken cat's two pieces (shard mates) don't merge with each other until they have been
+ *    apart: more than PORCELAIN_MATE_GAP between their edges once both have grown in.
  *
  * Hubris (GAME_DESIGN §15.11, `threesUpTo`): three cats up to that size that touch in a chain
  * merge at once into a cat two sizes bigger (three for a golden one) at their centroid; two of them
@@ -31,7 +32,12 @@
  * Scores, coins, events and the hits' effect are the caller's job (RunController).
  */
 import { MERGE_SPIN_MIN_SLIDE, MERGE_SPIN_RIM_SPEED } from '../config/physics';
-import { BOULDER_HIT_REACH, HUBRIS_SIZE_STEP, PORCELAIN_REACH } from '../config/picks';
+import {
+  BOULDER_HIT_REACH,
+  HUBRIS_SIZE_STEP,
+  PORCELAIN_MATE_GAP,
+  PORCELAIN_REACH,
+} from '../config/picks';
 import { sizeRadius } from '../config/tiers';
 import type { Ball } from './balls';
 import type { PhysicsWorld } from './PhysicsWorld';
@@ -179,6 +185,7 @@ export class MergeResolver {
     this.members.length = 0;
     this.tiers.length = 0;
     const contacts = world.mergeContacts;
+    this.releaseMates(world.balls);
     this.forgetWaits(world, rules);
     if (contacts.length === 0) {
       this.collectJokerHits(world.jokerBoulderContacts);
@@ -209,6 +216,26 @@ export class MergeResolver {
     this.mergeOf.clear();
     this.collectJokerHits(world.jokerBoulderContacts);
     return outcomes;
+  }
+
+  /**
+   * Porcelain: shard mates part once they have been apart (more than PORCELAIN_MATE_GAP between
+   * their edges, both grown in) or one of them is gone; from then on they merge like any two cats.
+   */
+  private releaseMates(balls: readonly Ball[]): void {
+    for (const ball of balls) {
+      if (ball.mate === null) continue;
+      const mate = balls.find((other) => other.id === ball.mate);
+      if (!mate) {
+        ball.mate = null;
+        continue;
+      }
+      if (ball.growing || mate.growing) continue;
+      const gap = Math.hypot(mate.x - ball.x, mate.y - ball.y) - ball.radius - mate.radius;
+      if (gap <= PORCELAIN_MATE_GAP) continue;
+      ball.mate = null;
+      mate.mate = null;
+    }
   }
 
   /**

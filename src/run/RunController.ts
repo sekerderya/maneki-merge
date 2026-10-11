@@ -434,6 +434,8 @@ export class RunController {
     const geo = this.world.geometry;
     const radius = this.radiusOf(item.tier);
     const at = clampDropX(x, radius, geo);
+    // Heavy Drop (GAME_DESIGN §15.9): it leaves the paw already falling, as the wind tilts it.
+    const vy = HEAVY_DROP_START_SPEED[this.levels.heavyDrop] ?? 0;
     this.world.addBall({
       kind,
       tier: item.tier,
@@ -441,8 +443,8 @@ export class RunController {
       hits: item.hits,
       x: at,
       y: dropStartY(radius, geo),
-      // Heavy Drop (GAME_DESIGN §15.9): it leaves the paw already falling.
-      vy: HEAVY_DROP_START_SPEED[this.levels.heavyDrop] ?? 0,
+      vx: this.world.windLaunch(at, radius, vy),
+      vy,
     });
     this.dropAllowedAt = this.world.steps + COOLDOWN_STEPS;
     this.dropAnnounced = false;

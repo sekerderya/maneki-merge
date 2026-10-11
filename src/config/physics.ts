@@ -106,6 +106,11 @@ export const HEAVY_DROP_GRAVITY_BONUS = [0, 537.5, 1075, 1612.5, 2150, 2687.5] a
  */
 export const HEAVY_DROP_MAX_SPEED = 4800;
 /**
+ * A falling ball this close to the wall the wind blows toward (world units) counts as against
+ * it: the wind no longer presses it into the wall (GAME_DESIGN §15.8).
+ */
+export const WALL_TOUCH_SLOP = 1;
+/**
  * A falling heavy ball never starts a contact deeper than this (physics/fallGuard.ts): half a
  * size-1 radius, what MAX_SPEED_BASE allows any ball per step.
  */

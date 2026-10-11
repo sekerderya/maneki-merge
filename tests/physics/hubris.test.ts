@@ -153,12 +153,16 @@ describe('Hubris (GAME_DESIGN §15.11)', () => {
   });
 
   it("never puts a broken cat's two pieces in one three", () => {
+    // Two pieces side by side on the floor (still mates) and a third 2 resting on both.
     const world = new PhysicsWorld();
-    const [a, b, c] = row(world, 2, 3);
+    const [a, c] = row(world, 2, 2, -sizeRadius(2));
+    const r = sizeRadius(2);
+    const b = world.addBall({ tier: 2, x: 0, y: -r - (r - 1) * Math.sqrt(3) });
     a!.mate = c!.id;
     c!.mate = a!.id;
     expect(play(world, 30)).toEqual([]);
-    expect(b!.removed).toBe(false);
+    expect(b.removed).toBe(false);
+    expect(a!.mate).toBe(c!.id);
   });
 
   it('hits a boulder near two of the three once, as one merge', () => {

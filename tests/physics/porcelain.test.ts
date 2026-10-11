@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { PORCELAIN_REACH, SPAWN_START_RADIUS_SHARE } from '../../src/config/picks';
+import Matter from 'matter-js';
+import {
+  PORCELAIN_CHANCE_PER_LEVEL,
+  PORCELAIN_MATE_GAP,
+  PORCELAIN_REACH,
+  SPAWN_START_RADIUS_SHARE,
+} from '../../src/config/picks';
 import { stageInfo } from '../../src/config/stages';
 import { sizeRadius } from '../../src/config/tiers';
 import { MERGE_GROW_MS } from '../../src/config/timings';
@@ -157,6 +163,50 @@ describe('Porcelain: cracking and breaking (GAME_DESIGN §15.10)', () => {
     expect(run.balls.map((b) => b.tier).sort()).toEqual([3, 4]);
   });
 
+  it("lets a broken cat's pieces merge once they have been apart", () => {
+    const r = sizeRadius(3);
+    /** Two shard mates of size 3 on the floor, `gap` apart. */
+    const mates = (gap: number, startRadius = r) => {
+      const world = new PhysicsWorld();
+      const a = world.addBall({ tier: 3, x: -r - gap / 2, y: -r });
+      const b = world.addBall({ tier: 3, x: r + gap / 2, y: -r, startRadius });
+      a.mate = b.id;
+      b.mate = a.id;
+      return { world, a, b, resolver: new MergeResolver() };
+    };
+    // Still close, or one still growing in: they stay mates.
+    for (const near of [mates(PORCELAIN_MATE_GAP - 2), mates(PORCELAIN_MATE_GAP + 20, r / 4)]) {
+      near.world.step();
+      expect(near.resolver.resolve(near.world, CAP, PORCELAIN)).toEqual([]);
+      expect([near.a.mate, near.b.mate]).toEqual([near.b.id, near.a.id]);
+    }
+    // Apart: they part, and merge when they meet.
+    const { world, a, b, resolver } = mates(PORCELAIN_MATE_GAP + 2);
+    world.step();
+    resolver.resolve(world, CAP, PORCELAIN);
+    expect([a.mate, b.mate]).toEqual([null, null]);
+    Matter.Body.setVelocity(b.body, { x: -2, y: 0 });
+    const outcomes = [];
+    for (let i = 0; i < 60 && outcomes.length === 0; i++) {
+      world.step();
+      outcomes.push(...resolver.resolve(world, CAP, PORCELAIN));
+    }
+    expect(outcomes[0]).toMatchObject({ tier: 3, newTier: 4 });
+  });
+
+  it('forgets a shard mate that is gone', () => {
+    const world = new PhysicsWorld();
+    const r = sizeRadius(3);
+    const a = floorCat(world, 3, -r);
+    const b = floorCat(world, 3, r);
+    a.mate = b.id;
+    b.mate = a.id;
+    world.removeBall(b);
+    world.step();
+    new MergeResolver().resolve(world, CAP, PORCELAIN);
+    expect(a.mate).toBeNull();
+  });
+
   it('makes a whole cat of a cracked one that merges, with a flash of gold', () => {
     const run = new RunController({ seed: 1 });
     const merged: GameEvents['merged'][] = [];
@@ -177,11 +227,12 @@ describe('Porcelain: cracking and breaking (GAME_DESIGN §15.10)', () => {
   });
 
   it('cracks with its chance per level, the same for the same seed', () => {
-    // A 3 between two pairs of 1s: each merge reaches it once. Over many seeds at 40%, about a
-    // third of the 3s end up cracked or broken (1 − 0.6² = 64% are hit at least once).
+    // A 3 between two pairs of 1s: each merge reaches it once. Over many seeds at level 4 (40%),
+    // about a third of the 3s end up cracked or broken (1 − 0.6² = 64% are hit at least once).
+    expect(4 * PORCELAIN_CHANCE_PER_LEVEL).toBeCloseTo(0.4, 12);
     const outcome = (seed: number): string => {
       const run = new RunController({ seed });
-      run.setPickLevel('porcelain', 2);
+      run.setPickLevel('porcelain', 4);
       const r1 = sizeRadius(1);
       const r3 = sizeRadius(3);
       const mid = run.spawnBall(3, 0, -r3);
