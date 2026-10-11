@@ -2,6 +2,23 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.36.0] - 2026-10-12 (Batch 20)
+
+### Changed
+
+- **Every profile starts over** (save version 7, the owner's call): only the settings stay (sound, haptics, reduce motion). Coins, upgrades, records, stats and the first-run hints go, and a run saved before this version is dropped.
+- **Coins** pay by the merging cats' size, times the number of the jar the stage plays in: ×1 in stages 1–5, ×2 in 6–10, ×3 in 11–15, and so on (a stage pays ~530 coins before upgrades). "The shrine grows!" says the new multiplier ("Coins ×2"). Until now each stage paid ~118 times the coins of the one before, so one run past stage 2 bought the whole shop.
+- **Score** pays 2^size, 1.225 times more each stage: about 5 million by the time stage 30 is cleared (it was 2^tier, about 10^81 there). Every combo step adds 10% to a merge's score for every player, up to ×1.5; the combo label shows it ("+30% score") with the Combo Charm coin bonus beside it.
+- **Blessings are bought in the shop.** Under the upgrades, a Blessings section sells a card per blessing: its level is the highest level that blessing can reach in a run. A fresh profile has Golden Cats and Big Drops at 1; when no blessing is left under its card, the stage clears give only trials and the run ends on its own.
+- **Stage gates:** Combo Charm and More Magnets open at stage 3, Second Chance and Hanabi at stage 5, Joker Cat at stage 8; until then the card says "Reach stage N". Game Over lists the cards a run opened.
+- **Big Catch** has 10 levels, each 0.8 of the old step (34% biggest drops at the top, against 25% before), so a maxed profile clears early stages faster and Big Drops keeps room.
+- Every price is new, from a pacing model: everything bought in about 8 hours of play, the first run paying for two or three cheap cards (GAME_DESIGN §10, §14).
+
+### Added
+
+- Debug panel: set the best stage, max the profile (every card, every gate), +50K coins, and the run's play time with the last stages' times.
+- `npm run sim -- --upgrades max` (or `id=level,…`) plays with shop cards, and the simulator reports coins per run and the score, coins and play time at each stage clear.
+
 ## [0.35.3] - 2026-10-11
 
 ### Changed

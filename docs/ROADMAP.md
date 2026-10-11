@@ -345,6 +345,14 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
   - [x] Copycat (rule): the next cat copies the size of the last merge (at most size 4)
   - [x] Dice (rule): every merge rolls: sometimes a size more, sometimes it fizzles
   - [x] a headless balance bot (`npm run sim`), and its table for every new pick
+- [x] Batch 20 (v0.36.0), economy, score and meta progression (GAME_DESIGN §4, §10, §14; plan: docs/plans/batch-20.md). **Status:** done in v0.36.0; the owner's playtests on a fresh profile tune it next:
+  - [x] coins by size times the jar (×1 in stages 1–5, ×2 in 6–10, …), "Coins ×N" as the jar grows
+  - [x] score by size, 1.225× per stage (about 5 million by stage 30, calibrated with the bot), and a combo multiplier for everyone (+10% per step, up to ×1.5)
+  - [x] blessing cards in the shop: a card's level is how far its blessing can go in a run; a fresh profile has Golden Cats and Big Drops at 1
+  - [x] stage gates for shop cards ("Reach stage N"), and Game Over lists the cards a run opened
+  - [x] Big Catch with 10 levels of 0.8 drop tilt; every price from the 8-hour pacing model
+  - [x] save v7: every profile starts over, keeping its settings; older saved runs are dropped
+  - [x] debug: best stage, max profile, stage times; the bot takes shop cards and reports each clear's score and coins
 
 ## M13: Final art integration
 

@@ -1,5 +1,8 @@
 # Batch 20 plan: economy, score and meta progression
 
+> **Status:** built in v0.36.0 (2026-10-12). The score's growth came out at 1.225 per stage, not the
+> 1.24 below: the bot's maxed profile scores ~2,500 by its first clear (§4).
+>
 > Written 2026-10-12 from the owner's decisions in chat, for the agent that builds it. Read it whole
 > before you start, together with `CLAUDE.md`, GAME_DESIGN §2.2, §4, §5, §7, §9–§11, §14 and §15.5,
 > and TECH_SPEC §8 and §11. Once a feature is built, its rules live in GAME_DESIGN; from then on

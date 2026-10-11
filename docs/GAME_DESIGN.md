@@ -5,7 +5,7 @@
 
 ## 1. Pitch
 
-Drop lucky cats into a shrine jar. Two identical cats merge into a bigger cat and pay out coins. Every stage has 10 cats; merge two 9s into the 10th and every other cat pays out its value, then the jar grows: the camera zooms out until the 10th cat is as small as the first one was, and it becomes the first of a new stage of 10 bigger-numbered cats. Every stage is open from the start. Coins carry over between runs and buy permanent upgrades.
+Drop lucky cats into a shrine jar. Two identical cats merge into a bigger cat and pay out coins. Every stage has 10 cats; merge two 9s into the 10th and every other cat pays out its value, then the jar grows: the camera zooms out until the 10th cat is as small as the first one was, and it becomes the first of a new stage of 10 bigger-numbered cats. Every stage is open from the start. Coins carry over between runs and buy permanent upgrades, and how far each blessing can go in a run (§10).
 
 - Mobile, portrait, one-handed, offline. A mouse works too, for testing on desktop.
 - A run lasts 3–20 minutes.
@@ -35,17 +35,24 @@ Layout: everything sits where it is in the mockup, on a stage of the mockup's si
 
 - Slides up over the menu, which shows through blurred and a little darker. At the top, "Upgrades" on a cream pill, a round close button on the right, and the coin balance in the menu's coins pill under them (v0.31, the owner's approved mockup, §13.1).
 - One card per upgrade (§10) showing its icon, the name with the level (e.g. 3/10), a one-line effect, the current → next value in the card's tan strip, and a gold Buy button with the price, standing on the strip's right end. The level pips are gone (v0.31, the owner's call); the level is the number.
-- The value each card shows (derived from §10; at MAX only the current value):
+- Under the four upgrades, the **Blessings** heading ("How far each blessing can go in a run", dark brown words with a cream edge) and the five blessing cards (v0.36, §10). A blessing card's icon is the blessing's own ball in a cream medallion with a gold rim, as on its pick card (§15.5); its effect line starts with "Blessing:".
+- The value each card shows (derived from §10; at MAX only the current value; a blessing card shows the blessing at the level a run can reach, without Big Catch):
 
-  | Upgrade       | Value                                                          | Level 0 → 1 | At max |
+  | Card          | Value                                                          | First level | At max |
   | ------------- | -------------------------------------------------------------- | ----------- | ------ |
   | Lucky Paw     | Coins                                                          | +0% → +15%  | +150%  |
-  | Big Catch     | Biggest drop: the share of a stage's largest drop (size 4, §8) | 10% → 13%   | 25%    |
+  | Big Catch     | Biggest drop: the share of a stage's largest drop (size 4, §8) | 10% → 12%   | 34%    |
   | Combo Charm   | Per combo step                                                 | +0% → +8%   | +40%   |
   | Second Chance | Lucky Saves                                                    | 0 → 1       | 2      |
+  | Golden Cats   | Up to (golden cats)                                            | 4% → 8%     | 20%    |
+  | Big Drops     | Up to (biggest drop)                                           | 16% → 22%   | 28%    |
+  | More Magnets  | Up to (magnets)                                                | 1% → 2.5%   | 8.5%   |
+  | Hanabi        | Up to (hanabi)                                                 | 0% → 1.5%   | 7.5%   |
+  | Joker Cat     | Up to (jokers)                                                 | 0% → 1.5%   | 7.5%   |
 
-- The price button has three states: affordable (gold, "Buy" over the coin and the price), not enough coins (faded grey and disabled, "Need N more" in red where "Buy" was), and MAX (faded, a check and "MAX"). With `?skin=vector` the shop keeps the code-drawn sheet of v0.14 (no pips either).
+- The price button has four states: affordable (gold, "Buy" over the coin and the price), not enough coins (faded grey and disabled, "Need N more" in red where "Buy" was), MAX (faded, a check and "MAX"), and **locked** (v0.36: faded and disabled, "Reach" over the BEST STAGE card's small torii and "Stage N", the stage that opens the card; the card's icon and value are faded too). With `?skin=vector` the shop keeps the code-drawn sheet of v0.14 (no pips either).
 - Buying gives feedback: a sound (from M9), a card pulse, and the balance counting down. The purchase is saved at once. The panel scrolls vertically if needed.
+- The UPGRADES dot on the menu shows only for a card that is open and affordable.
 - Closing: the close button, a tap on the dimmed menu above the panel, or the back button.
 
 ### 2.4 Settings panel (over the main menu)
@@ -66,8 +73,8 @@ Layout: everything sits where it is in the mockup, on a stage of the mockup's si
 - HUD over the top of the scene. At the top in the middle, the stage in words ("STAGE 2"), dark brown with a cream edge, no card (v0.25). On the left, a narrow cream score card with "SCORE:" and the score in a sunken well, level with the coins card (their middles on one line, v0.26; until v0.24 it sat at the top, level with the pause button). (The stage card of v0.14–v0.17, with a progress bar and the stage's last cat, is gone; the banners still announce stage clears and the new goal.) On the right, a pink pause button, a "COINS:" card with the coins earned this run, which runs off the right edge, and under it the next cat in a round glass bubble with a small "NEXT" tag on its rim (v0.14.1). Only the pause button takes touches; everywhere else a touch aims.
 - Overlays:
   - **Pause**: Resume, Sound, Haptics, Quit to Menu.
-  - **Game Over**: score, best score, stage reached, the biggest cat made this run, coins earned this run, new-record badges (best score, best stage, biggest cat ever), Play Again, Menu.
-- Short banners: Combo, Jackpot, Stage clear! (every stage clear), The shrine grows! (as the jar grows, every 5 stages, v0.33; from v0.29.4 to v0.32 no banner, and until v0.29.4 it replaced "Stage clear!" at a clear that grew the jar), Lucky Save!. (Until v0.29.5 the reveal of a new stage showed "New cats unlocked!" with the next goal; the owner removed it.)
+  - **Game Over**: score, best score, stage reached, the biggest cat made this run, coins earned this run, new-record badges (best score, best stage, biggest cat ever), the shop cards the run opened ("New in the shop: Second Chance, Hanabi", v0.36, on a pale gold card), Play Again, Menu.
+- Short banners: Combo, Jackpot, Stage clear! (every stage clear), The shrine grows! (as the jar grows, every 5 stages, v0.33; with the new jar's coin multiplier under it, "Coins ×2", since v0.36; from v0.29.4 to v0.32 no banner, and until v0.29.4 it replaced "Stage clear!" at a clear that grew the jar), Lucky Save!. (Until v0.29.5 the reveal of a new stage showed "New cats unlocked!" with the next goal; the owner removed it.)
 - First-run hints: "Drag to aim, release to drop" and "Merge two identical cats".
 
 ## 3. Controls
@@ -99,28 +106,41 @@ The radius depends on the size only: `r(s) = round(41 × 1.19^(s−1))` in world
 |    8 |    139 |              0.232 |           115 |
 |    9 |    165 |              0.275 |           137 |
 
-When two tier-`t` cats merge, they pay score `S(t) = 2^t` and base coins `C(t) = round(1.7^(t−1))`. Both keep growing with the tier through every stage: a stage-2 merge of two 13s pays like a tier-13 merge, not like a tier-3 one. A single cat's **value** is half of what its pair's merge pays: `C(t) / 2`. That is what it pays when it pops (§5).
+When two cats of tier `t` merge, they pay by their **size** `s` and their **stage** `n` (v0.36, the owner's call; the tier tells both, §7):
 
-| Tier | Score S(t) | Coins C(t) | Value C(t)/2 |
-| ---: | ---------: | ---------: | -----------: |
-|    1 |          2 |          1 |          0.5 |
-|    2 |          4 |          2 |            1 |
-|    3 |          8 |          3 |          1.5 |
-|    4 |         16 |          5 |          2.5 |
-|    5 |         32 |          8 |            4 |
-|    6 |         64 |         14 |            7 |
-|    7 |        128 |         24 |           12 |
-|    8 |        256 |         41 |         20.5 |
-|    9 |        512 |         70 |           35 |
-|   10 |      1,024 |        119 |         59.5 |
-|   18 |    262,144 |      8,272 |        4,136 |
-|   27 |  1.3 × 10⁸ |    981,007 |    490,503.5 |
-|   36 | 6.9 × 10¹⁰ |  1.2 × 10⁸ |    5.8 × 10⁷ |
-|   45 | 3.5 × 10¹³ | 1.4 × 10¹⁰ |    6.9 × 10⁹ |
-|   54 | 1.8 × 10¹⁶ | 1.6 × 10¹² |   8.2 × 10¹¹ |
-|   90 | 1.2 × 10²⁷ | 3.2 × 10²⁰ |   1.6 × 10²⁰ |
+- score `S(t) = 2^s × 1.225^(n−1)` (before the combo, §5): exponential, but slowly, about 5 million in all by the time stage 30 is cleared (the owner's target);
+- base coins `C(t) = round(1.7^(s−1)) × jar(n)`, where `jar(n)` is the number of the jar the stage plays in (§7): ×1 in stages 1–5, ×2 in 6–10, ×3 in 11–15, and so on. "The shrine grows!" says the new multiplier.
 
-Values are rounded only when paid (§5). Score and coins are doubles: `S(t)` stays exact at every tier, sums lose only digits too small to show, and both would overflow only past tier 1000 (stage 111). Implement the formulas. Unit tests assert these tables.
+A single cat's **value** is half of what its pair's merge pays: `C(t) / 2`. That is what it pays when it pops (§5).
+
+| Size merged | Score at stage 1 | Coins in jar 1 | Value |
+| ----------: | ---------------: | -------------: | ----: |
+|           1 |                2 |              1 |   0.5 |
+|           2 |                4 |              2 |     1 |
+|           3 |                8 |              3 |   1.5 |
+|           4 |               16 |              5 |   2.5 |
+|           5 |               32 |              8 |     4 |
+|           6 |               64 |             14 |     7 |
+|           7 |              128 |             24 |    12 |
+|           8 |              256 |             41 |  20.5 |
+|           9 |              512 |             70 |    35 |
+
+| Stage | Score × | Coins × |
+| ----: | ------: | ------: |
+|     1 |       1 |       1 |
+|     2 |   1.225 |       1 |
+|     5 |    2.25 |       1 |
+|     6 |    2.76 |       2 |
+|    10 |    6.21 |       2 |
+|    11 |    7.61 |       3 |
+|    20 |    47.3 |       4 |
+|    30 |     360 |       6 |
+
+Measured with the balance bot (TECH_SPEC §11): a stage pays ~530 coins before upgrades (a run that ends in stage 3 makes ~1.2K, in stage 10 ~7.5K, in stage 20 ~25K, in stage 30 ~52K; Lucky Paw 10 makes it 2.5 times as much), and a maxed profile scores ~2,500 by its first clear, ~4.9 million over 30 stages.
+
+Until v0.36 both went by the tier: `S(t) = 2^t` and `C(t) = round(1.7^(t−1))`, so every stage paid 512 times the score and ~118 times the coins of the one before (the bot had ~530 coins at its first clear, ~60K at its second, ~7M at its third), and one run past stage 2 could buy the whole shop.
+
+Values are rounded only when paid (§5). Implement the formulas. Unit tests assert these tables.
 
 ## 5. Merging
 
@@ -129,7 +149,7 @@ Values are rounded only when paid (§5). Score and coins are doubles: `S(t)` sta
 - A cat takes part in at most one merge per physics step. Merges are queued during collision handling and resolved after the step. When pairs compete for a cat, the oldest cats merge first.
 - **The last cat.** Two size-8 cats merge into the stage's last cat (size 9). That clears the stage (§7): every other cat in the jar pops into its value, the last cat pops too once it has settled, and the run moves on, with an empty jar, to the next stage (every 5 stages the jar grows on the way, §7).
 - **Jackpot.** Two of a stage's last cat don't merge upward: both vanish with a big celebration, paying score `2 × S(last)` and coins `5 × C(last)` before multipliers. In play this needs two last cats in the jar at once, which a clear prevents (the last cat pops), so in practice only the debug tools make one.
-- **Combo.** A merge within 1.0 s of the previous merge raises the combo counter; otherwise the counter resets to 1. "Combo ×N" shows from N = 2. Combos pay extra coins only with the Combo Charm upgrade. Jackpots count as merges for the combo; pops (stage clears, Lucky Save) neither raise it nor get a combo bonus.
+- **Combo.** A merge within 1.0 s of the previous merge raises the combo counter; otherwise the counter resets to 1. "Combo ×N" shows from N = 2. Every combo step adds 10% to a merge's score, for every player, up to 5 steps (×1.5; v0.36): `round(S × (1 + 0.1 × min(N − 1, 5)))`. Combos pay extra coins only with the Combo Charm upgrade. Jackpots count as merges for the combo; pops (stage clears, Lucky Save) neither raise it nor get a combo bonus.
 - **Golden cats** (§15.4) skip a tier when they merge. Until v0.21 the Golden Merge upgrade gave every merge a chance to pay ×3 coins; it is gone (§10).
 - **Coin payout** for any merge, Jackpot or pop: `round(base × coinMultiplier × (1 + comboBonus))`, minimum 1. The base is C(t) for a merge, 5 × C(last) for a Jackpot and the cat's value C(t)/2 for a pop. Halves round up (57.5 → 58), ignoring floating-point noise. So two popping 4s pay what merging them would (C(5) = 8 → 4 + 4); an odd C(t) can pay one coin more.
 - Coins go into the persistent wallet immediately. Quitting or a crash never loses earned coins.
@@ -167,7 +187,7 @@ Every clear runs steps 1 and 2, then the picks. A clear that doesn't grow the ja
 
 1. **Stage clear.** The moment the last cat is made (its merge pays as usual), every other cat in the jar pops into its value (§4, §5) with a "+coins" each and a fanfare: not all at once, but quickly from the top of the jar down, 45 ms apart and within 0.9 s in all (v0.33.5, the owner's call; until then oldest first within a quarter of a second). The coins count at once. "Stage clear!" shows for 1.5 s, then slides up off the screen (0.5 s) as the stage doors set off (v0.29.4, the owner's call; until then a clear that grew the jar said "The shrine grows!").
 2. Input is disabled and the dropper hides. **The last cat shines** for 1.5 s (v0.33.5, the owner's call, so it is clear what happened; 0.5 s until then) while it finishes growing and settles alone in the jar: a gold halo twice its radius grows in and pulses behind it, a sunburst of fourteen light rays turns slowly behind the halo, and sparkles fly off its edge (fewer with reduced motion, and the rays hold still); the danger timer is reset. Then it pops into its value too (§5) in a big burst of sparks, and the jar is empty. When the jar grows, time then stops and the empty jar holds still for 0.5 s, until "Stage clear!" has slid away (2 s after the last cat).
-3. **The shrine grows** (2.05 s, the timeline's `zoom` phase): "The shrine grows!" shows, holds while the clouds come and part, and then slides up off the screen. Time stops (physics, the drop cooldown and the combo window freeze), with a whoosh and gold sparks along the rim. The jar stays still. **The growth clouds** (v0.33.3, the owner's art, docs/ART_ASSETS.md phase 10): a wall of about forty of the owner's nine clouds, in three layers (the back ones smaller), wells up from below the screen as one (0.715 s, each cloud up to 0.11 s late, slowing as it arrives) and covers the play area under the HUD and the banners. When every cloud is up, the next jar's background (§7) comes in behind them, starting 1.15 times bigger around the jar's feet. After a 0.12 s hold they part to the left and right, the middle first (0.975 s, the clouds at the sides up to 0.13 s later), speeding up, rising a little and growing as if passing the camera, and fade out on their way; the new place settles to its size as they go, as if the camera pulled back. The whole transition lasts this step (v0.33.4, the owner's call: rising and parting 30% slower than v0.33.3's 0.55 s and 0.75 s). With reduced motion the clouds only fade in and out where they stand, and the background doesn't move. A pause freezes them.
+3. **The shrine grows** (2.05 s, the timeline's `zoom` phase): "The shrine grows!" shows, with the new jar's coin multiplier under it ("Coins ×2", §4), holds while the clouds come and part, and then slides up off the screen. Time stops (physics, the drop cooldown and the combo window freeze), with a whoosh and gold sparks along the rim. The jar stays still. **The growth clouds** (v0.33.3, the owner's art, docs/ART_ASSETS.md phase 10): a wall of about forty of the owner's nine clouds, in three layers (the back ones smaller), wells up from below the screen as one (0.715 s, each cloud up to 0.11 s late, slowing as it arrives) and covers the play area under the HUD and the banners. When every cloud is up, the next jar's background (§7) comes in behind them, starting 1.15 times bigger around the jar's feet. After a 0.12 s hold they part to the left and right, the middle first (0.975 s, the clouds at the sides up to 0.13 s later), speeding up, rising a little and growing as if passing the camera, and fade out on their way; the new place settles to its size as they go, as if the camera pulled back. The whole transition lasts this step (v0.33.4, the owner's call: rising and parting 30% slower than v0.33.3's 0.55 s and 0.75 s). With reduced motion the clouds only fade in and out where they stand, and the background doesn't move. A pause freezes them.
 4. **Reveal** (1.5 s): the clouds are gone and the new place shows on its own before the doors come (v0.33.4, the owner's call; 0 s in v0.33.3). The world is now the next stage's, with an empty jar, and the stage words at the top move on. The dropper's cats move to the new stage's pool (§8), with a bell chime; no banner (v0.29.5, the owner's call; until then "New cats unlocked!" showed the new goal, the new stage's last cat).
 5. The picks come (below). Then physics resumes, the dropper returns, and input is enabled again.
 
@@ -180,18 +200,17 @@ Since v0.33 there is none. From v0.24 to v0.32 stage 5 was the last: its clear h
 ## 8. Drop pool
 
 - Every stage drops its sizes 1–4 (stage 1: tiers 1–4; stage 2: 10–13; …), with base weights `[40, 30, 20, 10]` (smallest first).
-- Big Catch tilts the chances towards the bigger cats: each level moves 3 points from the smallest to the biggest and 1 point from size 2 to size 3, so `share_i = base_i + 3 × L × (2i − 3) / 3` % (i = 0 for the smallest):
+- The **tilt** L moves the chances towards the bigger cats: each tilt level moves 3 points from the smallest to the biggest and 1 point from size 2 to size 3, so `share_i = base_i + L × (2i − 3)` % (i = 0 for the smallest). L = 0.8 × Big Catch + 2 × Big Drops (§15.5), at most 10. Each Big Catch level is 0.8 of a tilt level (v0.36: 10 levels, the owner's call; until then 5 levels of 1), so Big Catch 10 leaves room for Big Drops:
 
-  | Big Catch |   1 |   2 |   3 |   4 |
-  | --------: | --: | --: | --: | --: |
-  |         0 | 40% | 30% | 20% | 10% |
-  |         1 | 37% | 29% | 21% | 13% |
-  |         2 | 34% | 28% | 22% | 16% |
-  |         3 | 31% | 27% | 23% | 19% |
-  |         4 | 28% | 26% | 24% | 22% |
-  |         5 | 25% | 25% | 25% | 25% |
+  | Big Catch |   L |     1 |     2 |     3 |     4 |
+  | --------: | --: | ----: | ----: | ----: | ----: |
+  |         0 |   0 |   40% |   30% |   20% |   10% |
+  |         1 | 0.8 | 37.6% | 29.2% | 20.8% | 12.4% |
+  |         5 |   4 |   28% |   26% |   24% |   22% |
+  |        10 |   8 |   16% |   22% |   28% |   34% |
 
-  Until v0.12 it was `base_i × (1 + 0.12 × L × i)`, normalized (10% → 17.5% at L = 5): every level now adds about twice as much.
+  The shop card rounds the biggest drop's share (10, 12, 15, 17, 20, 22, 24, 27, 29, 32, 34%). Measured (bot, stage 1): the tilt of the old Big Catch 5 (L = 5) needs 97 drops to clear against 141 without it, L = 9 83, so a maxed profile clears a stage in about 40% fewer drops.
+  Until v0.12 it was `base_i × (1 + 0.12 × L × i)`, normalized (10% → 17.5% at L = 5).
 
 - The first two drops of a run are always the pool's smallest tier.
 - The queue comes from the seeded RNG. The next cat is visible. Every queued cat rolls its tier (the roll happens even for the two fixed opening drops). Magnets, boulders and golden cats roll on a second generator seeded from the same seed (§15.1), so a seed gives the same drops at every pick level.
@@ -199,24 +218,37 @@ Since v0.33 there is none. From v0.24 to v0.32 stage 5 was the last: its clear h
 
 ## 9. Score, coins, records
 
-- Score: `S(t)` per merge and `2 × S(last)` per Jackpot. Score only drives best-score records (the stage clears, not the score, grow the jar).
+- Score: `S(t)` per merge and `2 × S(last)` per Jackpot (§4), both times the combo's score multiplier (§5), rounded. Score only drives best-score records (the stage clears, not the score, grow the jar).
 - Coins: merges, Jackpots, stage-clear pops and Lucky Save pops all pay out by the rule in §5.
 - Number formatting: thousands separators below 10,000, short format from 10,000 (12.5K, 125K, 3.2M, then B, T, Qa for 10^15, Qi for 10^18, Sx, Sp, Oc, No and Dc for 10^33): one decimal below 100 units, none from 100. From 10^36 a mantissa and an exponent, truncated the same way ("1.2e36"; v0.33, stages have no end). The short format truncates instead of rounding, so a balance never looks bigger than it is (59,960 shows 59.9K, not 60K).
 
 ## 10. Upgrades (permanent, bought in the shop)
 
-| ID             | Name          | Effect per level                                   | Max | Price for each next level                         |
-| -------------- | ------------- | -------------------------------------------------- | --: | ------------------------------------------------- |
-| `luckyPaw`     | Lucky Paw     | +15% coins from everything                         |  10 | 50, 80, 125, 200, 320, 500, 800, 1250, 2000, 3200 |
-| `bigCatch`     | Big Catch     | Bigger cats come more often: +3% biggest drop (§8) |   5 | 100, 250, 600, 1500, 3500                         |
-| `comboCharm`   | Combo Charm   | +8% coins per combo step (up to 5 steps)           |   5 | 80, 160, 320, 640, 1280                           |
-| `secondChance` | Second Chance | +1 Lucky Save per run                              |   2 | 500, 4000                                         |
+The shop sells four permanent upgrades and, since v0.36 (the owner's call), a card for each blessing (§15.5): **a blessing card's level is the highest level its blessing can reach in a run.** With Golden Cats at 2, a run's blessing picks can take Golden Cats twice at most; at 0 it is never offered. When no blessing is under its card's level, a stage clear's blessing pick is skipped and the run only gathers trials, so the cards set how far a run can go. A fresh profile has Golden Cats and Big Drops at 1, so its first run sees the whole loop (a trial, then a blessing). With every card at its max the budget is what it was before v0.36 (5 + 3 + 5 + 5 + 5 levels).
 
-Derived values, where each name means that upgrade's current level:
+A card can be bought once the profile's **best stage** reaches its **gate** (the stage in the table; 1: from the start); until then it says "Reach stage N" (§2.2). The best stage only goes up, so a gate stays open.
+
+| ID             | Name          | Effect per level                                 | Start | Max | Gate | Price for each next level                         |
+| -------------- | ------------- | ------------------------------------------------ | ----: | --: | ---: | ------------------------------------------------- |
+| `luckyPaw`     | Lucky Paw     | +15% coins from everything                       |     0 |  10 |    1 | 300, 600, 1K, 1.6K, 2.5K, 4K, 6.5K, 10K, 16K, 25K |
+| `bigCatch`     | Big Catch     | Bigger cats come more often: +0.8 drop tilt (§8) |     0 |  10 |    1 | 300, 800, 1.6K, 3K, 5K, 8K, 13K, 20K, 30K, 45K    |
+| `comboCharm`   | Combo Charm   | +8% coins per combo step (up to 5 steps)         |     0 |   5 |    3 | 1K, 3K, 6K, 12K, 20K                              |
+| `secondChance` | Second Chance | +1 Lucky Save per run                            |     0 |   2 |    5 | 10K, 50K                                          |
+| `goldenCats`   | Golden Cats   | Golden Cats can go one level higher in a run     |     1 |   5 |    1 | 400, 2K, 5K, 12K                                  |
+| `bigDrops`     | Big Drops     | Big Drops can go one level higher in a run       |     1 |   3 |    1 | 2K, 8K                                            |
+| `moreMagnets`  | More Magnets  | More Magnets can go one level higher in a run    |     0 |   5 |    3 | 1.2K, 3.5K, 8K, 15K, 25K                          |
+| `hanabi`       | Hanabi        | Hanabi can go one level higher in a run          |     0 |   5 |    5 | 3.5K, 7K, 13K, 22K, 35K                           |
+| `joker`        | Joker Cat     | Joker Cat can go one level higher in a run       |     0 |   5 |    8 | 9K, 16K, 26K, 40K, 60K                            |
+
+Every card costs ~610K coins in all. Big Drops has 3 levels: its tilt adds to Big Catch's up to 10 (§8), and 3 levels (6) on top of Big Catch 10 (8) already pass it. The prices come from a pacing model (docs/plans/batch-20.md §7): a player who keeps playing and buys whatever is affordable has bought everything in about 8 hours (21 runs), the first run (about 5 minutes) pays for two or three cheap cards, and runs reach stage ~7 after an hour, ~10 after two and ~16 after four. Until v0.36 the four upgrades cost 21,455 in all (Lucky Paw 50 to 3200, Big Catch 100 to 3500 for 5 levels of 3 points, Combo Charm 80 to 1280, Second Chance 500 and 4000), and the blessings were all open from the first run.
+
+Derived values, where each name means that card's current level:
 
 - `coinMultiplier = 1 + 0.15 × luckyPaw`
 - `comboBonus = 0.08 × comboCharm × min(combo − 1, 5)`
 - `luckySaves = secondChance`
+- the drop tilt from Big Catch: `0.8 × bigCatch` (§8)
+- each blessing's highest level in a run: its card's level
 
 Upgrade definitions are data in `src/config/upgrades.ts`: id, name, description, max level, prices and effect.
 
@@ -233,7 +265,7 @@ Golden Touch (golden dropped cats) became Golden Merge in v0.12; its level carri
 
 Everything is stored locally, with a version number:
 
-- wallet coins and upgrade levels
+- wallet coins and the shop cards' levels (upgrades and blessing cards)
 - records: best score, best stage, highest tier ever made
 - stats: runs played, total merges, total coins earned, jackpots
 - settings: sound, haptics, reduce motion
@@ -241,13 +273,14 @@ Everything is stored locally, with a version number:
 
 The run in progress is saved too (v0.27, the owner's call; until then closing the app ended it): the stage, every cat and boulder in the jar where it lies, the score and the run's coins, the dropper and NEXT, the trials, rules and blessings, the wind's direction, which cats are cracked (Porcelain), the cursed cat and its bell (§15.12) the Lucky Saves left, a stage clear's waiting pick or a growing jar. It is written whenever the wallet is (at most once a second while coins come in) and when the app goes to the background or closes. The next launch opens the game screen straight away, paused where the run stopped, with Resume (a waiting pick shows under the pause). Quit to Menu and game over end the run, and the next launch opens the menu. Cats that were still falling or rolling go on a little differently than they would have; a settled pile doesn't move. A saved run that a new version can't read is dropped (the profile is never lost).
 
-The save format is at version 6:
+The save format is at version 7:
 
 - v1 → v2 (v0.10) removed Quick Growth and returns the coins spent on its levels to the wallet (150, 300, 600, 1200 and 2400 for levels 1–5).
 - v2 → v3 (v0.12) removed Shrine Expansion (1500, 10000 and 60000 back) and Fortune Teller (400 back), moves the Golden Touch level to Golden Merge, and caps a record tier above 51 (stages had 12 cats, up to tier 56) at 51.
 - v3 → v4 (v0.15) caps a record tier above 46 (stages had 11 cats, up to tier 51) at 46.
 - v4 → v5 (v0.21) removed Golden Merge and returns the coins spent on its levels.
 - v5 → v6 (v0.24) caps a record tier above 45 (stages had 10 cats, up to tier 46) at 45.
+- v6 → v7 (v0.36, the new economy) starts every profile over, the owner's call: only the settings (sound, haptics, reduce motion) stay; coins, upgrades, records, stats and the first-run hints go. A run saved before it is dropped. (So older saves pass the earlier steps and start over too.)
 
 If a save can't be read, or some of its fields are invalid, a copy is kept (TECH_SPEC §8) and the game continues with the valid fields and defaults for the rest.
 
@@ -255,7 +288,7 @@ If a save can't be read, or some of its fields are invalid, a copy is kept (TECH
 
 - Merge: a pop scale, a particle burst in the cat's colour, a floating "+coins", and a coin icon that flies to the HUD counter. A golden cat's merge (§15.4) shows a bigger "+coins", bursts gold sparks, rings a bell and sends three coins; a Jackpot shows an even bigger "+coins", a gold spark burst and a shower of coins.
 - Merges also bump the new cat (a short scale pop on top of its growth) and burst particles in its colour, more for bigger cats.
-- Combo: "Combo ×N" over the jar, with the Combo Charm bonus ("+16%") when it has one. The label heats up (bigger, brighter) at ×4 and ×7.
+- Combo: "Combo ×N" over the jar, and under it its score bonus on a cream pill ("+30% score", v0.36) and, with Combo Charm, its coin bonus on a gold one ("+48% coins"). The label heats up (bigger, brighter) at ×4 and ×7.
 - Danger: the countdown number pulses on each new second, with a tick that rises in pitch (3, 2, 1).
 - Stage clear: every other cat pops in turn with its "+coins", and the Jackpot fanfare plays.
 - Stage clear: the pops ripple down the jar, the last cat shines (halo, turning rays, sparkles) and pops in a burst (§7.1). Expansion: gold sparks along the rim as the shrine grows and again at the reveal; the growth clouds (§7.1).
@@ -321,15 +354,15 @@ The owner generates the art phase by phase with the prompts in docs/ART_ASSETS.m
 - Cats roll like Suika fruit (v0.11).
 - Optional later: a music loop (OGG/MP3, licensed for use, with a music switch in Settings).
 
-## 14. Balance targets (M10, set aside in v0.10)
+## 14. Balance targets (v0.36, the owner's)
 
-These were written for score thresholds. With stage clears (§7), clearing stage 1 means making two 9s at once (two 10s until v0.15, two 11s until v0.12); the owner's playtests decide the balance now.
+- A **new player's** first run ends at stage 2–3, rarely 4 (the owner, a practised player, goes further on a fresh profile).
+- The first run pays for 2–3 cheap cards.
+- Every card is bought in about **8 hours** of continuous play, buying as soon as something is affordable.
+- A maxed profile clears **30 stages in about 50 minutes** on average, the early stages faster than before v0.36 (Big Catch 10, §8), and scores about **5 million** by then (§4).
+- Progress comes often: unlocks by stage gates and the shop only, no player levels or XP.
 
-- A new player with no upgrades reaches stage 2 in at least 70% of first runs, with the first expansion within about 2 minutes.
-- The first run pays for 2–3 cheap upgrades.
-- Maxing every upgrade takes about 50–70 runs.
-- A run that reaches stage 4 or 5 lasts 12–20 minutes.
-- Every upgrade changes runs noticeably, and none is a mandatory first pick.
+The owner's playtests on a fresh profile check them; the debug panel shows each stage's play time (TECH_SPEC §11). (M10's targets, written for score thresholds, were set aside in v0.10.)
 
 ## 15. Special balls, trials and blessings
 
@@ -414,7 +447,7 @@ The cards show in front of the shut stage doors (§7.1). With the art skin (v0.3
 
 Then play resumes in the next stage as the doors open: in the grown jar, or in the same empty jar.
 
-- **Options:** each pick shows up to 3 different options, drawn at random from those that are open, with the run's seeded RNG. An option is open when it isn't at its max level and, for a **follow-up**, once the pick it needs has been taken (Batch 19): Quick Curse and More Curses are never offered before Cursed Bell. Today there are 9 trials (7 open at first), so the trial pick shows 3 of them, 4 rules, so a rule pick shows 3 of the 4 in random order, and 5 blessings (v0.28), so the blessing pick shows 3 of the 5. With fewer than 3 open it shows fewer cards; with none open the pick is skipped.
+- **Options:** each pick shows up to 3 different options, drawn at random from those that are open, with the run's seeded RNG. An option is open when it isn't at its max level (for a blessing: at its shop card's level, §10, v0.36) and, for a **follow-up**, once the pick it needs has been taken (Batch 19): Quick Curse and More Curses are never offered before Cursed Bell. Today there are 9 trials (7 open at first), so the trial pick shows 3 of them, 4 rules, so a rule pick shows 3 of the 4 in random order, and 5 blessings (v0.28), so the blessing pick shows 3 of the 5. With fewer than 3 open it shows fewer cards; with none open the pick is skipped.
 - The player must pick exactly one: no skip, no reroll, no rarities.
 - **Levels:** a pick raises that option's level by 1. Levels last for the run, and every run starts at 0. They are saved with the run in progress (§11).
 - **Card:** an icon, the name, a one-line effect, the level as pips with "Lv 1 → 2", and the value it changes (current → next), like a shop card (§2.2).
@@ -448,17 +481,18 @@ The boulder trials still multiply each other (more × bigger × harder to break)
 
 **Blessings**
 
-| ID            | Name         | Effect per level                    | Max | Level 0 → max |
-| ------------- | ------------ | ----------------------------------- | --: | ------------- |
-| `moreMagnets` | More Magnets | +1.5% magnet chance                 |   5 | 1% → 8.5%     |
-| `bigDrops`    | Big Drops    | +2 Big Catch levels in §8's formula |   5 | see below     |
-| `goldenCats`  | Golden Cats  | +4% golden cat chance               |   5 | 0% → 20%      |
-| `hanabi`      | Hanabi       | +1.5% hanabi chance (§15.6)         |   5 | 0% → 7.5%     |
-| `joker`       | Joker Cat    | +1.5% joker chance (§15.7)          |   5 | 0% → 7.5%     |
+| ID            | Name         | Effect per level            | Max | Level 0 → max |
+| ------------- | ------------ | --------------------------- | --: | ------------- |
+| `moreMagnets` | More Magnets | +1.5% magnet chance         |   5 | 1% → 8.5%     |
+| `bigDrops`    | Big Drops    | +2 drop tilt levels (§8)    |   5 | see below     |
+| `goldenCats`  | Golden Cats  | +4% golden cat chance       |   5 | 0% → 20%      |
+| `hanabi`      | Hanabi       | +1.5% hanabi chance (§15.6) |   5 | 0% → 7.5%     |
+| `joker`       | Joker Cat    | +1.5% joker chance (§15.7)  |   5 | 0% → 7.5%     |
 
-- **Big Drops:** the drop weights use `L = Big Catch level + 2 × Big Drops level`, at most 10, in §8's formula `share_i = base_i + L × (2i − 3)` %.
+- **Big Drops:** the drop weights use `L = 0.8 × Big Catch level + 2 × Big Drops level`, at most 10, in §8's formula `share_i = base_i + L × (2i − 3)` %.
   - L = 6 gives 22/24/26/28%; L = 8 gives 16/22/28/34%; L = 10 gives 10/20/30/40%.
   - Big Drops counts as maxed (not offered) once L reaches 10.
+- Every blessing goes only as high as its shop card allows (§10, v0.36): a fresh profile has Golden Cats and Big Drops up to 1 and the others not at all.
 
 ### 15.6 Hanabi
 
