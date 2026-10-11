@@ -23,6 +23,7 @@ import {
 } from '../../config/view';
 import { darken } from '../../core/color';
 import type { BallSkin, NumberFrame, SkinFrame } from './BallSkin';
+import { crackRingFrame, restoreCrackRing } from './porcelainFrames';
 import { stageSkinSet } from './skinSets';
 
 const PAD_PX = 2;
@@ -81,6 +82,14 @@ export class PlaceholderSkin implements BallSkin {
     return tierColor(tier);
   }
 
+  crack(): SkinFrame {
+    return crackRingFrame(this.textures);
+  }
+
+  seam(): null {
+    return null;
+  }
+
   prepare(stage: number, budgetMs: number): boolean {
     const start = performance.now();
     let drew = false;
@@ -111,6 +120,7 @@ export class PlaceholderSkin implements BallSkin {
   }
 
   restore(): void {
+    restoreCrackRing(this.textures);
     const all = [...this.bodies.values()];
     for (const frames of this.numbers.values()) all.push(...frames.values());
     for (const { key } of all) {

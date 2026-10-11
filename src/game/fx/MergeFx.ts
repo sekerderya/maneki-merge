@@ -124,12 +124,29 @@ export class MergeFx {
     this.onCoins(x, y, kind);
   }
 
+  /**
+   * A ring of `color` popping out from a ball of `radius` at a world point, `delayMs` from now,
+   * with no payout (an echo cat's ripples).
+   */
+  ripple(nowMs: number, x: number, y: number, radius: number, color: number, delayMs = 0): void {
+    const pop = this.pops[this.nextPop] as Pop;
+    this.nextPop = (this.nextPop + 1) % this.pops.length;
+    pop.startMs = nowMs + delayMs;
+    pop.radius = radius;
+    pop.ring.setPosition(x, y).setTint(color).setAlpha(0).setVisible(true);
+  }
+
   update(nowMs: number): void {
     for (const pop of this.pops) {
       if (!pop.ring.visible) continue;
       const t = (nowMs - pop.startMs) / MERGE_POP_MS;
-      if (t >= 1 || t < 0) {
+      if (t >= 1) {
         pop.ring.setVisible(false);
+        continue;
+      }
+      // A ripple waiting for its turn.
+      if (t < 0) {
+        pop.ring.setAlpha(0);
         continue;
       }
       const ease = 1 - (1 - t) * (1 - t);

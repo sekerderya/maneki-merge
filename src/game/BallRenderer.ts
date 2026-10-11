@@ -8,10 +8,14 @@
  *
  * When the skin switches to another stage's textures, every live sprite takes its new texture on
  * the next sync. A popped ball's sprite can be handed to an effect (`detach`) and comes back to the
- * pool when the effect ends (`recycle`). A freshly merged cat bumps up and settles (`bump`).
+ * pool when the effect ends (`recycle`). A freshly merged cat bumps up and settles (`bump`); an
+ * echo cat fades in (`fadeIn`). A cracked cat (Porcelain, GAME_DESIGN §15.10) shows the skin's
+ * crack lines over it, one of two patterns turned by its id, rolling with it.
  */
 import type Phaser from 'phaser';
 import {
+  ECHO_FADE_FROM,
+  ECHO_FADE_MS,
   GOLDEN_GLOW_ALPHA,
   GOLDEN_GLOW_PERIOD_MS,
   GOLDEN_GLOW_SCALE,
@@ -36,6 +40,14 @@ export interface CatSprite {
   readonly body: Phaser.GameObjects.Image;
   readonly number: Phaser.GameObjects.Image;
   readonly glow: Phaser.GameObjects.Image;
+  /** Porcelain's crack lines over a cracked cat. */
+  readonly crack: Phaser.GameObjects.Image;
+}
+
+/** A cracked cat's crack pattern (0 or 1) and how far it is turned, from its id. */
+export function crackVariant(id: number): { readonly variant: number; readonly turn: number } {
+  // The golden angle spreads the turns of neighbouring ids evenly.
+  return { variant: id % 2, turn: (id * 2.39996) % (2 * Math.PI) };
 }
 
 /** How bright a golden cat's glow is at `nowMs`: a slow pulse. */
@@ -55,6 +67,8 @@ export class BallRenderer {
   private readonly free: CatSprite[] = [];
   /** When each bumping cat's bump started, by cat id. */
   private readonly bumps = new Map<number, number>();
+  /** When each fading-in cat (an echo) appeared, by cat id. */
+  private readonly fades = new Map<number, number>();
   private frame = 0;
   private revision: number;
 
@@ -107,6 +121,17 @@ export class BallRenderer {
         .setPosition(ball.x, ball.y)
         .setRotation(ball.angle)
         .setScale(body.unitsPerPixel * grow);
+      if (this.fades.size > 0) sprite.body.setAlpha(this.fadeAt(ball.id, nowMs));
+      sprite.crack.setVisible(ball.cracked);
+      if (ball.cracked) {
+        const { variant, turn } = crackVariant(ball.id);
+        const crack = this.skin.crack(variant);
+        if (sprite.crack.texture.key !== crack.key) sprite.crack.setTexture(crack.key, crack.frame);
+        sprite.crack
+          .setPosition(ball.x, ball.y)
+          .setRotation(ball.angle + turn)
+          .setScale(crack.unitsPerPixel * ball.targetRadius * grow);
+      }
       // A hanabi glows while its fuse burns (from its first contact).
       const lit = ball.kind === 'hanabi' && ball.landedMs >= 0;
       if (ball.kind === 'hanabi') sprite.glow.setVisible(lit);
@@ -137,6 +162,22 @@ export class BallRenderer {
     this.bumps.set(id, nowMs);
   }
 
+  /** The echo cat `id` just appeared: it fades in from pale. */
+  fadeIn(id: number, nowMs: number): void {
+    this.fades.set(id, nowMs);
+  }
+
+  private fadeAt(id: number, nowMs: number): number {
+    const start = this.fades.get(id);
+    if (start === undefined) return 1;
+    const t = (nowMs - start) / ECHO_FADE_MS;
+    if (t >= 1) {
+      this.fades.delete(id);
+      return 1;
+    }
+    return ECHO_FADE_FROM + (1 - ECHO_FADE_FROM) * Math.max(0, t);
+  }
+
   private bumpAt(id: number, nowMs: number): number {
     if (this.bumps.size === 0) return 1;
     const start = this.bumps.get(id);
@@ -158,6 +199,7 @@ export class BallRenderer {
     if (!sprite) return null;
     this.live.delete(id);
     sprite.glow.setVisible(false);
+    sprite.crack.setVisible(false);
     return sprite;
   }
 
@@ -166,11 +208,13 @@ export class BallRenderer {
     sprite.body.setVisible(false).setAlpha(1).setTexture(PARKED_TEXTURE);
     sprite.number.setVisible(false).setAlpha(1).setTexture(PARKED_TEXTURE);
     sprite.glow.setVisible(false).setAlpha(1);
+    sprite.crack.setVisible(false);
     this.free.push(sprite);
   }
 
   clear(): void {
     this.bumps.clear();
+    this.fades.clear();
     for (const [id, sprite] of this.live) this.release(id, sprite);
   }
 
@@ -184,6 +228,7 @@ export class BallRenderer {
     // Newer balls draw on top of older ones.
     this.bodies.bringToTop(sprite.body);
     this.numbers.bringToTop(sprite.number);
+    this.numbers.bringToTop(sprite.crack);
     this.live.set(ball.id, sprite);
     return sprite;
   }
@@ -210,6 +255,7 @@ export class BallRenderer {
   private release(id: number, sprite: CatSprite): void {
     this.live.delete(id);
     this.bumps.delete(id);
+    this.fades.delete(id);
     this.recycle(sprite);
   }
 
@@ -217,9 +263,10 @@ export class BallRenderer {
     const body = this.scene.add.image(0, 0, PARKED_TEXTURE).setVisible(false);
     const number = this.scene.add.image(0, 0, PARKED_TEXTURE).setVisible(false);
     const glow = this.scene.add.image(0, 0, PARKED_TEXTURE).setVisible(false);
+    const crack = this.scene.add.image(0, 0, PARKED_TEXTURE).setVisible(false);
     this.bodies.add(body);
-    this.numbers.add(number);
+    this.numbers.add([number, crack]);
     this.glows.add(glow);
-    return { id: -1, tier: 1, hits: 0, seen: 0, body, number, glow };
+    return { id: -1, tier: 1, hits: 0, seen: 0, body, number, glow, crack };
   }
 }

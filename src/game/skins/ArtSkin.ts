@@ -23,6 +23,7 @@ import { FIRST_STAGE, tierSize } from '../../config/stages';
 import { SIZE_COUNT, sizeRadius } from '../../config/tiers';
 import { CAT_PX_PER_UNIT } from '../../config/view';
 import type { BallSkin, SkinFrame } from './BallSkin';
+import { crackRingFrame, restoreCrackRing } from './porcelainFrames';
 import { context } from './canvas';
 import { packRows } from './packRows';
 
@@ -85,6 +86,15 @@ export class ArtSkin implements BallSkin {
   }
 
   /** The atlas holds every stage's cats: it is drawn once, whatever the budget. */
+  // Until the owner's crack lines and gold seams come (docs/ART_ASSETS.md §4.12).
+  crack(): SkinFrame {
+    return crackRingFrame(this.textures);
+  }
+
+  seam(): null {
+    return null;
+  }
+
   prepare(): boolean {
     if (this.bodies.size === 0) this.drawAtlas();
     return true;
@@ -98,6 +108,7 @@ export class ArtSkin implements BallSkin {
   }
 
   restore(): void {
+    restoreCrackRing(this.textures);
     if (this.textures.exists(ATLAS_KEY)) {
       (this.textures.get(ATLAS_KEY) as Phaser.Textures.CanvasTexture).refresh();
     }

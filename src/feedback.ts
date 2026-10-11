@@ -21,8 +21,8 @@ export function connectRunFeedback(events: EventBus<GameEvents>, out: FeedbackOu
       // Lower for bigger cats: every stage sounds the same.
       out.play('merge', e.newSize);
       out.play('coin');
-      // A golden cat's merge (it skips a tier) and a joker's ring a bell too.
-      if (e.golden || e.joker) out.play('chime');
+      // A golden cat's merge (it skips a tier), a joker's and a Hubris three ring a bell too.
+      if (e.golden || e.joker || e.parts === 3) out.play('chime');
       out.vibrate('tick');
     }),
     events.on('comboChanged', (e) => {
@@ -65,6 +65,14 @@ export function connectRunFeedback(events: EventBus<GameEvents>, out: FeedbackOu
       out.vibrate('luckySave');
     }),
     events.on('dangerTick', (e) => out.play('dangerTick', e.secondsLeft)),
+    // Porcelain (GAME_DESIGN §15.10): a crack tinks, a break shatters.
+    events.on('catCracked', () => out.play('tink')),
+    events.on('catBroken', () => {
+      out.play('shatter');
+      out.vibrate('tick');
+    }),
+    // Echo (GAME_DESIGN §15.11): a bell and its fainter echo.
+    events.on('echoed', () => out.play('echo')),
     // Heavy Drop's fireball (its top level) lands with a thud.
     events.on('heavyLanded', (e) => {
       if (e.level < HEAVY_FIREBALL_LEVEL) return;

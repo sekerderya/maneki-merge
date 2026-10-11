@@ -78,6 +78,16 @@ export const HANABI_SPARKS = 0xffb347;
 export const FIRE_TINTS = [0xffd34d, 0xffa53d, 0xff7a2e, 0xe8502f] as const;
 /** Its speed lines: warm ink, so they show on the cream sky. */
 export const HEAVY_TRAIL_TINT = 0x8a5a3b;
+/**
+ * Porcelain (GAME_DESIGN §15.10) until the owner's crack lines come: a cracked cat's dashed dark
+ * ring (radius and width as shares of the cat's radius), the white chips of a crack or a break,
+ * and the gold of the kintsugi flash on a cracked cat's merge.
+ */
+export const CRACK_RING = { radius: 0.9, width: 0.07, color: 'rgba(59, 38, 32, 0.85)' } as const;
+export const PORCELAIN_CHIPS = 0xfffaf2;
+export const KINTSUGI_GOLD = 0xffc93c;
+/** Echo (GAME_DESIGN §15.11): the ripple rings round a new echo cat. */
+export const ECHO_RIPPLE = 0xcfe6ff;
 export const JOKER_BALL = '#fffaf2';
 export const JOKER_RAINBOW = [
   '#ff5a4e',

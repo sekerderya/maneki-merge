@@ -108,4 +108,29 @@ describe('run feedback wiring (GAME_DESIGN §12)', () => {
     events.emit('heavyLanded', { id: 2, level: 5, at });
     expect(log).toEqual(['thud', 'buzz:tick']);
   });
+
+  it('tinks at a crack, shatters at a break, rings an echo and a Hubris three', () => {
+    const events = new EventBus<GameEvents>();
+    const log: string[] = [];
+    connectRunFeedback(events, {
+      play: (name) => log.push(name),
+      vibrate: (name) => log.push('buzz:' + name),
+    });
+    const at = { x: 0, y: 0 };
+    events.emit('catCracked', { id: 1, tier: 3, at });
+    events.emit('catBroken', { id: 1, tier: 3, at, pieces: [2, 3] });
+    events.emit('echoed', { id: 4, tier: 4, from: 5, at });
+    const merge = { id: 6, tier: 2, newTier: 4, newSize: 4, at, score: 6, coins: 3, combo: 1 };
+    events.emit('merged', { ...merge, golden: false, joker: false, parts: 3, kintsugi: false });
+    expect(log).toEqual([
+      'tink',
+      'shatter',
+      'buzz:tick',
+      'echo',
+      'merge',
+      'coin',
+      'chime',
+      'buzz:tick',
+    ]);
+  });
 });

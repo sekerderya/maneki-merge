@@ -15,6 +15,7 @@ import {
   HINT_MERGE_DELAY_MS,
   GOLDEN_COIN_FLIGHTS,
   JACKPOT_COIN_FLIGHTS,
+  RULE_HINT_MS,
 } from './config/view';
 import { stageJar } from './config/stages';
 import type { PickId, PickKind } from './config/picks';
@@ -75,9 +76,15 @@ export interface SessionParts {
   readonly onProfileChange: () => void;
 }
 
+/** A rule's hint pill (GAME_DESIGN §15.11). */
+const RULE_HINTS = { hubris: 'Hubris: sizes 1–5 merge in threes' } as const;
+
 export class GameSession {
   private current: RunController | null = null;
   private hintTimer = 0;
+  /** A rule's hint for the start of the next stage (GAME_DESIGN §15.11), and its timer. */
+  private ruleHint: string | null = null;
+  private ruleHintTimer = 0;
   private runSavePending = false;
   /** The last pick, chosen but held back until the doors are open (then the next stage starts). */
   private heldPick: PickId | null = null;
@@ -244,6 +251,8 @@ export class GameSession {
     banners.clear();
     coins.clear();
     window.clearTimeout(this.hintTimer);
+    window.clearTimeout(this.ruleHintTimer);
+    this.ruleHint = null;
   }
 
   private showPick(run: RunController, kind: PickKind, options: readonly PickId[]): void {
@@ -336,6 +345,16 @@ export class GameSession {
     events.on('expansionFinished', () => {
       showPreview();
       hud.setStage(run.stage);
+      // A rule picked at this clear: what it does, once, as the stage starts.
+      const ruleHint = this.ruleHint;
+      if (ruleHint) {
+        this.ruleHint = null;
+        hint.show(ruleHint);
+        window.clearTimeout(this.ruleHintTimer);
+        this.ruleHintTimer = window.setTimeout(() => {
+          if (this.current === run) hint.hide();
+        }, RULE_HINT_MS);
+      }
       // A run restored in the middle of a zoom gets its new garden here.
       this.parts.scenery.setJar(stageJar(run.stage), false);
     });
@@ -361,7 +380,8 @@ export class GameSession {
       if (wait > 0) this.doorsTimer = window.setTimeout(shut, wait);
       else shut();
     });
-    events.on('pickChosen', () => {
+    events.on('pickChosen', (e) => {
+      if (e.id === 'hubris') this.ruleHint = RULE_HINTS.hubris;
       this.parts.picks.hide();
       // Picks made some other way (the debug tools) open the doors as the run moves on.
       queueMicrotask(() => {

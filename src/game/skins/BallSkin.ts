@@ -44,6 +44,16 @@ export interface BallSkin {
   /** The cat's main colour as `#rrggbb` (merge particles, the pop ring). */
   color(tier: number): string;
   /**
+   * Porcelain (GAME_DESIGN §15.10): the lines over a cracked cat, one of two patterns (`variant`
+   * 0 or 1). Its `unitsPerPixel` is for a radius of 1: scale it by the cat's radius.
+   */
+  crack(variant: number): SkinFrame;
+  /**
+   * The gold kintsugi seams that flash on the whole cat a cracked one's merge makes, like
+   * `crack`, or null when the skin has none (a gold ring flashes instead).
+   */
+  seam(variant: number): SkinFrame | null;
+  /**
    * Creates the textures `stage` needs ahead of time, spending about `budgetMs` (at least one
    * texture per call). Returns true once they all exist.
    */

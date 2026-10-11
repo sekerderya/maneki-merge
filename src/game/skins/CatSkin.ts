@@ -18,6 +18,7 @@ import { FIRST_STAGE, tierSize } from '../../config/stages';
 import { SIZE_COUNT, sizeRadius } from '../../config/tiers';
 import { CAT_PX_PER_UNIT } from '../../config/view';
 import type { BallSkin, NumberFrame, SkinFrame } from './BallSkin';
+import { crackRingFrame, restoreCrackRing } from './porcelainFrames';
 import { context, drawNumber } from './canvas';
 import { stageSkinSet } from './skinSets';
 
@@ -82,6 +83,14 @@ export class CatSkin implements BallSkin {
     return catLook(tier).color;
   }
 
+  crack(): SkinFrame {
+    return crackRingFrame(this.textures);
+  }
+
+  seam(): null {
+    return null;
+  }
+
   prepare(stage: number, budgetMs: number): boolean {
     const start = performance.now();
     let drew = false;
@@ -111,6 +120,7 @@ export class CatSkin implements BallSkin {
   }
 
   restore(): void {
+    restoreCrackRing(this.textures);
     const all: SkinFrame[] = [...this.bodies.values()];
     for (const frames of this.numbers.values()) all.push(...frames.values());
     for (const { key } of all) {

@@ -211,6 +211,26 @@ export const FIRE_SPARKS = {
   gravity: 500,
 } as const;
 
+/**
+ * Porcelain (GAME_DESIGN §15.10): chips when a cat cracks and when it breaks, and the gold flash on
+ * the whole cat a cracked one's merge makes (KINTSUGI_FLASH_MS).
+ */
+export const CRACK_CHIPS = 6;
+export const BREAK_CHIPS = 16;
+export const KINTSUGI_FLASH_MS = 600;
+/**
+ * Echo (GAME_DESIGN §15.11): a new echo cat fades in from ECHO_FADE_FROM over ECHO_FADE_MS, with
+ * ECHO_RIPPLES rings ECHO_RIPPLE_GAP_MS apart.
+ */
+export const ECHO_FADE_FROM = 0.3;
+export const ECHO_FADE_MS = 450;
+export const ECHO_RIPPLES = 3;
+export const ECHO_RIPPLE_GAP_MS = 140;
+/** Hubris (GAME_DESIGN §15.11): a three-way merge bursts this many times the particles. */
+export const THREE_WAY_PARTICLES = 1.5;
+/** A rule's hint pill shows this long at the start of the stage after its pick. */
+export const RULE_HINT_MS = 5000;
+
 /** The shop balance counts down to the new wallet after a purchase (GAME_DESIGN §2.2). */
 export const SHOP_BALANCE_COUNT_MS = 450;
 

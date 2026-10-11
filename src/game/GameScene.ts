@@ -13,8 +13,10 @@ import {
   BOULDER_CHIPS,
   BOULDER_SPARKS,
   COUNTDOWN_FILL,
+  ECHO_RIPPLE,
   HANABI_SPARKS,
   COUNTDOWN_STROKE,
+  PORCELAIN_CHIPS,
   SELECT_RING,
 } from '../config/skin';
 import { HEAVY_FIREBALL_LEVEL } from '../config/picks';
@@ -24,6 +26,10 @@ import { MAGNET_TAKE_MS } from '../config/timings';
 import {
   AIM_DOT_SPACING,
   BOULDER_BREAK_CHIPS,
+  BREAK_CHIPS,
+  CRACK_CHIPS,
+  ECHO_RIPPLE_GAP_MS,
+  ECHO_RIPPLES,
   BOULDER_HIT_SPARKS,
   BURST_SPARKS,
   COUNTDOWN_PULSE_MS,
@@ -38,6 +44,7 @@ import {
   SELECT_RING_WIDTH,
   SHAKE,
   SKIN_PREPARE_BUDGET_MS,
+  THREE_WAY_PARTICLES,
 } from '../config/view';
 import { PAW_ART_FADE, PAW_ART_SHOWN } from '../config/sceneSprites';
 import { hexToNumber } from '../core/color';
@@ -54,6 +61,7 @@ import type { CatSprite } from './BallRenderer';
 import { fitCamera, worldToView } from './cameraFit';
 import type { CameraFit, JarFrame } from './cameraFit';
 import { FallFx } from './fx/FallFx';
+import { KintsugiFx } from './fx/KintsugiFx';
 import { LastCatFx } from './fx/LastCatFx';
 import { MergeFx } from './fx/MergeFx';
 import type { PayoutKind } from './fx/MergeFx';
@@ -118,6 +126,7 @@ export class GameScene extends Phaser.Scene {
   /** The stage's last cat shining while it waits alone (GAME_DESIGN §7.1). */
   private lastCat!: LastCatFx;
   private fall!: FallFx;
+  private kintsugi!: KintsugiFx;
   private aimGuide!: AimGuide;
   private selectRing!: Phaser.GameObjects.Graphics;
   private dropperGlow!: Phaser.GameObjects.Image;
@@ -221,6 +230,7 @@ export class GameScene extends Phaser.Scene {
       (count) => this.particles(count),
       () => reducedMotion(),
     );
+    this.kintsugi = new KintsugiFx(this, fx, this.skin);
     this.selectRing = this.add.graphics();
     fx.add(this.selectRing);
     this.countdown = this.add
@@ -285,9 +295,32 @@ export class GameScene extends Phaser.Scene {
       this.fx.payout(this.nowMs, x, y, e.newTier, run.radiusOf(e.newTier), e.coins, kind);
       this.balls.bump(e.id, this.nowMs);
       const color = hexToNumber(this.skin.color(e.newTier));
-      this.sparks.mergeBurst(x, y, mergeParticleCount(e.newSize, reduced), color);
+      // A Hubris three bursts bigger (GAME_DESIGN §15.11).
+      const share = e.parts === 3 ? THREE_WAY_PARTICLES : 1;
+      const count = Math.round(share * mergeParticleCount(e.newSize, reduced));
+      this.sparks.mergeBurst(x, y, count, color);
       if (e.golden) this.sparks.burst(x, y, this.particles(BURST_SPARKS.golden));
+      // A cracked cat merged: gold seams flash on the whole new cat (Porcelain, §15.10).
+      if (e.kintsugi) this.kintsugi.flash(e.id, this.nowMs);
       this.addShake(mergeShake(e.newSize), SHAKE.mergeMs);
+    });
+    // Porcelain (GAME_DESIGN §15.10): a crack throws white chips; a break pops the cat like a
+    // boulder, without a payout, in a shower of them.
+    on('catCracked', (e) => {
+      this.sparks.mergeBurst(e.at.x, e.at.y, this.particles(CRACK_CHIPS), PORCELAIN_CHIPS);
+    });
+    on('catBroken', (e) => {
+      const { x, y } = e.at;
+      this.popped.push({ id: e.id, tier: e.tier, radius: run.radiusOf(e.tier), x, y, coins: null });
+      this.sparks.mergeBurst(x, y, this.particles(BREAK_CHIPS), PORCELAIN_CHIPS);
+    });
+    // Echo (GAME_DESIGN §15.11): the echo cat fades in from pale, with ripples round it.
+    on('echoed', (e) => {
+      this.balls.fadeIn(e.id, this.nowMs);
+      const radius = run.radiusOf(e.tier);
+      for (let i = 0; i < ECHO_RIPPLES; i++) {
+        this.fx.ripple(this.nowMs, e.at.x, e.at.y, radius, ECHO_RIPPLE, i * ECHO_RIPPLE_GAP_MS);
+      }
     });
     on('jackpot', (e) => {
       const { x, y } = e.at;
@@ -469,6 +502,7 @@ export class GameScene extends Phaser.Scene {
     this.fx?.clear();
     this.sparks?.clear();
     this.fall?.clear();
+    this.kintsugi?.clear();
     this.lastCat?.clear();
   }
 
@@ -510,6 +544,7 @@ export class GameScene extends Phaser.Scene {
     this.renderCountdown(run, geo);
     this.lastCat.update(this.nowMs, run.balls, run.state === 'paused');
     this.fall.update(this.nowMs, run.balls, run.levelOf('heavyDrop'), run.state === 'paused');
+    this.kintsugi.update(this.nowMs, run.balls);
     this.pops.update(this.nowMs);
     this.fx.update(this.nowMs);
   }
