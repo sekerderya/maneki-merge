@@ -23,7 +23,9 @@ import { FIRST_STAGE, tierSize } from '../../config/stages';
 import { SIZE_COUNT, sizeRadius } from '../../config/tiers';
 import { CAT_PX_PER_UNIT } from '../../config/view';
 import type { BallSkin, SkinFrame } from './BallSkin';
-import { crackRingFrame, restoreCrackRing } from './porcelainFrames';
+import { FX_ART } from '../../config/fxSprites';
+import type { FxImages } from '../artImages';
+import { crackRingFrame, patternFrame, refreshTextures, restoreCrackRing } from './porcelainFrames';
 import { context } from './canvas';
 import { packRows } from './packRows';
 
@@ -46,6 +48,8 @@ function spriteScale(size: number, sprite: CatSprite): number {
 /** Around the outline, so its anti-aliased edge isn't cut. */
 const PAD_PX = 2;
 const ATLAS_KEY = 'cat-art';
+const CRACK_KEY = 'porcelain-crack-';
+const SEAM_KEY = 'porcelain-seam-';
 /** The atlas's rows are at most this wide: every phone's GPU takes 2048-pixel textures. */
 const ATLAS_MAX_WIDTH = 2048;
 /** Between frames, so filtering never reaches a neighbour. */
@@ -59,10 +63,14 @@ export class ArtSkin implements BallSkin {
   private active = FIRST_STAGE;
   private rev = 0;
 
-  /** `images`: the looks' images (ArtImages.cats), in look order. */
+  /**
+   * `images`: the looks' images (ArtImages.cats), in look order; `fx`: the effect art (cracks and
+   * seams), or null for the code-drawn ring.
+   */
   constructor(
     private readonly textures: Phaser.Textures.TextureManager,
     private readonly images: readonly HTMLImageElement[],
+    private readonly fx: FxImages | null = null,
   ) {}
 
   get stage(): number {
@@ -86,13 +94,19 @@ export class ArtSkin implements BallSkin {
   }
 
   /** The atlas holds every stage's cats: it is drawn once, whatever the budget. */
-  // Until the owner's crack lines and gold seams come (docs/ART_ASSETS.md §4.12).
-  crack(): SkinFrame {
-    return crackRingFrame(this.textures);
+  /** The owner's crack lines (docs/ART_ASSETS.md §4.12), or the ring without them. */
+  crack(variant: number): SkinFrame {
+    const image = this.fx?.cracks[variant];
+    const sprite = FX_ART.cracks[variant];
+    if (!image || !sprite) return crackRingFrame(this.textures);
+    return patternFrame(this.textures, `${CRACK_KEY}${variant}`, image, sprite);
   }
 
-  seam(): null {
-    return null;
+  seam(variant: number): SkinFrame | null {
+    const image = this.fx?.seams[variant];
+    const sprite = FX_ART.seams[variant];
+    if (!image || !sprite) return null;
+    return patternFrame(this.textures, `${SEAM_KEY}${variant}`, image, sprite);
   }
 
   prepare(): boolean {
@@ -109,6 +123,10 @@ export class ArtSkin implements BallSkin {
 
   restore(): void {
     restoreCrackRing(this.textures);
+    refreshTextures(
+      this.textures,
+      [0, 1].flatMap((v) => [`${CRACK_KEY}${v}`, `${SEAM_KEY}${v}`]),
+    );
     if (this.textures.exists(ATLAS_KEY)) {
       (this.textures.get(ATLAS_KEY) as Phaser.Textures.CanvasTexture).refresh();
     }

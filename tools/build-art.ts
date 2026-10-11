@@ -4,7 +4,7 @@
  * scene (jar, paw, background) is built by tools/buildScene.ts, the HUD by tools/buildHud.ts,
  * the main menu by tools/buildMenu.ts, the stage doors by tools/buildDoors.ts, the special balls by
  * tools/buildSpecials.ts, the Upgrades screen by tools/buildShop.ts and the icon kit by
- * tools/buildIcons.ts, the pick cards' pictures by tools/buildPicks.ts. Cats, special balls and icons
+ * tools/buildIcons.ts, the pick cards' pictures by tools/buildPicks.ts, the effect sheets by tools/buildFx.ts. Cats, special balls and icons
  * go through tools/artBall.ts.
  *
  * For each `art-source/cats/size-NN.{png,jpg,jpeg,webp}` (NN = 01–09, one per look):
@@ -20,6 +20,7 @@ import { buildBall } from './artBall.ts';
 import { findSource } from './artImage.ts';
 import { buildClouds } from './buildClouds.ts';
 import { buildDoors } from './buildDoors.ts';
+import { buildFx } from './buildFx.ts';
 import { buildHud } from './buildHud.ts';
 import { buildIcons } from './buildIcons.ts';
 import { buildMenu } from './buildMenu.ts';
@@ -59,6 +60,7 @@ async function main(): Promise<void> {
   await buildShop();
   await buildIcons();
   await buildPicks();
+  await buildFx();
   await buildClouds();
 }
 

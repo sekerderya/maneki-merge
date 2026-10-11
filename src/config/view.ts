@@ -200,6 +200,14 @@ export const HEAVY_TRAIL = {
   emberMs: 35,
   landingSparks: 26,
 } as const;
+/**
+ * Heavy Drop's flames (the owner's art, docs/ART_ASSETS.md §4.12): the small one from
+ * HEAVY_FLAME_LEVEL, the big fireball at HEAVY_FIREBALL_LEVEL. Each flame's round head is scaled to
+ * its `headShare` of the ball's radius and sits under it (the fireball's is a little wider, so its
+ * flames wrap the ball); the flames trail back along its path and flicker, their length swinging
+ * by `flicker` every `flickerMs`.
+ */
+export const HEAVY_FLAME = { headShare: [1, 1.2], flicker: 0.07, flickerMs: 160 } as const;
 /** Embers and the fireball's landing sparks (world units, like BURST_SPARKS). */
 export const FIRE_SPARKS = {
   emberLifespanMs: { min: 220, max: 420 },

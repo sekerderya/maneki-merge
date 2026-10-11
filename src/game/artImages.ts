@@ -1,11 +1,12 @@
 /**
- * The raster art the canvas draws (GAME_DESIGN §13.1): the cats, the jar's two layers, the paw and
- * the special balls.
+ * The raster art the canvas draws (GAME_DESIGN §13.1): the cats, the jar's two layers, the paw, the
+ * special balls and Batch 18's effects (Heavy Drop's flames, Porcelain's cracks and seams).
  * Boot loads and decodes them with the fonts (main.ts), before the game is created, with the
  * main menu's, the stage doors' and the Upgrades screen's images; the backgrounds are DOM images.
  */
 import { CAT_ART_LOAD_TIMEOUT_MS, CAT_SPRITE_DIR, CAT_SPRITES } from '../config/catSprites';
 import { DOOR_ART, DOOR_SPRITE_DIR } from '../config/doorSprites';
+import { FX_ART, FX_SPRITE_DIR } from '../config/fxSprites';
 import { HUD_BADGE_ART, HUD_SPRITE_DIR } from '../config/hudSprites';
 import { ICON_SPRITE_DIR, iconSprites } from '../config/iconSprites';
 import { MENU_SPRITE_DIR, menuSprites } from '../config/menuSprites';
@@ -21,6 +22,14 @@ export interface ArtImages {
   readonly jarFront: HTMLImageElement;
   readonly paw: HTMLImageElement;
   readonly specials: SpecialImages;
+  readonly fx: FxImages;
+}
+
+/** Batch 18's effect art (config/fxSprites.ts), in the order of FX_ART's lists. */
+export interface FxImages {
+  readonly flames: readonly HTMLImageElement[];
+  readonly cracks: readonly HTMLImageElement[];
+  readonly seams: readonly HTMLImageElement[];
 }
 
 /** The special balls' images (config/specialSprites.ts). */
@@ -54,6 +63,11 @@ export function loadArt(baseUrl: string): Promise<ArtImages> {
     special(SPECIAL_ART.joker.file),
     Promise.all(SPECIAL_ART.boulders.map(({ file }) => special(file))),
   ]).then(([magnet, hanabi, joker, boulders]) => ({ magnet, hanabi, joker, boulders }));
+  const fxList = (list: readonly { file: string }[]): Promise<HTMLImageElement[]> =>
+    Promise.all(list.map(({ file }) => image(`${baseUrl}${FX_SPRITE_DIR}${file}`)));
+  const fx = Promise.all([fxList(FX_ART.flames), fxList(FX_ART.cracks), fxList(FX_ART.seams)]).then(
+    ([flames, cracks, seams]) => ({ flames, cracks, seams }),
+  );
   const loads = Promise.all([
     Promise.all(CAT_SPRITES.map(({ file }) => image(`${baseUrl}${CAT_SPRITE_DIR}${file}`))),
     scene(JAR_ART.back),
@@ -69,18 +83,20 @@ export function loadArt(baseUrl: string): Promise<ArtImages> {
       ),
     ),
     specials,
+    fx,
     // The Upgrades screen's pieces and icons and the pick cards' pictures (DOM).
     Promise.all([
       ...Object.values(SHOP_ART).map(({ file }) => image(`${baseUrl}${SHOP_SPRITE_DIR}${file}`)),
       ...iconSprites().map(({ file }) => image(`${baseUrl}${ICON_SPRITE_DIR}${file}`)),
       ...pickPictures().map(({ file }) => image(`${baseUrl}${PICK_SPRITE_DIR}${file}`)),
     ]),
-  ]).then(([cats, jarBack, jarFront, paw, , , , specials]) => ({
+  ]).then(([cats, jarBack, jarFront, paw, , , , specials, fx]) => ({
     cats,
     jarBack,
     jarFront,
     paw,
     specials,
+    fx,
   }));
   const timeout = new Promise<never>((_, reject) =>
     window.setTimeout(() => reject(new Error('Art timed out')), CAT_ART_LOAD_TIMEOUT_MS),

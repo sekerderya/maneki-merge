@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import sharp from 'sharp';
 
 /** A pixel is background white when its darkest channel is at least this light. */
-const WHITE_MIN = 226;
+export const WHITE_MIN = 226;
 /** Pixels this close to the background are edge pixels: their alpha is un-blended from white. */
 const EDGE_DEPTH = 2;
 /** Outline pixels this far inside the edge give the outline's colour for the un-blending. */
@@ -138,7 +138,7 @@ export function clearRegion(image: Rgba, x: number, y: number): void {
 }
 
 /** Visits the 4-connected near-white region reachable from `seeds`. */
-function flood(image: Rgba, seeds: readonly number[], visit: (i: number) => void): void {
+export function flood(image: Rgba, seeds: readonly number[], visit: (i: number) => void): void {
   const { data, width } = image;
   const n = width * image.height;
   const seen = new Uint8Array(n);

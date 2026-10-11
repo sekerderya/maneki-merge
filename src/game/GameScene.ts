@@ -180,7 +180,7 @@ export class GameScene extends Phaser.Scene {
       this.skinId === 'placeholder'
         ? new PlaceholderSkin(this.textures)
         : this.skinId === 'art' && this.art
-          ? new ArtSkin(this.textures, this.art.cats)
+          ? new ArtSkin(this.textures, this.art.cats, this.art.fx)
           : new CatSkin(this.textures);
     this.skin.prepare(FIRST_STAGE, Infinity);
     this.special = new SpecialSkin(
@@ -222,7 +222,13 @@ export class GameScene extends Phaser.Scene {
     this.pops = new PopFx(this.balls, this.fx);
     this.sparks = new SparkFx(this, fx);
     // Heavy Drop's trails go behind the balls.
-    this.fall = new FallFx(this, glows, this.sparks, (count) => this.particles(count));
+    this.fall = new FallFx(
+      this,
+      glows,
+      this.sparks,
+      (count) => this.particles(count),
+      art?.fx.flames ?? null,
+    );
     this.lastCat = new LastCatFx(
       this,
       glows,
@@ -256,6 +262,7 @@ export class GameScene extends Phaser.Scene {
       this.aimGuide.restore();
       this.jar.restore();
       this.paw.restore();
+      this.fall.restore();
     });
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.detach());

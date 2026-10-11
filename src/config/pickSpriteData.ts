@@ -10,9 +10,34 @@ export const PICK_SPRITE_DATA: Readonly<Record<string, PickPicture>> = {
     width: 1012,
     height: 1008,
   },
+  echo: {
+    file: 'echo.webp',
+    width: 906,
+    height: 943,
+  },
+  heavyDrop: {
+    file: 'heavyDrop.webp',
+    width: 636,
+    height: 933,
+  },
+  hubris: {
+    file: 'hubris.webp',
+    width: 925,
+    height: 891,
+  },
   moreBoulders: {
     file: 'moreBoulders.webp',
     width: 909,
     height: 815,
+  },
+  porcelain: {
+    file: 'porcelain.webp',
+    width: 940,
+    height: 923,
+  },
+  wind: {
+    file: 'wind.webp',
+    width: 825,
+    height: 570,
   },
 };
