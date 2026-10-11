@@ -35,8 +35,6 @@ export interface QueueSnapshot {
   /** Items rolled so far (the first ones are always the smallest cat). */
   readonly generated: number;
   readonly stageDrops: number;
-  /** Copycat: the tier the queued cats follow (missing: none, as before Batch 19). */
-  readonly follow?: number;
 }
 
 export interface EconomySnapshot {
@@ -287,7 +285,6 @@ function queue(value: unknown): QueueSnapshot {
     next: drop(q['next'], 'queue.next'),
     generated: count(q['generated'], 'queue.generated'),
     stageDrops: count(q['stageDrops'], 'queue.stageDrops'),
-    ...(q['follow'] === undefined ? {} : { follow: int(q['follow'], 'queue.follow') }),
   };
 }
 

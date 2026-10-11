@@ -87,8 +87,8 @@ export interface DropQueueOptions {
  * `current` is the ball in the dropper and `next` the one after it, which the HUD shows. Each item
  * rolls its tier, kind and golden once; the first two items of a run are cats of the pool's
  * smallest tier. No magnet is queued before MAGNET_FREE_DROPS balls were dropped in the stage, no
- * hanabi before HANABI_FREE_DROPS. With Copycat (GAME_DESIGN §15.13) the queued cats `follow` a
- * tier: each still rolls its tier, then takes the followed one.
+ * hanabi before HANABI_FREE_DROPS. With Copycat (GAME_DESIGN §15.13) a merge turns the cat in NEXT
+ * to its size (`copyNext`); the cats queued after it roll as usual.
  */
 export class DropQueue {
   private readonly rng: Rng;
@@ -101,8 +101,6 @@ export class DropQueue {
   private stageDrops = 0;
   private dropper: Drop;
   private upcoming: Drop;
-  /** Copycat: the tier the queued cats take (the stage's latest merge), or null. */
-  private followed: number | null = null;
 
   constructor(options: DropQueueOptions) {
     this.rng = options.rng;
@@ -128,21 +126,14 @@ export class DropQueue {
     return this.stageDrops;
   }
 
-  /** Copycat: the tier the queued cats follow, or null. */
-  get followTier(): number | null {
-    return this.followed;
-  }
-
   /**
-   * Copycat (GAME_DESIGN §15.13): from now on every queued cat takes `tier` (null: its own roll),
-   * NEXT at once if it is a cat; the ball in the dropper stays as it is. A golden cat stays golden;
-   * magnets, boulders, hanabi and jokers never change, nor do a run's first two cats. Returns
-   * whether NEXT changed.
+   * Copycat (GAME_DESIGN §15.13): the cat in NEXT takes `tier`; the ball in the dropper stays as it
+   * is, and the cats queued after NEXT roll as usual. A golden cat stays golden; magnets, boulders,
+   * hanabi and jokers never change, nor do a run's first two cats. Returns whether NEXT changed.
    */
-  follow(tier: number | null): boolean {
-    this.followed = tier;
+  copyNext(tier: number): boolean {
     const next = this.upcoming;
-    if (tier === null || next.kind !== 'cat' || next.tier === tier || this.opening) return false;
+    if (next.kind !== 'cat' || next.tier === tier || this.opening) return false;
     this.upcoming = { ...next, tier };
     return true;
   }
@@ -194,7 +185,6 @@ export class DropQueue {
    */
   newStage(): void {
     this.stageDrops = 0;
-    this.followed = null;
     this.dropper = this.forEmptyJar(this.dropper);
     this.upcoming = this.forEmptyJar(this.upcoming);
   }
@@ -206,7 +196,6 @@ export class DropQueue {
       next: this.upcoming,
       generated: this.generated,
       stageDrops: this.stageDrops,
-      ...(this.followed === null ? {} : { follow: this.followed }),
     };
   }
 
@@ -217,7 +206,6 @@ export class DropQueue {
     this.upcoming = { ...saved.next };
     this.generated = saved.generated;
     this.stageDrops = saved.stageDrops;
-    this.followed = saved.follow ?? null;
   }
 
   private forEmptyJar(drop: Drop): Drop {
@@ -260,7 +248,6 @@ export class DropQueue {
     if (kindRoll < below) {
       return { kind: 'joker', tier: first + JOKER_SIZE - 1, golden: false, hits: 0 };
     }
-    const golden = goldenRoll < odds.goldenChance;
-    return { kind: 'cat', tier: this.followed ?? tier, golden, hits: 0 };
+    return { kind: 'cat', tier, golden: goldenRoll < odds.goldenChance, hits: 0 };
   }
 }

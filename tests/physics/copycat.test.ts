@@ -50,12 +50,26 @@ describe('Copycat (GAME_DESIGN §15.13)', () => {
     // The copied cat moves into the paw and stays as it is; NEXT follows the next merge.
     dropAt(run, -250);
     expect(sizeOf(run, run.current.tier)).toBe(3);
-    expect(sizeOf(run, run.next.tier)).toBe(3);
     spawnPair(run, 2, 150);
     run.tick();
     expect(sizeOf(run, run.current.tier)).toBe(3);
     expect(sizeOf(run, run.next.tier)).toBe(2);
     expect(changes.at(-1)).toMatchObject({ kind: 'cat', tier: 2 });
+  });
+
+  it('copies into NEXT once: the cats after it roll as usual', () => {
+    const plain = setup(9, false).run;
+    const { run } = setup(9);
+    for (const r of [plain, run]) dropAt(r, -250);
+    spawnPair(run, 3, 150);
+    run.tick();
+    expect(sizeOf(run, run.next.tier)).toBe(3);
+    // Dropped without another merge: the next cats are the seed's own, as without Copycat.
+    for (const x of [250, -100, 100]) {
+      dropAt(plain, x);
+      dropAt(run, x);
+      expect(run.next).toEqual(plain.next);
+    }
   });
 
   it('copies at most COPYCAT_MAX_SIZE', () => {
@@ -154,11 +168,8 @@ describe('Copycat (GAME_DESIGN §15.13)', () => {
     const decoded = decodeRunSave(text);
     if (!('save' in decoded)) throw new Error(decoded.error);
     const saved: RunSnapshot = decoded.save.run;
-    expect(saved.queue.follow).toBeDefined();
     const back = RunController.restore(saved);
     expect(back.stateHash()).toBe(a.stateHash());
-    // A followed tier the stage doesn't drop is refused.
-    const wrong = { ...saved, queue: { ...saved.queue, follow: 7 } };
-    expect(() => RunController.restore(wrong)).toThrow(RangeError);
+    expect(back.next).toEqual(a.next);
   });
 });

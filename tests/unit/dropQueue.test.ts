@@ -336,59 +336,48 @@ describe('Copycat in the queue (GAME_DESIGN §15.13)', () => {
     goldenChance: 0.5,
   };
 
-  it('changes a cat in NEXT at once and every cat queued after it, not the dropper', () => {
-    const queue = makeQueue();
-    takeMany(queue, 1);
-    const current = queue.current;
-    const target = pool[2]!;
-    const changed = queue.next.tier !== target;
-    expect(queue.follow(target)).toBe(changed);
-    expect(queue.next.tier).toBe(target);
-    expect(queue.current).toEqual(current);
-    expect(queue.followTier).toBe(target);
-    // Following the same tier again changes nothing.
-    expect(queue.follow(target)).toBe(false);
-    for (const drop of takeMany(queue, 20).slice(1)) expect(drop.tier).toBe(target);
-  });
-
-  it("still rolls every tier, so a seed's later rolls stay the same", () => {
+  it('changes the cat in NEXT only: the dropper keeps its cat and later cats roll as usual', () => {
     const plain = makeQueue();
     const copy = makeQueue();
     takeMany(plain, 1);
     takeMany(copy, 1);
-    copy.follow(pool[3]!);
-    takeMany(plain, 10);
-    takeMany(copy, 10);
-    copy.follow(null);
-    // The two already queued keep the copied size; the rolls after them are the plain ones.
-    expect(takeMany(copy, 20).slice(2)).toEqual(takeMany(plain, 20).slice(2));
+    const current = copy.current;
+    const target = pool[2]!;
+    expect(copy.copyNext(target)).toBe(plain.next.tier !== target);
+    expect(copy.next).toEqual({ ...plain.next, tier: target });
+    expect(copy.current).toEqual(current);
+    // The same size again changes nothing.
+    expect(copy.copyNext(target)).toBe(false);
+    // After NEXT moves into the paw, every cat is the seed's own roll.
+    takeMany(plain, 1);
+    expect(takeMany(copy, 1)[0]!.tier).toBe(current.tier);
+    expect(copy.current.tier).toBe(target);
+    expect(copy.next).toEqual(plain.next);
+    expect(takeMany(copy, 20).slice(1)).toEqual(takeMany(plain, 20).slice(1));
   });
 
   it("keeps golden cats golden and never changes special balls or a run's first two cats", () => {
     const queue = makeQueue({ odds: specials });
     // The opening cat in NEXT stays the smallest.
-    expect(queue.follow(pool[3]!)).toBe(false);
+    expect(queue.copyNext(pool[3]!)).toBe(false);
     expect(queue.next.tier).toBe(pool[0]);
-    const drops = takeMany(queue, 300).slice(2);
-    for (const drop of drops) {
-      if (drop.kind === 'cat') expect(drop.tier).toBe(pool[3]);
-      else expect(drop.tier).not.toBe(pool[3]);
+    takeMany(queue, 2);
+    let golden = false;
+    let special = false;
+    for (let i = 0; i < 200; i++) {
+      const before = queue.next;
+      const changed = queue.copyNext(pool[3]!);
+      if (before.kind === 'cat') {
+        expect(queue.next).toEqual({ ...before, tier: pool[3] });
+        expect(changed).toBe(before.tier !== pool[3]);
+        golden ||= before.golden;
+      } else {
+        expect(changed).toBe(false);
+        expect(queue.next).toEqual(before);
+        special = true;
+      }
+      queue.take();
     }
-    expect(drops.some((d) => d.kind === 'cat' && d.golden)).toBe(true);
-    expect(drops.some((d) => d.kind === 'boulder')).toBe(true);
-  });
-
-  it('forgets the tier at a new stage, and keeps it in a snapshot', () => {
-    const queue = makeQueue();
-    takeMany(queue, 3);
-    queue.follow(pool[1]!);
-    const saved = queue.snapshot();
-    expect(saved.follow).toBe(pool[1]);
-    const back = makeQueue();
-    back.restore(saved, 1);
-    expect(back.followTier).toBe(pool[1]);
-    queue.newStage();
-    expect(queue.followTier).toBeNull();
-    expect(queue.snapshot().follow).toBeUndefined();
+    expect(golden && special).toBe(true);
   });
 });

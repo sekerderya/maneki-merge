@@ -617,7 +617,6 @@ export class RunController {
     this.queue.setOdds(this.odds());
     this.world.setFallForces(this.fallForces());
     if (id === 'wind') this.announceWind();
-    if (id === 'copycat' && this.levels.copycat <= 0) this.queue.follow(null);
   }
 
   /**
@@ -771,7 +770,6 @@ export class RunController {
     h.number(curse?.id ?? 0)
       .number(curse?.dropsLeft ?? 0)
       .number(this.curseDue);
-    h.number(this.queue.followTier ?? 0);
     for (const wait of this.merges.waits) for (const n of wait) h.number(n);
     for (const item of [this.queue.current, this.queue.next]) {
       h.string(item.kind).number(item.tier).bool(item.golden).number(item.hits);
@@ -824,10 +822,6 @@ export class RunController {
       if (!stageHoldsTier(stage, item.tier) || (item.kind === 'boulder' && item.hits < 1)) {
         throw new RangeError(`Stage ${stage} can't queue ${item.kind} ${item.tier}`);
       }
-    }
-    const follow = this.queue.followTier;
-    if (follow !== null && !stageInfo(stage).dropPool.includes(follow)) {
-      throw new RangeError(`Stage ${stage} doesn't drop tier ${follow}`);
     }
     this.economy.restore(saved.economy);
     this.danger.restore(saved.danger);
@@ -1018,15 +1012,15 @@ export class RunController {
   }
 
   /**
-   * Copycat: NEXT, and every cat queued after it, takes the size of the step's latest merge (the
-   * size that met), at most COPYCAT_MAX_SIZE.
+   * Copycat: the cat in NEXT takes the size of the step's latest merge (the size that met), at most
+   * COPYCAT_MAX_SIZE; the cats after it roll as usual.
    */
   private copyLatestMerge(outcomes: readonly MergeOutcome[]): void {
     let latest: MergeOutcome | null = null;
     for (const o of outcomes) if (o.kind === 'merge') latest = o;
     if (!latest) return;
     const size = Math.min(this.world.sizeOf(latest.tier), COPYCAT_MAX_SIZE);
-    if (!this.queue.follow(stageInfo(this.world.stage).firstTier + size - 1)) return;
+    if (!this.queue.copyNext(stageInfo(this.world.stage).firstTier + size - 1)) return;
     const { kind, tier, golden } = this.queue.next;
     this.events.emit('nextChanged', { kind, tier, golden });
   }
