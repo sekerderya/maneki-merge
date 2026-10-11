@@ -2,6 +2,17 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.35.1] - 2026-10-11
+
+### Fixed
+
+- Copycat copied a merge into every cat after NEXT too, until the next merge, so the paw kept handing out one size (the owner found it far too easy). Now a merge changes only the cat waiting in NEXT; the cats after it roll as usual. With the fix it copies up to size 4 again, as planned: the balance bot clears 6 of 30 stage-1 runs with it (median 49 s), against 11 (67 s) without it and 45–51 s with Hubris or Echo; at size 3 it cleared 10 (63 s).
+
+### Changed
+
+- The cursed bell and its ring of flames are gone (the owner found the design poor). A cursed cat will turn to stone bit by bit under the owner's stone patterns, like a cracked cat's cracks (docs/ART_ASSETS.md §4.13, a new prompt); until they come, the drops left show as a number over the cat. The first-curse hint now says "Merge this cat before it turns to stone".
+- The Copycat card has the owner's picture: the black cat and its grinning copy.
+
 ## [0.35.0] - 2026-10-11 (Batch 19)
 
 ### Added
