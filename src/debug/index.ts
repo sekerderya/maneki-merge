@@ -86,10 +86,10 @@ export interface GameHooks {
   choose(id?: PickId): boolean;
   /** Puts a magnet, a boulder, a hanabi, a joker or a golden cat in the dropper. */
   give(kind: 'magnet' | 'boulder' | 'hanabi' | 'joker' | 'golden'): void;
-  /** Sets a trial's or blessing's level for this run. */
+  /** Sets a trial's, rule's (0 or 1) or blessing's level for this run. */
   setPickLevel(id: PickId, level: number): void;
-  /** Opens a stage clear's picks now. */
-  offerPicks(): void;
+  /** Opens a stage clear's picks now: a trial first, or a rule first with `rule`. */
+  offerPicks(rule?: boolean): void;
   /** Puts a boulder of the stage's `size` needing `hits` merges into the jar at world x. */
   spawnBoulder(x?: number, size?: number, hits?: number): void;
   addCoins(coins: number): void;
@@ -202,8 +202,8 @@ export function installDebugHooks(ctx: DebugContext): GameHooks {
     setPickLevel(id, level) {
       session.run?.setPickLevel(id, level);
     },
-    offerPicks() {
-      session.run?.offerPicks();
+    offerPicks(rule = false) {
+      session.run?.offerPicks(rule);
     },
     spawnBoulder(x = 0, size = 2, hits = 1) {
       const run = session.run;
@@ -369,6 +369,7 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
       action('Hanabi', () => hooks.give('hanabi')),
       action('Joker', () => hooks.give('joker')),
       action('Picks', () => hooks.offerPicks()),
+      action('Rule pick', () => hooks.offerPicks(true)),
     ),
     row(
       // A real stage clear (GAME_DESIGN §7.1): two of the stage's size 8 meet at the dropper and

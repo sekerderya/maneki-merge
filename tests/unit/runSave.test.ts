@@ -120,6 +120,26 @@ describe('decodeRunSave', () => {
     );
     expect(decodeRunSave(text(picking))).toEqual({ save: picking });
   });
+
+  it('accepts a waiting rule pick (Batch 18), with the blessing still to come', () => {
+    const save = sample();
+    const picking = withField(
+      withField(
+        withField(withField(save, 'run.state', 'choosing'), 'run.offer', {
+          kind: 'rule',
+          options: ['echo', 'hubris'],
+        }),
+        'run.pickQueue',
+        ['blessing'],
+      ),
+      'run.expansion',
+      { from: 5, to: 6, picks: true, elapsedSteps: 800, phase: 'reveal' },
+    );
+    expect(decodeRunSave(text(picking))).toEqual({ save: picking });
+    expect(decodeRunSave(text(withField(picking, 'run.pickQueue', ['law'])))).toHaveProperty(
+      'error',
+    );
+  });
 });
 
 describe('RunSaveStore', () => {

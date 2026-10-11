@@ -21,7 +21,7 @@ import {
   JOKER_SIZE,
   MAGNET_SIZE,
   PICK_IDS,
-  PICK_ORDER,
+  pickOrder,
   PICKS,
 } from '../config/picks';
 import type { PickId, PickKind } from '../config/picks';
@@ -506,10 +506,13 @@ export class RunController {
     this.queue.setOdds(this.odds());
   }
 
-  /** Debug: opens a stage clear's picks now; play goes on in the same stage after them. */
-  offerPicks(): void {
+  /**
+   * Debug: opens a stage clear's picks now, as at a clear that grows the jar (a rule first) when
+   * `grows`; play goes on in the same stage after them.
+   */
+  offerPicks(grows = false): void {
     if (this.runState !== 'playing') return;
-    this.beginPicks();
+    this.beginPicks(grows);
   }
 
   /** Sets the run score (it only counts for records). */
@@ -874,16 +877,26 @@ export class RunController {
 
   // ── Trials and blessings (GAME_DESIGN §15.5) ───────────────────────────────
 
-  /** Starts a stage clear's picks. Returns false when every option is maxed (nothing to pick). */
-  private beginPicks(): boolean {
-    this.pickQueue = [...PICK_ORDER];
+  /**
+   * Starts a stage clear's picks: a rule first when the clear grows the jar, else a trial
+   * (`pickOrder`). Returns false when every option is maxed (nothing to pick).
+   */
+  private beginPicks(grows: boolean): boolean {
+    this.pickQueue = [...pickOrder(grows)];
     return this.offerNextPick();
   }
 
-  /** Offers the next pick that has options; the run waits in `choosing`. False when none is left. */
+  /**
+   * Offers the next pick that has options; the run waits in `choosing`. A rule pick with no rule
+   * left offers a trial instead. False when none is left.
+   */
   private offerNextPick(): boolean {
     for (let kind = this.pickQueue.shift(); kind; kind = this.pickQueue.shift()) {
-      const options = drawOffer(kind, this.levels, this.stats.bigCatchLevel, this.pickRng);
+      let options = drawOffer(kind, this.levels, this.stats.bigCatchLevel, this.pickRng);
+      if (options.length === 0 && kind === 'rule') {
+        kind = 'trial';
+        options = drawOffer(kind, this.levels, this.stats.bigCatchLevel, this.pickRng);
+      }
       if (options.length === 0) continue;
       this.offer = { kind, options };
       this.runState = 'choosing';
@@ -957,7 +970,7 @@ export class RunController {
         this.pop([...this.world.balls], 'cashOut');
         if (!e.grows) {
           // The picks (time stands still), then the next stage in the same jar.
-          if (e.picks && this.beginPicks()) return;
+          if (e.picks && this.beginPicks(e.grows)) return;
           this.moveOn(e);
           return;
         }
@@ -970,7 +983,7 @@ export class RunController {
     }
     if (e.elapsedSteps < EXPANSION_STEPS) return;
     // The grown jar's picks; `choose` goes on after the last one.
-    if (e.picks && this.beginPicks()) return;
+    if (e.picks && this.beginPicks(e.grows)) return;
     this.finishExpansion(e);
   }
 

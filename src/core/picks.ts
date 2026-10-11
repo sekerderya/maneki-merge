@@ -1,6 +1,6 @@
 /**
- * Trials and blessings (GAME_DESIGN §15): the run's pick levels, the queue odds they give, the
- * options a stage clear offers, and what each card shows. Pure functions.
+ * Trials, rules and blessings (GAME_DESIGN §15): the run's pick levels, the queue odds they give,
+ * the options a stage clear offers, and what each card shows. Pure functions.
  */
 import {
   BIG_DROPS_TILT_PER_LEVEL,
@@ -8,14 +8,16 @@ import {
   BOULDER_BASE_HITS,
   BOULDER_BASE_SIZE,
   BOULDER_FIRST_STAGE,
+  HEAVY_DROP_FALL_TIMES,
   MAGNET_BASE_CHANCE,
   MAX_DROP_TILT_LEVEL,
   PICK_IDS,
   PICK_OPTIONS,
   pickIds,
   PICKS,
+  WIND_NAMES,
 } from '../config/picks';
-import type { PickId, PickKind } from '../config/picks';
+import type { PickId, PickKind, WindDirection } from '../config/picks';
 import { dropWeights } from './dropQueue';
 import type { DropOdds } from './dropQueue';
 import { roundStable } from './math';
@@ -95,21 +97,31 @@ export interface PickCard {
   /** The value at the current level and after this pick. */
   readonly current: string;
   readonly next: string;
+  /** Its picture faces the other way: the Wind's carp streamer when the run's wind blows left. */
+  readonly mirror: boolean;
 }
 
-export function pickCard(id: PickId, levels: PickLevels, bigCatchLevel: number): PickCard {
+/** A card of `id` at these levels; the Wind's card names the run's wind (`windDirection`). */
+export function pickCard(
+  id: PickId,
+  levels: PickLevels,
+  bigCatchLevel: number,
+  windDirection: WindDirection = 1,
+): PickCard {
   const def = PICKS[id];
   const level = levels[id];
+  const left = id === 'wind' && windDirection < 0;
   return {
     id,
     kind: def.kind,
     name: def.name,
-    description: def.description,
+    description: left ? def.description.replace('right', 'left') : def.description,
     statLabel: def.statLabel,
     level,
     maxLevel: def.maxLevel,
     current: pickValue(id, levels, bigCatchLevel),
     next: pickValue(id, { ...levels, [id]: level + 1 }, bigCatchLevel),
+    mirror: left,
   };
 }
 
@@ -135,7 +147,22 @@ export function pickValue(id: PickId, levels: PickLevels, bigCatchLevel: number)
       return percent(odds.hanabiChance);
     case 'joker':
       return percent(odds.jokerChance);
+    case 'wind':
+      return WIND_NAMES[levels.wind] ?? '';
+    case 'heavyDrop':
+      return seconds(HEAVY_DROP_FALL_TIMES[levels.heavyDrop] ?? 0);
+    case 'porcelain':
+      return percent(PICKS.porcelain.perLevel * levels.porcelain);
+    case 'hubris':
+      return levels.hubris > 0 ? 'In threes' : 'In pairs';
+    case 'echo':
+      return levels.echo > 0 ? 'On' : 'Off';
   }
+}
+
+/** A time with at least one decimal: 1.0 s, 0.65 s. */
+function seconds(s: number): string {
+  return `${Number.isInteger(s * 10) ? s.toFixed(1) : String(s)} s`;
 }
 
 /** A chance as a percentage with at most one decimal: 3%, 2.5%. */

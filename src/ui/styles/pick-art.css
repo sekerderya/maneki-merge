@@ -2,7 +2,8 @@
  * A stage clear's picks in the owner's art (GAME_DESIGN §15.5), built from the Upgrades screen's
  * pieces (docs/ART_ASSETS.md §4.9) over the shut stage doors: the title on its cream pill, three
  * cards with their tan stat strips, and the menu's coral PLAY pill as Choose. Sizes are mockup
- * pixels times --u, as in shop-art.css. A trial's selection glows blue, a blessing's gold.
+ * pixels times --u, as in shop-art.css. A trial's selection glows blue, a rule's vermilion (the
+ * shrine's red) and a blessing's gold.
  */
 .pick-overlay.is-art {
   container-type: inline-size;
@@ -24,6 +25,10 @@
 
 .pick-overlay.is-art[data-kind='trial'] .pick-panel {
   --glow: #7fb2e5;
+}
+
+.pick-overlay.is-art[data-kind='rule'] .pick-panel {
+  --glow: #ef5b3c;
 }
 
 .pick-overlay.is-art .pick-title {
@@ -145,6 +150,12 @@
   box-shadow: inset 0 0 0 calc(9 * var(--u)) #a7a7a9;
 }
 
+/* A rule's medallion has a vermilion rim, like a torii. */
+.pick-overlay.is-art .pick-card.is-rule .pick-icon {
+  background: #fff6e7;
+  box-shadow: inset 0 0 0 calc(9 * var(--u)) #e0502f;
+}
+
 .pick-overlay.is-art .pick-icon svg {
   width: calc(64 * var(--u));
   height: calc(64 * var(--u));
@@ -247,6 +258,11 @@
   height: auto;
   transform: translate(-50%, -50%);
   filter: drop-shadow(0 0 calc(1.5 * var(--u)) #4e2416);
+}
+
+/* The Wind's carp streamer flies the way the run's wind blows. */
+.pick-icon.is-mirrored .pick-icon-ball {
+  transform: translate(-50%, -50%) scaleX(-1);
 }
 
 .pick-icon.is-golden .pick-icon-ball {

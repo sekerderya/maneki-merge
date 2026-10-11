@@ -13,13 +13,14 @@ export interface PickActions {
 
 export interface PickView {
   readonly visible: boolean;
-  /** Shows a pick's cards (a trial or a blessing); nothing is selected yet. */
+  /** Shows a pick's cards (a trial, a rule or a blessing); nothing is selected yet. */
   show(kind: PickKind, cards: readonly PickCard[]): void;
   hide(): void;
 }
 
 const TITLES: Readonly<Record<PickKind, { title: string; detail: string }>> = {
   trial: { title: 'Choose a trial', detail: 'The coming stages get harder' },
+  rule: { title: 'Choose a rule', detail: 'It changes the game for the rest of the run' },
   blessing: { title: 'Choose a blessing', detail: 'It lasts for the whole run' },
 };
 
@@ -117,6 +118,7 @@ function createCard(card: PickCard, art: boolean, onSelect: () => void): HTMLBut
     const image = artImage(ball.path, 'pick-icon-ball');
     image.style.width = `${ball.width * 100}%`;
     icon.classList.toggle('is-golden', ball.golden);
+    icon.classList.toggle('is-mirrored', card.mirror);
     icon.append(image);
   } else {
     icon.insertAdjacentHTML('beforeend', PICK_ICONS[card.id]);
@@ -126,7 +128,12 @@ function createCard(card: PickCard, art: boolean, onSelect: () => void): HTMLBut
   const head = el('span', 'pick-head');
   head.append(
     el('span', 'pick-name', card.name),
-    el('span', 'pick-level', `Lv ${card.level} → ${card.level + 1}`),
+    // A rule has one level: it is on or off.
+    el(
+      'span',
+      'pick-level',
+      card.kind === 'rule' ? 'New rule' : `Lv ${card.level} → ${card.level + 1}`,
+    ),
   );
   const value = el('span', 'pick-value');
   value.append(

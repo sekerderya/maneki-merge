@@ -187,7 +187,10 @@
   animation: none;
 }
 
-/* A stage clear's pick (GAME_DESIGN §15.5): a trial, then a blessing. Under the pause overlay. */
+/*
+ * A stage clear's pick (GAME_DESIGN §15.5): a trial (a rule when the jar grows), then a blessing.
+ * Under the pause overlay.
+ */
 .pick-overlay {
   z-index: 150;
 }
@@ -208,6 +211,10 @@
 
 .pick-overlay[data-kind='trial'] .pick-title {
   text-shadow: 0 3px 0 #c9c3ba;
+}
+
+.pick-overlay[data-kind='rule'] .pick-title {
+  text-shadow: 0 3px 0 #f0a08c;
 }
 
 .pick-overlay[data-kind='blessing'] .pick-title {
@@ -258,6 +265,10 @@
   background: #ece7e0;
 }
 
+.pick-card.is-rule.is-selected {
+  background: #fbe0d8;
+}
+
 .pick-icon {
   display: flex;
   align-items: center;
@@ -272,6 +283,10 @@
 
 .pick-card.is-trial .pick-icon {
   background: #ddd8d0;
+}
+
+.pick-card.is-rule .pick-icon {
+  background: #f7c9bd;
 }
 
 .pick-icon svg {

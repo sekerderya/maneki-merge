@@ -16,7 +16,6 @@ import {
   GOLDEN_COIN_FLIGHTS,
   JACKPOT_COIN_FLIGHTS,
 } from './config/view';
-import { PICK_ORDER } from './config/picks';
 import { stageJar } from './config/stages';
 import type { PickId, PickKind } from './config/picks';
 import type { UpgradeId } from './config/upgrades';
@@ -138,7 +137,8 @@ export class GameSession {
     const run = this.current;
     const offer = run?.pickOffer;
     if (!run || !offer?.options.includes(id)) return;
-    if (offer.kind !== PICK_ORDER[PICK_ORDER.length - 1]) {
+    // The blessing always comes last.
+    if (offer.kind !== 'blessing') {
       run.choose(id);
       return;
     }

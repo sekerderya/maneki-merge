@@ -195,7 +195,7 @@ function runSnapshot(value: unknown): RunSnapshot {
   };
 }
 
-const PICK_KINDS = ['trial', 'blessing'] as const;
+const PICK_KINDS = ['trial', 'blessing', 'rule'] as const;
 const DROP_KINDS = ['cat', 'magnet', 'boulder', 'hanabi', 'joker'] as const;
 const BALL_KINDS = ['cat', 'boulder', 'hanabi', 'joker'] as const;
 

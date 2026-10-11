@@ -18,7 +18,7 @@ import type { UpgradeLevels } from '../../src/core/upgrades';
 import { RunController } from '../../src/run/RunController';
 import type { RunOptions } from '../../src/run/RunController';
 import { MAGNET_TAKE_MS } from '../../src/config/timings';
-import { PICKS } from '../../src/config/picks';
+import { PICKS, TRIAL_IDS } from '../../src/config/picks';
 import type { PickId } from '../../src/config/picks';
 import { MAX_DROP_RADIUS } from '../../src/physics/geometry';
 
@@ -401,24 +401,21 @@ describe('stage clears (GAME_DESIGN §7)', () => {
     expect(of('expansionRevealed').at(-1)).toEqual({ stage: 6, newTiers });
     expect(run.progress).toEqual({ fraction: 0, goalTier: 54, grows: false });
 
-    // Then the picks (GAME_DESIGN §15.5): a trial, then a blessing, while time stands still.
+    // Then the picks (GAME_DESIGN §15.5): the jar grew, so a rule takes the trial's place, then a
+    // blessing, while time stands still.
     ticks(run, EXPANSION_STEPS - ZOOM_START_STEPS - ZOOM_STEPS - 1);
     expect(run.state).toBe('expanding');
     run.tick();
     expect(run.state).toBe('choosing');
-    expect(of('pickOffered')).toEqual([{ kind: 'trial', options: expect.any(Array) }]);
-    expect([...run.pickOffer!.options].sort()).toEqual([
-      'bigBoulders',
-      'ironBands',
-      'moreBoulders',
-    ]);
+    expect(of('pickOffered')).toEqual([{ kind: 'rule', options: expect.any(Array) }]);
+    expect([...run.pickOffer!.options].sort()).toEqual(['echo', 'hubris']);
     ticks(run, 100);
     run.update(1000);
     expect(run.playTimeMs).toBe(settled);
     expect(run.choose('moreMagnets')).toBe(false); // not on these cards
     const trial = run.pickOffer!.options[1]!;
     expect(run.choose(trial)).toBe(true);
-    expect(of('pickChosen')).toEqual([{ kind: 'trial', id: trial, level: 1 }]);
+    expect(of('pickChosen')).toEqual([{ kind: 'rule', id: trial, level: 1 }]);
     expect(run.pickOffer?.kind).toBe('blessing');
     expect(run.choose(run.pickOffer!.options[0]!)).toBe(true);
     expect(run.pickLevels[trial]).toBe(1);
@@ -866,9 +863,7 @@ describe('trials and blessings (GAME_DESIGN §15.5)', () => {
 
   it('skips maxed options and whole picks with nothing left', () => {
     const { run, of } = setup();
-    for (const id of ['moreBoulders', 'ironBands', 'bigBoulders'] as const) {
-      run.setPickLevel(id, PICKS[id].maxLevel);
-    }
+    for (const id of TRIAL_IDS) run.setPickLevel(id, PICKS[id].maxLevel);
     for (const id of ['moreMagnets', 'hanabi', 'joker'] as const) {
       run.setPickLevel(id, PICKS[id].maxLevel);
     }
@@ -883,6 +878,47 @@ describe('trials and blessings (GAME_DESIGN §15.5)', () => {
     run.offerPicks();
     expect(run.state).toBe('playing');
     expect(of('pickOffered')).toHaveLength(1);
+  });
+
+  it('offers a trial at the clears in a jar and a rule where it grows, then trials when none is left', () => {
+    const { run, of } = setup({ instantExpansion: true });
+    // Stage 4's clear moves on in the same jar: a trial.
+    run.jumpToStage(4);
+    run.tick();
+    expect(run.stage).toBe(4);
+    makeLastCat(run);
+    expect(of('pickOffered').map((p) => p.kind)).toEqual(['trial']);
+    chooseAll(run);
+    expect(run.stage).toBe(5);
+    // Stage 5's clear grows the jar: a rule, then a blessing.
+    makeLastCat(run);
+    expect(of('pickOffered').map((p) => p.kind)).toEqual(['trial', 'blessing', 'rule']);
+    const [rule] = chooseAll(run);
+    expect(of('pickChosen').at(-2)).toEqual({ kind: 'rule', id: rule, level: 1 });
+    expect(run.pickLevels[rule!]).toBe(1);
+    // Stage 6's clear: a trial again.
+    expect(run.stage).toBe(6);
+    makeLastCat(run);
+    expect(of('pickOffered').at(-1)!.kind).toBe('trial');
+    chooseAll(run);
+    // With both rules taken, a growth clear offers a trial instead.
+    run.setPickLevel('hubris', 1);
+    run.setPickLevel('echo', 1);
+    expect(run.pickLevels.hubris).toBe(1);
+    run.offerPicks(true);
+    expect(run.pickOffer?.kind).toBe('trial');
+    chooseAll(run);
+    // A rule has one level: it is on or off.
+    run.setPickLevel('echo', 5);
+    expect(run.pickLevels.echo).toBe(1);
+  });
+
+  it('opens a rule pick on demand (debug)', () => {
+    const { run, of } = setup();
+    run.offerPicks(true);
+    expect(run.pickOffer?.kind).toBe('rule');
+    expect(chooseAll(run)).toHaveLength(2);
+    expect(of('pickOffered').map((p) => p.kind)).toEqual(['rule', 'blessing']);
   });
 
   it('skips the picks on a debug jump', () => {

@@ -226,4 +226,25 @@ export const PICK_ICONS: Readonly<Record<PickId, string>> = {
     '<circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.4"/>' +
       '<path d="M12 7.2l1.5 3.1 3.4.4-2.5 2.3.7 3.4-3.1-1.7-3.1 1.7.7-3.4-2.5-2.3 3.4-.4z" fill="currentColor"/>',
   ),
+  wind: svg(
+    '<path d="M3 8.5h11a3 3 0 1 0-3-3M3 12.5h15a3 3 0 1 1-3 3M3 16.5h7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
+  ),
+  heavyDrop: svg(
+    '<circle cx="12" cy="16" r="5.5" fill="currentColor"/>' +
+      '<path d="M7.5 3v5M12 2v6M16.5 3v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+  ),
+  porcelain: svg(
+    '<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.2"/>' +
+      '<path d="M6.5 7.5l4 3.5-2 3 5 2-1 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>',
+  ),
+  hubris: svg(
+    '<circle cx="7.3" cy="16.5" r="4.6" fill="currentColor"/>' +
+      '<circle cx="16.7" cy="16.5" r="4.6" fill="currentColor"/>' +
+      '<circle cx="12" cy="8" r="4.6" fill="currentColor"/>',
+  ),
+  echo: svg(
+    '<circle cx="9" cy="11" r="6.5" fill="currentColor"/>' +
+      '<circle cx="18.5" cy="16.5" r="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/>' +
+      '<path d="M16.5 5.5a7.5 7.5 0 0 1 3 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+  ),
 };

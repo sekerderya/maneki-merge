@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
   BLESSING_IDS,
   PICK_IDS,
-  PICK_ORDER,
   pickIds,
+  pickOrder,
   PICKS,
+  RULE_IDS,
   TRIAL_IDS,
 } from '../../src/config/picks';
 import type { PickId } from '../../src/config/picks';
@@ -28,24 +29,34 @@ const levels = (overrides: Partial<Record<PickId, number>> = {}): PickLevels => 
   ...overrides,
 });
 
-describe('the trials and blessings (GAME_DESIGN §15.5)', () => {
+describe('the trials, rules and blessings (GAME_DESIGN §15.5)', () => {
   // Id, kind, name, max level, per level.
   const TABLE: readonly [PickId, string, string, number, number][] = [
     ['moreBoulders', 'trial', 'More Boulders', 5, 0.03],
     ['ironBands', 'trial', 'Iron Bands', 3, 1],
     ['bigBoulders', 'trial', 'Big Boulders', 4, 1],
+    ['wind', 'trial', 'Wind', 5, 100],
+    ['heavyDrop', 'trial', 'Heavy Drop', 5, 1],
+    ['porcelain', 'trial', 'Porcelain', 4, 0.2],
     ['moreMagnets', 'blessing', 'More Magnets', 5, 0.015],
     ['bigDrops', 'blessing', 'Big Drops', 5, 2],
     ['goldenCats', 'blessing', 'Golden Cats', 5, 0.04],
     ['hanabi', 'blessing', 'Hanabi', 5, 0.015],
     ['joker', 'blessing', 'Joker Cat', 5, 0.015],
+    ['hubris', 'rule', 'Hubris', 1, 1],
+    ['echo', 'rule', 'Echo', 1, 1],
   ];
 
-  it('lists three trials, then five blessings, in card order', () => {
+  it('lists six trials, five blessings and two rules, in card order', () => {
     expect([...PICK_IDS]).toEqual(TABLE.map(([id]) => id));
     expect(pickIds('trial')).toEqual(TRIAL_IDS);
     expect(pickIds('blessing')).toEqual(BLESSING_IDS);
-    expect(PICK_ORDER).toEqual(['trial', 'blessing']);
+    expect(pickIds('rule')).toEqual(RULE_IDS);
+  });
+
+  it('offers a trial then a blessing, and a rule instead of the trial when the jar grows', () => {
+    expect(pickOrder(false)).toEqual(['trial', 'blessing']);
+    expect(pickOrder(true)).toEqual(['rule', 'blessing']);
   });
 
   it.each(TABLE)('%s: a %s, %s, max %i, %f per level', (id, kind, name, max, perLevel) => {
@@ -110,15 +121,26 @@ describe('the cards', () => {
     expect(pickMaxed('bigDrops', levels({ bigDrops: 3 }), 5)).toBe(true); // 5 + 6 ≥ 10
   });
 
-  it('offers every open option of a kind once, in random order', () => {
+  it('offers three of the six trials, each of them at times', () => {
     const seen = new Set<string>();
     for (let seed = 0; seed < 60; seed++) {
       const offer = drawOffer('trial', levels(), 0, new Rng(seed));
-      expect([...offer].sort()).toEqual([...TRIAL_IDS].sort());
+      expect(new Set(offer).size).toBe(3);
+      for (const id of offer) seen.add(id);
+    }
+    expect([...seen].sort()).toEqual([...TRIAL_IDS].sort());
+  });
+
+  it('offers both rules in random order, then the one left, then none', () => {
+    const seen = new Set<string>();
+    for (let seed = 0; seed < 20; seed++) {
+      const offer = drawOffer('rule', levels(), 0, new Rng(seed));
+      expect([...offer].sort()).toEqual([...RULE_IDS].sort());
       seen.add(offer.join());
     }
-    // All six orders turn up.
-    expect(seen.size).toBe(6);
+    expect(seen.size).toBe(2);
+    expect(drawOffer('rule', levels({ hubris: 1 }), 0, new Rng(1))).toEqual(['echo']);
+    expect(drawOffer('rule', levels({ hubris: 1, echo: 1 }), 0, new Rng(1))).toEqual([]);
   });
 
   it('offers three of the five blessings, each of them at times', () => {
@@ -135,7 +157,7 @@ describe('the cards', () => {
     const maxed = { goldenCats: 5, hanabi: 5, joker: 5 };
     const some = drawOffer('blessing', levels(maxed), 0, new Rng(1));
     expect([...some].sort()).toEqual(['bigDrops', 'moreMagnets']);
-    const none = levels({ moreBoulders: 5, ironBands: 3, bigBoulders: 4 });
+    const none = levels(Object.fromEntries(TRIAL_IDS.map((id) => [id, PICKS[id].maxLevel])));
     expect(drawOffer('trial', none, 0, new Rng(1))).toEqual([]);
   });
 
@@ -157,11 +179,33 @@ describe('the cards', () => {
     ['goldenCats', { goldenCats: 2 }, 0, '8%', '12%'],
     ['hanabi', {}, 0, '0%', '1.5%'],
     ['joker', { joker: 4 }, 0, '6%', '7.5%'],
+    ['wind', {}, 0, 'Calm', 'Breeze'],
+    ['wind', { wind: 4 }, 0, 'Gale', 'Storm'],
+    ['heavyDrop', {}, 0, '1.0 s', '0.8 s'],
+    ['heavyDrop', { heavyDrop: 1 }, 0, '0.8 s', '0.65 s'],
+    ['heavyDrop', { heavyDrop: 4 }, 0, '0.4 s', '0.3 s'],
+    ['porcelain', {}, 0, '0%', '20%'],
+    ['porcelain', { porcelain: 3 }, 0, '60%', '80%'],
+    ['hubris', {}, 0, 'In pairs', 'In threes'],
+    ['echo', {}, 0, 'Off', 'On'],
   ])('%s with %j (Big Catch %i) shows %s → %s', (id, over, bigCatch, current, next) => {
     const card = pickCard(id, levels(over), bigCatch);
     expect(card).toMatchObject({ id, current, next, kind: PICKS[id].kind, name: PICKS[id].name });
     expect(card.level).toBe(over[id] ?? 0);
     expect(card.maxLevel).toBe(PICKS[id].maxLevel);
     expect(pickValue(id, levels(over), bigCatch)).toBe(current);
+  });
+});
+
+describe('the Wind card', () => {
+  it("names the way the run's wind blows, and turns its picture with it", () => {
+    const right = pickCard('wind', levels(), 0, 1);
+    expect(right.description).toBe('The wind blows falling cats to the right');
+    expect(right.mirror).toBe(false);
+    const left = pickCard('wind', levels(), 0, -1);
+    expect(left.description).toBe('The wind blows falling cats to the left');
+    expect(left.mirror).toBe(true);
+    // Other cards never turn.
+    expect(pickCard('heavyDrop', levels(), 0, -1).mirror).toBe(false);
   });
 });

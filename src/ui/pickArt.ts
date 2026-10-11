@@ -66,5 +66,14 @@ export function pickArt(id: PickId, level: number): PickArt {
       return cat(DROP_SIZES, false);
     case 'goldenCats':
       return cat(1, true);
+    // Until their own pictures come (docs/ART_ASSETS.md §4.12): the cat each is about.
+    case 'wind':
+    case 'porcelain':
+    case 'hubris':
+      return cat(1, false);
+    case 'heavyDrop':
+      return cat(2, false);
+    case 'echo':
+      return cat(4, false);
   }
 }
