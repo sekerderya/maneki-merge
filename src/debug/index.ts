@@ -105,6 +105,14 @@ export interface GameHooks {
   setScore(score: number): void;
   /** Drops a cat of `tier` at world x from the dropper's height; ignored if the stage can't hold it. */
   spawnTier(tier: number, x?: number): void;
+  /** Drops a cracked cat (Porcelain) of the stage's `size` at world x; returns its id or null. */
+  spawnCracked(size?: number, x?: number): number | null;
+  /** Cracks the cat `id` as a merge beside it would (a cracked one breaks). */
+  crackCat(id: number): boolean;
+  /** The ids of the cracked cats in the jar. */
+  crackedIds(): number[];
+  /** The ids of the cats in the jar, oldest first. */
+  catIds(): number[];
   /**
    * Places `pairs` touching pairs of `tier` cats in rows on the jar floor, so they all merge on
    * the next physics step (M9: many simultaneous merges). `tier` defaults to the stage's smallest
@@ -236,6 +244,22 @@ export function installDebugHooks(ctx: DebugContext): GameHooks {
       const run = session.run;
       if (!run || !stageHoldsTier(run.stage, tier)) return;
       run.spawnBall(tier, x);
+    },
+    spawnCracked(size = 3, x = 0) {
+      const run = session.run;
+      if (!run) return null;
+      const tier = stageInfo(run.stage).firstTier + size - 1;
+      if (!stageHoldsTier(run.stage, tier)) return null;
+      return run.spawnBall(tier, x, undefined, { cracked: true }).id;
+    },
+    crackCat(id) {
+      return session.run?.crackCat(id) ?? false;
+    },
+    catIds() {
+      return (session.run?.balls ?? []).filter((b) => b.kind === 'cat').map((b) => b.id);
+    },
+    crackedIds() {
+      return (session.run?.balls ?? []).filter((b) => b.cracked).map((b) => b.id);
     },
     mergeBurst(pairs = 10, tier) {
       const run = session.run;
@@ -393,7 +417,14 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
       pickLevel,
       action('Set run', () => hooks.setPickLevel(pick.value as PickId, Number(pickLevel.value))),
     ),
-    row(action('Flip wind', () => hooks.setWind())),
+    row(
+      action('Flip wind', () => hooks.setWind()),
+      action('Cracked cat', () => hooks.spawnCracked(Number(size.value), 0)),
+      action('Crack newest', () => {
+        const newest = hooks.catIds().at(-1);
+        if (newest !== undefined) hooks.crackCat(newest);
+      }),
+    ),
     row(
       action('+1000 coins', () => hooks.addCoins(1000)),
       action('Game over', () => hooks.forceGameOver()),

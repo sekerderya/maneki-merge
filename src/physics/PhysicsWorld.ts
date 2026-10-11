@@ -376,6 +376,8 @@ export class PhysicsWorld {
       startRadius: saved.radius,
       landedMs: saved.landedMs,
       struck: saved.struck,
+      cracked: saved.cracked,
+      mate: saved.mate,
     });
     ball.restoreGrowth(saved.growFrom, saved.growMs);
     const body = ball.body;
@@ -410,6 +412,7 @@ export class PhysicsWorld {
       hasher.number(angle).number(anglePrev);
       hasher.number(ball.radius).number(ball.landedMs);
       for (const id of ball.struck) hasher.number(id);
+      hasher.bool(ball.cracked).number(ball.mate ?? 0);
     }
   }
 
@@ -521,5 +524,7 @@ function saveBall(ball: Ball): SavedBall {
     growMs: ageMs,
     landedMs: ball.landedMs,
     struck: [...ball.struck],
+    cracked: ball.cracked,
+    mate: ball.mate,
   };
 }

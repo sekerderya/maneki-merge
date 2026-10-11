@@ -67,6 +67,10 @@ export interface SavedBall {
   readonly hitsLeft: number;
   /** A joker's boulders hit so far (empty for other balls; missing before v0.28). */
   readonly struck: readonly number[];
+  /** Porcelain: a cracked cat (false when missing, before Batch 18). */
+  readonly cracked: boolean;
+  /** A broken cat's piece: the other piece's id (null when missing, before Batch 18). */
+  readonly mate: number | null;
   readonly x: number;
   readonly y: number;
   readonly prevX: number;
@@ -123,6 +127,9 @@ export interface RunSnapshot {
   readonly rng: RngState;
   readonly specialRng: RngState;
   readonly pickRng: RngState;
+  /** Porcelain's cracks and Echo's sides (missing before Batch 18: fresh from the seed). */
+  readonly porcelainRng?: RngState;
+  readonly echoRng?: RngState;
   readonly queue: QueueSnapshot;
   readonly economy: EconomySnapshot;
   readonly danger: DangerSnapshot;
@@ -191,6 +198,10 @@ function runSnapshot(value: unknown): RunSnapshot {
     rng: rngState(r['rng'], 'rng'),
     specialRng: rngState(r['specialRng'], 'specialRng'),
     pickRng: rngState(r['pickRng'], 'pickRng'),
+    ...(r['porcelainRng'] === undefined
+      ? {}
+      : { porcelainRng: rngState(r['porcelainRng'], 'porcelainRng') }),
+    ...(r['echoRng'] === undefined ? {} : { echoRng: rngState(r['echoRng'], 'echoRng') }),
     queue: queue(r['queue']),
     economy: economy(r['economy']),
     danger: danger(r['danger']),
@@ -299,6 +310,8 @@ function ball(value: unknown): SavedBall {
       b['struck'] === undefined
         ? []
         : list(b['struck'], 'ball.struck').map((id) => count(id, 'ball.struck')),
+    cracked: b['cracked'] === undefined ? false : bool(b['cracked'], 'ball.cracked'),
+    mate: b['mate'] === undefined || b['mate'] === null ? null : count(b['mate'], 'ball.mate'),
   };
 }
 

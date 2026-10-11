@@ -9,6 +9,9 @@ import { decodeRunSave, RUN_SAVE_VERSION } from '../../src/core/runSave';
 import type { RunSnapshot } from '../../src/core/runSave';
 import { RunController } from '../../src/run/RunController';
 import { botMove, upgrades } from './fixtures';
+import { readFileSync } from 'node:fs';
+import { PICK_IDS, PICKS } from '../../src/config/picks';
+import { windDirectionOf } from '../../src/run/RunController';
 
 const CLEAR_STEPS = stepsFor(EXPANSION_CLEAR_MS);
 const ZOOM_STEPS = stepsFor(EXPANSION_ZOOM_MS);
@@ -251,5 +254,41 @@ describe('saved runs (GAME_DESIGN §11)', () => {
       { ...good, offer: { kind: 'trial', options: [] }, state: 'choosing' },
     ];
     for (const snapshot of bad) expect(() => RunController.restore(snapshot)).toThrow(RangeError);
+  });
+});
+
+describe('a run saved by v0.33.5, before Batch 18', () => {
+  const text = readFileSync(new URL('./run-v0.33.5.json', import.meta.url), 'utf8');
+
+  it("loads with the new trials and rules at 0, no cracks and the seed's wind", () => {
+    const decoded = decodeRunSave(text);
+    if (!('save' in decoded)) throw new Error(decoded.error);
+    const saved = decoded.save.run;
+    for (const id of ['wind', 'heavyDrop', 'porcelain', 'hubris', 'echo'] as const) {
+      expect(saved.levels[id]).toBe(0);
+    }
+    expect(saved.windDirection).toBeUndefined();
+    expect(saved.world.balls.length).toBeGreaterThan(5);
+    expect(saved.world.balls.every((b) => !b.cracked && b.mate === null)).toBe(true);
+    const run = RunController.restore(saved);
+    expect(run.windDirection).toBe(windDirectionOf(saved.seed));
+    expect(run.balls.map((b) => [b.id, b.tier, b.x])).toEqual(
+      saved.world.balls.map((b) => [b.id, b.tier, b.x]),
+    );
+    for (const id of PICK_IDS) expect(run.pickLevels[id]).toBeLessThanOrEqual(PICKS[id].maxLevel);
+  });
+
+  it('plays on', () => {
+    const decoded = decodeRunSave(text);
+    if (!('save' in decoded)) throw new Error(decoded.error);
+    const run = RunController.restore(decoded.save.run);
+    run.resume();
+    play(run, 1200);
+    expect(run.ticks).toBeGreaterThan(decoded.save.run.ticks + 1000);
+    // Saved again, it carries the new fields.
+    run.pause();
+    const again = roundTrip(run.snapshot());
+    expect(again.windDirection).toBe(run.windDirection);
+    expect(again.porcelainRng).toHaveLength(4);
   });
 });

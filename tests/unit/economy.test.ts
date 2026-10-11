@@ -112,6 +112,14 @@ describe('RunEconomy', () => {
     expect(e.highestTier).toBe(8);
   });
 
+  it('pays a three-way merge (Hubris) like its size and a half, once for the combo', () => {
+    const e = new RunEconomy({ coinMultiplier: 1, comboCharmLevel: 0 });
+    // Three 5s: 1.5 × S(5) = 48 score, 1.5 × C(5) = 12 coins.
+    expect(e.merge(5, 0, 7, 3)).toEqual({ score: 48, coins: 12, combo: 1 });
+    expect(e.merges).toBe(1);
+    expect(e.highestTier).toBe(7);
+  });
+
   it('pays Jackpots with combo and counts them, without raising the highest tier', () => {
     const e = new RunEconomy({ coinMultiplier: 1, comboCharmLevel: 1 });
     e.merge(6, 0);

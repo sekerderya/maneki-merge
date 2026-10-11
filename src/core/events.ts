@@ -130,6 +130,10 @@ export interface GameEvents {
     readonly golden: boolean;
     /** A joker merged with a cat of `tier` (GAME_DESIGN §15.7). */
     readonly joker: boolean;
+    /** Two cats merged, or three (Hubris, GAME_DESIGN §15.11). */
+    readonly parts: 2 | 3;
+    /** A cracked cat merged (Porcelain, §15.10): gold seams flash on the whole new cat. */
+    readonly kintsugi: boolean;
     readonly at: WorldPoint;
     readonly score: number;
     readonly coins: number;
@@ -193,6 +197,31 @@ export interface GameEvents {
    * `level` is Heavy Drop's level (a fireball's landing at the top level).
    */
   heavyLanded: { readonly id: number; readonly level: number; readonly at: WorldPoint };
+  /**
+   * Porcelain (GAME_DESIGN §15.10): a merge beside the cat cracked it. It pays nothing; the next
+   * crack breaks it.
+   */
+  catCracked: { readonly id: number; readonly tier: number; readonly at: WorldPoint };
+  /**
+   * A cracked cat cracked again and broke: `pieces` are the two cats of the size below that took
+   * its place (none for a size-1 cat, which shatters). It pays nothing.
+   */
+  catBroken: {
+    readonly id: number;
+    readonly tier: number;
+    readonly at: WorldPoint;
+    readonly pieces: readonly number[];
+  };
+  /**
+   * Echo (GAME_DESIGN §15.11): the merge that made the cat `from` left a cat of its size, `id`,
+   * beside it. It pays nothing and isn't a merge.
+   */
+  echoed: {
+    readonly id: number;
+    readonly tier: number;
+    readonly from: number;
+    readonly at: WorldPoint;
+  };
   /** The wind (GAME_DESIGN §15.8) changed: its level (0: none) or, with the debug tools, its way. */
   windChanged: { readonly level: number; readonly direction: WindDirection };
   paused: Record<string, never>;

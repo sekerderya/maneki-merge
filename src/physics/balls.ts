@@ -54,6 +54,10 @@ export interface BallView {
   readonly landedMs: number;
   /** A joker's: the boulders it has hit by touching them (once each, GAME_DESIGN §15.7). */
   readonly struck: ReadonlySet<number>;
+  /** Porcelain (GAME_DESIGN §15.10): a cracked cat breaks in two the next time it cracks. */
+  readonly cracked: boolean;
+  /** A broken cat's piece: the id of the other piece, which it never merges with; else null. */
+  readonly mate: number | null;
 }
 
 export interface BallSpec {
@@ -78,6 +82,10 @@ export interface BallSpec {
   readonly landedMs?: number;
   /** A joker's boulders hit so far (a saved run). */
   readonly struck?: readonly number[];
+  /** A cracked cat (Porcelain; cats only). */
+  readonly cracked?: boolean;
+  /** A broken cat's piece: the other piece's id. */
+  readonly mate?: number | null;
 }
 
 export class Ball implements BallView, CircleShape {
@@ -93,6 +101,10 @@ export class Ball implements BallView, CircleShape {
   touchesGrowth = false;
   /** A joker's: the ids of the boulders it has hit by touching them. */
   readonly struck = new Set<number>();
+  /** Porcelain: cracked once; the next crack breaks it. */
+  cracked = false;
+  /** A broken cat's piece: the other piece's id, which it never merges with. */
+  mate: number | null = null;
   private growFrom: number;
   private growAgeMs = 0;
 
@@ -219,6 +231,10 @@ export function createBall(id: number, spec: BallSpec): Ball {
     hits,
   );
   if (kind === 'joker') for (const id of spec.struck ?? []) ball.struck.add(id);
+  if (kind === 'cat') {
+    ball.cracked = spec.cracked ?? false;
+    ball.mate = spec.mate ?? null;
+  }
   (body.plugin as { circle?: Ball }).circle = ball;
   setCircleMass(body, spec.size, radius);
   if (spec.vx || spec.vy) {

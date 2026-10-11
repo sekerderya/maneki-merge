@@ -106,6 +106,8 @@ describe('EventBus', () => {
       newSize: 4,
       golden: false,
       joker: false,
+      parts: 2 as const,
+      kintsugi: false,
       at: { x: 0, y: -100 },
       score: 8,
       coins: 3,

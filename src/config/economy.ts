@@ -5,6 +5,12 @@ export const JACKPOT_SCORE_MULTIPLIER = 2;
 export const JACKPOT_COIN_MULTIPLIER = 5;
 
 /**
+ * Hubris (GAME_DESIGN §15.11): a three-way merge pays like a merge of its cats' size times this
+ * (three cats instead of two; a starting value, the economy comes later).
+ */
+export const THREE_WAY_PAYOUT = 1.5;
+
+/**
  * A cat's value: what it pays when it pops (stage clear, Lucky Save) is this share of what
  * merging two of its tier pays, C(t). Two cats that pop pay as much as their merge would.
  */

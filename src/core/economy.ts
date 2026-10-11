@@ -4,6 +4,7 @@ import {
   JACKPOT_SCORE_MULTIPLIER,
   MIN_COIN_PAYOUT,
   POP_VALUE_SHARE,
+  THREE_WAY_PAYOUT,
 } from '../config/economy';
 import { tierCoins, tierScore } from '../config/tiers';
 import { COMBO_WINDOW_MS } from '../config/timings';
@@ -144,12 +145,14 @@ export class RunEconomy {
 
   /**
    * Two tier-t cats merged into one cat of `newTier`: t + 1, or t + 2 when a golden cat merged
-   * (GAME_DESIGN §15.4). Either way it pays like a merge of two tier-t cats.
+   * (GAME_DESIGN §15.4). Either way it pays like a merge of two tier-t cats; three of them
+   * (`parts`, Hubris, §15.11) pay THREE_WAY_PAYOUT times as much.
    */
-  merge(tier: number, timeMs: number, newTier = tier + 1): Payout {
+  merge(tier: number, timeMs: number, newTier = tier + 1, parts: 2 | 3 = 2): Payout {
     this.mergeCount++;
     this.highest = Math.max(this.highest, newTier);
-    return this.pay(mergeScore(tier), tierCoins(tier), timeMs);
+    const share = parts === 3 ? THREE_WAY_PAYOUT : 1;
+    return this.pay(share * mergeScore(tier), share * tierCoins(tier), timeMs);
   }
 
   /** Two of a stage's last cat vanished in a Jackpot. */

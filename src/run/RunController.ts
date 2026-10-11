@@ -10,9 +10,10 @@
  * frame runs, and every timer counts ticks, so a run is a pure function of its seed and of the
  * tick at which each input arrives: the same inputs replay the same run at any frame rate.
  *
- * Tick pipeline while playing: physics step → merges (payouts and events, oldest first) → boulder
- * hits → hanabi blasts → combo expiry → stage clear → drop ready → danger. The stage clear goes first, so making
- * the stage's last cat saves the jar even on the step the danger timer would run out.
+ * Tick pipeline while playing: physics step → merges (payouts and events, oldest first, each with
+ * its echo) → boulder hits → porcelain cracks → hanabi blasts → combo expiry → stage clear → drop
+ * ready → danger. The stage clear goes first, so making the stage's last cat saves the jar even on
+ * the step the danger timer would run out.
  */
 import {
   HEAVY_DROP_GRAVITY_BONUS,
@@ -23,17 +24,23 @@ import {
   stepsFor,
 } from '../config/physics';
 import {
+  ECHO_MAX_SIZE,
+  ECHO_MIN_SIZE,
   HANABI_REACH,
   HANABI_SIZE,
+  HUBRIS_MAX_SIZE,
   JOKER_SIZE,
   MAGNET_SIZE,
   PICK_IDS,
   pickOrder,
   PICKS,
+  PORCELAIN_CHANCE_PER_LEVEL,
+  SPAWN_START_RADIUS_SHARE,
   WIND_ACCEL_PER_LEVEL,
 } from '../config/picks';
 import type { PickId, PickKind, WindDirection } from '../config/picks';
 import { catRadius, clearGrowsJar, stageHoldsTier, stageInfo } from '../config/stages';
+import { sizeRadius } from '../config/tiers';
 import {
   DROP_COOLDOWN_MS,
   EXPANSION_CLEAR_MS,
@@ -63,6 +70,8 @@ import { clampDropX, dropStartY } from '../physics/geometry';
 import { fuseBurntOut, hanabiBlast } from '../physics/hanabi';
 import type { JarGeometry } from '../physics/geometry';
 import { MergeResolver } from '../physics/merges';
+import type { MergeOutcome, MergeRules } from '../physics/merges';
+import { echoSpot, pieceSpots } from '../physics/spawns';
 import { FixedStepper, PhysicsWorld } from '../physics/PhysicsWorld';
 import type { FallForces } from '../physics/PhysicsWorld';
 
@@ -96,6 +105,8 @@ export interface SpawnOptions {
   readonly golden?: boolean;
   /** A boulder's merges to break (1 by default). */
   readonly hits?: number;
+  /** A cracked cat (Porcelain). */
+  readonly cracked?: boolean;
 }
 
 /**
@@ -152,6 +163,9 @@ const SPECIAL_SEED_SALT = 0x9e3779b9;
 const PICK_SEED_SALT = 0x7f4a7c15;
 /** The wind's direction (GAME_DESIGN §15.8): one roll when the run starts. */
 const WIND_SEED_SALT = 0x2545f491;
+/** Porcelain's crack rolls and Echo's sides (GAME_DESIGN §15.10–§15.11). */
+const PORCELAIN_SEED_SALT = 0x6c8e9cf5;
+const ECHO_SEED_SALT = 0x3c6ef372;
 
 /** Which way a run's wind blows: one roll on its own generator, so it never moves another roll. */
 export function windDirectionOf(seed: number): WindDirection {
@@ -171,6 +185,10 @@ export class RunController {
   private readonly specialRng: Rng;
   /** Draws the stage clears' cards. */
   private readonly pickRng: Rng;
+  /** Rolls whether a merge cracks each porcelain cat beside it. */
+  private readonly porcelainRng: Rng;
+  /** Rolls the side each echo cat appears on. */
+  private readonly echoRng: Rng;
   private readonly queue: DropQueue;
   private readonly economy: RunEconomy;
   private readonly merges = new MergeResolver();
@@ -221,6 +239,8 @@ export class RunController {
     this.specialRng = new Rng((Math.trunc(options.seed) ^ SPECIAL_SEED_SALT) >>> 0);
     this.pickRng = new Rng((Math.trunc(options.seed) ^ PICK_SEED_SALT) >>> 0);
     this.wind = windDirectionOf(options.seed);
+    this.porcelainRng = new Rng((Math.trunc(options.seed) ^ PORCELAIN_SEED_SALT) >>> 0);
+    this.echoRng = new Rng((Math.trunc(options.seed) ^ ECHO_SEED_SALT) >>> 0);
     this.queue = new DropQueue({
       rng: this.rng,
       specialRng: this.specialRng,
@@ -541,6 +561,17 @@ export class RunController {
     if (id === 'wind') this.announceWind();
   }
 
+  /**
+   * Debug: cracks the cat `id` as if a merge beside it had (a cracked one breaks). Returns
+   * whether there was such a cat.
+   */
+  crackCat(id: number): boolean {
+    const cat = this.world.balls.find((ball) => ball.id === id);
+    if (!cat || cat.kind !== 'cat' || this.runState === 'over') return false;
+    this.crack(cat, this.world.timeMs);
+    return true;
+  }
+
   /** Debug: turns the wind the other way (or sets it). */
   setWindDirection(direction: WindDirection = this.wind === 1 ? -1 : 1): void {
     this.wind = direction;
@@ -619,6 +650,8 @@ export class RunController {
       rng: this.rng.state(),
       specialRng: this.specialRng.state(),
       pickRng: this.pickRng.state(),
+      porcelainRng: this.porcelainRng.state(),
+      echoRng: this.echoRng.state(),
       queue: this.queue.snapshot(),
       economy: this.economy.snapshot(),
       danger: this.danger.snapshot(),
@@ -635,6 +668,8 @@ export class RunController {
     for (const value of this.rng.state()) h.number(value);
     for (const value of this.specialRng.state()) h.number(value);
     for (const value of this.pickRng.state()) h.number(value);
+    for (const value of this.porcelainRng.state()) h.number(value);
+    for (const value of this.echoRng.state()) h.number(value);
     for (const item of [this.queue.current, this.queue.next]) {
       h.string(item.kind).number(item.tier).bool(item.golden).number(item.hits);
     }
@@ -658,6 +693,9 @@ export class RunController {
     this.rng.setState(saved.rng);
     this.specialRng.setState(saved.specialRng);
     this.pickRng.setState(saved.pickRng);
+    // Runs saved before Batch 18 never rolled these: they start fresh from the seed.
+    if (saved.porcelainRng) this.porcelainRng.setState(saved.porcelainRng);
+    if (saved.echoRng) this.echoRng.setState(saved.echoRng);
     for (const id of PICK_IDS) this.levels[id] = Math.min(PICKS[id].maxLevel, saved.levels[id]);
     // A run saved before Batch 18 has no wind yet: the seed's.
     this.wind = saved.windDirection ?? this.wind;
@@ -707,13 +745,13 @@ export class RunController {
     const last = stageInfo(world.stage).lastTier;
 
     if (this.levels.heavyDrop > 0) this.announceLandings(now);
-    const outcomes = this.merges.resolve(world, last);
+    const outcomes = this.merges.resolve(world, last, this.mergeRules());
     /** The first cat this step made of the stage's last tier: it clears the stage. */
     let cleared: Ball | null = null;
     for (const o of outcomes) {
       const at = { x: o.x, y: o.y };
       if (o.kind === 'merge') {
-        const p = this.economy.merge(o.tier, now, o.newTier);
+        const p = this.economy.merge(o.tier, now, o.newTier, o.parts);
         this.bankCoins(p.coins);
         if (o.ball && o.ball.tier === last) cleared ??= o.ball;
         this.events.emit('merged', {
@@ -723,9 +761,12 @@ export class RunController {
           newSize: o.ball?.size ?? world.sizeOf(o.newTier),
           golden: o.golden,
           joker: o.joker,
+          parts: o.parts,
+          kintsugi: o.cracked,
           at,
           ...p,
         });
+        this.echo(o, last);
       } else {
         const p = this.economy.jackpot(last, now);
         this.bankCoins(p.coins);
@@ -737,6 +778,7 @@ export class RunController {
       this.events.emit('runCoinsChanged', { coins: this.economy.coins });
     }
     this.hitBoulders(this.merges.hits);
+    this.crackPorcelain(this.merges.cracks, now);
     this.fireHanabi(now);
     const combo = this.economy.comboAt(now);
     if (combo !== this.shownCombo) {
@@ -831,6 +873,82 @@ export class RunController {
       lit.push(...blast.chain);
     }
     if (paid) this.events.emit('runCoinsChanged', { coins: this.economy.coins });
+  }
+
+  /** How cats merge now: Hubris's threes and Porcelain's cracks (GAME_DESIGN §15.10–§15.11). */
+  private mergeRules(): MergeRules {
+    return {
+      threesUpTo: this.levels.hubris > 0 ? HUBRIS_MAX_SIZE : 0,
+      porcelain: this.levels.porcelain > 0,
+    };
+  }
+
+  /**
+   * Echo (GAME_DESIGN §15.11): a merge of cats of ECHO_MIN_SIZE–ECHO_MAX_SIZE leaves a cat of their
+   * size beside the new cat, on a side the seed picks, growing in from small. Never for a joker's
+   * merge or the stage's last cat. It pays nothing and isn't a merge.
+   */
+  private echo(o: MergeOutcome, last: number): void {
+    const ball = o.ball;
+    if (this.levels.echo <= 0 || !ball || o.joker || o.newTier >= last) return;
+    const size = this.world.sizeOf(o.tier);
+    if (size < ECHO_MIN_SIZE || size > ECHO_MAX_SIZE) return;
+    const radius = sizeRadius(size);
+    const side = this.echoRng.chance(0.5) ? 1 : -1;
+    const spot = echoSpot(o.x, o.y, ball.targetRadius, radius, side, this.world.geometry);
+    const echo = this.world.addBall({
+      tier: o.tier,
+      ...spot,
+      startRadius: SPAWN_START_RADIUS_SHARE * radius,
+      landedMs: ball.landedMs,
+    });
+    this.events.emit('echoed', { id: echo.id, tier: o.tier, from: ball.id, at: spot });
+  }
+
+  /**
+   * Porcelain (GAME_DESIGN §15.10): each cat a merge reached cracks with its chance, rolled in the
+   * resolver's order (cats by id, then merges). A cracked cat that cracks again breaks.
+   */
+  private crackPorcelain(cats: readonly Ball[], now: number): void {
+    if (cats.length === 0) return;
+    const chance = PORCELAIN_CHANCE_PER_LEVEL * this.levels.porcelain;
+    for (const cat of cats) {
+      if (this.porcelainRng.chance(chance)) this.crack(cat, now);
+    }
+  }
+
+  /**
+   * A cat cracks: an intact one is cracked now; a cracked one breaks into two cats of the size below,
+   * side by side where it was, each growing in from small (shard mates: they never merge with each
+   * other). A cracked size 1 just shatters. It pays nothing.
+   */
+  private crack(cat: Ball, now: number): void {
+    if (cat.removed || cat.kind !== 'cat') return;
+    const at = { x: cat.x, y: cat.y };
+    if (!cat.cracked) {
+      cat.cracked = true;
+      this.events.emit('catCracked', { id: cat.id, tier: cat.tier, at });
+      return;
+    }
+    this.world.removeBall(cat);
+    const pieces: number[] = [];
+    if (cat.size > 1) {
+      const radius = sizeRadius(cat.size - 1);
+      const landedMs = cat.landedMs >= 0 ? cat.landedMs : now;
+      const [a, b] = pieceSpots(cat.x, radius, this.world.geometry).map((x) =>
+        this.world.addBall({
+          tier: cat.tier - 1,
+          x,
+          y: cat.y,
+          startRadius: SPAWN_START_RADIUS_SHARE * radius,
+          landedMs,
+        }),
+      ) as [Ball, Ball];
+      a.mate = b.id;
+      b.mate = a.id;
+      pieces.push(a.id, b.id);
+    }
+    this.events.emit('catBroken', { id: cat.id, tier: cat.tier, at, pieces });
   }
 
   /** What the queue rolls now: the stage and the picks so far. */

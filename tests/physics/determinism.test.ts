@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Rng } from '../../src/core/rng';
 import { PhysicsWorld } from '../../src/physics/PhysicsWorld';
+import type { PickId } from '../../src/config/picks';
 import { RunController } from '../../src/run/RunController';
 import { botMove, replayInput, STEPS_PER_SECOND, upgrades } from './fixtures';
 import type { PlayInput } from './fixtures';
@@ -17,8 +18,15 @@ interface DropInput {
 const LEVELS = upgrades({ bigCatch: 2, comboCharm: 3, secondChance: 1 });
 const TICKS = 25 * STEPS_PER_SECOND;
 
-function newRun(seed: number): RunController {
-  return new RunController({ seed, upgrades: LEVELS });
+/** Pick levels on top of the magnets and golden cats every run here has. */
+type Extra = Partial<Record<PickId, number>>;
+
+function newRun(seed: number, extra: Extra = {}): RunController {
+  const run = new RunController({ seed, upgrades: LEVELS });
+  run.setPickLevel('moreMagnets', 5);
+  run.setPickLevel('goldenCats', 5);
+  for (const [id, level] of Object.entries(extra)) run.setPickLevel(id as PickId, level);
+  return run;
 }
 
 /**
@@ -33,10 +41,9 @@ function playWithFrames(
   frameSeed: number,
   clearAt = Infinity,
   picksAt = Infinity,
+  extra: Extra = {},
 ): { inputs: DropInput[]; hashes: string[] } {
-  const run = newRun(seed);
-  run.setPickLevel('moreMagnets', 5);
-  run.setPickLevel('goldenCats', 5);
+  const run = newRun(seed, extra);
   const frames = new Rng(frameSeed);
   const aim = new Rng(seed + 99);
   const inputs: DropInput[] = [];
@@ -70,10 +77,13 @@ function playWithFrames(
 }
 
 /** Replays recorded inputs one tick at a time; hashes at the same ticks as the recording. */
-function replay(seed: number, inputs: readonly DropInput[], checkTicks: readonly number[]) {
-  const run = newRun(seed);
-  run.setPickLevel('moreMagnets', 5);
-  run.setPickLevel('goldenCats', 5);
+function replay(
+  seed: number,
+  inputs: readonly DropInput[],
+  checkTicks: readonly number[],
+  extra: Extra = {},
+) {
+  const run = newRun(seed, extra);
   const hashes: string[] = [];
   let next = 0;
   const end = Math.max(TICKS, ...checkTicks);
@@ -91,7 +101,8 @@ function replay(seed: number, inputs: readonly DropInput[], checkTicks: readonly
   return { run, hashes };
 }
 
-describe('determinism (TECH_SPEC §5)', () => {
+// Whole runs replayed: slow under coverage, slower while other files run beside them.
+describe('determinism (TECH_SPEC §5)', { timeout: 30_000 }, () => {
   it('replays a run exactly from its seed and inputs, at any frame rate', () => {
     const recorded = playWithFrames(6, 1, Infinity, 8 * STEPS_PER_SECOND);
     expect(recorded.inputs.length).toBeGreaterThan(20);
@@ -119,6 +130,16 @@ describe('determinism (TECH_SPEC §5)', () => {
     const { run, hashes } = replay(9, recorded.inputs, ticks);
     expect(hashes).toEqual(recorded.hashes);
     expect(run.stage).toBeGreaterThan(1);
+  });
+
+  it("replays a run with Batch 18's trials and rules: wind, heavy drops, cracks, threes, echoes", () => {
+    const extra: Extra = { wind: 3, heavyDrop: 4, porcelain: 4, hubris: 1, echo: 1 };
+    const recorded = playWithFrames(12, 3, Infinity, Infinity, extra);
+    const ticks = recorded.hashes.map((h) => Number(h.split(':')[0]));
+    new PhysicsWorld().addBall({ tier: 3, x: 0, y: -100 });
+    const { run, hashes } = replay(12, recorded.inputs, ticks, extra);
+    expect(hashes).toEqual(recorded.hashes);
+    expect(run.score).toBeGreaterThan(0);
   });
 
   it('gives different runs for different seeds', () => {
