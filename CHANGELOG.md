@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.35.2] - 2026-10-11
+
+### Fixed
+
+- Porcelain: a broken cat's two pieces that stayed wedged together in a pile never merged (they only could once they had come apart, which 13–18% of breaks never did in bot play). Now they are ordinary cats 1 s after the break in any case, so pieces still touching then merge back into a whole cat. Porcelain clogs the jar less for it: the balance bot clears 8 of 30 stage-1 runs at level 2 and 12 at level 4 (before: 9 and 4; without Porcelain 11).
+
 ## [0.35.1] - 2026-10-11
 
 ### Fixed
