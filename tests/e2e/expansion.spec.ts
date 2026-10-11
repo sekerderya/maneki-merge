@@ -124,7 +124,9 @@ test('making the last cat (two 8s) clears stage 1 and moves on in the same jar',
   expect(errors).toEqual([]);
 });
 
-test('a rule pick (Batch 18) shows its rules and is chosen through the panel', async ({ page }) => {
+test('a rule pick shows three of its four rules and is chosen through the panel', async ({
+  page,
+}) => {
   const errors = watchConsole(page);
   await startRun(page, 4);
   // As at a clear that grows the jar (GAME_DESIGN §15.5): a rule, then a blessing.
@@ -132,10 +134,10 @@ test('a rule pick (Batch 18) shows its rules and is chosen through the panel', a
   const overlay = page.getByTestId('pick-overlay');
   await expect(overlay).toHaveAttribute('data-kind', 'rule', WAIT);
   await expect(overlay.locator('.pick-title')).toHaveText('Choose a rule');
-  await expect(overlay.locator('.pick-card')).toHaveCount(2);
+  await expect(overlay.locator('.pick-card')).toHaveCount(3);
   await expect(overlay.locator('.pick-card.is-rule .pick-level').first()).toHaveText('New rule');
   const rule = await overlay.locator('.pick-card').first().getAttribute('data-id');
-  expect(['hubris', 'echo']).toContain(rule);
+  expect(['hubris', 'echo', 'copycat', 'dice']).toContain(rule);
   await page.waitForTimeout(500);
   await overlay.locator('.pick-card').first().click();
   await page.getByTestId('pick-choose').click();
@@ -146,6 +148,48 @@ test('a rule pick (Batch 18) shows its rules and is chosen through the panel', a
   await expect(overlay).toBeHidden(WAIT);
   await expect.poll(async () => (await state(page)).runState, WAIT).toBe('playing');
   expect((await state(page)).pickLevels?.[rule!]).toBe(1);
+  expect(errors).toEqual([]);
+});
+
+test("Cursed Bell's follow-up trials are offered only once it is taken", async ({ page }) => {
+  const errors = watchConsole(page);
+  await startRun(page, 6);
+  // Every other trial maxed: before Cursed Bell, it is the only trial left to offer.
+  await page.evaluate(() => {
+    const max: Record<string, number> = {
+      moreBoulders: 5,
+      ironBands: 3,
+      bigBoulders: 4,
+      wind: 5,
+      heavyDrop: 5,
+      porcelain: 4,
+    };
+    for (const [id, level] of Object.entries(max)) {
+      window.__game?.setPickLevel(id as never, level);
+    }
+    window.__game?.offerPicks();
+  });
+  const overlay = page.getByTestId('pick-overlay');
+  await expect(overlay).toHaveAttribute('data-kind', 'trial', WAIT);
+  await expect(overlay.locator('.pick-card')).toHaveCount(1);
+  await expect(overlay.locator('.pick-card').first()).toHaveAttribute('data-id', 'cursedBell');
+  await page.waitForTimeout(500);
+  await overlay.locator('.pick-card').first().click();
+  await page.getByTestId('pick-choose').click();
+  await expect(overlay).toHaveAttribute('data-kind', 'blessing', WAIT);
+  await page.waitForTimeout(500);
+  await overlay.locator('.pick-card').first().click();
+  await page.getByTestId('pick-choose').click();
+  await expect.poll(async () => (await state(page)).runState, WAIT).toBe('playing');
+  expect((await state(page)).pickLevels?.['cursedBell']).toBe(1);
+  // Now its two follow-ups are what is left.
+  await page.evaluate(() => window.__game?.offerPicks());
+  await expect(overlay).toHaveAttribute('data-kind', 'trial', WAIT);
+  await expect(overlay.locator('.pick-card')).toHaveCount(2);
+  const ids = await overlay
+    .locator('.pick-card')
+    .evaluateAll((cards) => cards.map((card) => (card as HTMLElement).dataset['id']).sort());
+  expect(ids).toEqual(['moreCurses', 'quickCurse']);
   expect(errors).toEqual([]);
 });
 

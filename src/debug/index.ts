@@ -50,6 +50,10 @@ export interface GameStateSnapshot {
   readonly pickLevels: Readonly<Record<string, number>> | null;
   /** Which way the run's wind blows (1 right, −1 left), or null. */
   readonly wind: 1 | -1 | null;
+  /** The cursed cat and what its bell shows (Cursed Bell, GAME_DESIGN §15.12), or null. */
+  readonly curse: { readonly id: number; readonly dropsLeft: number } | null;
+  /** The tier of the ball in NEXT (Copycat, §15.13), or null. */
+  readonly nextTier: number | null;
   /** The danger countdown is running (a cat is over the line). */
   readonly danger: boolean;
   /** The stage's smallest and last cat (making the last one clears the stage). */
@@ -114,6 +118,15 @@ export interface GameHooks {
   /** The ids of the cats in the jar, oldest first. */
   catIds(): number[];
   /**
+   * Curses the cat `id` (the newest one that can be when omitted), with `dropsLeft` on its bell
+   * (Quick Curse's count by default). Returns whether it did.
+   */
+  curseCat(id?: number, dropsLeft?: number): boolean;
+  /** Sets what the cursed cat's bell shows. */
+  setCurseDrops(dropsLeft: number): boolean;
+  /** The next merge that rolls a die (Dice, §15.14) shows this. */
+  forceDice(roll: 'lucky' | 'fizzle' | 'normal'): void;
+  /**
    * Places `pairs` touching pairs of `tier` cats in rows on the jar floor, so they all merge on
    * the next physics step (M9: many simultaneous merges). `tier` defaults to the stage's smallest
    * and must be below its last cat.
@@ -166,6 +179,8 @@ export function installDebugHooks(ctx: DebugContext): GameHooks {
           : null,
         pickLevels: run?.pickLevels ?? null,
         wind: run?.windDirection ?? null,
+        curse: run?.curse ?? null,
+        nextTier: run?.next.tier ?? null,
         danger: run?.dangerActive ?? false,
         firstTier: stageInfo(run?.stage ?? 1).firstTier,
         lastTier: stageInfo(run?.stage ?? 1).lastTier,
@@ -260,6 +275,15 @@ export function installDebugHooks(ctx: DebugContext): GameHooks {
     },
     crackedIds() {
       return (session.run?.balls ?? []).filter((b) => b.cracked).map((b) => b.id);
+    },
+    curseCat(id, dropsLeft) {
+      return session.run?.curseCat(id, dropsLeft) ?? false;
+    },
+    setCurseDrops(dropsLeft) {
+      return session.run?.setCurseDrops(dropsLeft) ?? false;
+    },
+    forceDice(roll) {
+      session.run?.forceDice(roll);
     },
     mergeBurst(pairs = 10, tier) {
       const run = session.run;
@@ -373,6 +397,14 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
   pickLevel.type = 'number';
   pickLevel.min = '0';
   pickLevel.value = '1';
+  // Cursed Bell and Dice (GAME_DESIGN §15.12, §15.14).
+  const bell = el('input', 'debug-input');
+  bell.type = 'number';
+  bell.min = '0';
+  bell.value = '3';
+  bell.title = 'Drops left on the bell';
+  const die = el('select', 'debug-input');
+  for (const face of ['lucky', 'fizzle', 'normal']) die.append(new Option(face, face));
 
   body.append(
     stats,
@@ -424,6 +456,13 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
         const newest = hooks.catIds().at(-1);
         if (newest !== undefined) hooks.crackCat(newest);
       }),
+    ),
+    row(
+      bell,
+      action('Curse newest', () => hooks.curseCat(undefined, Number(bell.value))),
+      action('Set bell', () => hooks.setCurseDrops(Number(bell.value))),
+      die,
+      action('Force die', () => hooks.forceDice(die.value as 'lucky' | 'fizzle' | 'normal')),
     ),
     row(
       action('+1000 coins', () => hooks.addCoins(1000)),
