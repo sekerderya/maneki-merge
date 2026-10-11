@@ -18,7 +18,11 @@ export type SoundName =
   | 'purchase'
   | 'take'
   | 'clang'
-  | 'crunch';
+  | 'crunch'
+  | 'thud'
+  | 'tink'
+  | 'shatter'
+  | 'echo';
 
 /** Everything goes through one master gain and a limiter, so stacked sounds never clip. */
 export const MASTER_VOLUME = 0.8;
@@ -63,6 +67,12 @@ export const SOUNDS: Readonly<Record<SoundName, SoundSpec>> = {
   crunch: { volume: 0.4, durationMs: 320, minIntervalMs: 60, maxVoices: 2 },
   // A hanabi goes off (GAME_DESIGN §15.6).
   boom: { volume: 0.45, durationMs: 700, minIntervalMs: 120, maxVoices: 2 },
+  // Batch 18 (GAME_DESIGN §15.9–§15.11): Heavy Drop's top level landing, a porcelain cat
+  // cracking and breaking, an echo cat appearing.
+  thud: { volume: 0.5, durationMs: 260, minIntervalMs: 80, maxVoices: 1 },
+  tink: { volume: 0.2, durationMs: 120, minIntervalMs: 50, maxVoices: 2 },
+  shatter: { volume: 0.32, durationMs: 320, minIntervalMs: 80, maxVoices: 2 },
+  echo: { volume: 0.22, durationMs: 1100, minIntervalMs: 150, maxVoices: 2 },
 };
 
 /**

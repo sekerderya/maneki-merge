@@ -80,6 +80,13 @@ export type WindDirection = 1 | -1;
  * gravity that make them are in config/physics.ts.
  */
 export const HEAVY_DROP_FALL_TIMES = [1.0, 0.8, 0.65, 0.5, 0.4, 0.3] as const;
+/**
+ * Its look: speed lines from level 1, a small flame with embers from HEAVY_FLAME_LEVEL, and from
+ * HEAVY_FIREBALL_LEVEL (the top level) the big fireball, which lands with sparks, a thud and a
+ * small shake. Visual only.
+ */
+export const HEAVY_FLAME_LEVEL = 3;
+export const HEAVY_FIREBALL_LEVEL = 5;
 
 /**
  * Porcelain (GAME_DESIGN §15.10): every merge may crack each cat whose edge is within this many

@@ -5,6 +5,7 @@
 import type { SoundName } from './config/audio';
 import type { HapticPattern } from './config/platform';
 import { COMBO_BANNER_MIN } from './config/economy';
+import { HEAVY_FIREBALL_LEVEL } from './config/picks';
 import type { EventBus, GameEvents } from './core/events';
 
 export interface FeedbackOutputs {
@@ -64,6 +65,12 @@ export function connectRunFeedback(events: EventBus<GameEvents>, out: FeedbackOu
       out.vibrate('luckySave');
     }),
     events.on('dangerTick', (e) => out.play('dangerTick', e.secondsLeft)),
+    // Heavy Drop's fireball (its top level) lands with a thud.
+    events.on('heavyLanded', (e) => {
+      if (e.level < HEAVY_FIREBALL_LEVEL) return;
+      out.play('thud');
+      out.vibrate('tick');
+    }),
     events.on('gameOver', () => out.play('gameOver')),
   ];
   return () => {

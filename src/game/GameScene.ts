@@ -17,6 +17,7 @@ import {
   COUNTDOWN_STROKE,
   SELECT_RING,
 } from '../config/skin';
+import { HEAVY_FIREBALL_LEVEL } from '../config/picks';
 import { FIRST_STAGE, JAR_WIDTH, tierSize } from '../config/stages';
 import { PAW_GRIP } from '../config/pawArt';
 import { MAGNET_TAKE_MS } from '../config/timings';
@@ -52,6 +53,7 @@ import { BallRenderer, glowAlpha } from './BallRenderer';
 import type { CatSprite } from './BallRenderer';
 import { fitCamera, worldToView } from './cameraFit';
 import type { CameraFit, JarFrame } from './cameraFit';
+import { FallFx } from './fx/FallFx';
 import { LastCatFx } from './fx/LastCatFx';
 import { MergeFx } from './fx/MergeFx';
 import type { PayoutKind } from './fx/MergeFx';
@@ -115,6 +117,7 @@ export class GameScene extends Phaser.Scene {
   private sparks!: SparkFx;
   /** The stage's last cat shining while it waits alone (GAME_DESIGN §7.1). */
   private lastCat!: LastCatFx;
+  private fall!: FallFx;
   private aimGuide!: AimGuide;
   private selectRing!: Phaser.GameObjects.Graphics;
   private dropperGlow!: Phaser.GameObjects.Image;
@@ -209,6 +212,8 @@ export class GameScene extends Phaser.Scene {
     );
     this.pops = new PopFx(this.balls, this.fx);
     this.sparks = new SparkFx(this, fx);
+    // Heavy Drop's trails go behind the balls.
+    this.fall = new FallFx(this, glows, this.sparks, (count) => this.particles(count));
     this.lastCat = new LastCatFx(
       this,
       glows,
@@ -318,6 +323,13 @@ export class GameScene extends Phaser.Scene {
       this.sparks.mergeBurst(x, y, this.particles(HANABI_BLAST_SPARKS), HANABI_SPARKS);
       this.sparks.burst(x, y, this.particles(BURST_SPARKS.golden));
       this.addShake(SHAKE.hanabi, SHAKE.hanabiMs);
+    });
+    // Heavy Drop's fireball lands (GAME_DESIGN §15.9): fire sparks under it and a small shake.
+    on('heavyLanded', (e) => {
+      if (e.level < HEAVY_FIREBALL_LEVEL) return;
+      const ball = run.balls.find((b) => b.id === e.id);
+      this.fall.landing(e.at.x, e.at.y + (ball?.radius ?? 0));
+      this.addShake(SHAKE.heavy, SHAKE.heavyMs);
     });
     on('specialPopped', (e) => {
       const { x, y } = e.at;
@@ -456,6 +468,7 @@ export class GameScene extends Phaser.Scene {
     this.balls?.clear();
     this.fx?.clear();
     this.sparks?.clear();
+    this.fall?.clear();
     this.lastCat?.clear();
   }
 
@@ -496,6 +509,7 @@ export class GameScene extends Phaser.Scene {
     this.renderFlights(run);
     this.renderCountdown(run, geo);
     this.lastCat.update(this.nowMs, run.balls, run.state === 'paused');
+    this.fall.update(this.nowMs, run.balls, run.levelOf('heavyDrop'), run.state === 'paused');
     this.pops.update(this.nowMs);
     this.fx.update(this.nowMs);
   }

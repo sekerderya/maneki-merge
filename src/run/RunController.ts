@@ -343,6 +343,11 @@ export class RunController {
     return { ...this.levels };
   }
 
+  /** One trial's, rule's or blessing's level this run (no copy: for every frame). */
+  levelOf(id: PickId): number {
+    return this.levels[id];
+  }
+
   /** Which way the wind blows this run (GAME_DESIGN §15.8): 1 to the right, −1 to the left. */
   get windDirection(): WindDirection {
     return this.wind;
@@ -701,6 +706,7 @@ export class RunController {
     const now = world.timeMs;
     const last = stageInfo(world.stage).lastTier;
 
+    if (this.levels.heavyDrop > 0) this.announceLandings(now);
     const outcomes = this.merges.resolve(world, last);
     /** The first cat this step made of the stage's last tier: it clears the stage. */
     let cleared: Ball | null = null;
@@ -743,6 +749,15 @@ export class RunController {
     }
     this.announceDropIfReady();
     this.updateDanger(now);
+  }
+
+  /** Heavy Drop's falling balls that touched something this step (their fire goes out). */
+  private announceLandings(now: number): void {
+    for (const ball of this.world.balls) {
+      if (ball.landedMs !== now) continue;
+      const at = { x: ball.x, y: ball.y };
+      this.events.emit('heavyLanded', { id: ball.id, level: this.levels.heavyDrop, at });
+    }
   }
 
   private announceDropIfReady(): void {

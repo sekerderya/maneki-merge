@@ -184,6 +184,33 @@ export const BURST_SPARKS = {
   scale: 0.45,
 } as const;
 
+/**
+ * Heavy Drop's look (GAME_DESIGN §15.9), world units. A falling ball faster than `minSpeed` trails
+ * `lines` speed lines above it, each `lengthPerSpeed` × its speed long (at most `maxLength`);
+ * from HEAVY_FLAME_LEVEL it sheds embers every `emberMs`, and the fireball's landing bursts
+ * `landingSparks` fire sparks.
+ */
+export const HEAVY_TRAIL = {
+  minSpeed: 900,
+  lines: 3,
+  width: 4,
+  lengthPerSpeed: 0.05,
+  maxLength: 190,
+  alpha: 0.55,
+  emberMs: 35,
+  landingSparks: 26,
+} as const;
+/** Embers and the fireball's landing sparks (world units, like BURST_SPARKS). */
+export const FIRE_SPARKS = {
+  emberLifespanMs: { min: 220, max: 420 },
+  emberSpeed: { min: 30, max: 120 },
+  emberScale: 0.3,
+  burstLifespanMs: { min: 350, max: 750 },
+  burstSpeed: { min: 220, max: 620 },
+  burstScale: 0.42,
+  gravity: 500,
+} as const;
+
 /** The shop balance counts down to the new wallet after a purchase (GAME_DESIGN §2.2). */
 export const SHOP_BALANCE_COUNT_MS = 450;
 
@@ -220,6 +247,9 @@ export const SHAKE = {
   jackpotMs: 450,
   hanabi: 8,
   hanabiMs: 260,
+  /** Heavy Drop's fireball landing (GAME_DESIGN §15.9). */
+  heavy: 6,
+  heavyMs: 220,
   comboMin: 5,
   comboStep: 1.2,
   comboMax: 7,

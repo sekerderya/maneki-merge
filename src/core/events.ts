@@ -188,6 +188,11 @@ export interface GameEvents {
   pickOffered: { readonly kind: PickKind; readonly options: readonly PickId[] };
   /** An option was chosen: its level for the rest of the run is now `level`. */
   pickChosen: { readonly kind: PickKind; readonly id: PickId; readonly level: number };
+  /**
+   * A ball dropped with Heavy Drop on (GAME_DESIGN §15.9) touched something for the first time:
+   * `level` is Heavy Drop's level (a fireball's landing at the top level).
+   */
+  heavyLanded: { readonly id: number; readonly level: number; readonly at: WorldPoint };
   /** The wind (GAME_DESIGN §15.8) changed: its level (0: none) or, with the debug tools, its way. */
   windChanged: { readonly level: number; readonly direction: WindDirection };
   paused: Record<string, never>;

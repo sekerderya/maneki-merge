@@ -194,6 +194,28 @@ export const RECIPES: Readonly<Record<SoundName, Recipe>> = {
       gain: 0.35,
     });
   },
+  // Heavy Drop's fireball lands (GAME_DESIGN §15.9): a short, heavy thud.
+  thud(v) {
+    tone(v, { from: 95, to: 40, glide: 0.16, decay: 0.2, gain: 0.95 });
+    noise(v, { filter: 'lowpass', from: 700, to: 180, attack: 0.002, decay: 0.12, gain: 0.7 });
+  },
+  // A porcelain cat cracks (GAME_DESIGN §15.10): a small glassy tink.
+  tink(v) {
+    tone(v, { from: 3520, decay: 0.09, gain: 0.6 });
+    tone(v, { from: 5274, decay: 0.05, gain: 0.3 });
+  },
+  // A cracked cat breaks in two: porcelain shattering.
+  shatter(v) {
+    noise(v, { filter: 'highpass', from: 2600, attack: 0.002, decay: 0.18, gain: 0.7 });
+    for (let i = 0; i < 4; i++) {
+      tone(v, { from: 2800 + i * 640, delay: i * 0.035, decay: 0.07, gain: 0.35 });
+    }
+  },
+  // An echo cat appears (GAME_DESIGN §15.11): a soft bell and its fainter echo.
+  echo(v) {
+    bell(v, 784, 0, 0.6);
+    bell(v, 784, 0.18, 0.3);
+  },
   // Two rising notes and a ching.
   purchase(v) {
     const hz = 659.25;

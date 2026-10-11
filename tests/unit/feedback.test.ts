@@ -91,4 +91,18 @@ describe('run feedback wiring (GAME_DESIGN §12)', () => {
     events.emit('pickChosen', { kind: 'trial', id: 'ironBands', level: 1 });
     expect(log).toEqual(['take', 'clang', 'buzz:tick', 'crunch', 'buzz:tick', 'chime', 'purchase']);
   });
+
+  it("thuds when Heavy Drop's fireball lands, not below its top level", () => {
+    const events = new EventBus<GameEvents>();
+    const log: string[] = [];
+    connectRunFeedback(events, {
+      play: (name) => log.push(name),
+      vibrate: (name) => log.push('buzz:' + name),
+    });
+    const at = { x: 0, y: 0 };
+    events.emit('heavyLanded', { id: 1, level: 4, at });
+    expect(log).toEqual([]);
+    events.emit('heavyLanded', { id: 2, level: 5, at });
+    expect(log).toEqual(['thud', 'buzz:tick']);
+  });
 });

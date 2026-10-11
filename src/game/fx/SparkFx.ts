@@ -1,11 +1,12 @@
 /**
  * Sparks and particles: gold along the rim when the shrine grows and again when the new jar is
- * revealed (GAME_DESIGN §7.1), gold bursts for golden merges and Jackpots, and a burst in the new
- * cat's colour for every merge (§12). Three pooled Phaser particle emitters in world units (the
- * world has the same scale at every stage).
+ * revealed (GAME_DESIGN §7.1), gold bursts for golden merges and Jackpots, a burst in the new
+ * cat's colour for every merge (§12), and Heavy Drop's embers and fire sparks (§15.9). Pooled
+ * Phaser particle emitters in world units (the world has the same scale at every stage).
  */
 import type Phaser from 'phaser';
-import { BURST_SPARKS, EXPANSION_SPARKS, MERGE_PARTICLES } from '../../config/view';
+import { FIRE_TINTS } from '../../config/skin';
+import { BURST_SPARKS, EXPANSION_SPARKS, FIRE_SPARKS, MERGE_PARTICLES } from '../../config/view';
 
 const SPARK_KEY = 'fx-spark';
 const SPARK_PX = 64;
@@ -16,6 +17,8 @@ export class SparkFx {
   private readonly emitter: Phaser.GameObjects.Particles.ParticleEmitter;
   private readonly bursts: Phaser.GameObjects.Particles.ParticleEmitter;
   private readonly merges: Phaser.GameObjects.Particles.ParticleEmitter;
+  private readonly embersEmitter: Phaser.GameObjects.Particles.ParticleEmitter;
+  private readonly fire: Phaser.GameObjects.Particles.ParticleEmitter;
 
   constructor(scene: Phaser.Scene, layer: Phaser.GameObjects.Layer) {
     createSparkTexture(scene.textures);
@@ -51,7 +54,38 @@ export class SparkFx {
       scale: { start: MERGE_PARTICLES.scale, end: 0 },
       alpha: { start: 1, end: 0 },
     });
-    layer.add([this.merges, this.emitter, this.bursts]);
+    this.embersEmitter = scene.add.particles(0, 0, SPARK_KEY, {
+      emitting: false,
+      lifespan: { ...FIRE_SPARKS.emberLifespanMs },
+      speed: { ...FIRE_SPARKS.emberSpeed },
+      // Mostly up and out: they trail behind a falling ball.
+      angle: { min: 200, max: 340 },
+      scale: { start: FIRE_SPARKS.emberScale, end: 0 },
+      alpha: { start: 1, end: 0 },
+      tint: [...FIRE_TINTS],
+    });
+    this.fire = scene.add.particles(0, 0, SPARK_KEY, {
+      emitting: false,
+      lifespan: { ...FIRE_SPARKS.burstLifespanMs },
+      speed: { ...FIRE_SPARKS.burstSpeed },
+      // Up and to the sides, off the thing it landed on.
+      angle: { min: 190, max: 350 },
+      gravityY: FIRE_SPARKS.gravity,
+      scale: { start: FIRE_SPARKS.burstScale, end: 0 },
+      alpha: { start: 1, end: 0.2 },
+      tint: [...FIRE_TINTS],
+    });
+    layer.add([this.merges, this.emitter, this.bursts, this.embersEmitter, this.fire]);
+  }
+
+  /** Embers shed by a falling heavy ball. */
+  embers(x: number, y: number, count: number): void {
+    this.embersEmitter.emitParticleAt(x, y, count);
+  }
+
+  /** Fire sparks where Heavy Drop's fireball lands. */
+  fireBurst(x: number, y: number, count: number): void {
+    this.fire.emitParticleAt(x, y, count);
   }
 
   /** A burst of `count` particles tinted `color` at a world point. */
@@ -92,7 +126,7 @@ export class SparkFx {
   }
 
   private all(): Phaser.GameObjects.Particles.ParticleEmitter[] {
-    return [this.emitter, this.bursts, this.merges];
+    return [this.emitter, this.bursts, this.merges, this.embersEmitter, this.fire];
   }
 }
 

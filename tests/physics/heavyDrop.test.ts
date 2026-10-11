@@ -97,6 +97,18 @@ describe('Heavy Drop (GAME_DESIGN §15.9)', () => {
     }
   });
 
+  it('announces each heavy landing, once, where the ball first touched', () => {
+    const run = new RunController({ seed: 3 });
+    const landed: { id: number; level: number }[] = [];
+    run.events.on('heavyLanded', (e) => landed.push({ id: e.id, level: e.level }));
+    run.setPickLevel('heavyDrop', 5);
+    while (!run.canDrop) run.tick();
+    run.drop(0);
+    const ball = run.balls[0]!;
+    for (let i = 0; i < 120; i++) run.tick();
+    expect(landed).toEqual([{ id: ball.id, level: 5 }]);
+  });
+
   it('changes nothing at level 0', () => {
     const run = new RunController({ seed: 3 });
     while (!run.canDrop) run.tick();

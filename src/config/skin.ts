@@ -74,6 +74,10 @@ export const HANABI_BURST = ['#ff5a4e', '#ffd34d', '#7fe0ff', '#ff9ad5'] as cons
 export const HANABI_FUSE = '#8a5a3b';
 /** A hanabi's blast: its sparks. */
 export const HANABI_SPARKS = 0xffb347;
+/** Heavy Drop's embers and its fireball's landing sparks (GAME_DESIGN §15.9). */
+export const FIRE_TINTS = [0xffd34d, 0xffa53d, 0xff7a2e, 0xe8502f] as const;
+/** Its speed lines: warm ink, so they show on the cream sky. */
+export const HEAVY_TRAIL_TINT = 0x8a5a3b;
 export const JOKER_BALL = '#fffaf2';
 export const JOKER_RAINBOW = [
   '#ff5a4e',

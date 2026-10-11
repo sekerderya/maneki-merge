@@ -49,7 +49,8 @@ export function createWindGusts(root: HTMLElement): WindGustsView {
     direction: 1 | -1,
     crossMs: number,
     sway: number,
-    turn: number,
+    /** Degrees it turns over a crossing; null for a streak, which stays level. */
+    turn: number | null,
   ): void => {
     const width = root.clientWidth;
     const height = root.clientHeight * WIND_BAND;
@@ -57,13 +58,15 @@ export function createWindGusts(root: HTMLElement): WindGustsView {
     const from = direction > 0 ? -60 : width + 60;
     const to = direction > 0 ? width + 60 : -60;
     const duration = crossMs * (0.8 + 0.4 * rng.next());
-    const spin = rng.next() * 360;
+    const spin = turn === null ? 0 : rng.next() * 360;
     const frames: Keyframe[] = [];
     for (let i = 0; i <= 4; i++) {
       const t = i / 4;
       const x = from + (to - from) * t;
       const dy = sway * Math.sin((t + rng.next() * 0.2) * Math.PI * 2);
-      frames.push({ transform: `translate(${x}px, ${y + dy}px) rotate(${spin + turn * t}deg)` });
+      frames.push({
+        transform: `translate(${x}px, ${y + dy}px) rotate(${spin + (turn ?? 0) * t}deg)`,
+      });
     }
     layer.append(piece);
     const animation = piece.animate(frames, {
@@ -90,7 +93,7 @@ export function createWindGusts(root: HTMLElement): WindGustsView {
       const crossMs = still ? WIND_CALM_CROSS_MS : WIND_CROSS_MS - WIND_CROSS_MS_PER_LEVEL * level;
       for (let i = 0; i < petals; i++) {
         const petal = el('span', 'wind-petal');
-        const size = 6 + 5 * rng.next();
+        const size = 8 + 5 * rng.next();
         petal.style.width = `${size}px`;
         petal.style.height = `${size * 0.55}px`;
         drift(petal, rng, direction, crossMs, 18, still ? 90 : 540 * direction);
@@ -99,7 +102,7 @@ export function createWindGusts(root: HTMLElement): WindGustsView {
       for (let i = 0; i < WIND_STREAKS_PER_LEVEL * level; i++) {
         const streak = el('span', `wind-streak${direction < 0 ? ' is-left' : ''}`);
         streak.style.width = `${40 + 50 * rng.next()}px`;
-        drift(streak, rng, direction, crossMs * 0.7, 6, 0);
+        drift(streak, rng, direction, crossMs * 0.7, 6, null);
       }
     },
     setPaused(value) {
