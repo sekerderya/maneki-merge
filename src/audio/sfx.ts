@@ -216,6 +216,26 @@ export const RECIPES: Readonly<Record<SoundName, Recipe>> = {
     bell(v, 784, 0, 0.6);
     bell(v, 784, 0.18, 0.3);
   },
+  // A curse begins (GAME_DESIGN §15.12): a dull, low iron bell, two close notes beating.
+  curse(v) {
+    tone(v, { from: 233, decay: 0.7, gain: 0.8 });
+    tone(v, { from: 237, decay: 0.6, gain: 0.5 });
+    tone(v, { from: 233 * 2.76, decay: 0.25, gain: 0.2 });
+    noise(v, { filter: 'lowpass', from: 600, attack: 0.002, decay: 0.05, gain: 0.3 });
+  },
+  // A cursed cat turns to stone: a low grind of rough noise over a sinking hum.
+  grind(v) {
+    noise(v, { filter: 'lowpass', from: 520, to: 160, q: 2, attack: 0.04, decay: 0.34, gain: 0.9 });
+    noise(v, { filter: 'bandpass', from: 1300, q: 4, attack: 0.03, decay: 0.2, gain: 0.25 });
+    tone(v, { type: 'triangle', from: 78, to: 52, glide: 0.35, decay: 0.36, gain: 0.6 });
+  },
+  // A die fizzles a merge (GAME_DESIGN §15.14): two dull clacks of a die on wood.
+  clack(v) {
+    for (const delay of [0, 0.07]) {
+      noise(v, { filter: 'bandpass', from: 900, q: 2.5, delay, attack: 0.001, decay: 0.035 });
+      tone(v, { from: 320, delay, decay: 0.04, gain: 0.5 });
+    }
+  },
   // Two rising notes and a ching.
   purchase(v) {
     const hz = 659.25;

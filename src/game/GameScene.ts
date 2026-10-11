@@ -33,6 +33,7 @@ import {
   BOULDER_HIT_SPARKS,
   BURST_SPARKS,
   COUNTDOWN_PULSE_MS,
+  CURSE_STONE_CHIPS,
   COUNTDOWN_PULSE_SCALE,
   DANGER_FLASH_PERIOD_MS,
   DROPPER_POP_IN_MS,
@@ -61,6 +62,7 @@ import type { CatSprite } from './BallRenderer';
 import { fitCamera, worldToView } from './cameraFit';
 import type { CameraFit, JarFrame } from './cameraFit';
 import { FallFx } from './fx/FallFx';
+import { CurseFx } from './fx/CurseFx';
 import { KintsugiFx } from './fx/KintsugiFx';
 import { LastCatFx } from './fx/LastCatFx';
 import { MergeFx } from './fx/MergeFx';
@@ -127,6 +129,8 @@ export class GameScene extends Phaser.Scene {
   private lastCat!: LastCatFx;
   private fall!: FallFx;
   private kintsugi!: KintsugiFx;
+  /** Cursed Bell's number over the cursed cat, and cats turning to stone (GAME_DESIGN §15.12). */
+  private curse!: CurseFx;
   private aimGuide!: AimGuide;
   private selectRing!: Phaser.GameObjects.Graphics;
   private dropperGlow!: Phaser.GameObjects.Image;
@@ -237,6 +241,7 @@ export class GameScene extends Phaser.Scene {
       () => reducedMotion(),
     );
     this.kintsugi = new KintsugiFx(this, fx, this.skin);
+    this.curse = new CurseFx(this, fx, this.balls);
     this.selectRing = this.add.graphics();
     fx.add(this.selectRing);
     this.countdown = this.add
@@ -298,7 +303,9 @@ export class GameScene extends Phaser.Scene {
     on('merged', (e) => {
       const reduced = reducedMotion();
       const { x, y } = e.at;
-      const kind = e.golden ? 'golden' : 'plain';
+      // A lifted curse (GAME_DESIGN §15.12) pays and sparkles like a golden merge.
+      const gold = e.golden || e.curseLifted;
+      const kind = gold ? 'golden' : 'plain';
       this.fx.payout(this.nowMs, x, y, e.newTier, run.radiusOf(e.newTier), e.coins, kind);
       this.balls.bump(e.id, this.nowMs);
       const color = hexToNumber(this.skin.color(e.newTier));
@@ -306,7 +313,7 @@ export class GameScene extends Phaser.Scene {
       const share = e.parts === 3 ? THREE_WAY_PARTICLES : 1;
       const count = Math.round(share * mergeParticleCount(e.newSize, reduced));
       this.sparks.mergeBurst(x, y, count, color);
-      if (e.golden) this.sparks.burst(x, y, this.particles(BURST_SPARKS.golden));
+      if (gold) this.sparks.burst(x, y, this.particles(BURST_SPARKS.golden));
       // A cracked cat merged: gold seams flash on the whole new cat (Porcelain, §15.10).
       if (e.kintsugi) this.kintsugi.flash(e.id, this.nowMs);
       this.addShake(mergeShake(e.newSize), SHAKE.mergeMs);
@@ -320,6 +327,11 @@ export class GameScene extends Phaser.Scene {
       const { x, y } = e.at;
       this.popped.push({ id: e.id, tier: e.tier, radius: run.radiusOf(e.tier), x, y, coins: null });
       this.sparks.mergeBurst(x, y, this.particles(BREAK_CHIPS), PORCELAIN_CHIPS);
+    });
+    // Cursed Bell (GAME_DESIGN §15.12): the cat fades into its boulder in a shower of stone chips.
+    on('catPetrified', (e) => {
+      this.curse.petrify(e.id, e.boulder, this.nowMs);
+      this.sparks.mergeBurst(e.at.x, e.at.y, this.particles(CURSE_STONE_CHIPS), BOULDER_CHIPS);
     });
     // Echo (GAME_DESIGN §15.11): the echo cat fades in from pale, with ripples round it.
     on('echoed', (e) => {
@@ -510,6 +522,7 @@ export class GameScene extends Phaser.Scene {
     this.sparks?.clear();
     this.fall?.clear();
     this.kintsugi?.clear();
+    this.curse?.clear();
     this.lastCat?.clear();
   }
 
@@ -552,6 +565,7 @@ export class GameScene extends Phaser.Scene {
     this.lastCat.update(this.nowMs, run.balls, run.state === 'paused');
     this.fall.update(this.nowMs, run.balls, run.levelOf('heavyDrop'), run.state === 'paused');
     this.kintsugi.update(this.nowMs, run.balls);
+    this.curse.update(this.nowMs, run.curse, run.balls, this.fit.zoom, reducedMotion());
     this.pops.update(this.nowMs);
     this.fx.update(this.nowMs);
   }

@@ -234,6 +234,19 @@ export const ECHO_FADE_FROM = 0.3;
 export const ECHO_FADE_MS = 450;
 export const ECHO_RIPPLES = 3;
 export const ECHO_RIPPLE_GAP_MS = 140;
+/**
+ * Cursed Bell (GAME_DESIGN §15.12): the drops left show as live text CURSE_NUMBER_SIZE world units
+ * tall, CURSE_NUMBER_GAP above the cursed cat's top, upright; from CURSE_SWAY_FROM drops left it
+ * sways CURSE_SWAY_RAD each way every CURSE_SWAY_PERIOD_MS. Turning to stone, the cat fades out
+ * as its boulder fades in over CURSE_STONE_FADE_MS, in CURSE_STONE_CHIPS stone chips.
+ */
+export const CURSE_NUMBER_SIZE = 46;
+export const CURSE_NUMBER_GAP = 8;
+export const CURSE_SWAY_FROM = 2;
+export const CURSE_SWAY_RAD = 0.2;
+export const CURSE_SWAY_PERIOD_MS = 700;
+export const CURSE_STONE_FADE_MS = 300;
+export const CURSE_STONE_CHIPS = 14;
 /** Hubris (GAME_DESIGN §15.11): a three-way merge bursts this many times the particles. */
 export const THREE_WAY_PARTICLES = 1.5;
 /** A rule's hint pill shows this long at the start of the stage after its pick. */

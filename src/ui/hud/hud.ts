@@ -23,6 +23,8 @@ export interface HudView {
   setStage(stage: number): void;
   /** The ball after the one in the dropper: a cat, the magnet or a boulder. */
   setNext(drop: Drop): void;
+  /** NEXT took another size (Copycat, GAME_DESIGN §15.13): its cat pops like a merged one. */
+  popNext(): void;
   /** A coin landed on the counter. */
   pulseCoins(): void;
   /** Where flying coins land. */
@@ -142,6 +144,7 @@ export function createHud(root: HTMLElement, actions: HudActions, art = false): 
     node.classList.add(className);
   };
   coinsCard.addEventListener('animationend', () => coinsCard.classList.remove('is-pulsing'));
+  nextCat.addEventListener('animationend', () => nextCat.classList.remove('is-copied'));
 
   return {
     setScore(value) {
@@ -155,6 +158,9 @@ export function createHud(root: HTMLElement, actions: HudActions, art = false): 
     },
     setNext(drop) {
       paintDropIcon(nextCat, drop);
+    },
+    popNext() {
+      restartAnimation(nextCat, 'is-copied');
     },
     pulseCoins() {
       restartAnimation(coinsCard, 'is-pulsing');

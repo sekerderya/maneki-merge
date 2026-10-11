@@ -908,6 +908,20 @@
   animation: coins-pulse 180ms ease-out;
 }
 
+/* Copycat (GAME_DESIGN §15.13): NEXT's cat pops into its new size like a merged cat. */
+.hud-next-cats .cat-icon.is-copied {
+  animation: next-copied 260ms ease-out;
+}
+
+@keyframes next-copied {
+  from {
+    transform: scale(0.7);
+  }
+  55% {
+    transform: scale(1.15);
+  }
+}
+
 @keyframes coins-pulse {
   50% {
     transform: scale(1.08);
@@ -947,6 +961,7 @@
 }
 
 .reduce-motion .hint-pill,
+.reduce-motion .hud-next-cats .cat-icon.is-copied,
 .reduce-motion .combo.is-step,
 .reduce-motion .hud-coins-card.is-pulsing {
   animation: none;

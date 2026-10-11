@@ -97,6 +97,32 @@ describe('run feedback wiring (GAME_DESIGN §12)', () => {
     expect(log).toEqual(['take', 'clang', 'buzz:tick', 'crunch', 'buzz:tick', 'chime', 'purchase']);
   });
 
+  it('rings a curse, grinds a stone, chimes a lift and a lucky die, clacks a fizzle', () => {
+    const events = new EventBus<GameEvents>();
+    const log: string[] = [];
+    connectRunFeedback(events, {
+      play: (name) => log.push(name),
+      vibrate: (name) => log.push('buzz:' + name),
+    });
+    const at = { x: 0, y: 0 };
+    events.emit('curseBegan', { id: 1, tier: 3, dropsLeft: 10, at });
+    events.emit('catPetrified', { id: 1, boulder: 2, tier: 3, at });
+    const merge = { id: 6, tier: 2, newTier: 3, newSize: 3, at, score: 4, coins: 2, combo: 1 };
+    const plain = { golden: false, joker: false, parts: 2, kintsugi: false } as const;
+    events.emit('merged', { ...merge, ...plain, dice: null, curseLifted: true });
+    events.emit('merged', { ...merge, ...plain, dice: 'lucky', curseLifted: false });
+    events.emit('merged', { ...merge, ...plain, dice: 'fizzle', curseLifted: false });
+    const merged = (extra: string[]) => ['merge', 'coin', ...extra, 'buzz:tick'];
+    expect(log).toEqual([
+      'curse',
+      'grind',
+      'buzz:tick',
+      ...merged(['chime']),
+      ...merged(['chime']),
+      ...merged(['clack']),
+    ]);
+  });
+
   it("thuds when Heavy Drop's fireball lands, not below its top level", () => {
     const events = new EventBus<GameEvents>();
     const log: string[] = [];

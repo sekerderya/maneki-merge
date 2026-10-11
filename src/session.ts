@@ -76,8 +76,11 @@ export interface SessionParts {
   readonly onProfileChange: () => void;
 }
 
-/** A rule's hint pill (GAME_DESIGN §15.11). */
-const RULE_HINTS = { hubris: 'Hubris: three small cats merge at once and skip a size' } as const;
+/** A rule's hint pill (GAME_DESIGN §15.11, §15.13). */
+const RULE_HINTS: Partial<Record<PickId, string>> = {
+  hubris: 'Hubris: three small cats merge at once and skip a size',
+  copycat: 'Copycat: the next cat copies your last merge',
+};
 
 export class GameSession {
   private current: RunController | null = null;
@@ -282,6 +285,11 @@ export class GameSession {
     // The menu catches up with the wallet when the run ends (it is hidden until then).
     events.on('runCoinsChanged', (e) => hud.setCoins(e.coins));
     events.on('catDropped', showPreview);
+    // Copycat (GAME_DESIGN §15.13): NEXT took the size of the latest merge.
+    events.on('nextChanged', () => {
+      showPreview();
+      hud.popNext();
+    });
 
     // Banners sit in the empty top of the jar (GAME_DESIGN §2.3).
     const jarY = (fraction: number): number | undefined => {
@@ -381,7 +389,7 @@ export class GameSession {
       else shut();
     });
     events.on('pickChosen', (e) => {
-      if (e.id === 'hubris') this.ruleHint = RULE_HINTS.hubris;
+      this.ruleHint = RULE_HINTS[e.id] ?? this.ruleHint;
       this.parts.picks.hide();
       // Picks made some other way (the debug tools) open the doors as the run moves on.
       queueMicrotask(() => {
@@ -431,6 +439,16 @@ export class GameSession {
       if (profile.hintSeen('magnet')) return;
       profile.markHintSeen('magnet');
       hint.hide();
+    });
+    // The first curse of a profile (GAME_DESIGN §15.12): what to do about it, for a few seconds.
+    events.on('curseBegan', () => {
+      if (profile.hintSeen('curse')) return;
+      profile.markHintSeen('curse');
+      hint.show('Cursed! Merge this cat before its bell runs out');
+      window.clearTimeout(this.ruleHintTimer);
+      this.ruleHintTimer = window.setTimeout(() => {
+        if (this.current === run) hint.hide();
+      }, RULE_HINT_MS);
     });
     this.hintTimer = 0;
 

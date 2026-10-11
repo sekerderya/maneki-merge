@@ -42,6 +42,9 @@ export const AIM_LINE_ALPHA = 0.75;
 /** The danger countdown over the jar. */
 export const COUNTDOWN_FILL = '#d9483b';
 export const COUNTDOWN_STROKE = '#fff8ee';
+/** The drops left on a cursed cat's bell (GAME_DESIGN §15.12), in the HUD's ink. */
+export const CURSE_NUMBER_FILL = '#4a2e25';
+export const CURSE_NUMBER_STROKE = '#fff8ee';
 /** Floating "+coins" over the jar. */
 export const COINS_TEXT_FILL = '#f2b83b';
 export const COINS_TEXT_STROKE = '#4a2e25';

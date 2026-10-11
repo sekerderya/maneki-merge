@@ -21,8 +21,11 @@ export function connectRunFeedback(events: EventBus<GameEvents>, out: FeedbackOu
       // Lower for bigger cats: every stage sounds the same.
       out.play('merge', e.newSize);
       out.play('coin');
-      // A golden cat's merge (it skips a tier), a joker's and a Hubris three ring a bell too.
-      if (e.golden || e.joker || e.parts === 3) out.play('chime');
+      // A golden cat's merge (it skips a tier), a joker's, a Hubris three, a lifted curse and a
+      // lucky die ring a bell too; a fizzled die clacks.
+      const bell = e.golden || e.joker || e.parts === 3 || e.curseLifted || e.dice === 'lucky';
+      if (bell) out.play('chime');
+      if (e.dice === 'fizzle') out.play('clack');
       out.vibrate('tick');
     }),
     events.on('comboChanged', (e) => {
@@ -73,6 +76,13 @@ export function connectRunFeedback(events: EventBus<GameEvents>, out: FeedbackOu
     }),
     // Echo (GAME_DESIGN §15.11): a bell and its fainter echo.
     events.on('echoed', () => out.play('echo')),
+    // Cursed Bell (GAME_DESIGN §15.12): a dull bell as a curse begins, a grind as a cat turns to
+    // stone.
+    events.on('curseBegan', () => out.play('curse')),
+    events.on('catPetrified', () => {
+      out.play('grind');
+      out.vibrate('tick');
+    }),
     // Heavy Drop's fireball (its top level) lands with a thud.
     events.on('heavyLanded', (e) => {
       if (e.level < HEAVY_FIREBALL_LEVEL) return;

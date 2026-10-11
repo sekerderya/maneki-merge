@@ -22,7 +22,10 @@ export type SoundName =
   | 'thud'
   | 'tink'
   | 'shatter'
-  | 'echo';
+  | 'echo'
+  | 'curse'
+  | 'grind'
+  | 'clack';
 
 /** Everything goes through one master gain and a limiter, so stacked sounds never clip. */
 export const MASTER_VOLUME = 0.8;
@@ -73,6 +76,11 @@ export const SOUNDS: Readonly<Record<SoundName, SoundSpec>> = {
   tink: { volume: 0.2, durationMs: 120, minIntervalMs: 50, maxVoices: 2 },
   shatter: { volume: 0.32, durationMs: 320, minIntervalMs: 80, maxVoices: 2 },
   echo: { volume: 0.22, durationMs: 1100, minIntervalMs: 150, maxVoices: 2 },
+  // Batch 19 (GAME_DESIGN §15.12, §15.14): a curse begins, a cursed cat turns to stone, a die
+  // fizzles a merge.
+  curse: { volume: 0.3, durationMs: 900, minIntervalMs: 300, maxVoices: 1 },
+  grind: { volume: 0.42, durationMs: 450, minIntervalMs: 200, maxVoices: 1 },
+  clack: { volume: 0.3, durationMs: 160, minIntervalMs: 60, maxVoices: 2 },
 };
 
 /**

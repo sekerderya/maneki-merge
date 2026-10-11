@@ -9,8 +9,9 @@
  * When the skin switches to another stage's textures, every live sprite takes its new texture on
  * the next sync. A popped ball's sprite can be handed to an effect (`detach`) and comes back to the
  * pool when the effect ends (`recycle`). A freshly merged cat bumps up and settles (`bump`); an
- * echo cat fades in (`fadeIn`). A cracked cat (Porcelain, GAME_DESIGN §15.10) shows the skin's
- * crack lines over it, one of two patterns turned by its id, rolling with it.
+ * echo cat and a cursed cat's boulder fade in (`fadeIn`). A cracked cat (Porcelain, GAME_DESIGN
+ * §15.10) shows the skin's crack lines over it, one of two patterns turned by its id, rolling
+ * with it.
  */
 import type Phaser from 'phaser';
 import {
@@ -67,8 +68,8 @@ export class BallRenderer {
   private readonly free: CatSprite[] = [];
   /** When each bumping cat's bump started, by cat id. */
   private readonly bumps = new Map<number, number>();
-  /** When each fading-in cat (an echo) appeared, by cat id. */
-  private readonly fades = new Map<number, number>();
+  /** Each fading-in ball (an echo, a cat's stone): when, from which alpha and how long, by id. */
+  private readonly fades = new Map<number, { start: number; from: number; ms: number }>();
   private frame = 0;
   private revision: number;
 
@@ -162,20 +163,23 @@ export class BallRenderer {
     this.bumps.set(id, nowMs);
   }
 
-  /** The echo cat `id` just appeared: it fades in from pale. */
-  fadeIn(id: number, nowMs: number): void {
-    this.fades.set(id, nowMs);
+  /**
+   * The ball `id` just appeared: it fades in from `from` over `ms` (an echo cat from pale, a
+   * cursed cat's boulder from nothing).
+   */
+  fadeIn(id: number, nowMs: number, from = ECHO_FADE_FROM, ms = ECHO_FADE_MS): void {
+    this.fades.set(id, { start: nowMs, from, ms });
   }
 
   private fadeAt(id: number, nowMs: number): number {
-    const start = this.fades.get(id);
-    if (start === undefined) return 1;
-    const t = (nowMs - start) / ECHO_FADE_MS;
+    const fade = this.fades.get(id);
+    if (fade === undefined) return 1;
+    const t = (nowMs - fade.start) / fade.ms;
     if (t >= 1) {
       this.fades.delete(id);
       return 1;
     }
-    return ECHO_FADE_FROM + (1 - ECHO_FADE_FROM) * Math.max(0, t);
+    return fade.from + (1 - fade.from) * Math.max(0, t);
   }
 
   private bumpAt(id: number, nowMs: number): number {
