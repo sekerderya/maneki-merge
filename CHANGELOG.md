@@ -2,6 +2,50 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.35.0] - 2026-10-11 (Batch 19)
+
+### Added
+
+- Follow-up trials: a pick can need another pick first. Quick Curse and More Curses are offered only once Cursed Bell is taken.
+- Cursed Bell (trial): from a stage's 15th drop a cat is cursed now and then (every 30 drops). Its iron bell counts 10 drops; merge the cat in time, or at the drop after 0 it turns into a bare boulder of its size that one merge breaks. A merge that lifts the curse pays its coins twice; the magnet lifts it with no bonus. Quick Curse: 8, 7, 6 drops. More Curses: every 25, 20, 15 drops.
+- Copycat (rule): the cat in NEXT, and every cat after it, takes the size of the stage's latest merge (up to size 3).
+- Dice (rule): every merge rolls a die: 1 in 6 makes a cat one size bigger, 1 in 6 fizzles into one cat of the size that met. No roll for a joker's merge or the stage's last cat.
+- With four rules, the clears that grow the jar offer rules up to stage 20.
+- The owner's art for them: the cursed bell with the drops left on its tag, the ring of ghostly flames round the cursed cat, the lucky and unlucky dice, and the Cursed Bell, Quick Curse, More Curses and Dice cards. A cat turning to stone fades into its boulder in stone chips; NEXT's cat pops when Copycat changes it.
+- New sounds: a dull iron bell as a curse begins, a low grind as a cat turns to stone, a clack for a fizzle; a lifted curse and a lucky die chime like a golden merge. Hints for the first curse and for Copycat.
+- `npm run sim`: a headless balance bot that plays seeded runs per set of picks and prints a table (TECH_SPEC §11). Debug: curse the newest cat, set its bell, force the next die.
+
+### Decisions taken for the owner (docs/plans/batch-19.md §3; tell me to change any)
+
+- A petrified cat is a bare boulder of its own size, one merge to break, whatever Iron Bands and Big Boulders say.
+- The countdown counts drops, not seconds; the cat turns to stone when the player drops while the bell already shows 0, so the drop that brings it to 0 can still make the merge.
+- One cursed cat at a time; curses begin only right after a drop (so a lifted curse never brings a new one at once).
+- Lifting a curse pays the merge's coins twice (coins only, not the score); a magnet lifts it with no bonus. Golden and cracked cats can be cursed.
+- Copycat leaves magnets, boulders, hanabi and jokers alone, keeps a golden cat golden, and leaves a run's first two cats the smallest.
+- Dice never rolls for a joker's merge or the merge that makes the stage's last cat; a lucky roll may make the last cat. A fizzle still counts as a merge (pay, combo, boulder hits, cracks, a lifted curse) but never echoes.
+- The ring's flames came out upright, so the ring rocks gently instead of turning round.
+
+### Balance (measured before shipping with `npm run sim`: 30 seeds of stage 1, 240 s at most)
+
+The bot drops as fast as it can on the highest cat of its ball's size:
+
+| Arm                                       | Cleared | Lost | Median run | Per run                                     |
+| ----------------------------------------- | ------: | ---: | ---------: | ------------------------------------------- |
+| no picks                                  |      11 |   19 |       67 s | –                                           |
+| Hubris                                    |       3 |   27 |       51 s | 22.5 threes                                 |
+| Echo                                      |      10 |   20 |       45 s | 7.2 echoes                                  |
+| Cursed Bell                               |      10 |   20 |       70 s | 5.1 curses: 2.7 lifted, 2.2 turned to stone |
+| Cursed Bell, Quick and More Curses at max |       7 |   23 |       78 s | 11.3 curses: 4.7 lifted, 6.1 stone          |
+| Copycat (size 3)                          |      29 |    1 |       48 s | 11.4 NEXT copies                            |
+| Dice                                      |      11 |   19 |       50 s | 15.3 lucky, 15.7 fizzles                    |
+
+- Copycat was planned to copy up to size 4 (the biggest drop): the bot then cleared 29 of 30 runs with a median of 29 s, much sooner than Hubris or Echo, so it copies up to size 3 (48 s). Size 2 would give 23 clears and 88 s.
+- A bot dropping at random spots loses almost every run (1 clear in 30, median 57 s), so its table mostly shows run lengths: Hubris 45 s, Echo 44 s, Cursed Bell 56 s (60 s at max), Copycat 47 s (24 clears), Dice 45 s.
+
+### Known
+
+- The Copycat card shows the size-2 cat until its picture is regenerated (the first one split the cat in two; docs/ART_ASSETS.md §4.13 has the corrected prompt).
+
 ## [0.34.0] - 2026-10-11 (Batch 18)
 
 ### Added

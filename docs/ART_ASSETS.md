@@ -1869,13 +1869,17 @@ vector-like edges, readable at 48 px.
 Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow.
 No text, no letters, no numbers, no kanji, no watermark, no signature.
 
-Draw a brand-new picture; the attached image only shows what the cat looks like. A small game
-picture: two of the attached maneki-neko cats side by side, exactly the same size, the same pose
-(both raise the paw on the viewer's right; the right cat is a copy, not a mirror image) and the
-same colours. The right one wears a cheeky grin, copying the left one. A curved gold arrow arcs
-over them from the left cat to the right cat. Both fully visible with complete outlines. Centred,
-fills about 80% of the canvas. No frame, no circle, no medallion, no ground, nothing else.
-Square 1:1.
+Draw a brand-new picture; the attached image only shows what one cat looks like. Do not edit, cut
+or split the attached image. A small game picture of TWO separate, complete copies of the attached
+maneki-neko cat side by side, with a clear gap of plain white between them: they do not touch or
+overlap. Each cat is the whole attached design on its own: a full round body, two ears, two eyes,
+its own collar with its own gold bell, its light belly, the paw on the viewer's right raised with
+palm and pink pads forward, the other paw resting on its belly. Both face the viewer and are
+exactly the same size, pose and colours: the right cat is a copy of the left, not a mirror image,
+so on both cats the raised paw is on the viewer's right. The right cat has a cheeky grin. A curved
+gold arrow arcs above them, from over the left cat to over the right cat. Each cat about 40% of the
+canvas width; everything fully visible with complete outlines. No frame, no circle, no medallion,
+no ground, nothing else. Square 1:1.
 ```
 
 Dice (`picks/dice.png`); attach the dice sheet (`art-source/fx/dice.*`):
@@ -1898,6 +1902,13 @@ frame, no circle, no medallion, no ground, nothing else. Square 1:1.
 Checks for these: the general checklist (§2); each cat is the attached design with one raised paw
 on the viewer's right, collar and bell (the Cursed Bell cat's bell is iron, not gold); the cursed
 bell's tag is blank; the flame ring's middle is empty; dice show pips only, no numbers.
+
+**Status (v0.35.0):** the curse and dice sheets and the Cursed Bell, Quick Curse, More Curses and
+Dice cards are in. The ring's flames came out upright instead of leaning round it, so the game
+rocks the ring gently instead of turning it. The first Copycat picture failed: the tool split the
+attached cat down the middle into one body with two half faces, the left half raising its paw on
+the viewer's left. Its prompt above now asks for two separate, complete cats with a gap between
+them; until it comes, the card shows the size-2 cat.
 
 ## 5. Icon kit (every new icon)
 
