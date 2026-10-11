@@ -1910,8 +1910,9 @@ growing from the first to the fourth; dice show pips only, no numbers.
 above now asks for two separate, complete cats, and the second came out right. v0.35.0 had a
 cursed bell over the cat with the drops left on its tag and a ring of ghostly flames round it
 (`fx/curse`); the owner found it a poor design, so the curse shows as stone spreading over the
-cat instead, like Porcelain's cracks (`fx/stone`, above). Until that sheet comes, the drops left
-show as a number over the cat.
+cat instead, like Porcelain's cracks (`fx/stone`, above). The stone sheet came in v0.35.3: the game
+uses its top row only (the owner's call), the first pattern for the first half of the count and
+the second for the rest.
 
 ## 5. Icon kit (every new icon)
 

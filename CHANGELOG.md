@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.35.3] - 2026-10-11
+
+### Changed
+
+- A cursed cat turns to stone under the owner's stone patterns, like a cracked cat's cracks: a few stone patches for the first half of its count (10 drops: 10 to 6), mostly stone for the rest (5 to 0), rolling with the cat. The number over it is gone (it stays without the art skin).
+
 ## [0.35.2] - 2026-10-11
 
 ### Fixed

@@ -337,9 +337,9 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
   - [x] Porcelain (trial): a merge may crack the cats beside it (10% per level); cracked twice, a cat breaks into two of the size below, which merge with each other once they have come apart; the owner's crack lines, and gold kintsugi seams when a cracked cat merges
   - [x] Hubris (rule): three cats of sizes 1–5 merge at once into a cat two sizes bigger; two of them merge after touching for half a second
   - [x] Echo (rule): merges of sizes 5–7 leave a cat of their size beside the new cat, once per drop
-- [x] Batch 19 (v0.35.0), Cursed Bell, Copycat and Dice (GAME_DESIGN §15; plan: docs/plans/batch-19.md; art: docs/ART_ASSETS.md §4.13). **Status:** done in v0.35.0; v0.35.1 fixed Copycat (only the cat in NEXT copies a merge, up to size 4) and dropped the cursed bell for stone spreading over the cat, whose art (`fx/stone`, ART_ASSETS §4.13) is to come:
+- [x] Batch 19 (v0.35.0), Cursed Bell, Copycat and Dice (GAME_DESIGN §15; plan: docs/plans/batch-19.md; art: docs/ART_ASSETS.md §4.13). **Status:** done in v0.35.0; v0.35.1 fixed Copycat (only the cat in NEXT copies a merge, up to size 4) and dropped the cursed bell for stone spreading over the cat (v0.35.3, the owner's stone patterns):
   - [x] the owner's phase 12 art: the dice sheet and the five card pictures
-  - [ ] the stone patterns for a cursed cat (`fx/stone`, replacing the bell, v0.35.1)
+  - [x] the stone patterns for a cursed cat (`fx/stone`, replacing the bell; v0.35.3)
   - [x] follow-up trials: a pick can need another pick first
   - [x] Cursed Bell (trial): now and then a cat is cursed; merge it within its drops or it turns to stone; Quick Curse and More Curses follow it
   - [x] Copycat (rule): the next cat copies the size of the last merge (at most size 4)
