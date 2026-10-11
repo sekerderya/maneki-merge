@@ -239,7 +239,7 @@ Everything is stored locally, with a version number:
 - settings: sound, haptics, reduce motion
 - flags: which first-run hints have been seen
 
-The run in progress is saved too (v0.27, the owner's call; until then closing the app ended it): the stage, every cat and boulder in the jar where it lies, the score and the run's coins, the dropper and NEXT, the trials, rules and blessings, the wind's direction, which cats are cracked (Porcelain), the Lucky Saves left, a stage clear's waiting pick or a growing jar. It is written whenever the wallet is (at most once a second while coins come in) and when the app goes to the background or closes. The next launch opens the game screen straight away, paused where the run stopped, with Resume (a waiting pick shows under the pause). Quit to Menu and game over end the run, and the next launch opens the menu. Cats that were still falling or rolling go on a little differently than they would have; a settled pile doesn't move. A saved run that a new version can't read is dropped (the profile is never lost).
+The run in progress is saved too (v0.27, the owner's call; until then closing the app ended it): the stage, every cat and boulder in the jar where it lies, the score and the run's coins, the dropper and NEXT, the trials, rules and blessings, the wind's direction, which cats are cracked (Porcelain), the cursed cat and its bell (§15.12), the size Copycat's cats follow (§15.13), the Lucky Saves left, a stage clear's waiting pick or a growing jar. It is written whenever the wallet is (at most once a second while coins come in) and when the app goes to the background or closes. The next launch opens the game screen straight away, paused where the run stopped, with Resume (a waiting pick shows under the pause). Quit to Menu and game over end the run, and the next launch opens the menu. Cats that were still falling or rolling go on a little differently than they would have; a settled pile doesn't move. A saved run that a new version can't read is dropped (the profile is never lost).
 
 The save format is at version 6:
 
@@ -260,11 +260,13 @@ If a save can't be read, or some of its fields are invalid, a copy is kept (TECH
 - Stage clear: every other cat pops in turn with its "+coins", and the Jackpot fanfare plays.
 - Stage clear: the pops ripple down the jar, the last cat shines (halo, turning rays, sparkles) and pops in a burst (§7.1). Expansion: gold sparks along the rim as the shrine grows and again at the reveal; the growth clouds (§7.1).
 - Batch 18 (§15.8–§15.11): the wind's petals and streaks drift across the top of the screen; a heavy drop trails speed lines and embers, and its fireball lands in fire sparks with a thud and a small shake; a crack throws white chips with a tink, a break pops the cat with a shatter, and a cracked cat's merge flashes gold on the new cat; an echo cat fades in with ripple rings and a soft bell echo; a Hubris three bursts bigger and rings a bell.
+- Batch 19 (§15.12–§15.14): a cursed cat shows its bell's count above it, swaying near the end; it turns to stone with a fade into its boulder, stone chips and a grind; a lifted curse sparkles and chimes like a golden merge; NEXT's cat pops when Copycat changes it; a lucky die chimes and a fizzle clacks.
 - Sound effects are procedural Web Audio, no files:
   - drop plop; merge pop (lower pitch for bigger sizes, the same at every stage); coin ching
   - rising combo notes; Jackpot and stage-clear fanfare; expansion whoosh + chime
   - danger tick; game over; UI click; purchase
   - Heavy Drop's thud; Porcelain's tink and shatter; Echo's bell echo (§15.9–§15.11)
+  - Cursed Bell's dull iron bell as a curse begins and the low grind of a cat turning to stone; Dice's clack for a fizzle (a lucky roll chimes like a golden merge) (§15.12, §15.14)
 - Haptics (Android only, toggled in Pause and in Settings): a light tick per merge (at most one every 70 ms) and a stronger pattern for Jackpots, stage clears, expansions and Lucky Saves.
 - A small camera shake for merges into size 9 and above (stronger for bigger cats), for Jackpots, and a light one that grows with the combo from ×5. Reduce motion (the setting or `prefers-reduced-motion`): no shake and about a third of the particles.
 - Menu: the title floats, the lucky cat sways on its cushion, the coins bob, PLAY sends out a soft ring every few seconds, the UPGRADES dot nudges, and buttons sink into their ink edge when tapped.
@@ -333,7 +335,7 @@ These were written for score thresholds. With stage clears (§7), clearing stage
 
 > The owner's design (2026-10-08), built in v0.21. Its numbers are starting values: balance and the economy come later.
 
-Later stages get harder and every run gets its own build. Every stage clear asks the player to pick a **trial**, which makes the coming stages harder, and then a **blessing**, which helps; every 5 stages, where the jar grows, a **rule**, which changes how the game works, takes the trial's place (v0.34, the owner's call). Picks stack by level for the rest of the run, like Vampire Survivors' level-ups: the same pick again raises its level; a rule has one level, on or off. Trials work through **boulders** (more, bigger, harder to break), the **wind**, **heavy drops** and **porcelain** cats (v0.34: trials that make the game harder in different ways, which don't build on each other). Rules: **Hubris** and **Echo** (v0.34). Blessings work through **magnets**, bigger drops, **golden cats**, **hanabi** and **joker cats** (the last two since v0.28).
+Later stages get harder and every run gets its own build. Every stage clear asks the player to pick a **trial**, which makes the coming stages harder, and then a **blessing**, which helps; every 5 stages, where the jar grows, a **rule**, which changes how the game works, takes the trial's place (v0.34, the owner's call). Picks stack by level for the rest of the run, like Vampire Survivors' level-ups: the same pick again raises its level; a rule has one level, on or off. Trials work through **boulders** (more, bigger, harder to break), the **wind**, **heavy drops**, **porcelain** cats (v0.34: trials that make the game harder in different ways, which don't build on each other) and the **Cursed Bell** with its two follow-ups (Batch 19). Rules: **Hubris** and **Echo** (v0.34), **Copycat** and **Dice** (Batch 19). Blessings work through **magnets**, bigger drops, **golden cats**, **hanabi** and **joker cats** (the last two since v0.28).
 
 ### 15.1 The queue
 
@@ -403,16 +405,16 @@ A boulder is a stone ball that only takes up room.
 
 ### 15.5 Stage-clear picks
 
-At every stage clear two picks come after the last cat settles alone and pops (§7.1 step 2), or, every 5 stages, after the jar has grown (§7.1 step 4). At the clears that grow the jar (stages 5, 10, 15, …) the first pick is a rule instead of a trial (v0.34, the owner's call); once both rules are taken, those clears offer a trial as usual:
+At every stage clear two picks come after the last cat settles alone and pops (§7.1 step 2), or, every 5 stages, after the jar has grown (§7.1 step 4). At the clears that grow the jar (stages 5, 10, 15, …) the first pick is a rule instead of a trial (v0.34, the owner's call); once every rule is taken (four since Batch 19, so rule picks run through stage 20), those clears offer a trial as usual:
 
-The cards show in front of the shut stage doors (§7.1). With the art skin (v0.32) they are built from the Upgrades screen's pieces (§13.1): the title on its cream pill with a line under it, three cards with the icon, the name and the level change ("Lv 0 → 1"), the effect and the stat in the tan strip, and Choose on the menu's coral PLAY pill, faded until a card is chosen. The chosen card pops forward (0.22 s, overshooting a little) in a thick ring of light, blue for a trial, vermilion (the shrine's red) for a rule and gold for a blessing (v0.32.2, the owner found the first glow too faint; v0.32.4 dropped the dimming of the other cards, the owner's call; the rule's since v0.34). While the doors are shut the jar behind them isn't drawn, so the picks run smoothly on slow phones. Each card's icon is the game's own art for the ball it is about, in a cream medallion, stone-grey rimmed for a trial, vermilion for a rule and gold for a blessing (v0.32.1, the owner's call; the rule's rim since v0.34, drawn in CSS like the others): a pyramid of three boulders for More Boulders and a big boulder with a small one and an arrow for Big Boulders (the owner's pictures, v0.32.4); for Iron Bands the boulder as the pick will make it, with one band more than now; the magnet, the hanabi and the joker for theirs; the biggest drop (the size-4 cat) for Big Drops; a white cat with a gold glow for Golden Cats. Batch 18's five picks get the owner's own pictures (docs/ART_ASSETS.md §4.12; the Wind's carp streamer is mirrored when the run's wind blows to the left); until they come, each card shows the cat it is about. An icon made later with the icon kit (docs/ART_ASSETS.md §5) would take its card's place.
+The cards show in front of the shut stage doors (§7.1). With the art skin (v0.32) they are built from the Upgrades screen's pieces (§13.1): the title on its cream pill with a line under it, three cards with the icon, the name and the level change ("Lv 0 → 1"), the effect and the stat in the tan strip, and Choose on the menu's coral PLAY pill, faded until a card is chosen. The chosen card pops forward (0.22 s, overshooting a little) in a thick ring of light, blue for a trial, vermilion (the shrine's red) for a rule and gold for a blessing (v0.32.2, the owner found the first glow too faint; v0.32.4 dropped the dimming of the other cards, the owner's call; the rule's since v0.34). While the doors are shut the jar behind them isn't drawn, so the picks run smoothly on slow phones. Each card's icon is the game's own art for the ball it is about, in a cream medallion, stone-grey rimmed for a trial, vermilion for a rule and gold for a blessing (v0.32.1, the owner's call; the rule's rim since v0.34, drawn in CSS like the others): a pyramid of three boulders for More Boulders and a big boulder with a small one and an arrow for Big Boulders (the owner's pictures, v0.32.4); for Iron Bands the boulder as the pick will make it, with one band more than now; the magnet, the hanabi and the joker for theirs; the biggest drop (the size-4 cat) for Big Drops; a white cat with a gold glow for Golden Cats. Batch 18's five picks get the owner's own pictures (docs/ART_ASSETS.md §4.12; the Wind's carp streamer is mirrored when the run's wind blows to the left), and so do Batch 19's five (§4.13); until they come, each card shows the cat it is about (the size-3 cat for the curses, size 2 for Copycat, size 1 for Dice). An icon made later with the icon kit (docs/ART_ASSETS.md §5) would take its card's place.
 
-1. **Choose a trial:** 3 cards; the player picks one. Where the jar grows, **Choose a rule** ("It changes the game for the rest of the run") instead: the rules left, at most 3 (today 2); a rule's card reads "New rule" where a trial's shows its level change.
+1. **Choose a trial:** 3 cards; the player picks one. Where the jar grows, **Choose a rule** ("It changes the game for the rest of the run") instead: the rules left, at most 3 (of 4); a rule's card reads "New rule" where a trial's shows its level change.
 2. **Choose a blessing:** 3 cards; the player picks one.
 
 Then play resumes in the next stage as the doors open: in the grown jar, or in the same empty jar.
 
-- **Options:** each pick shows up to 3 different options, drawn at random from those not at their max level, with the run's seeded RNG. Today there are 6 trials (v0.34), so the trial pick shows 3 of the 6, 2 rules, so a rule pick shows both in random order, and 5 blessings (v0.28), so the blessing pick shows 3 of the 5. With fewer than 3 left it shows fewer cards; with none left the pick is skipped.
+- **Options:** each pick shows up to 3 different options, drawn at random from those that are open, with the run's seeded RNG. An option is open when it isn't at its max level and, for a **follow-up**, once the pick it needs has been taken (Batch 19): Quick Curse and More Curses are never offered before Cursed Bell. Today there are 9 trials (7 open at first), so the trial pick shows 3 of them, 4 rules, so a rule pick shows 3 of the 4 in random order, and 5 blessings (v0.28), so the blessing pick shows 3 of the 5. With fewer than 3 open it shows fewer cards; with none open the pick is skipped.
 - The player must pick exactly one: no skip, no reroll, no rarities.
 - **Levels:** a pick raises that option's level by 1. Levels last for the run, and every run starts at 0. They are saved with the run in progress (§11).
 - **Card:** an icon, the name, a one-line effect, the level as pips with "Lv 1 → 2", and the value it changes (current → next), like a shop card (§2.2).
@@ -421,23 +423,28 @@ Then play resumes in the next stage as the doors open: in the grown jar, or in t
 
 **Trials**
 
-| ID             | Name          | Effect per level                      | Max | Level 0 → max                 |
-| -------------- | ------------- | ------------------------------------- | --: | ----------------------------- |
-| `moreBoulders` | More Boulders | +3% boulder chance (from stage 2)     |   5 | 3% → 18%                      |
-| `ironBands`    | Iron Bands    | Boulders need one more merge to break |   3 | 1 → 4 merges                  |
-| `bigBoulders`  | Big Boulders  | Boulders one size bigger              |   4 | size 2 (r 49) → size 6 (r 98) |
-| `wind`         | Wind          | +100 u/s² of wind (§15.8)             |   5 | Calm → Storm                  |
-| `heavyDrop`    | Heavy Drop    | Falls faster (§15.9)                  |   5 | 1.0 s → 0.24 s fall           |
-| `porcelain`    | Porcelain     | +10% crack chance (§15.10)            |   4 | 0% → 40%                      |
+| ID             | Name          | Effect per level                      | Max | Level 0 → max                   | Needs       |
+| -------------- | ------------- | ------------------------------------- | --: | ------------------------------- | ----------- |
+| `moreBoulders` | More Boulders | +3% boulder chance (from stage 2)     |   5 | 3% → 18%                        | –           |
+| `ironBands`    | Iron Bands    | Boulders need one more merge to break |   3 | 1 → 4 merges                    | –           |
+| `bigBoulders`  | Big Boulders  | Boulders one size bigger              |   4 | size 2 (r 49) → size 6 (r 98)   | –           |
+| `wind`         | Wind          | +100 u/s² of wind (§15.8)             |   5 | Calm → Storm                    | –           |
+| `heavyDrop`    | Heavy Drop    | Falls faster (§15.9)                  |   5 | 1.0 s → 0.24 s fall             | –           |
+| `porcelain`    | Porcelain     | +10% crack chance (§15.10)            |   4 | 0% → 40%                        | –           |
+| `cursedBell`   | Cursed Bell   | Now and then a cat is cursed (§15.12) |   1 | Off → On                        | –           |
+| `quickCurse`   | Quick Curse   | Cursed cats turn to stone sooner      |   3 | 10 → 8 → 7 → 6 drops to stone   | Cursed Bell |
+| `moreCurses`   | More Curses   | Curses come more often                |   3 | 30 → 25 → 20 → 15 drops between | Cursed Bell |
 
-The boulder trials still multiply each other (more × bigger × harder to break); a pick now shows 3 of the 6 trials, so the player can steer around them. Balance comes later.
+The boulder trials still multiply each other (more × bigger × harder to break), and so do Quick Curse and More Curses; a pick shows 3 of the open trials, so the player can steer around them. Balance comes later.
 
 **Rules** (v0.34, one level each, §15.11)
 
-| ID       | Name   | Effect                                                                         | Card value                               |
-| -------- | ------ | ------------------------------------------------------------------------------ | ---------------------------------------- |
-| `hubris` | Hubris | Sizes 1–5 wait a moment to merge in pairs; three merge at once and skip a size | Small pairs merge: At once → After 0.5 s |
-| `echo`   | Echo   | Merges of sizes 5–7 leave a cat of their size behind, once per drop            | Off → On                                 |
+| ID        | Name    | Effect                                                                         | Card value                               |
+| --------- | ------- | ------------------------------------------------------------------------------ | ---------------------------------------- |
+| `hubris`  | Hubris  | Sizes 1–5 wait a moment to merge in pairs; three merge at once and skip a size | Small pairs merge: At once → After 0.5 s |
+| `echo`    | Echo    | Merges of sizes 5–7 leave a cat of their size behind, once per drop            | Off → On                                 |
+| `copycat` | Copycat | The next cat copies the size of your last merge (§15.13)                       | Next cat: Random → Copied                |
+| `dice`    | Dice    | Every merge rolls a die: sometimes a size more, sometimes it fizzles (§15.14)  | Merges: Sure → Rolled                    |
 
 **Blessings**
 
@@ -562,12 +569,57 @@ A merge can crack the cats beside it; a cracked cat that cracks again breaks.
 - It pays nothing and isn't a merge (no boulder hit, no crack, no combo).
 - **Look:** it fades in from pale with three expanding ripple rings, and a soft bell echo.
 
-### 15.12 Notes for building it
+### 15.12 Cursed Bell
+
+> The owner's idea (2026-10-11), built in Batch 19 (docs/plans/batch-19.md). Its numbers are starting values.
+
+A trial: now and then a cat is cursed; merge it in time, or it turns to stone. Taking Cursed Bell unlocks two follow-up trials (§15.5): **Quick Curse** (fewer drops before the stone) and **More Curses** (curses come more often).
+
+- **When a curse comes.** With Cursed Bell taken, the run counts the stage's drops (every ball that leaves the paw, a magnet's catch dropped again too). The first curse comes due after the stage's 15th drop; the next comes due 30 drops after the last one began (25, 20 and 15 with More Curses 1–3). Curses begin only right after a drop, one at a time: one that comes due while another is on waits until that one ends. The count starts again at every stage.
+- **Which cat.** At random (the run's seed, on its own roll), one cat that has landed, isn't growing, is of sizes 1–6 and isn't over the line (§6); golden and cracked cats too. When none fits, it tries again after the next drop.
+- **The bell** starts at 10 drops (8, 7 and 6 with Quick Curse 1–3), and every drop after the curse began takes one off. When the player drops while it already shows 0, the cat turns to stone just before that ball leaves the paw, so the drop that brings it to 0 can still make the merge. (Drops, not seconds, so it never rushes the player: time stops in the picks and the pause anyway.)
+- **Ways it ends:**
+  - **Merged** (a pair, a Hubris three, a joker's merge, a Dice roll of any outcome): the curse is lifted, and the merge pays its coins twice (the bonus equals its own coins; the score isn't doubled), with the golden merge's sparkle and chime.
+  - **Magnet:** taking the cursed cat lifts the curse with no bonus; it goes into the paw as a normal cat. The magnet is a counter to it.
+  - **Gone otherwise** (a hanabi, a Lucky Save, a Porcelain break, a stage clear): the curse just ends. The merged cat, an echo and a broken cat's pieces are never cursed.
+  - **Stone:** the cat is replaced where it is, with its speed, spin and angle, by a bare boulder of its own size that one merge breaks, whatever Iron Bands and Big Boulders say, so the curse doesn't stack with the boulder trials. From then on it is an ordinary boulder (§15.3): merges beside it break it, it crumbles at a clear, a magnet can take it, and it pays nothing.
+- The run in progress keeps the curse (§11): the cursed cat, its bell, and the drop the next one is due at.
+- **Look:** the drops left show as live text (Fredoka) just above the cat, upright, swaying from 2 drops left (not with reduced motion). The owner's cursed bell, whose blank tag will carry the number, and its ring of ghostly flames round the cat come with the art (docs/ART_ASSETS.md §4.13). Turning to stone, the cat fades out as its boulder fades in (0.3 s) in a shower of stone chips, with a low grind. A curse beginning rings a dull iron bell. The first curse of a profile shows a hint: "Cursed! Merge this cat before its bell runs out".
+- **Measured** (the balance bot, 30 seeds of stage 1, TECH_SPEC §11): it cleared 10 runs and lost 20, against 11 and 19 without it, with 5 curses a run (2.7 lifted, 2.2 turned to stone); with Quick Curse and More Curses both at their top it cleared 7 and lost 23, with 11 curses and 6 stones a run. Runs don't end sooner (median 70 s and 78 s, against 67 s).
+
+### 15.13 Copycat
+
+> The owner's idea (2026-10-11), built in Batch 19.
+
+A rule: **the next cat copies the size of your last merge.** While it is on, the run remembers the size that met in the stage's latest merge (a pair's or a three's; for a joker's merge its cat's size; for a Dice fizzle the size that met too), at most **size 3**. The cat in NEXT takes that size whenever a merge happens, and so does every cat queued after it, until it moves into the paw, where it is fixed.
+
+- Before the stage's first merge, cats roll as usual, and every stage starts over. The run's first two cats stay the smallest.
+- Magnets, boulders, hanabi and jokers roll as before and never change; a golden cat stays golden at its new size. Every queued cat still rolls its tier (§15.1), so a seed's later rolls don't move. Big Drops still shapes the rolls a stage makes before its first merge, so it stays offered.
+- Saved with the run (the size the stage's cats follow).
+- **Tuning** (Batch 19, measured before shipping): planned at size 4, the biggest drop, the balance bot cleared stage 1 in 29 of 30 runs with a median run of 29 s (11 runs and 67 s without it; 45–51 s with Hubris or Echo). At size 3 it clears 29 with a median of 48 s, in line with the other rules; at size 2, 23 runs and 88 s. It stays a strong rule: the paw keeps handing out the size that just met, so drops pair up.
+- **Look:** no new art: NEXT's cat pops into its new size like a merged cat. When it is chosen, a hint shows as the next stage starts: "Copycat: the next cat copies your last merge".
+
+### 15.14 Dice
+
+> The owner's idea (2026-10-11), built in Batch 19.
+
+A rule: **every merge rolls a die.** Every merge of two cats, or three under Hubris, rolls before its new cat is made (the run's seed, on its own roll, in the order the merges resolve):
+
+- **Lucky** (1 in 6): the new cat is one size bigger than it would have been (a pair makes two sizes up, a Hubris three three, a golden pair three), never above the stage's last size.
+- **Fizzle** (1 in 6): the cats become **one** cat of their own size at their midpoint (two 4s make one 4; a three makes one too), already grown.
+- Otherwise the merge is normal.
+- No roll for a joker's merge, nor for the merge that would make the stage's last cat (two 8s, two golden 7s). A lucky roll may make the last cat (two 7s), like two golden 7s already can.
+- A fizzle counts as a merge in every way: it pays like a merge of its size (a three half as much again), counts for the combo, hits boulders, cracks its neighbours (Porcelain), lifts a curse and sets Copycat's size. It never echoes.
+- **Look:** a lucky roll rings the golden merge's chime, a fizzle clacks like a die on wood. The owner's dice (docs/ART_ASSETS.md §4.13) will pop up over the merge, rise a little and fade (about 0.6 s): the gold die for a lucky roll, the grey one for a fizzle; with reduced motion they fade in and out without rising. Normal merges show nothing.
+- **Measured** (the balance bot): it cleared 11 runs and lost 19, like stage 1 without it, but runs are shorter (median 50 s against 67 s), as with Hubris (51 s) and Echo (45 s); about 15 lucky rolls and 16 fizzles a run.
+
+### 15.15 Notes for building it
 
 - The rules (kinds, chances, hits, golden merges, the picks and their levels) live in the headless layers with unit tests. `game/` and `ui/` only draw and send intents (select, Take, the card pick). Every number goes in `src/config/`.
-- Debug panel (`?debug=1`): set trial, rule and blessing levels, put a magnet, a boulder, a hanabi, a joker or a golden cat in the paw, open the stage-clear picks (or a rule pick), flip the wind, drop a cracked cat and crack the newest cat. `window.__game` gets matching hooks for Playwright.
-- The visuals are code-drawn first; the owner's raster art follows through docs/ART_ASSETS.md.
-- Procedural sounds (§12): the magnet's take, a boulder hit (clang), a boulder break (crunch), the golden two-tier merge (also a joker's merge and a Hubris three), the hanabi's boom, Heavy Drop's thud, a crack's tink, a break's shatter, an echo's bell.
+- Debug panel (`?debug=1`): set trial, rule and blessing levels, put a magnet, a boulder, a hanabi, a joker or a golden cat in the paw, open the stage-clear picks (or a rule pick), flip the wind, drop a cracked cat and crack the newest cat, curse the newest cat and set its bell, force the next die. `window.__game` gets matching hooks for Playwright.
+- The visuals are code-drawn first; the owner's raster art follows through docs/ART_ASSETS.md. Since Batch 19, new looks come from the owner's art only: the code moves, scales, turns and fades it, writes numbers as live text and reuses the existing effects.
+- Procedural sounds (§12): the magnet's take, a boulder hit (clang), a boulder break (crunch), the golden two-tier merge (also a joker's merge, a Hubris three, a lifted curse and a lucky die), the hanabi's boom, Heavy Drop's thud, a crack's tink, a break's shatter, an echo's bell, a curse's dull bell, a stone's grind and a fizzle's clack.
+- The balance bot (`npm run sim`, TECH_SPEC §11) measures a new pick against the game without it before it ships.
 
 ## 16. Not in v1 (ideas for later)
 
