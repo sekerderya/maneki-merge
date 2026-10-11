@@ -337,6 +337,13 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
   - [x] Porcelain (trial): a merge may crack the cats beside it (10% per level); cracked twice, a cat breaks into two of the size below, which merge with each other once they have come apart; the owner's crack lines, and gold kintsugi seams when a cracked cat merges
   - [x] Hubris (rule): three cats of sizes 1–5 merge at once into a cat two sizes bigger; two of them merge after touching for half a second
   - [x] Echo (rule): merges of sizes 5–7 leave a cat of their size beside the new cat, once per drop
+- [ ] Batch 19 (v0.35.0), Cursed Bell, Copycat and Dice (GAME_DESIGN §15; plan: docs/plans/batch-19.md; art: docs/ART_ASSETS.md §4.13):
+  - [ ] the owner's phase 12 art: the curse and dice sheets, five card pictures
+  - [ ] follow-up trials: a pick can need another pick first
+  - [ ] Cursed Bell (trial): now and then a cat is cursed; merge it within its drops or it turns to stone; Quick Curse and More Curses follow it
+  - [ ] Copycat (rule): the next cat copies the size of the last merge
+  - [ ] Dice (rule): every merge rolls: sometimes a size more, sometimes it fizzles
+  - [ ] a headless balance bot (`npm run sim`), and its table for every new pick
 
 ## M13: Final art integration
 
