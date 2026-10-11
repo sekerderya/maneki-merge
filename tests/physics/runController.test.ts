@@ -14,7 +14,7 @@ import {
 } from '../../src/config/timings';
 import { EventBus } from '../../src/core/events';
 import type { GameEvents } from '../../src/core/events';
-import { defaultUpgradeLevels } from '../../src/core/upgrades';
+import { defaultUpgradeLevels, maxUpgradeLevels } from '../../src/core/upgrades';
 import type { UpgradeLevels } from '../../src/core/upgrades';
 import { RunController } from '../../src/run/RunController';
 import type { RunOptions } from '../../src/run/RunController';
@@ -439,8 +439,22 @@ describe('stage clears (GAME_DESIGN §7)', () => {
     expect(run.balls[0]!.y).toBeCloseTo(-run.radiusOf(tier), 0);
   });
 
+  it('offers blessings only up to their shop cards', () => {
+    // A fresh profile has Golden Cats and Big Drops at 1: two blessings, then trials only.
+    const { run } = setup({ instantExpansion: true });
+    const picks: PickId[][] = [];
+    for (let stage = 1; stage <= 4; stage++) {
+      makeLastCat(run);
+      picks.push(chooseAll(run));
+    }
+    expect(picks.map((p) => p.length)).toEqual([2, 2, 1, 1]);
+    expect(picks.flatMap((p) => p.slice(1)).sort()).toEqual(['bigDrops', 'goldenCats']);
+    expect(run.pickLevels.goldenCats).toBe(1);
+    expect(run.pickLevels.bigDrops).toBe(1);
+  });
+
   it('opens every stage, without end: each clear moves on, and the jar grows every 5', () => {
-    const { run, of } = setup({ instantExpansion: true });
+    const { run, of } = setup({ instantExpansion: true, upgrades: maxUpgradeLevels() });
     for (let stage = 1; stage <= 11; stage++) {
       expect(run.stage).toBe(stage);
       makeLastCat(run);

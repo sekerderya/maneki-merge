@@ -21,6 +21,7 @@ const SEED = 21;
 function runAfterBuying(id: UpgradeId, level: number, instantExpansion = false): RunController {
   const data = defaultSave();
   data.wallet.coins = UPGRADES[id].prices.reduce((sum, p) => sum + p, 0);
+  data.records.bestStage = 100; // every card open
   const profile = new Profile(new SaveStore(new MemoryStorage()), data, { scheduler: frozen });
   for (let i = 0; i < level; i++) expect(profile.buy(id).ok).toBe(true);
   expect(profile.upgrades[id]).toBe(level);

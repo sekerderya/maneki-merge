@@ -10,7 +10,7 @@ import { UPGRADE_IDS, UPGRADES } from '../config/upgrades';
 import type { UpgradeId } from '../config/upgrades';
 
 /** Bump when the shape changes, and add MIGRATIONS[old] that converts old data to the new one. */
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 7;
 
 export interface SaveData {
   wallet: { coins: number };
@@ -39,7 +39,7 @@ export interface SaveEnvelope {
 
 export function defaultSave(): SaveData {
   const upgrades = {} as Record<UpgradeId, number>;
-  for (const id of UPGRADE_IDS) upgrades[id] = 0;
+  for (const id of UPGRADE_IDS) upgrades[id] = UPGRADES[id].startLevel;
   const hintsSeen = {} as Record<HintId, boolean>;
   for (const id of HINT_IDS) hintsSeen[id] = false;
   return {
@@ -172,6 +172,17 @@ function withRefund(data: Record<string, unknown>, refund: number): Record<strin
   return { ...data, wallet: { ...wallet, coins: coins + refund } };
 }
 
+/**
+ * v6 → v7 (v0.36): the new economy (coins by size times the jar, the shop's blessing cards and
+ * gates). The owner's call: every profile starts over, keeping only its settings (sound, haptics,
+ * reduce motion). Coins, upgrades, records, stats and hints go. Anything malformed is left for
+ * `sanitize` to repair.
+ */
+export function startOver(data: unknown): unknown {
+  if (!isRecord(data)) return data;
+  return isRecord(data['settings']) ? { settings: data['settings'] } : {};
+}
+
 /** MIGRATIONS[n] upgrades version n to n + 1. */
 export const MIGRATIONS: Readonly<Record<number, Migration>> = {
   1: refundQuickGrowth,
@@ -179,6 +190,7 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
   3: shrinkStages,
   4: retireGoldenMerge,
   5: endStageLoop,
+  6: startOver,
 };
 
 export type LoadStatus =
@@ -280,7 +292,8 @@ export function sanitize(data: Record<string, unknown>): { data: SaveData; issue
 
   const upgrades = r.section(data, 'upgrades');
   for (const id of UPGRADE_IDS) {
-    out.upgrades[id] = r.count(upgrades, `upgrades.${id}`, 0, UPGRADES[id].maxLevel);
+    const { startLevel, maxLevel } = UPGRADES[id];
+    out.upgrades[id] = r.count(upgrades, `upgrades.${id}`, startLevel, maxLevel, startLevel);
   }
 
   const records = r.section(data, 'records');

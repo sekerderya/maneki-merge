@@ -11,9 +11,13 @@ const levels = (overrides: Partial<Record<UpgradeId, number>> = {}): UpgradeLeve
 });
 
 describe('shop cards (GAME_DESIGN §2.2)', () => {
-  it('lists all 5 upgrades in shop order', () => {
-    const cards = shopCards(levels(), 0);
+  it('lists every card in shop order: the upgrades, then the blessings', () => {
+    const cards = shopCards(levels(), 0, 1);
     expect(cards.map((c) => c.id)).toEqual([...UPGRADE_IDS]);
+    expect(cards.map((c) => c.section)).toEqual([
+      ...Array<string>(4).fill('upgrade'),
+      ...Array<string>(5).fill('blessing'),
+    ]);
     for (const card of cards) {
       expect(card.name).toBe(UPGRADES[card.id].name);
       expect(card.description).toBe(UPGRADES[card.id].description);
@@ -22,14 +26,16 @@ describe('shop cards (GAME_DESIGN §2.2)', () => {
   });
 
   it('shows an affordable price', () => {
-    expect(shopCard('luckyPaw', levels({ luckyPaw: 3 }), 200)).toEqual({
+    expect(shopCard('luckyPaw', levels({ luckyPaw: 3 }), 1600, 1)).toEqual({
       id: 'luckyPaw',
+      section: 'upgrade',
+      gate: 1,
       name: 'Lucky Paw',
       description: '+15% coins from everything',
       statLabel: 'Coins',
       level: 3,
       maxLevel: 10,
-      price: 200,
+      price: 1600,
       state: 'affordable',
       shortfall: null,
       current: '+45%',
@@ -38,38 +44,62 @@ describe('shop cards (GAME_DESIGN §2.2)', () => {
   });
 
   it('disables the price when coins are short', () => {
-    const card = shopCard('bigCatch', levels(), 99);
-    expect(card).toMatchObject({ price: 100, state: 'insufficient', current: '10%', next: '13%' });
+    const card = shopCard('bigCatch', levels(), 299, 1);
+    expect(card).toMatchObject({ price: 300, state: 'insufficient', current: '10%', next: '12%' });
     // "Need 1 more" under the price.
     expect(card.shortfall).toBe(1);
   });
 
   it('shows MAX with no next value at the max level', () => {
-    const card = shopCard('secondChance', levels({ secondChance: 2 }), 1e9);
+    const card = shopCard('secondChance', levels({ secondChance: 2 }), 1e9, 10);
     expect(card).toMatchObject({ level: 2, price: null, state: 'max', current: '2', next: null });
     expect(card.shortfall).toBeNull();
+  });
+
+  it('locks a card until the best stage reaches its gate', () => {
+    const card = shopCard('joker', levels(), 1e9, 7);
+    expect(card).toMatchObject({ state: 'locked', gate: 8, price: 9000, shortfall: null });
+    expect(shopCard('joker', levels(), 1e9, 8).state).toBe('affordable');
+  });
+
+  it('shows a blessing card at the highest level a run can reach', () => {
+    expect(shopCard('goldenCats', levels(), 0, 1)).toMatchObject({
+      level: 1,
+      maxLevel: 5,
+      price: 400,
+      current: '4%',
+      next: '8%',
+    });
   });
 
   it.each<[UpgradeId, number, string]>([
     ['luckyPaw', 0, '+0%'],
     ['luckyPaw', 10, '+150%'],
-    // The biggest drop of a stage: 10%, then 3 points more per level (GAME_DESIGN §8).
+    // The biggest drop of a stage: 10%, then 2.4 points more per level, rounded (GAME_DESIGN §8).
     ['bigCatch', 0, '10%'],
-    ['bigCatch', 1, '13%'],
-    ['bigCatch', 2, '16%'],
-    ['bigCatch', 3, '19%'],
-    ['bigCatch', 4, '22%'],
-    ['bigCatch', 5, '25%'],
+    ['bigCatch', 1, '12%'],
+    ['bigCatch', 2, '15%'],
+    ['bigCatch', 5, '22%'],
+    ['bigCatch', 10, '34%'],
     ['comboCharm', 2, '+16%'],
     ['secondChance', 2, '2'],
+    // A blessing card: its blessing at the card's level, without Big Catch.
+    ['goldenCats', 5, '20%'],
+    ['bigDrops', 1, '16%'],
+    ['bigDrops', 3, '28%'],
+    ['moreMagnets', 0, '1%'],
+    ['moreMagnets', 2, '4%'],
+    ['hanabi', 0, '0%'],
+    ['joker', 5, '7.5%'],
   ])('%s at level %i shows %s', (id, level, text) => {
     expect(upgradeValue(id, level)).toBe(text);
   });
 
-  it('gives every level of every upgrade its own value', () => {
+  it('gives every level of every card its own value', () => {
     for (const id of UPGRADE_IDS) {
-      const values = Array.from({ length: UPGRADES[id].maxLevel + 1 }, (_, l) =>
-        upgradeValue(id, l),
+      const { startLevel, maxLevel } = UPGRADES[id];
+      const values = Array.from({ length: maxLevel - startLevel + 1 }, (_, i) =>
+        upgradeValue(id, startLevel + i),
       );
       expect(new Set(values).size).toBe(values.length);
     }

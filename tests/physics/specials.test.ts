@@ -5,7 +5,7 @@ import { stageInfo } from '../../src/config/stages';
 import { sizeRadius } from '../../src/config/tiers';
 import { EventBus } from '../../src/core/events';
 import type { GameEvents } from '../../src/core/events';
-import { decodeRunSave } from '../../src/core/runSave';
+import { decodeRunSave, RUN_SAVE_VERSION } from '../../src/core/runSave';
 import type { BallView } from '../../src/physics/balls';
 import { hanabiBlast } from '../../src/physics/hanabi';
 import { MergeResolver } from '../../src/physics/merges';
@@ -273,7 +273,10 @@ describe('hanabi (GAME_DESIGN §15.6)', () => {
       ticks(run, 50);
       let current = run;
       if (save) {
-        const text = JSON.stringify({ version: 1, save: { run: run.snapshot(), recordsBefore } });
+        const text = JSON.stringify({
+          version: RUN_SAVE_VERSION,
+          save: { run: run.snapshot(), recordsBefore },
+        });
         const decoded = decodeRunSave(text);
         if (!('save' in decoded)) throw new Error(decoded.error);
         current = RunController.restore(decoded.save.run);

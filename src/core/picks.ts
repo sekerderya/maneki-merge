@@ -40,9 +40,15 @@ export function isPickId(value: unknown): value is PickId {
   return typeof value === 'string' && (PICK_IDS as readonly string[]).includes(value);
 }
 
-/** The drop weights' tilt: Big Catch plus Big Drops, at most MAX_DROP_TILT_LEVEL. */
-export function tiltLevel(levels: PickLevels, bigCatchLevel: number): number {
-  return Math.min(MAX_DROP_TILT_LEVEL, bigCatchLevel + BIG_DROPS_TILT_PER_LEVEL * levels.bigDrops);
+/**
+ * The highest level some picks can reach in this run (GAME_DESIGN §10, v0.36): each blessing's
+ * shop card. A pick that isn't listed goes up to its own max level.
+ */
+export type PickCaps = Readonly<Partial<Record<PickId, number>>>;
+
+/** The drop weights' tilt: Big Catch's tilt plus Big Drops, at most MAX_DROP_TILT_LEVEL. */
+export function tiltLevel(levels: PickLevels, bigCatchTilt: number): number {
+  return Math.min(MAX_DROP_TILT_LEVEL, bigCatchTilt + BIG_DROPS_TILT_PER_LEVEL * levels.bigDrops);
 }
 
 /** The boulder chance at a stage: none before BOULDER_FIRST_STAGE. */
@@ -52,9 +58,9 @@ export function boulderChance(levels: PickLevels, stage: number): number {
 }
 
 /** What the queue rolls at `stage` with these pick levels (GAME_DESIGN §15.1). */
-export function dropOdds(levels: PickLevels, stage: number, bigCatchLevel: number): DropOdds {
+export function dropOdds(levels: PickLevels, stage: number, bigCatchTilt: number): DropOdds {
   return {
-    tiltLevel: tiltLevel(levels, bigCatchLevel),
+    tiltLevel: tiltLevel(levels, bigCatchTilt),
     magnetChance: MAGNET_BASE_CHANCE + PICKS.moreMagnets.perLevel * levels.moreMagnets,
     boulderChance: boulderChance(levels, stage),
     goldenChance: PICKS.goldenCats.perLevel * levels.goldenCats,
@@ -65,20 +71,33 @@ export function dropOdds(levels: PickLevels, stage: number, bigCatchLevel: numbe
   };
 }
 
-/** True when the option can't go higher; Big Drops also stops once the tilt is at its most. */
-export function pickMaxed(id: PickId, levels: PickLevels, bigCatchLevel: number): boolean {
-  if (levels[id] >= PICKS[id].maxLevel) return true;
-  return id === 'bigDrops' && tiltLevel(levels, bigCatchLevel) >= MAX_DROP_TILT_LEVEL;
+/**
+ * True when the option can't go higher: at its max level or its cap in this run (`caps`, the
+ * blessings' shop cards); Big Drops also stops once the tilt is at its most.
+ */
+export function pickMaxed(
+  id: PickId,
+  levels: PickLevels,
+  bigCatchTilt: number,
+  caps: PickCaps = {},
+): boolean {
+  if (levels[id] >= Math.min(PICKS[id].maxLevel, caps[id] ?? Infinity)) return true;
+  return id === 'bigDrops' && tiltLevel(levels, bigCatchTilt) >= MAX_DROP_TILT_LEVEL;
 }
 
 /**
  * True when a pick may offer the option: it isn't maxed, and a follow-up's pick has been taken
  * (Quick Curse and More Curses need Cursed Bell, GAME_DESIGN §15.5).
  */
-export function pickOpen(id: PickId, levels: PickLevels, bigCatchLevel: number): boolean {
+export function pickOpen(
+  id: PickId,
+  levels: PickLevels,
+  bigCatchTilt: number,
+  caps: PickCaps = {},
+): boolean {
   const needs = PICKS[id].requires;
   if (needs !== undefined && levels[needs] <= 0) return false;
-  return !pickMaxed(id, levels, bigCatchLevel);
+  return !pickMaxed(id, levels, bigCatchTilt, caps);
 }
 
 /**
@@ -88,10 +107,11 @@ export function pickOpen(id: PickId, levels: PickLevels, bigCatchLevel: number):
 export function drawOffer(
   kind: PickKind,
   levels: PickLevels,
-  bigCatchLevel: number,
+  bigCatchTilt: number,
   rng: Rng,
+  caps: PickCaps = {},
 ): PickId[] {
-  const open = pickIds(kind).filter((id) => pickOpen(id, levels, bigCatchLevel));
+  const open = pickIds(kind).filter((id) => pickOpen(id, levels, bigCatchTilt, caps));
   // Fisher–Yates: each option lands on each place equally often.
   for (let i = open.length - 1; i > 0; i--) {
     const j = rng.int(0, i);
@@ -130,7 +150,7 @@ export interface PickCard {
 export function pickCard(
   id: PickId,
   levels: PickLevels,
-  bigCatchLevel: number,
+  bigCatchTilt: number,
   windDirection: WindDirection = 1,
 ): PickCard {
   const def = PICKS[id];
@@ -144,15 +164,15 @@ export function pickCard(
     statLabel: def.statLabel,
     level,
     maxLevel: def.maxLevel,
-    current: pickValue(id, levels, bigCatchLevel),
-    next: pickValue(id, { ...levels, [id]: level + 1 }, bigCatchLevel),
+    current: pickValue(id, levels, bigCatchTilt),
+    next: pickValue(id, { ...levels, [id]: level + 1 }, bigCatchTilt),
     mirror: left,
   };
 }
 
 /** The value one option changes, at these levels, formatted for its card. */
-export function pickValue(id: PickId, levels: PickLevels, bigCatchLevel: number): string {
-  const odds = dropOdds(levels, BOULDER_FIRST_STAGE, bigCatchLevel);
+export function pickValue(id: PickId, levels: PickLevels, bigCatchTilt: number): string {
+  const odds = dropOdds(levels, BOULDER_FIRST_STAGE, bigCatchTilt);
   switch (id) {
     case 'moreBoulders':
       return percent(odds.boulderChance);

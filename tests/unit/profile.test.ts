@@ -126,7 +126,7 @@ describe('Profile: wallet, records and stats (GAME_DESIGN §5, §11)', () => {
 
   it('buys an upgrade with wallet coins and writes the save at once', () => {
     const data = defaultSave();
-    data.wallet.coins = 300;
+    data.wallet.coins = 345;
     const { profile, store, scheduler } = setup(data);
     profile.earn(5); // the first change after a quiet second is written at once
     scheduler.advance(100);
@@ -135,32 +135,36 @@ describe('Profile: wallet, records and stats (GAME_DESIGN §5, §11)', () => {
     expect(profile.buy('luckyPaw')).toEqual({
       ok: true,
       levels: expect.objectContaining({ luckyPaw: 1 }) as unknown,
-      coins: 255,
-      price: 50,
+      coins: 50,
+      price: 300,
     });
     expect(store.writes).toHaveLength(writes + 1);
-    expect(store.last?.wallet.coins).toBe(255);
+    expect(store.last?.wallet.coins).toBe(50);
     expect(store.last?.upgrades.luckyPaw).toBe(1);
     expect(profile.pending).toBe(false);
     // Spending is not earning.
     expect(profile.stats.totalCoinsEarned).toBe(5);
   });
 
-  it('refuses a purchase it cannot afford or that is maxed, without writing', () => {
+  it('refuses a purchase it cannot afford, that is maxed or locked, without writing', () => {
     const data = defaultSave();
-    data.wallet.coins = 450;
+    data.wallet.coins = 9000;
     data.upgrades.comboCharm = 5;
+    data.records.bestStage = 5;
     const { profile, store } = setup(data);
     expect(profile.buy('comboCharm')).toEqual({ ok: false, reason: 'max' });
     expect(profile.buy('secondChance')).toEqual({ ok: false, reason: 'insufficient' });
-    expect(profile.coins).toBe(450);
+    // Joker Cat opens at stage 8.
+    expect(profile.buy('joker')).toEqual({ ok: false, reason: 'locked' });
+    expect(profile.coins).toBe(9000);
     expect(profile.upgrades.secondChance).toBe(0);
     expect(store.writes).toHaveLength(0);
   });
 
   it('keeps a purchase pending when the storage refuses it', () => {
     const data = defaultSave();
-    data.wallet.coins = 100;
+    data.wallet.coins = 1080;
+    data.records.bestStage = 3;
     const { profile, store } = setup(data);
     store.refuse = true;
     expect(profile.buy('comboCharm').ok).toBe(true);
@@ -169,7 +173,7 @@ describe('Profile: wallet, records and stats (GAME_DESIGN §5, §11)', () => {
     store.refuse = false;
     expect(profile.flush()).toBe(true);
     expect(store.last?.upgrades.comboCharm).toBe(1);
-    expect(store.last?.wallet.coins).toBe(20);
+    expect(store.last?.wallet.coins).toBe(80);
   });
 
   it('clamps upgrade levels to their range', () => {
@@ -178,10 +182,20 @@ describe('Profile: wallet, records and stats (GAME_DESIGN §5, §11)', () => {
     profile.setUpgrade('luckyPaw', -2);
     profile.setUpgrade('bigCatch', 2.6);
     profile.setUpgrade('comboCharm', Number.NaN);
+    profile.setUpgrade('goldenCats', 0);
     expect(profile.upgrades.secondChance).toBe(2);
     expect(profile.upgrades.luckyPaw).toBe(0);
     expect(profile.upgrades.bigCatch).toBe(3);
     expect(profile.upgrades.comboCharm).toBe(0);
+    expect(profile.upgrades.goldenCats).toBe(1); // its start level
+  });
+
+  it('lets debug tools set the best stage, which opens the shop gates', () => {
+    const { profile } = setup();
+    profile.setBestStage(8);
+    expect(profile.records.bestStage).toBe(8);
+    profile.setBestStage(0);
+    expect(profile.records.bestStage).toBe(1);
   });
 
   it('keeps settings and hint flags', () => {

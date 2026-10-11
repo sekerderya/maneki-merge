@@ -257,11 +257,26 @@ describe('saved runs (GAME_DESIGN §11)', () => {
   });
 });
 
+/**
+ * Runs saved before v0.36 are run-save version 1. v0.36 (the new economy, every profile starting
+ * over) drops them; RunController still rebuilds their shape, which these check.
+ */
+const V1 = 1;
+
+describe('a run saved before v0.36', () => {
+  it('is dropped', () => {
+    for (const file of ['./run-v0.33.5.json', './run-v0.34.0.json']) {
+      const text = readFileSync(new URL(file, import.meta.url), 'utf8');
+      expect(decodeRunSave(text)).toEqual({ error: 'version 1, expected 2' });
+    }
+  });
+});
+
 describe('a run saved by v0.33.5, before Batch 18', () => {
   const text = readFileSync(new URL('./run-v0.33.5.json', import.meta.url), 'utf8');
 
   it("loads with the new trials and rules at 0, no cracks and the seed's wind", () => {
-    const decoded = decodeRunSave(text);
+    const decoded = decodeRunSave(text, V1);
     if (!('save' in decoded)) throw new Error(decoded.error);
     const saved = decoded.save.run;
     for (const id of ['wind', 'heavyDrop', 'porcelain', 'hubris', 'echo'] as const) {
@@ -279,7 +294,7 @@ describe('a run saved by v0.33.5, before Batch 18', () => {
   });
 
   it('plays on', () => {
-    const decoded = decodeRunSave(text);
+    const decoded = decodeRunSave(text, V1);
     if (!('save' in decoded)) throw new Error(decoded.error);
     const run = RunController.restore(decoded.save.run);
     run.resume();
@@ -297,7 +312,7 @@ describe('a run saved by v0.34.0, before Batch 19', () => {
   const text = readFileSync(new URL('./run-v0.34.0.json', import.meta.url), 'utf8');
 
   it("loads with Batch 18's picks, cracks and waits as they were", () => {
-    const decoded = decodeRunSave(text);
+    const decoded = decodeRunSave(text, V1);
     if (!('save' in decoded)) throw new Error(decoded.error);
     const saved = decoded.save.run;
     expect(saved.levels.porcelain).toBe(2);
@@ -310,7 +325,7 @@ describe('a run saved by v0.34.0, before Batch 19', () => {
   });
 
   it('plays on', () => {
-    const decoded = decodeRunSave(text);
+    const decoded = decodeRunSave(text, V1);
     if (!('save' in decoded)) throw new Error(decoded.error);
     const run = RunController.restore(decoded.save.run);
     run.resume();

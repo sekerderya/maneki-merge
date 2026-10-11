@@ -33,6 +33,13 @@ export const DROPPER_HEADROOM_RATIO = 0.44;
 export const DROP_SIZES = 4;
 export const DROP_WEIGHTS: readonly number[] = [40, 30, 20, 10];
 
+/**
+ * One level of drop tilt (Big Catch and Big Drops, GAME_DESIGN §8) moves this share of the chances
+ * from the smallest drop to the biggest, and a third of it from size 2 to size 3: a tilt of 5 makes
+ * them 25% each, the most, 10 (MAX_DROP_TILT_LEVEL), 10, 20, 30 and 40%.
+ */
+export const DROP_TILT_STEP = 0.03;
+
 /** The first drops of a run are always the pool's smallest tier. */
 export const FIRST_DROPS_SMALLEST_COUNT = 2;
 

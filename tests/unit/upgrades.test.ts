@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { UPGRADE_IDS, UPGRADES } from '../../src/config/upgrades';
+import { BLESSING_CARD_IDS, UPGRADE_IDS, UPGRADES } from '../../src/config/upgrades';
 import type { UpgradeId } from '../../src/config/upgrades';
 import {
   anyAffordable,
@@ -9,7 +9,10 @@ import {
   defaultUpgradeLevels,
   deriveStats,
   isUpgradeId,
+  maxUpgradeLevels,
   nextPrice,
+  unlockedBetween,
+  upgradeUnlocked,
 } from '../../src/core/upgrades';
 import type { UpgradeLevels } from '../../src/core/upgrades';
 
@@ -18,25 +21,35 @@ const levels = (overrides: Partial<Record<UpgradeId, number>> = {}): UpgradeLeve
   ...overrides,
 });
 
-const maxed = (): UpgradeLevels =>
-  Object.fromEntries(UPGRADE_IDS.map((id) => [id, UPGRADES[id].maxLevel])) as UpgradeLevels;
+const maxed = (): UpgradeLevels => maxUpgradeLevels();
+
+/** A best stage that has opened every card. */
+const ANY_STAGE = 1000;
 
 describe('deriveStats (GAME_DESIGN §10)', () => {
-  it('starts with no bonuses', () => {
+  it('starts with no bonuses, Golden Cats and Big Drops open at level 1', () => {
     expect(deriveStats(levels())).toEqual({
       coinMultiplier: 1,
-      bigCatchLevel: 0,
+      bigCatchTilt: 0,
       comboCharmLevel: 0,
       luckySaves: 0,
+      blessingCaps: { goldenCats: 1, bigDrops: 1, moreMagnets: 0, hanabi: 0, joker: 0 },
     });
   });
 
   it('applies every formula at max level', () => {
     const s = deriveStats(maxed());
     expect(s.coinMultiplier).toBeCloseTo(2.5, 10); // 1 + 0.15 × 10
-    expect(s.bigCatchLevel).toBe(5);
+    expect(s.bigCatchTilt).toBeCloseTo(8, 10); // 0.8 × 10
     expect(s.comboCharmLevel).toBe(5);
     expect(s.luckySaves).toBe(2);
+    expect(s.blessingCaps).toEqual({
+      goldenCats: 5,
+      bigDrops: 3,
+      moreMagnets: 5,
+      hanabi: 5,
+      joker: 5,
+    });
   });
 
   it.each([
@@ -61,26 +74,60 @@ describe('comboBonus', () => {
   });
 });
 
+describe('the cards (GAME_DESIGN §10)', () => {
+  it('has one rising price per level above the start level, and a gate', () => {
+    for (const id of UPGRADE_IDS) {
+      const def = UPGRADES[id];
+      expect(def.prices).toHaveLength(def.maxLevel - def.startLevel);
+      expect([...def.prices].sort((a, b) => a - b)).toEqual(def.prices);
+      expect(def.gate).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  it('sells a card for every blessing, after the upgrades', () => {
+    expect(UPGRADE_IDS.filter((id) => UPGRADES[id].section === 'blessing')).toEqual([
+      ...BLESSING_CARD_IDS,
+    ]);
+    expect(UPGRADE_IDS.slice(-BLESSING_CARD_IDS.length)).toEqual([...BLESSING_CARD_IDS]);
+  });
+
+  it('costs about 610K coins in all (the 8-hour pacing model)', () => {
+    const total = UPGRADE_IDS.reduce(
+      (sum, id) => sum + UPGRADES[id].prices.reduce((a, b) => a + b, 0),
+      0,
+    );
+    expect(total).toBe(609_800);
+  });
+});
+
 describe('prices and purchases', () => {
   it('prices every level from the table and returns null at max', () => {
     for (const id of UPGRADE_IDS) {
       const def = UPGRADES[id];
-      def.prices.forEach((price, level) => expect(nextPrice(id, level)).toBe(price));
+      def.prices.forEach((price, i) => expect(nextPrice(id, def.startLevel + i)).toBe(price));
       expect(nextPrice(id, def.maxLevel)).toBeNull();
       expect(nextPrice(id, def.maxLevel + 3)).toBeNull();
     }
-    expect(nextPrice('luckyPaw', 0)).toBe(50);
-    expect(nextPrice('comboCharm', 4)).toBe(1280);
+    expect(nextPrice('luckyPaw', 0)).toBe(300);
+    expect(nextPrice('comboCharm', 4)).toBe(20_000);
+    // Golden Cats starts at level 1: its first price buys level 2.
+    expect(nextPrice('goldenCats', 1)).toBe(400);
   });
 
-  it('checks affordability and the max level', () => {
-    expect(canBuy('luckyPaw', levels(), 50)).toEqual({ ok: true, price: 50 });
-    expect(canBuy('luckyPaw', levels(), 49)).toEqual({
+  it('checks affordability, the gate and the max level', () => {
+    expect(canBuy('luckyPaw', levels(), 300, 1)).toEqual({ ok: true, price: 300 });
+    expect(canBuy('luckyPaw', levels(), 299, 1)).toEqual({
       ok: false,
       reason: 'insufficient',
-      price: 50,
+      price: 300,
     });
-    expect(canBuy('secondChance', levels({ secondChance: 2 }), 1e9)).toEqual({
+    expect(canBuy('hanabi', levels(), 1e9, 4)).toEqual({
+      ok: false,
+      reason: 'locked',
+      price: 3500,
+    });
+    expect(canBuy('hanabi', levels(), 1e9, 5)).toEqual({ ok: true, price: 3500 });
+    expect(canBuy('secondChance', levels({ secondChance: 2 }), 1e9, ANY_STAGE)).toEqual({
       ok: false,
       reason: 'max',
       price: null,
@@ -89,50 +136,66 @@ describe('prices and purchases', () => {
 
   it('buys one level, spends the price, and leaves the inputs untouched', () => {
     const before = levels({ luckyPaw: 2 });
-    const result = buy('luckyPaw', before, 200);
+    const result = buy('luckyPaw', before, 1200, 1);
     expect(result).toEqual({
       ok: true,
       levels: { ...before, luckyPaw: 3 },
-      coins: 75,
-      price: 125,
+      coins: 200,
+      price: 1000,
     });
     expect(before.luckyPaw).toBe(2);
   });
 
   it('refuses purchases it can’t make', () => {
-    expect(buy('bigCatch', levels(), 99)).toEqual({ ok: false, reason: 'insufficient' });
-    expect(buy('secondChance', levels({ secondChance: 2 }), 1e9)).toEqual({
+    expect(buy('bigCatch', levels(), 299, 1)).toEqual({ ok: false, reason: 'insufficient' });
+    expect(buy('joker', levels(), 1e9, 7)).toEqual({ ok: false, reason: 'locked' });
+    expect(buy('secondChance', levels({ secondChance: 2 }), 1e9, ANY_STAGE)).toEqual({
       ok: false,
       reason: 'max',
     });
   });
 
-  it('buys every upgrade to max for the sum of its prices', () => {
+  it('buys every card to max for the sum of its prices', () => {
     for (const id of UPGRADE_IDS) {
       const total = UPGRADES[id].prices.reduce((a, b) => a + b, 0);
       let state: UpgradeLevels = levels();
       let coins = total;
-      for (let i = 0; i < UPGRADES[id].maxLevel; i++) {
-        const r = buy(id, state, coins);
-        if (!r.ok) throw new Error(`could not buy ${id} level ${i + 1}`);
+      for (let i = 0; i < UPGRADES[id].prices.length; i++) {
+        const r = buy(id, state, coins, ANY_STAGE);
+        if (!r.ok) throw new Error(`could not buy ${id} level ${state[id] + 1}`);
         state = r.levels;
         coins = r.coins;
       }
       expect(coins).toBe(0);
       expect(state[id]).toBe(UPGRADES[id].maxLevel);
-      expect(buy(id, state, 1e9).ok).toBe(false);
+      expect(buy(id, state, 1e9, ANY_STAGE).ok).toBe(false);
     }
   });
 
   it('knows when anything is affordable (the menu dot)', () => {
-    expect(anyAffordable(levels(), 0)).toBe(false);
-    expect(anyAffordable(levels(), 49)).toBe(false);
-    expect(anyAffordable(levels(), 50)).toBe(true);
-    expect(anyAffordable(maxed(), 1e9)).toBe(false);
+    expect(anyAffordable(levels(), 0, 1)).toBe(false);
+    expect(anyAffordable(levels(), 299, 1)).toBe(false);
+    expect(anyAffordable(levels(), 300, 1)).toBe(true);
+    expect(anyAffordable(maxed(), 1e9, ANY_STAGE)).toBe(false);
+    // Only Second Chance is left, and only stage 5 opens it.
+    const allButSaves = { ...maxed(), secondChance: 0 };
+    expect(anyAffordable(allButSaves, 1e9, 4)).toBe(false);
+    expect(anyAffordable(allButSaves, 1e9, 5)).toBe(true);
+  });
+
+  it('opens cards at their gates', () => {
+    expect(upgradeUnlocked('luckyPaw', 1)).toBe(true);
+    expect(upgradeUnlocked('comboCharm', 2)).toBe(false);
+    expect(upgradeUnlocked('comboCharm', 3)).toBe(true);
+    expect(unlockedBetween(1, 1)).toEqual([]);
+    expect(unlockedBetween(1, 3)).toEqual(['comboCharm', 'moreMagnets']);
+    expect(unlockedBetween(3, 9)).toEqual(['secondChance', 'hanabi', 'joker']);
+    expect(unlockedBetween(9, 40)).toEqual([]);
   });
 
   it('recognizes upgrade ids', () => {
     expect(isUpgradeId('luckyPaw')).toBe(true);
+    expect(isUpgradeId('hanabi')).toBe(true);
     expect(isUpgradeId('nope')).toBe(false);
     expect(isUpgradeId(3)).toBe(false);
   });

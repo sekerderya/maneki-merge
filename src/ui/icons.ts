@@ -1,6 +1,6 @@
 /** Inline SVG icons (no icon font, no network). They inherit `currentColor`. */
 import type { PickId } from '../config/picks';
-import type { UpgradeId } from '../config/upgrades';
+import type { BlessingCardId, UpgradeId } from '../config/upgrades';
 
 const svg = (body: string, viewBox = '0 0 24 24'): string =>
   `<svg viewBox="${viewBox}" aria-hidden="true" focusable="false">${body}</svg>`;
@@ -104,7 +104,7 @@ export const ICON_CLOSE = svg(
 );
 
 /** One glyph per upgrade for the shop cards (GAME_DESIGN §2.2). */
-export const UPGRADE_ICONS: Readonly<Record<UpgradeId, string>> = {
+export const UPGRADE_ICONS: Readonly<Record<Exclude<UpgradeId, BlessingCardId>, string>> = {
   luckyPaw: svg(
     '<ellipse cx="12" cy="16" rx="5" ry="4.2" fill="currentColor"/>' +
       '<circle cx="5.5" cy="10.5" r="2.1" fill="currentColor"/>' +

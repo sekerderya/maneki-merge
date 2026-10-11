@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { UPGRADE_IDS } from '../../src/config/upgrades';
+import { UPGRADE_IDS, UPGRADES } from '../../src/config/upgrades';
 import { ICON_SPRITE_DIR, iconSprite, iconSprites } from '../../src/config/iconSprites';
 import { SHOP_ART, SHOP_SPRITE_DIR } from '../../src/config/shopSprites';
 
@@ -29,7 +29,10 @@ describe('Upgrades screen art (GAME_DESIGN §2.2, docs/ART_ASSETS.md §4.9)', ()
 
 describe('icon kit (docs/ART_ASSETS.md §5)', () => {
   it('has an icon for every upgrade, and ships each one', () => {
-    for (const id of UPGRADE_IDS) expect(iconSprite(id), id).not.toBeNull();
+    // The blessing cards show their blessing's ball instead (v0.36), like its pick card.
+    for (const id of UPGRADE_IDS.filter((u) => UPGRADES[u].section === 'upgrade')) {
+      expect(iconSprite(id), id).not.toBeNull();
+    }
     for (const { file } of iconSprites()) {
       expect(existsSync(`public/${ICON_SPRITE_DIR}${file}`), file).toBe(true);
     }

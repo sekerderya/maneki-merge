@@ -51,7 +51,8 @@ import {
   STAGE_CLEAR_BANNER_MS,
   STAGE_CLEAR_EXIT_MS,
 } from '../../src/config/view';
-import { UPGRADE_IDS, UPGRADES } from '../../src/config/upgrades';
+import { PICKS } from '../../src/config/picks';
+import { BLESSING_CARD_IDS, UPGRADE_IDS, UPGRADES } from '../../src/config/upgrades';
 
 describe('cat sizes (GAME_DESIGN §4)', () => {
   // Size and radius: every stage holds these 9 sizes.
@@ -213,33 +214,65 @@ describe('stages (GAME_DESIGN §7)', () => {
 });
 
 describe('upgrades (GAME_DESIGN §10)', () => {
-  // Id, name, max level, prices.
-  const TABLE: readonly [string, string, number, number[]][] = [
-    ['luckyPaw', 'Lucky Paw', 10, [50, 80, 125, 200, 320, 500, 800, 1250, 2000, 3200]],
-    ['bigCatch', 'Big Catch', 5, [100, 250, 600, 1500, 3500]],
-    ['comboCharm', 'Combo Charm', 5, [80, 160, 320, 640, 1280]],
-    ['secondChance', 'Second Chance', 2, [500, 4000]],
+  // Id, name, start level, max level, gate (best stage), prices.
+  const TABLE: readonly [string, string, number, number, number, number[]][] = [
+    [
+      'luckyPaw',
+      'Lucky Paw',
+      0,
+      10,
+      1,
+      [300, 600, 1000, 1600, 2500, 4000, 6500, 10_000, 16_000, 25_000],
+    ],
+    [
+      'bigCatch',
+      'Big Catch',
+      0,
+      10,
+      1,
+      [300, 800, 1600, 3000, 5000, 8000, 13_000, 20_000, 30_000, 45_000],
+    ],
+    ['comboCharm', 'Combo Charm', 0, 5, 3, [1000, 3000, 6000, 12_000, 20_000]],
+    ['secondChance', 'Second Chance', 0, 2, 5, [10_000, 50_000]],
+    ['goldenCats', 'Golden Cats', 1, 5, 1, [400, 2000, 5000, 12_000]],
+    ['bigDrops', 'Big Drops', 1, 3, 1, [2000, 8000]],
+    ['moreMagnets', 'More Magnets', 0, 5, 3, [1200, 3500, 8000, 15_000, 25_000]],
+    ['hanabi', 'Hanabi', 0, 5, 5, [3500, 7000, 13_000, 22_000, 35_000]],
+    ['joker', 'Joker Cat', 0, 5, 8, [9000, 16_000, 26_000, 40_000, 60_000]],
   ];
 
-  it('lists the 4 upgrades in shop order', () => {
+  it('lists the 4 upgrades, then the 5 blessing cards, in shop order', () => {
     expect([...UPGRADE_IDS]).toEqual(TABLE.map(([id]) => id));
   });
 
-  it.each(TABLE)('%s (%s): max %i, prices %j', (id, name, maxLevel, prices) => {
-    const def = UPGRADES[id as (typeof UPGRADE_IDS)[number]];
-    expect(def.id).toBe(id);
-    expect(def.name).toBe(name);
-    expect(def.maxLevel).toBe(maxLevel);
-    expect(def.prices).toEqual(prices);
-    expect(def.prices).toHaveLength(def.maxLevel);
-    expect(def.description.length).toBeGreaterThan(0);
-  });
+  it.each(TABLE)(
+    '%s (%s): from %i to %i, at stage %i, prices %j',
+    (id, name, startLevel, maxLevel, gate, prices) => {
+      const def = UPGRADES[id as (typeof UPGRADE_IDS)[number]];
+      expect(def.id).toBe(id);
+      expect(def.name).toBe(name);
+      expect(def.startLevel).toBe(startLevel);
+      expect(def.maxLevel).toBe(maxLevel);
+      expect(def.gate).toBe(gate);
+      expect(def.prices).toEqual(prices);
+      expect(def.prices).toHaveLength(def.maxLevel - def.startLevel);
+      expect(def.description.length).toBeGreaterThan(0);
+    },
+  );
 
   it('has per-level effects matching the table', () => {
     expect(UPGRADES.luckyPaw.perLevel).toBe(0.15);
-    expect(UPGRADES.bigCatch.perLevel).toBe(0.03);
+    // Big Catch: 0.8 drop tilt levels per level (GAME_DESIGN §8).
+    expect(UPGRADES.bigCatch.perLevel).toBe(0.8);
     expect(UPGRADES.comboCharm.perLevel).toBe(0.08);
     expect(UPGRADES.secondChance.perLevel).toBe(1);
+  });
+
+  it('caps every blessing card at its pick’s max level', () => {
+    for (const id of BLESSING_CARD_IDS) {
+      expect(UPGRADES[id].maxLevel).toBeLessThanOrEqual(PICKS[id].maxLevel);
+      expect(UPGRADES[id].section).toBe('blessing');
+    }
   });
 
   it('has prices that only go up', () => {

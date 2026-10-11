@@ -1204,7 +1204,7 @@ export class RunController {
 
   /** What the queue rolls now: the stage and the picks so far. */
   private odds(): DropOdds {
-    return dropOdds(this.levels, this.world.stage, this.stats.bigCatchLevel);
+    return dropOdds(this.levels, this.world.stage, this.stats.bigCatchTilt);
   }
 
   /** What acts on a falling ball now: the wind and Heavy Drop (GAME_DESIGN §15.8–§15.9). */
@@ -1336,10 +1336,22 @@ export class RunController {
    */
   private offerNextPick(): boolean {
     for (let kind = this.pickQueue.shift(); kind; kind = this.pickQueue.shift()) {
-      let options = drawOffer(kind, this.levels, this.stats.bigCatchLevel, this.pickRng);
+      let options = drawOffer(
+        kind,
+        this.levels,
+        this.stats.bigCatchTilt,
+        this.pickRng,
+        this.stats.blessingCaps,
+      );
       if (options.length === 0 && kind === 'rule') {
         kind = 'trial';
-        options = drawOffer(kind, this.levels, this.stats.bigCatchLevel, this.pickRng);
+        options = drawOffer(
+          kind,
+          this.levels,
+          this.stats.bigCatchTilt,
+          this.pickRng,
+          this.stats.blessingCaps,
+        );
       }
       if (options.length === 0) continue;
       this.offer = { kind, options };

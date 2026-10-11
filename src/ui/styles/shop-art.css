@@ -320,3 +320,64 @@
   filter: saturate(0.4);
   letter-spacing: 0.04em;
 }
+
+/* The blessing cards' heading (v0.36): dark brown words with a cream edge, like the HUD's. */
+.shop-overlay.is-art .shop-section {
+  margin: calc(18 * var(--u)) 0 calc(-6 * var(--u));
+  text-align: center;
+}
+
+.shop-overlay.is-art .shop-section-title {
+  color: #813c2d;
+  font-size: calc(46 * var(--u));
+  -webkit-text-stroke: calc(9 * var(--u)) #fff6e7;
+  paint-order: stroke fill;
+}
+
+.shop-overlay.is-art .shop-section-desc {
+  margin-top: calc(4 * var(--u));
+  color: #5b3324;
+  font-size: calc(28 * var(--u));
+  font-weight: var(--weight-semibold);
+  -webkit-text-stroke: calc(7 * var(--u)) #fff6e7;
+  paint-order: stroke fill;
+}
+
+/* A blessing's ball in a cream medallion with a gold rim, like its pick card (pick-art.css). */
+.shop-overlay.is-art .shop-icon.is-blessing {
+  width: calc(156 * var(--u));
+  height: calc(156 * var(--u));
+  margin-left: calc(6 * var(--u));
+  border: calc(6 * var(--u)) solid #4e2416;
+  border-radius: 50%;
+  background: #fff6e7;
+  box-shadow: inset 0 0 0 calc(9 * var(--u)) #f2c552;
+}
+
+.shop-overlay.is-art .shop-icon.is-blessing svg {
+  width: calc(64 * var(--u));
+  height: calc(64 * var(--u));
+}
+
+.shop-overlay.is-art .shop-icon-ball {
+  filter: drop-shadow(0 0 calc(1.5 * var(--u)) #4e2416);
+}
+
+.shop-overlay.is-art .shop-icon.is-golden .shop-icon-ball {
+  filter: drop-shadow(0 0 calc(1.5 * var(--u)) #4e2416) drop-shadow(0 0 calc(8 * var(--u)) #ffc93c)
+    drop-shadow(0 0 calc(5 * var(--u)) #ffe08a);
+}
+
+/* Locked: a faded button with "Reach" over the torii and the stage that opens the card. */
+.shop-overlay.is-art .shop-buy[data-state='locked'] {
+  border-color: transparent;
+  background: none;
+  color: #4e2416;
+  filter: grayscale(0.85) brightness(1.06);
+  opacity: 0.85;
+}
+
+.shop-torii {
+  width: calc(34 * var(--u));
+  height: auto;
+}

@@ -12,14 +12,17 @@
 import { RUN_SAVE_KEY } from '../config/app';
 import { PICK_IDS } from '../config/picks';
 import type { PickId, PickKind, WindDirection } from '../config/picks';
-import { UPGRADE_IDS } from '../config/upgrades';
+import { UPGRADE_IDS, UPGRADES } from '../config/upgrades';
 import type { UpgradeId } from '../config/upgrades';
 import type { DropKind } from './dropQueue';
 import type { RngState } from './rng';
 import type { SaveData, StorageAdapter } from './save';
 
-/** Bump whenever the snapshot's shape or meaning changes: older snapshots are then dropped. */
-export const RUN_SAVE_VERSION = 1;
+/**
+ * Bump whenever the snapshot's shape or meaning changes: older snapshots are then dropped. 2
+ * (v0.36): the new economy, and every profile starts over (save v7), so a run saved before it goes.
+ */
+export const RUN_SAVE_VERSION = 2;
 
 /** A ball in the dropper or in NEXT. */
 export interface SavedDrop {
@@ -205,7 +208,7 @@ function runSnapshot(value: unknown): RunSnapshot {
   const offer = r['offer'] === null ? null : record(r['offer'], 'offer');
   return {
     seed: int(r['seed'], 'seed'),
-    upgrades: levelsOf(r['upgrades'], UPGRADE_IDS, 'upgrades'),
+    upgrades: upgradeLevelsOf(r['upgrades']),
     state: oneOf(r['state'], ['playing', 'expanding', 'choosing'] as const, 'state'),
     ticks: count(r['ticks'], 'ticks'),
     dropAllowedAt: count(r['dropAllowedAt'], 'dropAllowedAt'),
@@ -376,6 +379,16 @@ function records(value: unknown): SaveData['records'] {
 }
 
 /** Levels by id; with `missing`, an id the record lacks gets that level instead of failing. */
+/** The run's upgrade levels; a card a run saved before v0.36 doesn't list is at its start level. */
+function upgradeLevelsOf(value: unknown): Record<UpgradeId, number> {
+  const r = record(value, 'upgrades');
+  const out = {} as Record<UpgradeId, number>;
+  for (const id of UPGRADE_IDS) {
+    out[id] = r[id] === undefined ? UPGRADES[id].startLevel : count(r[id], `upgrades.${id}`);
+  }
+  return out;
+}
+
 function levelsOf<K extends string>(
   value: unknown,
   ids: readonly K[],

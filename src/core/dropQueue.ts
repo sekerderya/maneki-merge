@@ -8,8 +8,12 @@ import {
   MAGNET_FREE_DROPS,
   MAGNET_SIZE,
 } from '../config/picks';
-import { DROP_WEIGHTS, FIRST_DROPS_SMALLEST_COUNT, stageInfo } from '../config/stages';
-import { UPGRADES } from '../config/upgrades';
+import {
+  DROP_TILT_STEP,
+  DROP_WEIGHTS,
+  FIRST_DROPS_SMALLEST_COUNT,
+  stageInfo,
+} from '../config/stages';
 import type { Rng } from './rng';
 import type { QueueSnapshot } from './runSave';
 
@@ -60,14 +64,14 @@ export const PLAIN_ODDS: DropOdds = {
 
 /**
  * Drop probabilities for a stage's pool, smallest tier first. The base weights are normalized,
- * then Big Catch tilts them towards the bigger cats: each level moves 0.03 of the chances from the
- * smallest to the biggest, and a third of that from size 2 to size 3 (L = 5: 25% each; L = 10, the
- * most with Big Drops: 10, 20, 30, 40%).
+ * then the tilt (Big Catch and Big Drops, core/picks.ts) moves them towards the bigger cats: each
+ * tilt level moves 0.03 of the chances from the smallest to the biggest, and a third of that from
+ * size 2 to size 3 (L = 5: 25% each; L = 10, the most: 10, 20, 30, 40%). L needn't be whole.
  */
-export function dropWeights(bigCatchLevel: number): number[] {
+export function dropWeights(tiltLevel: number): number[] {
   const total = DROP_WEIGHTS.reduce((sum, w) => sum + w, 0);
   const last = DROP_WEIGHTS.length - 1;
-  const tilt = UPGRADES.bigCatch.perLevel * bigCatchLevel;
+  const tilt = DROP_TILT_STEP * tiltLevel;
   return DROP_WEIGHTS.map((w, i) => w / total + (tilt * (2 * i - last)) / last);
 }
 

@@ -10,6 +10,7 @@
  */
 import { SAVE_THROTTLE_MS } from '../config/app';
 import type { HintId } from '../config/app';
+import { FIRST_STAGE } from '../config/stages';
 import { UPGRADES } from '../config/upgrades';
 import type { UpgradeId } from '../config/upgrades';
 import { defaultSave } from './save';
@@ -139,10 +140,12 @@ export class Profile {
 
   /**
    * Buys the next level of an upgrade with wallet coins (GAME_DESIGN §2.2, §10) and writes the
-   * save at once (TECH_SPEC §8). Nothing changes when it is maxed or too expensive.
+   * save at once (TECH_SPEC §8). Nothing changes when it is maxed, locked (the best stage hasn't
+   * reached its gate) or too expensive.
    */
   buy(id: UpgradeId): BuyResult {
-    const result = buy(id, this.state.upgrades, this.state.wallet.coins);
+    const { upgrades, wallet, records } = this.state;
+    const result = buy(id, upgrades, wallet.coins, records.bestStage);
     if (!result.ok) return result;
     this.state.wallet.coins = result.coins;
     this.state.upgrades[id] = result.levels[id];
@@ -151,9 +154,10 @@ export class Profile {
     return result;
   }
 
-  /** Sets an upgrade level (clamped to 0…max), for debug. */
+  /** Sets an upgrade level (clamped to its start level…max), for debug. */
   setUpgrade(id: UpgradeId, level: number): void {
-    const clamped = Math.max(0, Math.min(UPGRADES[id].maxLevel, Math.round(level)));
+    const { startLevel, maxLevel } = UPGRADES[id];
+    const clamped = Math.max(startLevel, Math.min(maxLevel, Math.round(level)));
     if (!Number.isFinite(clamped) || this.state.upgrades[id] === clamped) return;
     this.state.upgrades[id] = clamped;
     this.touch();
@@ -182,6 +186,14 @@ export class Profile {
     if (score <= r.bestScore && stage <= r.bestStage) return;
     r.bestScore = Math.max(r.bestScore, score);
     r.bestStage = Math.max(r.bestStage, stage);
+    this.touch();
+  }
+
+  /** Sets the best stage (debug, to open or close the shop's gates). */
+  setBestStage(stage: number): void {
+    const value = Math.max(FIRST_STAGE, Math.round(stage));
+    if (!Number.isFinite(value) || this.state.records.bestStage === value) return;
+    this.state.records.bestStage = value;
     this.touch();
   }
 

@@ -206,6 +206,25 @@ describe('the cards', () => {
     expect(drawOffer('trial', none, 0, new Rng(1))).toEqual([]);
   });
 
+  it('offers a blessing only below its shop card’s level (GAME_DESIGN §10)', () => {
+    // A fresh profile: Golden Cats and Big Drops up to 1, the others not at all.
+    const fresh = { goldenCats: 1, bigDrops: 1, moreMagnets: 0, hanabi: 0, joker: 0 };
+    const first = drawOffer('blessing', levels(), 0, new Rng(1), fresh);
+    expect([...first].sort()).toEqual(['bigDrops', 'goldenCats']);
+    expect(drawOffer('blessing', levels({ goldenCats: 1 }), 0, new Rng(1), fresh)).toEqual([
+      'bigDrops',
+    ]);
+    expect(
+      drawOffer('blessing', levels({ goldenCats: 1, bigDrops: 1 }), 0, new Rng(1), fresh),
+    ).toEqual([]);
+    expect(pickMaxed('hanabi', levels({ hanabi: 2 }), 0, { hanabi: 2 })).toBe(true);
+    expect(pickMaxed('hanabi', levels({ hanabi: 2 }), 0, { hanabi: 3 })).toBe(false);
+    // A cap above the pick's own max changes nothing.
+    expect(pickMaxed('hanabi', levels({ hanabi: 5 }), 0, { hanabi: 9 })).toBe(true);
+    // Trials aren't capped.
+    expect(drawOffer('trial', levels(), 0, new Rng(1), fresh)).toHaveLength(3);
+  });
+
   it('is deterministic for a generator', () => {
     const a = drawOffer('blessing', levels(), 0, new Rng(9));
     const b = drawOffer('blessing', levels(), 0, new Rng(9));

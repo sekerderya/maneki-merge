@@ -247,3 +247,54 @@
 .reduce-motion .shop-card.is-bought {
   animation: none;
 }
+
+/* The blessing cards' heading (v0.36): what their levels mean. */
+.shop-section {
+  flex: none;
+  margin: 10px 4px 0;
+}
+
+.shop-section-title {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: var(--weight-bold);
+  line-height: 1.1;
+}
+
+.shop-section-desc {
+  margin: 2px 0 0;
+  color: var(--color-muted);
+  font-size: 0.88rem;
+}
+
+/* A blessing card's icon: its ball in a gold medallion, like its pick card. */
+.shop-icon.is-blessing {
+  position: relative;
+  background: var(--color-gold-light);
+}
+
+.shop-icon-ball {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  height: auto;
+  transform: translate(-50%, -50%);
+}
+
+.shop-icon.is-golden .shop-icon-ball {
+  filter: drop-shadow(0 0 6px #ffc93c);
+}
+
+/* A card the best stage hasn't opened: faded, with the stage that opens it on its button. */
+.shop-card[data-state='locked'] .shop-icon,
+.shop-card[data-state='locked'] .shop-value {
+  filter: grayscale(0.7);
+  opacity: 0.7;
+}
+
+.shop-buy[data-state='locked'] {
+  border-color: #b9a08c;
+  background: #f1e6d8;
+  color: var(--color-muted);
+  box-shadow: none;
+}

@@ -237,8 +237,8 @@ async function boot(): Promise<void> {
     const settings = profile.settings;
     menu.setCoins(profile.coins);
     menu.setRecords(bestScore, bestStage);
-    menu.setUpgradesAffordable(anyAffordable(profile.upgrades, profile.coins));
-    shop.update(profile.upgrades, profile.coins);
+    menu.setUpgradesAffordable(anyAffordable(profile.upgrades, profile.coins, bestStage));
+    shop.update(profile.upgrades, profile.coins, bestStage);
     audio.setEnabled(settings.sound);
     haptics.setEnabled(settings.haptics);
     setReduceMotion(settings.reduceMotion);

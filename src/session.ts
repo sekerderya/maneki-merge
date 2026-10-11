@@ -263,7 +263,7 @@ export class GameSession {
     const levels = run.pickLevels;
     this.parts.picks.show(
       kind,
-      options.map((id) => pickCard(id, levels, run.stats.bigCatchLevel, run.windDirection)),
+      options.map((id) => pickCard(id, levels, run.stats.bigCatchTilt, run.windDirection)),
     );
   }
 
