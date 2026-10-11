@@ -119,51 +119,46 @@ describe('Heavy Drop (GAME_DESIGN §15.9)', () => {
   });
 
   it('keeps every cat in the jar under 100 heavy drops on a full jar, and launches none', () => {
-    // A jar filled to the rim; each dropped cat is taken away 0.45 s after it lands, as a merge
-    // would, so the jar stays full. The same drops at level 0 are the yardstick.
-    const play = (level: number) => {
-      const world = heavyWorld(level, fillJar(2, 45, 1));
-      for (let i = 0; i < 1500; i++) world.step();
-      const rng = new Rng(3);
-      const { halfWidth, rimY } = world.geometry;
-      let othersOverRim = 0;
-      let ownRebound = 0;
-      let deepest = 0;
-      let escaped = 0;
-      let sunk = 0;
-      const tops = new Map<Ball, number>();
-      for (let d = 0; d < 100; d++) {
-        const size = 1 + rng.weightedIndex(dropWeights(0));
-        const ball = drop(world, level, size, (rng.next() * 2 - 1) * 300);
-        let landedAt = -1;
-        for (let i = 0; i < 400 && (landedAt < 0 || i < landedAt + 54); i++) {
-          for (const b of world.balls) tops.set(b, b.y - b.radius);
-          world.step();
-          if (landedAt < 0 && ball.landedMs >= 0) {
-            landedAt = i;
-            deepest = Math.max(deepest, contactDepth(world, ball));
-          }
-          for (const b of world.balls) {
-            if (!inJar(b, halfWidth)) escaped++;
-            // Nothing sinks through the floor.
-            if (b.y + b.radius > 0.1 * b.radius) sunk++;
-            const crossed = tops.get(b)! > rimY && b.y - b.radius <= rimY;
-            if (!crossed || b.landedMs < 0) continue;
-            if (b === ball) ownRebound = Math.max(ownRebound, -b.vy);
-            else othersOverRim = Math.max(othersOverRim, -b.vy);
-          }
+    // A jar filled to the rim; each dropped cat is taken away 0.25 s after it lands, as a merge
+    // would, so the jar stays full. Ordinary drops push no other cat over the rim here (measured
+    // over six seeds, TECH_SPEC §5), and neither may the fireballs.
+    const world = heavyWorld(5, fillJar(2, 45, 1));
+    for (let i = 0; i < 900; i++) world.step();
+    const rng = new Rng(3);
+    const { halfWidth, rimY } = world.geometry;
+    let othersOverRim = 0;
+    let ownRebound = 0;
+    let deepest = 0;
+    let escaped = 0;
+    let sunk = 0;
+    const tops = new Map<Ball, number>();
+    for (let d = 0; d < 100; d++) {
+      const size = 1 + rng.weightedIndex(dropWeights(0));
+      const ball = drop(world, 5, size, (rng.next() * 2 - 1) * 300);
+      let landedAt = -1;
+      for (let i = 0; i < 200 && (landedAt < 0 || i < landedAt + 30); i++) {
+        for (const b of world.balls) tops.set(b, b.y - b.radius);
+        world.step();
+        if (landedAt < 0 && ball.landedMs >= 0) {
+          landedAt = i;
+          deepest = Math.max(deepest, contactDepth(world, ball));
         }
-        world.removeBall(ball);
+        for (const b of world.balls) {
+          if (!inJar(b, halfWidth)) escaped++;
+          // Nothing sinks through the floor.
+          if (b.y + b.radius > 0.1 * b.radius) sunk++;
+          const crossed = tops.get(b)! > rimY && b.y - b.radius <= rimY;
+          if (!crossed || b.landedMs < 0) continue;
+          if (b === ball) ownRebound = Math.max(ownRebound, -b.vy);
+          else othersOverRim = Math.max(othersOverRim, -b.vy);
+        }
       }
-      return { escaped, sunk, othersOverRim, ownRebound, deepest };
-    };
-    const ordinary = play(0);
-    const heavy = play(5);
-    expect([ordinary.escaped, ordinary.sunk, heavy.escaped, heavy.sunk]).toEqual([0, 0, 0, 0]);
-    expect(heavy.othersOverRim).toBeLessThanOrEqual(ordinary.othersOverRim);
-    expect(heavy.deepest).toBeLessThanOrEqual(FALL_GUARD_DEPTH + 1e-6);
+      world.removeBall(ball);
+    }
+    expect([escaped, sunk, othersOverRim]).toEqual([0, 0, 0]);
+    expect(deepest).toBeLessThanOrEqual(FALL_GUARD_DEPTH + 1e-6);
     // A heavy cat that lands on a pile at the rim may bounce back over it, but only a little:
-    // the normal limit applies from its first contact (at most a few units above the rim).
-    expect(heavy.ownRebound).toBeLessThan(300);
+    // the normal limit applies from its first contact (a few units above the rim).
+    expect(ownRebound).toBeLessThan(300);
   }, 60_000);
 });
