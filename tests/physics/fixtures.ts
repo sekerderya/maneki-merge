@@ -2,6 +2,7 @@
 import type { PickId } from '../../src/config/picks';
 import { catRadius, stageInfo } from '../../src/config/stages';
 import { dropWeights } from '../../src/core/dropQueue';
+import { StateHasher } from '../../src/core/hash';
 import { Rng } from '../../src/core/rng';
 import { defaultUpgradeLevels } from '../../src/core/upgrades';
 import type { UpgradeLevels } from '../../src/core/upgrades';
@@ -99,4 +100,21 @@ export function replayInput(run: RunController, input: PlayInput): boolean {
   if ('drop' in input) return run.drop(input.drop);
   if ('take' in input) return run.take(input.take);
   return run.choose(input.choose);
+}
+
+/**
+ * A digest of what a player can see of a run (the balls, the queue, score, coins, stage, ticks),
+ * from its public state only, so it stays comparable across versions that add hidden state.
+ */
+export function publicFingerprint(run: RunController): string {
+  const h = new StateHasher();
+  h.number(run.ticks).number(run.stage).number(run.score).number(run.coins);
+  for (const item of [run.current, run.next]) {
+    h.string(item.kind).number(item.tier).bool(item.golden).number(item.hits);
+  }
+  for (const ball of run.balls) {
+    h.number(ball.id).string(ball.kind).number(ball.tier).bool(ball.golden).number(ball.hitsLeft);
+    h.number(ball.x).number(ball.y).number(ball.angle).number(ball.radius).number(ball.landedMs);
+  }
+  return h.digest();
 }
