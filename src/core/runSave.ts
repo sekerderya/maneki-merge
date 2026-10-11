@@ -71,6 +71,8 @@ export interface SavedBall {
   readonly cracked: boolean;
   /** A broken cat's piece: the other piece's id (null when missing, before Batch 18). */
   readonly mate: number | null;
+  /** A piece: the world step it parts from its mate anyway (missing before v0.35.2: at once). */
+  readonly mateUntil?: number;
   readonly x: number;
   readonly y: number;
   readonly prevX: number;
@@ -351,6 +353,7 @@ function ball(value: unknown): SavedBall {
         : list(b['struck'], 'ball.struck').map((id) => count(id, 'ball.struck')),
     cracked: b['cracked'] === undefined ? false : bool(b['cracked'], 'ball.cracked'),
     mate: b['mate'] === undefined || b['mate'] === null ? null : count(b['mate'], 'ball.mate'),
+    ...(b['mateUntil'] === undefined ? {} : { mateUntil: count(b['mateUntil'], 'ball.mateUntil') }),
   };
 }
 

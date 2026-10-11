@@ -99,10 +99,13 @@ export const PORCELAIN_REACH = BOULDER_HIT_REACH;
 export const PORCELAIN_CHANCE_PER_LEVEL = 0.1;
 /**
  * A broken cat's two pieces (shard mates) are born touching and don't merge with each other; once
- * both have grown in and their edges are more than this many world units apart, they are two
- * ordinary cats and merge when they meet again.
+ * both have grown in and their edges are more than PORCELAIN_MATE_GAP world units apart, or
+ * PORCELAIN_MATE_MS after the break even if they never came apart, they are two ordinary cats and
+ * merge when they touch. (v0.35.2, the owner found pieces wedged together in a pile that never
+ * merged: 13–18% of breaks in bot play stayed together longer than 3 s.)
  */
 export const PORCELAIN_MATE_GAP = 10;
+export const PORCELAIN_MATE_MS = 1000;
 
 /**
  * Hubris (GAME_DESIGN §15.11): three cats up to this size that touch in a chain merge at once into

@@ -47,6 +47,7 @@ import {
   pickOrder,
   PICKS,
   PORCELAIN_CHANCE_PER_LEVEL,
+  PORCELAIN_MATE_MS,
   SPAWN_START_RADIUS_SHARE,
   WIND_ACCEL_PER_LEVEL,
 } from '../config/picks';
@@ -1158,8 +1159,9 @@ export class RunController {
 
   /**
    * A cat cracks: an intact one is cracked now; a cracked one breaks into two cats of the size below,
-   * side by side where it was, each growing in from small (shard mates: they never merge with each
-   * other). A cracked size 1 just shatters. It pays nothing.
+   * side by side where it was, each growing in from small (shard mates: they don't merge with each
+   * other until they have come apart, or PORCELAIN_MATE_MS later). A cracked size 1 just shatters.
+   * It pays nothing.
    */
   private crack(cat: Ball, now: number): void {
     if (cat.removed || cat.kind !== 'cat') return;
@@ -1185,6 +1187,8 @@ export class RunController {
       ) as [Ball, Ball];
       a.mate = b.id;
       b.mate = a.id;
+      // They part from each other in time even if they stay wedged together.
+      a.mateUntil = b.mateUntil = this.world.steps + stepsFor(PORCELAIN_MATE_MS);
       pieces.push(a.id, b.id);
     }
     this.events.emit('catBroken', { id: cat.id, tier: cat.tier, at, pieces });

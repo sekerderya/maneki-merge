@@ -32,8 +32,8 @@ const LEVELS: [PickId, number][] = [
 ];
 
 /**
- * What a v0.34.0 run showed at these ticks (written by v0.34.0 itself): a seed with Batch 18's
- * trials and rules on, a debug stage clear and the same kind of bot. Batch 19's picks
+ * What a v0.34.0 run showed at these ticks (written by v0.34.0 itself; the last two since v0.35.2):
+ * a seed with Batch 18's trials and rules on, a debug stage clear and the same kind of bot. Batch 19's picks
  * (GAME_DESIGN §15) start at 0 and roll on their own generators, so it must play the same.
  */
 const V0_34_0 = [
@@ -43,8 +43,10 @@ const V0_34_0 = [
   '2400:99e3d244:playing:13',
   '3000:d963176c:playing:19',
   '3600:e4ab5dd6:playing:16',
-  '4200:a12b74ac:playing:18',
-  '4800:be7f5794:playing:16',
+  // Re-recorded in v0.35.2: shard mates wedged together now part after PORCELAIN_MATE_MS, which
+  // first happens in this run after tick 3600 (until then it matches v0.34.0 to the bit).
+  '4200:81596d79:playing:14',
+  '4800:2bc999f5:playing:13',
 ];
 
 const LEVELS_0_34: [PickId, number][] = [

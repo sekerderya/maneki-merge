@@ -58,6 +58,8 @@ export interface BallView {
   readonly cracked: boolean;
   /** A broken cat's piece: the id of the other piece, which it never merges with; else null. */
   readonly mate: number | null;
+  /** A piece: the world step from which it parts from its mate even if they still touch. */
+  readonly mateUntil: number;
 }
 
 export interface BallSpec {
@@ -88,6 +90,8 @@ export interface BallSpec {
   readonly cracked?: boolean;
   /** A broken cat's piece: the other piece's id. */
   readonly mate?: number | null;
+  /** A piece: the world step from which it parts from its mate anyway (never by default). */
+  readonly mateUntil?: number;
 }
 
 export class Ball implements BallView, CircleShape {
@@ -107,6 +111,8 @@ export class Ball implements BallView, CircleShape {
   cracked = false;
   /** A broken cat's piece: the other piece's id, which it never merges with. */
   mate: number | null = null;
+  /** A piece: the world step from which it parts from its mate even if they still touch. */
+  mateUntil = Infinity;
   private growFrom: number;
   private growAgeMs = 0;
 
@@ -236,6 +242,7 @@ export function createBall(id: number, spec: BallSpec): Ball {
   if (kind === 'cat') {
     ball.cracked = spec.cracked ?? false;
     ball.mate = spec.mate ?? null;
+    ball.mateUntil = spec.mateUntil ?? Infinity;
   }
   (body.plugin as { circle?: Ball }).circle = ball;
   setCircleMass(body, spec.size, radius);

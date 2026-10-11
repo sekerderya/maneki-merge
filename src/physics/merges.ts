@@ -19,7 +19,8 @@
  * 6. Porcelain (GAME_DESIGN §15.10): every cat within PORCELAIN_REACH of a merge's balls may
  *    crack, except cats of the merging size and of the last size; the caller rolls and applies it.
  * 7. A broken cat's two pieces (shard mates) don't merge with each other until they have been
- *    apart: more than PORCELAIN_MATE_GAP between their edges once both have grown in.
+ *    apart (more than PORCELAIN_MATE_GAP between their edges once both have grown in) or their
+ *    time together is up (`mateUntil`, PORCELAIN_MATE_MS after the break).
  * 8. Dice (GAME_DESIGN §15.14, `dice`): every merge of two or three cats rolls before its new cat
  *    is made, in resolution order, unless it is a joker's merge or would make the cap's cat. A
  *    lucky roll makes the new cat one size bigger (never above the cap); a fizzle makes one cat of
@@ -203,7 +204,7 @@ export class MergeResolver {
     this.tiers.length = 0;
     const contacts = world.mergeContacts;
     this.dice = rules.dice ?? null;
-    this.releaseMates(world.balls);
+    this.releaseMates(world.balls, world.steps);
     this.forgetWaits(world, rules);
     if (contacts.length === 0) {
       this.collectJokerHits(world.jokerBoulderContacts);
@@ -238,9 +239,10 @@ export class MergeResolver {
 
   /**
    * Porcelain: shard mates part once they have been apart (more than PORCELAIN_MATE_GAP between
-   * their edges, both grown in) or one of them is gone; from then on they merge like any two cats.
+   * their edges, both grown in), once their time together is up (`mateUntil`), or when one of them
+   * is gone; from then on they merge like any two cats.
    */
-  private releaseMates(balls: readonly Ball[]): void {
+  private releaseMates(balls: readonly Ball[], steps: number): void {
     for (const ball of balls) {
       if (ball.mate === null) continue;
       const mate = balls.find((other) => other.id === ball.mate);
@@ -248,9 +250,10 @@ export class MergeResolver {
         ball.mate = null;
         continue;
       }
-      if (ball.growing || mate.growing) continue;
+      const due = steps >= Math.min(ball.mateUntil, mate.mateUntil);
+      if (!due && (ball.growing || mate.growing)) continue;
       const gap = Math.hypot(mate.x - ball.x, mate.y - ball.y) - ball.radius - mate.radius;
-      if (gap <= PORCELAIN_MATE_GAP) continue;
+      if (!due && gap <= PORCELAIN_MATE_GAP) continue;
       ball.mate = null;
       mate.mate = null;
     }

@@ -34,6 +34,7 @@ function cat(tier: number, y: number, landedMs = 0, kind: BallView['kind'] = 'ca
     struck: new Set(),
     cracked: false,
     mate: null,
+    mateUntil: Infinity,
   };
 }
 

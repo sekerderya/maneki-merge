@@ -384,6 +384,8 @@ export class PhysicsWorld {
       struck: saved.struck,
       cracked: saved.cracked,
       mate: saved.mate,
+      // Pieces saved before v0.35.2 have no time limit: they part at once.
+      ...(saved.mate === null ? {} : { mateUntil: saved.mateUntil ?? 0 }),
     });
     ball.restoreGrowth(saved.growFrom, saved.growMs);
     const body = ball.body;
@@ -419,6 +421,7 @@ export class PhysicsWorld {
       hasher.number(ball.radius).number(ball.landedMs);
       for (const id of ball.struck) hasher.number(id);
       hasher.bool(ball.cracked).number(ball.mate ?? 0);
+      if (ball.mate !== null) hasher.number(ball.mateUntil);
     }
   }
 
@@ -593,5 +596,6 @@ function saveBall(ball: Ball): SavedBall {
     struck: [...ball.struck],
     cracked: ball.cracked,
     mate: ball.mate,
+    ...(ball.mate !== null && Number.isFinite(ball.mateUntil) ? { mateUntil: ball.mateUntil } : {}),
   };
 }

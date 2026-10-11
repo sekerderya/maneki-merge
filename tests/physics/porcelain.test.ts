@@ -3,6 +3,7 @@ import Matter from 'matter-js';
 import {
   PORCELAIN_CHANCE_PER_LEVEL,
   PORCELAIN_MATE_GAP,
+  PORCELAIN_MATE_MS,
   PORCELAIN_REACH,
   SPAWN_START_RADIUS_SHARE,
 } from '../../src/config/picks';
@@ -192,6 +193,61 @@ describe('Porcelain: cracking and breaking (GAME_DESIGN §15.10)', () => {
       outcomes.push(...resolver.resolve(world, CAP, PORCELAIN));
     }
     expect(outcomes[0]).toMatchObject({ tier: 3, newTier: 4 });
+  });
+
+  it('lets pieces wedged together merge once their time together is up', () => {
+    const world = new PhysicsWorld();
+    const r = sizeRadius(3);
+    // Pressed together between the walls' worth of cats: they never come apart.
+    const a = floorCat(world, 3, -r + 1);
+    const b = floorCat(world, 3, r - 1);
+    const until = world.steps + stepsFor(PORCELAIN_MATE_MS);
+    a.mate = b.id;
+    b.mate = a.id;
+    a.mateUntil = b.mateUntil = until;
+    const resolver = new MergeResolver();
+    const outcomes = [];
+    while (world.steps < until - 1) {
+      world.step();
+      outcomes.push(...resolver.resolve(world, CAP, PORCELAIN));
+      // Still touching, still mates.
+      Matter.Body.setPosition(a.body, { x: -r + 1, y: -r });
+      Matter.Body.setPosition(b.body, { x: r - 1, y: -r });
+    }
+    expect(outcomes).toEqual([]);
+    expect(a.mate).toBe(b.id);
+    for (let i = 0; i < 3 && outcomes.length === 0; i++) {
+      world.step();
+      outcomes.push(...resolver.resolve(world, CAP, PORCELAIN));
+    }
+    expect(outcomes[0]).toMatchObject({ tier: 3, newTier: 4 });
+  });
+
+  it("gives a broken cat's pieces PORCELAIN_MATE_MS together, kept through a save", () => {
+    const run = new RunController({ seed: 1 });
+    run.setPickLevel('porcelain', 1);
+    const cat = run.spawnBall(5, 0, -sizeRadius(5), { cracked: true });
+    let pieces: readonly number[] = [];
+    run.events.on('catBroken', (e) => (pieces = e.pieces));
+    run.crackCat(cat.id);
+    const [a, b] = pieces.map((id) => run.balls.find((ball) => ball.id === id)!);
+    expect(a!.mate).toBe(b!.id);
+    expect(a!.mateUntil).toBe(b!.mateUntil);
+    run.pause();
+    const saved = roundTrip(run.snapshot());
+    const back = RunController.restore(saved);
+    expect(back.balls.find((ball) => ball.id === a!.id)!.mateUntil).toBe(a!.mateUntil);
+    expect(back.stateHash()).toBe(run.stateHash());
+    // Pieces saved before v0.35.2 have no time limit: they part at once.
+    const old: RunSnapshot = {
+      ...saved,
+      world: {
+        ...saved.world,
+        balls: saved.world.balls.map(({ mateUntil: _, ...ball }) => ball),
+      },
+    };
+    const older = RunController.restore(old);
+    expect(older.balls.find((ball) => ball.id === a!.id)!.mateUntil).toBe(0);
   });
 
   it('forgets a shard mate that is gone', () => {
