@@ -444,7 +444,7 @@ export class GameSession {
     events.on('curseBegan', () => {
       if (profile.hintSeen('curse')) return;
       profile.markHintSeen('curse');
-      hint.show('Cursed! Merge this cat before its bell runs out');
+      hint.show('Cursed! Merge this cat before it turns to stone');
       window.clearTimeout(this.ruleHintTimer);
       this.ruleHintTimer = window.setTimeout(() => {
         if (this.current === run) hint.hide();

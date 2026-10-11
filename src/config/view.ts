@@ -248,20 +248,6 @@ export const CURSE_SWAY_PERIOD_MS = 700;
 export const CURSE_STONE_FADE_MS = 300;
 export const CURSE_STONE_CHIPS = 14;
 /**
- * With the owner's art (docs/ART_ASSETS.md §4.13): the cursed bell, CURSE_BELL_HEIGHT world units
- * from its cord's top to its tag's bottom, hangs CURSE_BELL_GAP above the cat and sways from its
- * cord; the number fills CURSE_TAG_FONT of its tag's diameter. The ring of flames sits behind the
- * cat with the middle of its flames CURSE_RING_MID of the cat's radius out, and rocks
- * CURSE_RING_SWAY_RAD each way every CURSE_RING_SWAY_PERIOD_MS (its flames stand upright, so it
- * doesn't turn round; still with reduced motion).
- */
-export const CURSE_BELL_HEIGHT = 180;
-export const CURSE_BELL_GAP = 4;
-export const CURSE_TAG_FONT = 1;
-export const CURSE_RING_MID = 1.12;
-export const CURSE_RING_SWAY_RAD = 0.08;
-export const CURSE_RING_SWAY_PERIOD_MS = 2400;
-/**
  * Dice (GAME_DESIGN §15.14): a lucky or fizzled merge's die pops up over it, DICE_SIZE world units
  * tall, pops in over DICE_POP_MS, rises DICE_RISE and fades out over DICE_MS (no pop or rise with
  * reduced motion).

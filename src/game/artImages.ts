@@ -1,7 +1,6 @@
 /**
  * The raster art the canvas draws (GAME_DESIGN §13.1): the cats, the jar's two layers, the paw, the
- * special balls and the effects (Heavy Drop's flames, Porcelain's cracks and seams, the cursed bell,
- * its ring of flames and the dice).
+ * special balls and the effects (Heavy Drop's flames, Porcelain's cracks and seams, the dice).
  * Boot loads and decodes them with the fonts (main.ts), before the game is created, with the
  * main menu's, the stage doors' and the Upgrades screen's images; the backgrounds are DOM images.
  */
@@ -31,9 +30,7 @@ export interface FxImages {
   readonly flames: readonly HTMLImageElement[];
   readonly cracks: readonly HTMLImageElement[];
   readonly seams: readonly HTMLImageElement[];
-  /** Cursed Bell's bell and ring of flames, Dice's lucky and unlucky die (Batch 19). */
-  readonly bell: HTMLImageElement;
-  readonly ring: HTMLImageElement;
+  /** Dice's lucky and unlucky die (Batch 19). */
   readonly dice: readonly HTMLImageElement[];
 }
 
@@ -74,16 +71,8 @@ export function loadArt(baseUrl: string): Promise<ArtImages> {
     fxList(FX_ART.flames),
     fxList(FX_ART.cracks),
     fxList(FX_ART.seams),
-    fxList([FX_ART.bell, FX_ART.ring]),
     fxList(FX_ART.dice),
-  ]).then(([flames, cracks, seams, [bell, ring], dice]) => ({
-    flames,
-    cracks,
-    seams,
-    bell: bell as HTMLImageElement,
-    ring: ring as HTMLImageElement,
-    dice,
-  }));
+  ]).then(([flames, cracks, seams, dice]) => ({ flames, cracks, seams, dice }));
   const loads = Promise.all([
     Promise.all(CAT_SPRITES.map(({ file }) => image(`${baseUrl}${CAT_SPRITE_DIR}${file}`))),
     scene(JAR_ART.back),

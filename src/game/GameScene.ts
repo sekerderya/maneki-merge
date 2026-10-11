@@ -130,7 +130,7 @@ export class GameScene extends Phaser.Scene {
   private lastCat!: LastCatFx;
   private fall!: FallFx;
   private kintsugi!: KintsugiFx;
-  /** Cursed Bell's number over the cursed cat, and cats turning to stone (GAME_DESIGN §15.12). */
+  /** Cursed Bell's count over the cursed cat, and cats turning to stone (GAME_DESIGN §15.12). */
   private curse!: CurseFx;
   /** Dice's die over a lucky or fizzled merge (GAME_DESIGN §15.14). */
   private dice!: DiceFx;
@@ -244,13 +244,7 @@ export class GameScene extends Phaser.Scene {
       () => reducedMotion(),
     );
     this.kintsugi = new KintsugiFx(this, fx, this.skin);
-    this.curse = new CurseFx(
-      this,
-      glows,
-      fx,
-      this.balls,
-      art ? { bell: art.fx.bell, ring: art.fx.ring } : null,
-    );
+    this.curse = new CurseFx(this, fx, this.balls);
     this.dice = new DiceFx(this, fx, art?.fx.dice ?? null);
     this.selectRing = this.add.graphics();
     fx.add(this.selectRing);
@@ -278,7 +272,6 @@ export class GameScene extends Phaser.Scene {
       this.jar.restore();
       this.paw.restore();
       this.fall.restore();
-      this.curse.restore();
       this.dice.restore();
     });
 

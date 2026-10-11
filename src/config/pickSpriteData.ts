@@ -10,6 +10,11 @@ export const PICK_SPRITE_DATA: Readonly<Record<string, PickPicture>> = {
     width: 1012,
     height: 1008,
   },
+  copycat: {
+    file: 'copycat.webp',
+    width: 946,
+    height: 634,
+  },
   cursedBell: {
     file: 'cursedBell.webp',
     width: 937,
