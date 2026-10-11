@@ -30,8 +30,9 @@ export interface FxImages {
   readonly flames: readonly HTMLImageElement[];
   readonly cracks: readonly HTMLImageElement[];
   readonly seams: readonly HTMLImageElement[];
-  /** Dice's lucky and unlucky die (Batch 19). */
+  /** Dice's lucky and unlucky die, the cursed cat's stone patterns (Batch 19). */
   readonly dice: readonly HTMLImageElement[];
+  readonly stones: readonly HTMLImageElement[];
 }
 
 /** The special balls' images (config/specialSprites.ts). */
@@ -72,7 +73,8 @@ export function loadArt(baseUrl: string): Promise<ArtImages> {
     fxList(FX_ART.cracks),
     fxList(FX_ART.seams),
     fxList(FX_ART.dice),
-  ]).then(([flames, cracks, seams, dice]) => ({ flames, cracks, seams, dice }));
+    fxList(FX_ART.stones),
+  ]).then(([flames, cracks, seams, dice, stones]) => ({ flames, cracks, seams, dice, stones }));
   const loads = Promise.all([
     Promise.all(CAT_SPRITES.map(({ file }) => image(`${baseUrl}${CAT_SPRITE_DIR}${file}`))),
     scene(JAR_ART.back),

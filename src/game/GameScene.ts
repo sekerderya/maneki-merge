@@ -244,7 +244,7 @@ export class GameScene extends Phaser.Scene {
       () => reducedMotion(),
     );
     this.kintsugi = new KintsugiFx(this, fx, this.skin);
-    this.curse = new CurseFx(this, fx, this.balls);
+    this.curse = new CurseFx(this, numbers, fx, this.balls, art?.fx.stones ?? null);
     this.dice = new DiceFx(this, fx, art?.fx.dice ?? null);
     this.selectRing = this.add.graphics();
     fx.add(this.selectRing);
@@ -272,6 +272,7 @@ export class GameScene extends Phaser.Scene {
       this.jar.restore();
       this.paw.restore();
       this.fall.restore();
+      this.curse.restore();
       this.dice.restore();
     });
 

@@ -60,4 +60,16 @@ export const FX_SPRITE_DATA: FxSprites = {
       height: 549,
     },
   ],
+  stones: [
+    {
+      file: 'stone-0.webp',
+      side: 424,
+      radius: 210,
+    },
+    {
+      file: 'stone-1.webp',
+      side: 434,
+      radius: 215,
+    },
+  ],
 };

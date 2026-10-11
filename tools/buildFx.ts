@@ -70,7 +70,8 @@ export async function buildFx(): Promise<void> {
     await loadRgba(await findSource(SOURCE_DIR, 'porcelain')),
   );
   const dice = await buildDice(await loadRgba(await findSource(SOURCE_DIR, 'dice')));
-  await writeFile(DATA_FILE, dataModule({ flames, cracks, seams, dice }));
+  const stones = await buildStones(await loadRgba(await findSource(SOURCE_DIR, 'stone')));
+  await writeFile(DATA_FILE, dataModule({ flames, cracks, seams, dice, stones }));
   console.log(
     `Fx: ${flames.length} flames, ${cracks.length} cracks, ${seams.length} seams, ` +
       `${dice.length} dice`,
@@ -177,6 +178,23 @@ function fitHead(flame: Rgba): { cx: number; cy: number; r: number } {
   return kasa(points);
 }
 
+/**
+ * The stone sheet (Batch 19, docs/ART_ASSETS.md §4.13): a 2×2 grid of stone patterns growing from
+ * cell to cell, of which the game uses the top row (the owner's call): patches over a cursed cat
+ * in the first half of its countdown, then more. Cut and measured like Porcelain's cracks.
+ */
+async function buildStones(sheet: Rgba): Promise<Pattern[]> {
+  const w = Math.floor(sheet.width / 2);
+  const h = Math.floor(sheet.height / 2);
+  const stones: Pattern[] = [];
+  for (let cell = 0; cell < 2; cell++) {
+    const quarter = crop(sheet, { x: cell * w, y: 0, w, h });
+    cutBackground(quarter, undefined, whiteRegions(quarter));
+    stones.push(await savePattern(quarter, `stone-${cell}.webp`));
+  }
+  return stones;
+}
+
 async function buildPorcelain(sheet: Rgba): Promise<{ cracks: Pattern[]; seams: Pattern[] }> {
   const w = Math.floor(sheet.width / 2);
   const h = Math.floor(sheet.height / 2);
@@ -253,6 +271,7 @@ function dataModule(data: {
   flames: Flame[];
   cracks: Pattern[];
   seams: Pattern[];
+  stones: Pattern[];
   dice: Die[];
 }): string {
   return `/**

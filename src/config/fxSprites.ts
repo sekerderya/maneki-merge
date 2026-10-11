@@ -39,6 +39,8 @@ export interface FxSprites {
   readonly seams: readonly PatternSprite[];
   /** Dice's lucky die, then its unlucky one (Batch 19). */
   readonly dice: readonly FxImageSprite[];
+  /** Cursed Bell's two stone patterns over a cursed cat, the first half and the rest (Batch 19). */
+  readonly stones: readonly PatternSprite[];
 }
 
 /** Where the sprites live, relative to the app's base URL. */

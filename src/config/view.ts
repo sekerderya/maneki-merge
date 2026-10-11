@@ -248,6 +248,11 @@ export const CURSE_SWAY_PERIOD_MS = 700;
 export const CURSE_STONE_FADE_MS = 300;
 export const CURSE_STONE_CHIPS = 14;
 /**
+ * With the owner's art the cursed cat shows a stone pattern instead of the number, its circle on
+ * this share of the cat's radius (like Porcelain's cracks, CRACK_ART_RADIUS).
+ */
+export const CURSE_STONE_ART_RADIUS = 0.9;
+/**
  * Dice (GAME_DESIGN §15.14): a lucky or fizzled merge's die pops up over it, DICE_SIZE world units
  * tall, pops in over DICE_POP_MS, rises DICE_RISE and fades out over DICE_MS (no pop or rise with
  * reduced motion).

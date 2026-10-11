@@ -1,24 +1,31 @@
 /**
- * Cursed Bell's look (GAME_DESIGN §15.12): the drops left as live text floating just above the
- * cursed cat, upright, swaying from CURSE_SWAY_FROM drops left; and the turn to stone, the cat's
- * sprite fading out on its boulder as the boulder's fades in. The stone creeping over a cursed cat
- * will be the owner's art (docs/ART_ASSETS.md §4.13), laid over it like Porcelain's cracks.
+ * Cursed Bell's look (GAME_DESIGN §15.12): the cursed cat turns to stone bit by bit, like a cracked
+ * cat shows its cracks: one of the owner's stone patterns (docs/ART_ASSETS.md §4.13) lies over it,
+ * rolling with it, the first for the first half of its countdown and the second, more stone, for
+ * the rest. Without the art (`?skin=placeholder` or `vector`) the drops left show as live text over
+ * the cat instead. Turning to stone, the cat's sprite fades out on its boulder as the boulder's
+ * fades in.
  */
 import type Phaser from 'phaser';
+import { FX_ART } from '../../config/fxSprites';
 import { CURSE_NUMBER_FILL, CURSE_NUMBER_STROKE } from '../../config/skin';
 import {
   CURSE_NUMBER_GAP,
   CURSE_NUMBER_SIZE,
+  CURSE_STONE_ART_RADIUS,
   CURSE_STONE_FADE_MS,
   CURSE_SWAY_FROM,
   CURSE_SWAY_PERIOD_MS,
   CURSE_SWAY_RAD,
 } from '../../config/view';
 import type { BallView } from '../../physics/balls';
+import { imageCanvas } from '../artImages';
 import type { BallRenderer, CatSprite } from '../BallRenderer';
+import { crackVariant } from '../BallRenderer';
 
 /** The text is drawn at this size and scaled to CURSE_NUMBER_SIZE world units. */
 const FONT_PX = 96;
+const STONE_KEY = 'curse-stone-';
 
 /** A cursed cat fading out on the boulder that took its place. */
 interface Stone {
@@ -30,6 +37,8 @@ interface Stone {
 export interface CurseState {
   readonly id: number;
   readonly dropsLeft: number;
+  /** What the count started at. */
+  readonly total: number;
 }
 
 /** How far the number leans at `nowMs` with `dropsLeft` drops left (radians; 0 when still). */
@@ -38,15 +47,37 @@ export function curseSway(dropsLeft: number, nowMs: number, reduced: boolean): n
   return CURSE_SWAY_RAD * Math.sin((2 * Math.PI * nowMs) / CURSE_SWAY_PERIOD_MS);
 }
 
+/**
+ * Which stone pattern a cursed cat shows: the first while more than half its count is left (10
+ * drops: 10 to 6), then the second (5 to 0).
+ */
+export function stoneStage(dropsLeft: number, total: number): 0 | 1 {
+  return dropsLeft > Math.floor(total / 2) ? 0 : 1;
+}
+
 export class CurseFx {
   private readonly number: Phaser.GameObjects.Text;
+  private readonly stone: Phaser.GameObjects.Image | null = null;
   private readonly stones: Stone[] = [];
 
+  /** `overlay` holds the stone (over the cats, like cracks), `layer` the number. */
   constructor(
-    scene: Phaser.Scene,
+    private readonly scene: Phaser.Scene,
+    overlay: Phaser.GameObjects.Layer,
     layer: Phaser.GameObjects.Layer,
     private readonly balls: BallRenderer,
+    images: readonly HTMLImageElement[] | null = null,
   ) {
+    const list = images ?? [];
+    if (list.length >= FX_ART.stones.length && FX_ART.stones.length > 0) {
+      list.forEach((image, i) => {
+        if (!scene.textures.exists(STONE_KEY + i)) {
+          scene.textures.addCanvas(STONE_KEY + i, imageCanvas(image));
+        }
+      });
+      this.stone = scene.add.image(0, 0, STONE_KEY + 0).setVisible(false);
+      overlay.add(this.stone);
+    }
     this.number = scene.add
       .text(0, 0, '', {
         fontFamily: 'Fredoka, system-ui, sans-serif',
@@ -79,36 +110,60 @@ export class CurseFx {
     reduced: boolean,
   ): void {
     const cat = curse ? balls.find((b) => b.id === curse.id) : undefined;
-    this.number.setVisible(cat !== undefined);
+    const stone = this.stone;
+    stone?.setVisible(cat !== undefined);
+    this.number.setVisible(cat !== undefined && !stone);
     if (curse && cat) {
-      const scale = CURSE_NUMBER_SIZE / FONT_PX;
-      const resolution = zoom * scale;
-      if (this.number.style.resolution !== resolution) this.number.setResolution(resolution);
-      this.number
-        .setText(String(curse.dropsLeft))
-        .setScale(scale)
-        .setPosition(cat.x, cat.y - cat.radius - CURSE_NUMBER_GAP)
-        .setRotation(curseSway(curse.dropsLeft, nowMs, reduced));
+      if (stone) {
+        const stage = stoneStage(curse.dropsLeft, curse.total);
+        const sprite = FX_ART.stones[stage];
+        if (stone.texture.key !== STONE_KEY + stage) stone.setTexture(STONE_KEY + stage);
+        const grow = cat.radius / cat.targetRadius;
+        stone
+          .setPosition(cat.x, cat.y)
+          .setRotation(cat.angle + crackVariant(cat.id).turn)
+          .setScale(((CURSE_STONE_ART_RADIUS * cat.targetRadius) / (sprite?.radius ?? 1)) * grow);
+      } else {
+        const scale = CURSE_NUMBER_SIZE / FONT_PX;
+        const resolution = zoom * scale;
+        if (this.number.style.resolution !== resolution) this.number.setResolution(resolution);
+        this.number
+          .setText(String(curse.dropsLeft))
+          .setScale(scale)
+          .setPosition(cat.x, cat.y - cat.radius - CURSE_NUMBER_GAP)
+          .setRotation(curseSway(curse.dropsLeft, nowMs, reduced));
+      }
     }
     for (let i = this.stones.length - 1; i >= 0; i--) {
-      const stone = this.stones[i] as Stone;
-      const t = (nowMs - stone.startMs) / CURSE_STONE_FADE_MS;
-      const boulder = balls.find((b) => b.id === stone.boulder);
+      const fading = this.stones[i] as Stone;
+      const t = (nowMs - fading.startMs) / CURSE_STONE_FADE_MS;
+      const boulder = balls.find((b) => b.id === fading.boulder);
       if (t >= 1 || !boulder) {
-        this.balls.recycle(stone.sprite);
+        this.balls.recycle(fading.sprite);
         this.stones.splice(i, 1);
         continue;
       }
-      stone.sprite.body
+      fading.sprite.body
         .setPosition(boulder.x, boulder.y)
         .setRotation(boulder.angle)
         .setAlpha(1 - Math.max(0, t));
     }
   }
 
+  /** Re-uploads the textures after the WebGL context comes back. */
+  restore(): void {
+    for (let i = 0; i < FX_ART.stones.length; i++) {
+      const key = STONE_KEY + i;
+      if (this.scene.textures.exists(key)) {
+        (this.scene.textures.get(key) as Phaser.Textures.CanvasTexture).refresh();
+      }
+    }
+  }
+
   clear(): void {
     this.number.setVisible(false);
-    for (const stone of this.stones) this.balls.recycle(stone.sprite);
+    this.stone?.setVisible(false);
+    for (const fading of this.stones) this.balls.recycle(fading.sprite);
     this.stones.length = 0;
   }
 }

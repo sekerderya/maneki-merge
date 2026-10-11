@@ -1,10 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import { FX_ART } from '../../src/config/fxSprites';
 import { CURSE_SWAY_FROM, CURSE_SWAY_RAD } from '../../src/config/view';
-import { curseSway } from '../../src/game/fx/CurseFx';
+import { curseSway, stoneStage } from '../../src/game/fx/CurseFx';
 import { diePose } from '../../src/game/fx/DiceFx';
 
-describe("a cursed cat's count (GAME_DESIGN §15.12)", () => {
+describe("a cursed cat's look (GAME_DESIGN §15.12)", () => {
+  it('shows the first stone pattern for the first half of its count, then the second', () => {
+    // 10 drops: 10 to 6, then 5 to 0 (the owner's call).
+    expect([10, 9, 8, 7, 6].map((d) => stoneStage(d, 10))).toEqual([0, 0, 0, 0, 0]);
+    expect([5, 4, 3, 2, 1, 0].map((d) => stoneStage(d, 10))).toEqual([1, 1, 1, 1, 1, 1]);
+    expect([7, 4, 3].map((d) => stoneStage(d, 7))).toEqual([0, 0, 1]);
+    expect([6, 4, 3].map((d) => stoneStage(d, 6))).toEqual([0, 0, 1]);
+    expect(FX_ART.stones.map((s) => s.file)).toEqual(['stone-0.webp', 'stone-1.webp']);
+  });
+
   it('sways only near the end, and never with reduced motion', () => {
     expect(curseSway(CURSE_SWAY_FROM + 1, 175, false)).toBe(0);
     expect(Math.abs(curseSway(CURSE_SWAY_FROM, 175, false))).toBeGreaterThan(0);

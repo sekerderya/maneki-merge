@@ -144,7 +144,12 @@ export interface RunSnapshot {
    * the stage's drop at which the next curse comes due; the curses' generator. Missing before
    * Batch 19: no curse, the first one due at CURSE_FIRST_DROP, a fresh generator.
    */
-  readonly curse?: { readonly id: number; readonly dropsLeft: number } | null;
+  readonly curse?: {
+    readonly id: number;
+    readonly dropsLeft: number;
+    /** What the count started at (missing before v0.35.3). */
+    readonly total?: number;
+  } | null;
   readonly curseDue?: number;
   readonly curseRng?: RngState;
   /** Dice's rolls (GAME_DESIGN §15.14; missing before Batch 19: fresh from the seed). */
@@ -248,10 +253,14 @@ function waits(value: unknown): [number, number, number, number][] {
   });
 }
 
-function curse(value: unknown): { id: number; dropsLeft: number } | null {
+function curse(value: unknown): { id: number; dropsLeft: number; total?: number } | null {
   if (value === null) return null;
   const c = record(value, 'curse');
-  return { id: count(c['id'], 'curse.id'), dropsLeft: count(c['dropsLeft'], 'curse.dropsLeft') };
+  return {
+    id: count(c['id'], 'curse.id'),
+    dropsLeft: count(c['dropsLeft'], 'curse.dropsLeft'),
+    ...(c['total'] === undefined ? {} : { total: count(c['total'], 'curse.total') }),
+  };
 }
 
 function wind(value: unknown): WindDirection {

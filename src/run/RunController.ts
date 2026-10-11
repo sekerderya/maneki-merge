@@ -116,6 +116,8 @@ export interface RunOptions {
 export interface CurseView {
   readonly id: number;
   readonly dropsLeft: number;
+  /** What the count started at (its look turns to more stone at half of it). */
+  readonly total: number;
 }
 
 /** Debug and test balls (`spawnBall`): a cat by default. */
@@ -251,6 +253,7 @@ export class RunController {
   /** Cursed Bell: the cursed cat and the drops left on its bell (it turns to stone after 0). */
   private cursed: Ball | null = null;
   private curseDropsLeft = 0;
+  private curseTotal = 0;
   /** The stage's drop count at which the next curse comes due. */
   private curseDue = CURSE_FIRST_DROP;
   /** Debug only: what the next die shows. */
@@ -421,7 +424,8 @@ export class RunController {
   /** The cursed cat and what its bell shows (GAME_DESIGN §15.12), or null. */
   get curse(): CurseView | null {
     const cat = this.cursed;
-    return cat && !cat.removed ? { id: cat.id, dropsLeft: this.curseDropsLeft } : null;
+    if (!cat || cat.removed) return null;
+    return { id: cat.id, dropsLeft: this.curseDropsLeft, total: this.curseTotal };
   }
 
   /** The HUD's progress bar: the biggest cat in the jar against the stage's last cat. */
@@ -770,6 +774,7 @@ export class RunController {
     const curse = this.curse;
     h.number(curse?.id ?? 0)
       .number(curse?.dropsLeft ?? 0)
+      .number(curse?.total ?? 0)
       .number(this.curseDue);
     for (const wait of this.merges.waits) for (const n of wait) h.number(n);
     for (const item of [this.queue.current, this.queue.next]) {
@@ -805,13 +810,15 @@ export class RunController {
     if (saved.diceRng) this.diceRng.setState(saved.diceRng);
     this.curseDue = saved.curseDue ?? CURSE_FIRST_DROP;
     if (saved.curse) {
-      const { id, dropsLeft } = saved.curse;
+      const { id, dropsLeft, total } = saved.curse;
       const cat = this.world.balls.find((ball) => ball.id === id);
       if (!cat || cat.kind !== 'cat' || cat.size > CURSE_MAX_SIZE) {
         throw new RangeError(`No cat ${id} to curse`);
       }
       this.cursed = cat;
       this.curseDropsLeft = dropsLeft;
+      // Saved before v0.35.3: the count it would start at now.
+      this.curseTotal = Math.max(dropsLeft, total ?? this.curseDrops());
     }
     for (const id of PICK_IDS) this.levels[id] = Math.min(PICKS[id].maxLevel, saved.levels[id]);
     // A run saved before Batch 18 has no wind yet: the seed's.
@@ -956,6 +963,7 @@ export class RunController {
   private beginCurse(cat: Ball, dropsLeft: number): void {
     this.cursed = cat;
     this.curseDropsLeft = Math.max(0, Math.round(dropsLeft));
+    this.curseTotal = this.curseDropsLeft;
     const at = { x: cat.x, y: cat.y };
     const event = { id: cat.id, tier: cat.tier, dropsLeft: this.curseDropsLeft, at };
     this.events.emit('curseBegan', event);

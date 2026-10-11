@@ -77,7 +77,11 @@ describe('Cursed Bell (GAME_DESIGN §15.12): when a curse comes', () => {
     dropMany(run, 1, 9);
     expect(log.began).toHaveLength(1);
     expect(log.began[0]!.dropsLeft).toBe(CURSE_DROPS[0]);
-    expect(run.curse).toEqual({ id: log.began[0]!.id, dropsLeft: CURSE_DROPS[0] });
+    expect(run.curse).toEqual({
+      id: log.began[0]!.id,
+      dropsLeft: CURSE_DROPS[0],
+      total: CURSE_DROPS[0],
+    });
   });
 
   it('never comes without Cursed Bell', () => {
@@ -359,10 +363,10 @@ describe('Cursed Bell: determinism and saves', () => {
     const decoded = decodeRunSave(text);
     if (!('save' in decoded)) throw new Error(decoded.error);
     const saved: RunSnapshot = decoded.save.run;
-    expect(saved.curse).toEqual({ id: cat.id, dropsLeft: 3 });
+    expect(saved.curse).toEqual({ id: cat.id, dropsLeft: 3, total: 4 });
     expect(saved.curseDue).toBe(CURSE_FIRST_DROP);
     const back = RunController.restore(saved);
-    expect(back.curse).toEqual({ id: cat.id, dropsLeft: 3 });
+    expect(back.curse).toEqual({ id: cat.id, dropsLeft: 3, total: 4 });
     expect(back.stateHash()).toBe(run.stateHash());
     for (const curse of [
       { id: 999, dropsLeft: 3 },
