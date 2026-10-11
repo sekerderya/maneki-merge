@@ -106,9 +106,10 @@ export function replayInput(run: RunController, input: PlayInput): boolean {
  * A digest of what a player can see of a run (the balls, the queue, score, coins, stage, ticks),
  * from its public state only, so it stays comparable across versions that add hidden state.
  */
-export function publicFingerprint(run: RunController): string {
+export function publicFingerprint(run: RunController, economy = true): string {
   const h = new StateHasher();
-  h.number(run.ticks).number(run.stage).number(run.score).number(run.coins);
+  h.number(run.ticks).number(run.stage);
+  if (economy) h.number(run.score).number(run.coins);
   for (const item of [run.current, run.next]) {
     h.string(item.kind).number(item.tier).bool(item.golden).number(item.hits);
   }

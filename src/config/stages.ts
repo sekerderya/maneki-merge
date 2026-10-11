@@ -78,6 +78,11 @@ export function stageJar(stage: number): number {
   return Math.floor((stageInfo(stage).stage - 1) / JAR_GROWTH_STAGES) + 1;
 }
 
+/** The stage whose cats include `tier`: stage n holds tiers 9n − 8 to 9n. */
+export function tierStage(tier: number): number {
+  return Math.floor((tier - 1) / STAGE_TIER_STEP) + FIRST_STAGE;
+}
+
 /** A tier's size (1–9) at `stage`; outside 1–9 when the stage can't hold that tier. */
 export function tierSize(tier: number, stage: number): number {
   return tier - stageInfo(stage).firstTier + 1;

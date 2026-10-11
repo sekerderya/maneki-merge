@@ -60,7 +60,8 @@ describe('payout pipeline (GAME_DESIGN §5, §9)', () => {
     expect(run.coins).toBe(14);
     expect(profile.coins).toBe(14);
     expect(profile.stats).toMatchObject({ totalMerges: 3, totalCoinsEarned: 14, jackpots: 0 });
-    expect(profile.records).toEqual({ bestScore: 16, bestStage: 1, highestTier: 4 });
+    // Score: 4, then 4 × 1.1 = 4.4 → 4 and 8 × 1.2 = 9.6 → 10 (every combo step adds 10%).
+    expect(profile.records).toEqual({ bestScore: 18, bestStage: 1, highestTier: 4 });
   });
 
   it('pays a Jackpot of two last cats: 5 × C(last) with multipliers', () => {
@@ -99,10 +100,10 @@ describe('payout pipeline (GAME_DESIGN §5, §9)', () => {
     expect(profile.records).toEqual({ bestScore: 256, bestStage: 2, highestTier: 9 });
     expect(profile.stats.totalMerges).toBe(1);
 
-    // A debug jump clears with a stage-2 last cat, which pops: 8272 / 2 × 1.3 = 5376.8 → 5377.
+    // A debug jump clears with a stage-2 last cat, which pops like stage 1's (same jar): 46.
     run.jumpToStage(3);
     expect(run.stage).toBe(3);
-    expect(coins.slice(5)).toEqual([5377]);
+    expect(coins.slice(5)).toEqual([46]);
     expect(profile.records.bestStage).toBe(3);
   });
 

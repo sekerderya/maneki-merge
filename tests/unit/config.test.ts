@@ -32,6 +32,7 @@ import {
   stageInfo,
   stageJar,
   tierSize,
+  tierStage,
 } from '../../src/config/stages';
 import {
   isSize,
@@ -41,7 +42,8 @@ import {
   STAGE_TIER_STEP,
   SIZE_BASE_RADIUS,
   SIZE_RADIUS_GROWTH,
-  tierInfo,
+  sizeCoins,
+  sizeScore,
 } from '../../src/config/tiers';
 import * as timings from '../../src/config/timings';
 import {
@@ -99,7 +101,7 @@ describe('cat sizes (GAME_DESIGN §4)', () => {
 });
 
 describe('tiers (GAME_DESIGN §4)', () => {
-  // Tier, score S(t), coins C(t).
+  // Size, the score and the base coins of a merge of two cats of that size at stage 1.
   const TABLE: readonly [number, number, number][] = [
     [1, 2, 1],
     [2, 4, 2],
@@ -110,21 +112,21 @@ describe('tiers (GAME_DESIGN §4)', () => {
     [7, 128, 24],
     [8, 256, 41],
     [9, 512, 70],
-    [10, 1_024, 119],
-    [18, 262_144, 8_272],
-    [27, 134_217_728, 981_007],
-    [36, 68_719_476_736, 116_335_497],
-    [45, 35_184_372_088_832, 13_795_979_509],
   ];
 
   it('has no last tier: tier 9n ends stage n', () => {
     expect(stageInfo(5).lastTier).toBe(45);
     expect(stageInfo(20).lastTier).toBe(180);
-    expect(tierInfo(100)).toEqual({ tier: 100, score: 2 ** 100, coins: Math.round(1.7 ** 99) });
+    expect(isTier(1000)).toBe(true);
   });
 
-  it.each(TABLE)('tier %i: score %i, coins %i', (tier, score, coins) => {
-    expect(tierInfo(tier)).toEqual({ tier, score, coins });
+  it.each(TABLE)('size %i: score %i, coins %i', (size, score, coins) => {
+    expect(sizeScore(size)).toBe(score);
+    expect(sizeCoins(size)).toBe(coins);
+  });
+
+  it('knows the stage of every tier', () => {
+    expect([1, 9, 10, 18, 19, 45, 46, 270].map(tierStage)).toEqual([1, 1, 2, 2, 3, 5, 6, 30]);
   });
 
   it('rejects unknown tiers', () => {
@@ -132,8 +134,6 @@ describe('tiers (GAME_DESIGN §4)', () => {
     expect(isTier(46)).toBe(true);
     expect(isTier(2.5)).toBe(false);
     expect(isTier(Infinity)).toBe(false);
-    expect(() => tierInfo(0)).toThrow(RangeError);
-    expect(() => tierInfo(-1)).toThrow(RangeError);
   });
 
   it('repeats the colours with the sizes, so every stage looks the same', () => {

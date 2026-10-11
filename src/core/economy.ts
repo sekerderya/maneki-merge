@@ -1,12 +1,16 @@
 /** Score, coin payouts, combo, Jackpot and pops (GAME_DESIGN §5, §7.1, §9). */
 import {
+  COMBO_BONUS_MAX_STEPS,
   JACKPOT_COIN_MULTIPLIER,
   JACKPOT_SCORE_MULTIPLIER,
   MIN_COIN_PAYOUT,
   POP_VALUE_SHARE,
+  SCORE_COMBO_PER_STEP,
+  SCORE_STAGE_GROWTH,
   THREE_WAY_PAYOUT,
 } from '../config/economy';
-import { tierCoins, tierScore } from '../config/tiers';
+import { stageJar, tierSize, tierStage } from '../config/stages';
+import { isTier, sizeCoins, sizeScore } from '../config/tiers';
 import { COMBO_WINDOW_MS } from '../config/timings';
 import { roundStable } from './math';
 import type { EconomySnapshot } from './runSave';
@@ -21,12 +25,43 @@ export function coinPayout(base: number, coinMultiplier: number, bonus: number):
   return Math.max(MIN_COIN_PAYOUT, roundStable(base * coinMultiplier * (1 + bonus)));
 }
 
+/**
+ * S(t): the score for merging two tier-t cats, before the combo: 2^size × G^(stage − 1), where the
+ * size and stage are the cats' (GAME_DESIGN §4). Not rounded: a payout rounds it.
+ */
+export function tierScore(tier: number): number {
+  if (!isTier(tier)) throw new RangeError(`Unknown tier: ${tier}`);
+  const stage = tierStage(tier);
+  return sizeScore(tierSize(tier, stage)) * SCORE_STAGE_GROWTH ** (stage - 1);
+}
+
+/**
+ * C(t): the base coins for merging two tier-t cats, before multipliers: by the cats' size, times
+ * the jar's number (stages 1–5 ×1, 6–10 ×2, …; GAME_DESIGN §4).
+ */
+export function tierCoins(tier: number): number {
+  if (!isTier(tier)) throw new RangeError(`Unknown tier: ${tier}`);
+  const stage = tierStage(tier);
+  return sizeCoins(tierSize(tier, stage)) * stageJar(stage);
+}
+
+/** The coin multiplier of the jar `stage` plays in: the jar's number. */
+export function jarCoinMultiplier(stage: number): number {
+  return stageJar(stage);
+}
+
+/** The combo's score multiplier, for every player: 1 + 0.1 × min(combo − 1, 5) (×1 … ×1.5). */
+export function comboScoreMultiplier(combo: number): number {
+  const steps = Math.min(Math.max(combo - 1, 0), COMBO_BONUS_MAX_STEPS);
+  return 1 + SCORE_COMBO_PER_STEP * steps;
+}
+
 /** Score for merging two tier-t cats: S(t). */
 export function mergeScore(tier: number): number {
   return tierScore(tier);
 }
 
-/** Score for a Jackpot of two `capTier` cats (a stage's last cat): 2 × S(cap). */
+/** Score for a Jackpot of two `capTier` cats (a stage's last cat): 2 × S(cap), before the combo. */
 export function jackpotScore(capTier: number): number {
   return JACKPOT_SCORE_MULTIPLIER * tierScore(capTier);
 }
@@ -207,10 +242,11 @@ export class RunEconomy {
     return { score: 0, coins, combo: 0 };
   }
 
-  private pay(score: number, baseCoins: number, timeMs: number): Payout {
+  private pay(baseScore: number, baseCoins: number, timeMs: number): Payout {
     const combo = this.comboCounter.register(timeMs);
     const bonus = comboBonus(this.stats.comboCharmLevel, combo);
     const coins = coinPayout(baseCoins, this.stats.coinMultiplier, bonus);
+    const score = roundStable(baseScore * comboScoreMultiplier(combo));
     this.scoreTotal += score;
     this.coinsTotal += coins;
     return { score, coins, combo };

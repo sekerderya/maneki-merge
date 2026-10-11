@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { PHYSICS_STEP_MS, stepsFor } from '../../src/config/physics';
 import { stageInfo } from '../../src/config/stages';
-import { sizeRadius, tierCoins } from '../../src/config/tiers';
+import { sizeRadius } from '../../src/config/tiers';
+import { tierCoins } from '../../src/core/economy';
 import {
   DANGER_TIMEOUT_MS,
   DROP_COOLDOWN_MS,

@@ -7,8 +7,8 @@ import {
 } from '../../src/config/picks';
 import type { PickId } from '../../src/config/picks';
 import { stageInfo } from '../../src/config/stages';
-import { sizeRadius, tierCoins } from '../../src/config/tiers';
-import { coinPayout } from '../../src/core/economy';
+import { sizeRadius } from '../../src/config/tiers';
+import { coinPayout, tierCoins } from '../../src/core/economy';
 import type { GameEvents } from '../../src/core/events';
 import { decodeRunSave, RUN_SAVE_VERSION } from '../../src/core/runSave';
 import type { RunSnapshot } from '../../src/core/runSave';

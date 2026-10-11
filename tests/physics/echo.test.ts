@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { SPAWN_START_RADIUS_SHARE } from '../../src/config/picks';
-import { sizeRadius, tierCoins } from '../../src/config/tiers';
-import { coinPayout } from '../../src/core/economy';
+import { sizeRadius } from '../../src/config/tiers';
+import { coinPayout, tierCoins } from '../../src/core/economy';
 import type { GameEvents } from '../../src/core/events';
 import { RunController } from '../../src/run/RunController';
 

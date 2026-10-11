@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { MAX_SPEED_BASE, PHYSICS_STEP_MS, stepsFor } from '../../src/config/physics';
 import { clearGrowsJar, stageInfo } from '../../src/config/stages';
-import { tierCoins, tierScore } from '../../src/config/tiers';
 import { EXPANSION_DURATION_MS } from '../../src/config/timings';
-import { coinPayout, popCoins } from '../../src/core/economy';
+import { coinPayout, popCoins, tierCoins, tierScore } from '../../src/core/economy';
+import { roundStable } from '../../src/core/math';
 import { EventBus } from '../../src/core/events';
 import type { GameEvents } from '../../src/core/events';
 import { Rng } from '../../src/core/rng';
@@ -248,7 +248,7 @@ describe('stage clear payouts (GAME_DESIGN §7)', () => {
     }
     // Spot checks of the rounding: tier 3 at ×1.6 → 1.5 × 1.6 = 2.4 → 2.
     expect(popCoins(3, multiplier)).toBe(2);
-    expect(popCoins(21, multiplier)).toBe(32_514);
+    expect(popCoins(53, multiplier)).toBe(66); // stage 6 (jar 2), size 8: 41 × 1.6 = 65.6
   });
 
   it('announces the tiers each stage adds as it starts, and grows the jar every 5 stages', () => {
@@ -302,7 +302,7 @@ describe('every stage: Jackpots and drop pools (GAME_DESIGN §5, §7, §8)', () 
     expect(of('jackpot')).toEqual([
       expect.objectContaining({
         tier: lastTier,
-        score: 2 * tierScore(lastTier),
+        score: roundStable(2 * tierScore(lastTier)),
         coins: coinPayout(5 * tierCoins(lastTier), multiplier, 0),
       }),
     ]);

@@ -2,11 +2,15 @@ import { describe, expect, it } from 'vitest';
 import {
   coinPayout,
   ComboCounter,
+  comboScoreMultiplier,
   jackpotBaseCoins,
   jackpotScore,
+  jarCoinMultiplier,
   mergeScore,
   popCoins,
   RunEconomy,
+  tierCoins,
+  tierScore,
 } from '../../src/core/economy';
 import { roundStable } from '../../src/core/math';
 
@@ -36,17 +40,50 @@ describe('coinPayout (GAME_DESIGN §5)', () => {
   });
 });
 
+describe('S(t) and C(t) (GAME_DESIGN §4)', () => {
+  // Tier, its stage's merge score S(t) and base coins C(t).
+  const TABLE: readonly [number, number, number][] = [
+    [1, 2, 1], // stage 1, size 1
+    [8, 256, 41], // stage 1, size 8: the last cat's merge
+    [10, 2 * 1.24, 1], // stage 2, size 1
+    [15, 64 * 1.24, 14], // stage 2, size 6
+    [46, 2 * 1.24 ** 5, 2], // stage 6 (jar 2), size 1
+    [53, 256 * 1.24 ** 5, 82], // stage 6, size 8
+    [107, 256 * 1.24 ** 11, 123], // stage 12 (jar 3), size 8
+    [269, 256 * 1.24 ** 29, 246], // stage 30 (jar 6), size 8
+  ];
+
+  it.each(TABLE)('tier %i: score %f, coins %i', (tier, score, coins) => {
+    expect(tierScore(tier)).toBeCloseTo(score, 6);
+    expect(tierCoins(tier)).toBe(coins);
+  });
+
+  it('pays coins by size times the jar: ×1 in stages 1–5, ×2 in 6–10, …', () => {
+    expect([1, 5, 6, 10, 11, 30].map(jarCoinMultiplier)).toEqual([1, 1, 2, 2, 3, 6]);
+  });
+
+  it('rejects unknown tiers', () => {
+    expect(() => tierScore(0)).toThrow(RangeError);
+    expect(() => tierCoins(-1)).toThrow(RangeError);
+  });
+});
+
 describe('score and Jackpot (GAME_DESIGN §5, §9)', () => {
   it('scores S(t) per merge', () => {
     expect(mergeScore(1)).toBe(2);
     expect(mergeScore(7)).toBe(128);
-    expect(mergeScore(15)).toBe(32_768);
+    expect(mergeScore(15)).toBeCloseTo(79.36, 9);
   });
 
   it('pays 2 × S(cap) score and 5 × C(cap) base coins for a Jackpot', () => {
-    // A Jackpot is two of a stage's last cat: tiers 11 and 51 (stages 1 and 5).
-    expect([11, 51].map(jackpotScore)).toEqual([4096, 2 ** 52]);
-    expect([11, 51].map(jackpotBaseCoins)).toEqual([1010, 1_665_007_036_605]);
+    // A Jackpot is two of a stage's last cat: tiers 9 and 54 (stages 1 and 6).
+    expect(jackpotScore(9)).toBe(1024);
+    expect(jackpotScore(54)).toBeCloseTo(1024 * 1.24 ** 5, 6);
+    expect([9, 54].map(jackpotBaseCoins)).toEqual([350, 700]);
+  });
+
+  it('gives every combo step 10% more score, up to 5 steps', () => {
+    expect([0, 1, 2, 4, 6, 9].map(comboScoreMultiplier)).toEqual([1, 1, 1.1, 1.3, 1.5, 1.5]);
   });
 });
 
@@ -58,7 +95,7 @@ describe('a cat’s value (GAME_DESIGN §5, §7)', () => {
     expect(popCoins(1, 1)).toBe(1); // 0.5, but every payout pays at least 1
     expect(popCoins(3, 1)).toBe(2); // 1.5, halves round up
     expect(popCoins(4, 2.5)).toBe(6); // 2.5 × 2.5 = 6.25
-    expect(popCoins(21, 1)).toBe(20_321);
+    expect(popCoins(53, 1)).toBe(41); // stage 6: 41 × 2 / 2
   });
 });
 
@@ -99,11 +136,19 @@ describe('RunEconomy', () => {
     const plain = new RunEconomy({ coinMultiplier: 1, comboCharmLevel: 0 });
     const charmed = new RunEconomy({ coinMultiplier: 1, comboCharmLevel: 5 });
     const coins = (e: RunEconomy): number[] =>
-      Array.from({ length: 8 }, (_, i) => e.merge(10, i * 500).coins);
-    expect(coins(plain)).toEqual(Array(8).fill(119));
+      Array.from({ length: 8 }, (_, i) => e.merge(8, i * 500).coins);
+    expect(coins(plain)).toEqual(Array(8).fill(41));
     // Bonus 0.4 × min(combo − 1, 5): 0, 0.4, 0.8, 1.2, 1.6, 2, 2, 2.
-    expect(coins(charmed)).toEqual([119, 167, 214, 262, 309, 357, 357, 357]);
+    expect(coins(charmed)).toEqual([41, 57, 74, 90, 107, 123, 123, 123]);
     expect(charmed.combo).toBe(8);
+  });
+
+  it('gives every combo more score, with or without Combo Charm, capped at 5 steps', () => {
+    const e = new RunEconomy({ coinMultiplier: 1, comboCharmLevel: 0 });
+    const scores = Array.from({ length: 8 }, (_, i) => e.merge(8, i * 500).score);
+    // 256 × (1 + 0.1 × min(combo − 1, 5)), rounded.
+    expect(scores).toEqual([256, 282, 307, 333, 358, 384, 384, 384]);
+    expect(e.score).toBe(scores.reduce((a, b) => a + b, 0));
   });
 
   it('pays a golden cat’s two-tier merge like a plain one, and counts the new tier', () => {
@@ -124,11 +169,11 @@ describe('RunEconomy', () => {
     const e = new RunEconomy({ coinMultiplier: 1, comboCharmLevel: 1 });
     e.merge(6, 0);
     const p = e.jackpot(7, 500);
-    expect(p).toEqual({ score: 256, coins: 130, combo: 2 }); // 120 × 1.08 = 129.6
+    expect(p).toEqual({ score: 282, coins: 130, combo: 2 }); // 256 × 1.1; 120 × 1.08 = 129.6
     expect(e.jackpots).toBe(1);
     expect(e.merges).toBe(1);
     expect(e.highestTier).toBe(7);
-    expect(e.score).toBe(64 + 256);
+    expect(e.score).toBe(64 + 282);
   });
 
   it('pays pops in coins only, leaving score and combo alone', () => {
