@@ -2,7 +2,7 @@
  * What the shop sells (GAME_DESIGN §10): permanent upgrades, and blessing cards that set how far
  * each blessing can go in a run (v0.36). Derived stats: core/upgrades.ts.
  */
-import { BIG_DROPS_TILT_PER_LEVEL, PICKS } from './picks';
+import { PICKS } from './picks';
 
 /** Shop order: the upgrades, then the blessings. */
 export const UPGRADE_IDS = [
@@ -48,7 +48,10 @@ export interface UpgradeDef {
   readonly gate: number;
   /** prices[n] buys level startLevel + n + 1, so the length is maxLevel − startLevel. */
   readonly prices: readonly number[];
-  /** The effect of one level, in the unit of the stat it drives (see core/upgrades.ts). */
+  /**
+   * The effect of one level, in the unit of the stat it drives (see core/upgrades.ts); for a
+   * blessing card, one more level its blessing can reach.
+   */
   readonly perLevel: number;
 }
 
@@ -128,11 +131,11 @@ export const UPGRADES: Readonly<Record<UpgradeId, UpgradeDef>> = {
     statLabel: 'Up to',
     startLevel: 1,
     // Big Drops and Big Catch tilt the drops together, up to a tilt of 10 (MAX_DROP_TILT_LEVEL):
-    // three levels (6) on top of Big Catch's 8 already pass it.
+    // three levels (2 each) on top of Big Catch's 8 already pass it.
     maxLevel: 3,
     gate: 1,
     prices: [2000, 8000],
-    perLevel: BIG_DROPS_TILT_PER_LEVEL,
+    perLevel: 1,
   },
   moreMagnets: {
     id: 'moreMagnets',

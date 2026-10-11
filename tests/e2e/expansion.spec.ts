@@ -225,7 +225,7 @@ test('a resize and a pause in the middle of an expansion are safe', async ({ pag
   await expect
     .poll(async () => (await state(page)).expansion?.phase ?? null, { timeout: 80_000 })
     .toBe('zoom');
-  await expect(page.getByTestId('banner')).toHaveText('The shrine grows!');
+  await expect(page.getByTestId('banner')).toHaveText('The shrine grows!Coins ×2');
 
   // Turn into a bigger phone and back while the camera zooms.
   await page.setViewportSize({ width: size.width + 40, height: size.height + 90 });

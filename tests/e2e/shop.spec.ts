@@ -24,68 +24,110 @@ async function buy(page: Page, id: string): Promise<void> {
   await page.getByTestId(`shop-buy-${id}`).click();
 }
 
-test('buying with debug coins: prices, states, feedback and persistence', async ({ page }) => {
+test('buying with debug coins: prices, states, gates, feedback and persistence', async ({
+  page,
+}) => {
   const errors = watchConsole(page);
   await page.goto('./?debug=1');
   // Nothing affordable yet: no dot.
   await expect(page.getByTestId('upgrades-dot')).toBeHidden();
-  await menuWithCoins(page, 600);
+  await menuWithCoins(page, 1200);
   await expect(page.getByTestId('upgrades-dot')).toBeVisible();
 
   await page.getByTestId('upgrades').click();
   const shop = page.getByTestId('shop');
   await expect(shop).toBeVisible();
-  await expect(shop.locator('.shop-card')).toHaveCount(4);
-  await expect(page.getByTestId('shop-balance')).toHaveText('600');
+  // The four upgrades, the blessings' heading and the five blessing cards (v0.36).
+  await expect(shop.locator('.shop-card')).toHaveCount(9);
+  await expect(page.getByTestId('shop-blessings')).toContainText('Blessings');
+  await expect(page.getByTestId('shop-balance')).toHaveText('1,200');
 
-  // Lucky Paw 0 → 1 for 50.
+  // Lucky Paw 0 → 1 for 300.
   const paw = page.getByTestId('shop-buy-luckyPaw');
   // The art's button says "Buy" over the price.
-  await expect(paw.locator('.shop-price')).toHaveText('50');
+  await expect(paw.locator('.shop-price')).toHaveText('300');
   await expect(page.getByTestId('shop-value-luckyPaw')).toHaveText('Coins+0%→+15%');
   await buy(page, 'luckyPaw');
   await expect(page.getByTestId('shop-level-luckyPaw')).toHaveText('1/10');
-  await expect(paw.locator('.shop-price')).toHaveText('80');
-  await expect(page.getByTestId('shop-balance')).toHaveText('550'); // after the count-down
+  await expect(paw.locator('.shop-price')).toHaveText('600');
+  await expect(page.getByTestId('shop-balance')).toHaveText('900'); // after the count-down
 
-  // Big Catch and Combo Charm show what a level adds.
-  await expect(page.getByTestId('shop-value-bigCatch')).toHaveText('Biggest drop10%→13%');
-  await expect(page.getByTestId('shop-value-comboCharm')).toHaveText('Per combo step+0%→+8%');
+  // Big Catch shows what a level adds: 2.4 points of the biggest drop, rounded.
+  await expect(page.getByTestId('shop-value-bigCatch')).toHaveText('Biggest drop10%→12%');
 
-  // Second Chance 0 → 1 for 500; level 2 costs 4,000.
-  await buy(page, 'secondChance');
-  await expect(page.getByTestId('shop-level-secondChance')).toHaveText('1/2');
-  await expect(page.getByTestId('shop-balance')).toHaveText('50');
+  // Golden Cats starts open at 1: the next level lets a run reach 8%.
+  await expect(page.getByTestId('shop-level-goldenCats')).toHaveText('1/5');
+  await expect(page.getByTestId('shop-value-goldenCats')).toHaveText('Up to4%→8%');
+  await buy(page, 'goldenCats');
+  await expect(page.getByTestId('shop-level-goldenCats')).toHaveText('2/5');
+  await expect(page.getByTestId('shop-balance')).toHaveText('500');
 
-  // Not enough coins: Big Catch (100) is disabled and clicking does nothing.
-  const bigCatch = page.getByTestId('shop-buy-bigCatch');
-  await expect(bigCatch).toBeDisabled();
-  await expect(bigCatch).toHaveAttribute('data-state', 'insufficient');
-  await expect(page.getByTestId('shop-need-bigCatch')).toHaveText('Need 50 more');
+  // Combo Charm waits for stage 3: "Reach" over the stage, disabled.
+  const combo = page.getByTestId('shop-buy-comboCharm');
+  await expect(combo).toBeDisabled();
+  await expect(combo).toHaveAttribute('data-state', 'locked');
+  await expect(combo).toContainText('Reach');
+  await expect(combo.locator('.shop-price')).toHaveText('Stage 3');
+
+  // Not enough coins: Lucky Paw 2 (600) is disabled and says what is missing.
+  await expect(paw).toBeDisabled();
+  await expect(paw).toHaveAttribute('data-state', 'insufficient');
+  await expect(page.getByTestId('shop-need-luckyPaw')).toHaveText('Need 100 more');
 
   // Saved at once, outside any write throttle.
   const saved = await page.evaluate(
     (key) => JSON.parse(localStorage.getItem(key) ?? '{}'),
     SAVE_KEY,
   );
-  expect(saved.data.wallet.coins).toBe(50);
-  expect(saved.data.upgrades).toMatchObject({ luckyPaw: 1, secondChance: 1 });
+  expect(saved.data.wallet.coins).toBe(500);
+  expect(saved.data.upgrades).toMatchObject({ luckyPaw: 1, goldenCats: 2, bigDrops: 1 });
 
   // Closing returns to the menu with the new balance; a reload keeps the purchases.
   await page.getByTestId('shop-close').click();
   await expect(shop).toBeHidden();
-  await expect(page.getByTestId('coin-balance')).toHaveText('50');
+  await expect(page.getByTestId('coin-balance')).toHaveText('500');
   await page.reload();
   await page.getByTestId('upgrades').click();
   await expect(page.getByTestId('shop-level-luckyPaw')).toHaveText('1/10');
-  await expect(page.getByTestId('shop-level-secondChance')).toHaveText('1/2');
-  await expect(page.getByTestId('shop-balance')).toHaveText('50');
+  await expect(page.getByTestId('shop-level-goldenCats')).toHaveText('2/5');
+  await expect(page.getByTestId('shop-balance')).toHaveText('500');
+
+  // Reaching stage 3 opens Combo Charm.
+  await page.evaluate(() => window.__game?.setBestStage(3));
+  await expect(combo).toHaveAttribute('data-state', 'insufficient');
+  await expect(combo.locator('.shop-price')).toHaveText('1,000');
 
   // At the max level: MAX, disabled.
   await page.evaluate(() => window.__game?.setUpgrade('secondChance', 2));
   const chance = page.getByTestId('shop-buy-secondChance');
   await expect(chance.locator('.shop-price')).toHaveText('MAX');
   await expect(chance).toBeDisabled();
+  expect(errors).toEqual([]);
+});
+
+test('game over lists the shop cards a run opened', async ({ page }) => {
+  const errors = watchConsole(page);
+  await page.goto('./?debug=1&seed=42');
+  await page.getByTestId('play').click();
+  await expect.poll(() => page.evaluate(() => window.__game?.state().runState)).toBe('playing');
+  // Reaching stage 5 opens Combo Charm and More Magnets (3), Second Chance and Hanabi (5).
+  await page.evaluate(() => window.__game?.setStage(5));
+  await expect
+    .poll(() => page.evaluate(() => window.__game?.state().stage), { timeout: 60_000 })
+    .toBe(5);
+  await expect
+    .poll(() => page.evaluate(() => window.__game?.state().runState), { timeout: 60_000 })
+    .toBe('playing');
+  await page.evaluate(() => window.__game?.forceGameOver());
+  await expect(page.getByTestId('go-unlocked')).toHaveText(
+    'New in the shop: Combo Charm, Second Chance, More Magnets, Hanabi',
+  );
+  // The next run opens nothing new.
+  await page.getByTestId('play-again').click();
+  await expect.poll(() => page.evaluate(() => window.__game?.state().runState)).toBe('playing');
+  await page.evaluate(() => window.__game?.forceGameOver());
+  await expect(page.getByTestId('game-over')).toBeVisible();
+  await expect(page.getByTestId('go-unlocked')).toBeHidden();
   expect(errors).toEqual([]);
 });
 
@@ -105,37 +147,43 @@ test('the back button closes the shop and stays on the menu', async ({ page }) =
   expect(await page.evaluate(() => history.length)).toBeLessThanOrEqual(length + 1);
 });
 
-test('an old save gets its removed upgrades’ coins back', async ({ page }) => {
+test('a save from before v0.36 starts over, keeping its settings', async ({ page }) => {
   const errors = watchConsole(page);
   await page.goto('./?debug=1');
   await expect(page.getByTestId('play')).toBeVisible();
-  // A v0.11 save (version 2): Shrine Expansion 1, Fortune Teller 1, Golden Touch 2, and a
-  // record tier from the 12-cat stages.
+  // A v0.35 save (version 6): a maxed profile with billions of coins and the sound off.
   await page.evaluate((key) => {
     const data = {
-      wallet: { coins: 100 },
-      upgrades: { luckyPaw: 1, shrineExpansion: 1, fortuneTeller: 1, goldenTouch: 2 },
-      records: { bestScore: 900, bestStage: 5, highestTier: 54 },
+      wallet: { coins: 9_000_000_000 },
+      upgrades: { luckyPaw: 10, bigCatch: 5, comboCharm: 5, secondChance: 2 },
+      records: { bestScore: 2 ** 60, bestStage: 31, highestTier: 279 },
+      settings: { sound: false, haptics: true, reduceMotion: false },
     };
-    localStorage.setItem(key, JSON.stringify({ version: 2, data }));
+    localStorage.setItem(key, JSON.stringify({ version: 6, data }));
   }, SAVE_KEY);
   await page.reload();
-  // 100 + 1,500 + 400, and Golden Touch 2 became Golden Merge 2, refunded in v0.21: 120 + 240.
-  await expect(page.getByTestId('coin-balance')).toHaveText('2,360');
+  await expect(page.getByTestId('coin-balance')).toHaveText('0');
+  await expect(page.getByTestId('best-stage')).toHaveText('1');
   await page.getByTestId('upgrades').click();
-  await expect(page.getByTestId('shop-level-luckyPaw')).toHaveText('1/10');
+  await expect(page.getByTestId('shop-level-luckyPaw')).toHaveText('0/10');
+  await expect(page.getByTestId('shop-level-goldenCats')).toHaveText('1/5');
   const saved = await page.evaluate(
     (key) => JSON.parse(localStorage.getItem(key) ?? '{}'),
     SAVE_KEY,
   );
-  expect(saved.version).toBe(6);
-  // Capped at today's last tier (v3 → v4, then v5 → v6).
-  expect(saved.data.records.highestTier).toBe(45);
+  expect(saved.version).toBe(7);
+  expect(saved.data.settings.sound).toBe(false);
+  expect(saved.data.records).toEqual({ bestScore: 0, bestStage: 1, highestTier: 0 });
   expect(Object.keys(saved.data.upgrades)).toEqual([
     'luckyPaw',
     'bigCatch',
     'comboCharm',
     'secondChance',
+    'goldenCats',
+    'bigDrops',
+    'moreMagnets',
+    'hanabi',
+    'joker',
   ]);
   expect(errors).toEqual([]);
 });
@@ -181,7 +229,7 @@ for (const [width, height] of [
     });
     expect(issues).toEqual([]);
     // The last card scrolls into view.
-    const last = page.getByTestId('shop-card-secondChance');
+    const last = page.getByTestId('shop-card-joker');
     await last.scrollIntoViewIfNeeded();
     await expect(last).toBeInViewport({ ratio: 1 });
   });

@@ -251,6 +251,9 @@ test('combos and Jackpots show their banners', async ({ page }) => {
   await mergePair(page, 2, 0);
   await mergePair(page, 2, 200);
   await expect(page.getByTestId('combo')).toContainText('Combo ×');
+  // Every combo scores more (v0.36); coins only with Combo Charm.
+  await expect(page.getByTestId('combo-score')).toContainText('% score');
+  await expect(page.getByTestId('combo-coins')).toBeHidden();
   await expect(page.getByTestId('combo')).toBeHidden(WAIT);
 
   // Two of the stage's last cat: a Jackpot of 5 × C(9) = 350 coins.
