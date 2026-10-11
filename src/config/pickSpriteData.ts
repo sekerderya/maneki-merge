@@ -10,6 +10,16 @@ export const PICK_SPRITE_DATA: Readonly<Record<string, PickPicture>> = {
     width: 1012,
     height: 1008,
   },
+  cursedBell: {
+    file: 'cursedBell.webp',
+    width: 937,
+    height: 923,
+  },
+  dice: {
+    file: 'dice.webp',
+    width: 834,
+    height: 695,
+  },
   echo: {
     file: 'echo.webp',
     width: 906,
@@ -30,10 +40,20 @@ export const PICK_SPRITE_DATA: Readonly<Record<string, PickPicture>> = {
     width: 909,
     height: 815,
   },
+  moreCurses: {
+    file: 'moreCurses.webp',
+    width: 827,
+    height: 791,
+  },
   porcelain: {
     file: 'porcelain.webp',
     width: 940,
     height: 923,
+  },
+  quickCurse: {
+    file: 'quickCurse.webp',
+    width: 682,
+    height: 768,
   },
   wind: {
     file: 'wind.webp',

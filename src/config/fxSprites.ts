@@ -1,7 +1,7 @@
 /**
- * Batch 18's effect art (GAME_DESIGN §15.9–§15.10, docs/ART_ASSETS.md §4.12), made by
- * tools/build-art.ts from the owner's sheets: Heavy Drop's flames and Porcelain's crack lines and
- * gold kintsugi seams. Pure data, no DOM.
+ * The effect art (GAME_DESIGN §15.9–§15.10, §15.12, §15.14; docs/ART_ASSETS.md §4.12–§4.13), made by
+ * tools/build-art.ts from the owner's sheets: Heavy Drop's flames, Porcelain's crack lines and gold
+ * kintsugi seams, Cursed Bell's bell and ring of flames, and Dice's two dice. Pure data, no DOM.
  */
 import { FX_SPRITE_DATA } from './fxSpriteData';
 
@@ -23,6 +23,35 @@ export interface PatternSprite {
   readonly radius: number;
 }
 
+/**
+ * The cursed bell (GAME_DESIGN §15.12): the bell on its cord, its blank tag's fill circle (sprite
+ * pixels) where the drops left are written.
+ */
+export interface BellSprite {
+  readonly file: string;
+  readonly width: number;
+  readonly height: number;
+  readonly tagX: number;
+  readonly tagY: number;
+  readonly tagR: number;
+}
+
+/** The ring of flames round a cursed cat: a square sprite centred on it, its hole and its outside. */
+export interface RingSprite {
+  readonly file: string;
+  readonly side: number;
+  /** The clear hole in the middle (px): the cat goes in it. */
+  readonly inner: number;
+  readonly outer: number;
+}
+
+/** A plain sprite: a die. */
+export interface FxImageSprite {
+  readonly file: string;
+  readonly width: number;
+  readonly height: number;
+}
+
 export interface FxSprites {
   /** The small flame (Heavy Drop 3–4) and the big fireball (level 5). */
   readonly flames: readonly FlameSprite[];
@@ -30,6 +59,11 @@ export interface FxSprites {
   readonly cracks: readonly PatternSprite[];
   /** Two gold seams, matching the cracks. */
   readonly seams: readonly PatternSprite[];
+  /** Cursed Bell's bell and ring of flames (Batch 19). */
+  readonly bell: BellSprite;
+  readonly ring: RingSprite;
+  /** Dice's lucky die, then its unlucky one (Batch 19). */
+  readonly dice: readonly FxImageSprite[];
 }
 
 /** Where the sprites live, relative to the app's base URL. */

@@ -63,6 +63,7 @@ import { fitCamera, worldToView } from './cameraFit';
 import type { CameraFit, JarFrame } from './cameraFit';
 import { FallFx } from './fx/FallFx';
 import { CurseFx } from './fx/CurseFx';
+import { DiceFx } from './fx/DiceFx';
 import { KintsugiFx } from './fx/KintsugiFx';
 import { LastCatFx } from './fx/LastCatFx';
 import { MergeFx } from './fx/MergeFx';
@@ -131,6 +132,8 @@ export class GameScene extends Phaser.Scene {
   private kintsugi!: KintsugiFx;
   /** Cursed Bell's number over the cursed cat, and cats turning to stone (GAME_DESIGN §15.12). */
   private curse!: CurseFx;
+  /** Dice's die over a lucky or fizzled merge (GAME_DESIGN §15.14). */
+  private dice!: DiceFx;
   private aimGuide!: AimGuide;
   private selectRing!: Phaser.GameObjects.Graphics;
   private dropperGlow!: Phaser.GameObjects.Image;
@@ -241,7 +244,14 @@ export class GameScene extends Phaser.Scene {
       () => reducedMotion(),
     );
     this.kintsugi = new KintsugiFx(this, fx, this.skin);
-    this.curse = new CurseFx(this, fx, this.balls);
+    this.curse = new CurseFx(
+      this,
+      glows,
+      fx,
+      this.balls,
+      art ? { bell: art.fx.bell, ring: art.fx.ring } : null,
+    );
+    this.dice = new DiceFx(this, fx, art?.fx.dice ?? null);
     this.selectRing = this.add.graphics();
     fx.add(this.selectRing);
     this.countdown = this.add
@@ -268,6 +278,8 @@ export class GameScene extends Phaser.Scene {
       this.jar.restore();
       this.paw.restore();
       this.fall.restore();
+      this.curse.restore();
+      this.dice.restore();
     });
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.detach());
@@ -316,6 +328,8 @@ export class GameScene extends Phaser.Scene {
       if (gold) this.sparks.burst(x, y, this.particles(BURST_SPARKS.golden));
       // A cracked cat merged: gold seams flash on the whole new cat (Porcelain, §15.10).
       if (e.kintsugi) this.kintsugi.flash(e.id, this.nowMs);
+      // Dice: the gold die over a lucky merge, the grey one over a fizzle.
+      if (e.dice) this.dice.show(e.dice, x, y, run.radiusOf(e.newTier), this.nowMs, reduced);
       this.addShake(mergeShake(e.newSize), SHAKE.mergeMs);
     });
     // Porcelain (GAME_DESIGN §15.10): a crack throws white chips; a break pops the cat like a
@@ -523,6 +537,7 @@ export class GameScene extends Phaser.Scene {
     this.fall?.clear();
     this.kintsugi?.clear();
     this.curse?.clear();
+    this.dice?.clear();
     this.lastCat?.clear();
   }
 
@@ -566,6 +581,7 @@ export class GameScene extends Phaser.Scene {
     this.fall.update(this.nowMs, run.balls, run.levelOf('heavyDrop'), run.state === 'paused');
     this.kintsugi.update(this.nowMs, run.balls);
     this.curse.update(this.nowMs, run.curse, run.balls, this.fit.zoom, reducedMotion());
+    this.dice.update(this.nowMs);
     this.pops.update(this.nowMs);
     this.fx.update(this.nowMs);
   }

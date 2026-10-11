@@ -1,7 +1,8 @@
 /**
- * The effect sheets of Batch 18 (docs/ART_ASSETS.md §4.12): Heavy Drop's two flames and
- * Porcelain's two crack patterns and two gold seams, from `art-source/fx/`, written to
- * `public/assets/fx/` with their measurements in `src/config/fxSpriteData.ts`.
+ * The effect sheets of Batch 18 and 19 (docs/ART_ASSETS.md §4.12–§4.13): Heavy Drop's two flames,
+ * Porcelain's two crack patterns and two gold seams, the cursed bell with its ring of flames, and
+ * the two dice, from `art-source/fx/`, written to `public/assets/fx/` with their measurements in
+ * `src/config/fxSpriteData.ts`.
  *
  * - `fireball`: two flames side by side, each a round head at the bottom with flames rising from
  *   it. They are split at the empty column between them, the white is cut, and the head circle is
@@ -56,19 +57,178 @@ interface Pattern {
   readonly radius: number;
 }
 
+/** The cursed bell (Batch 19): its sprite and the blank tag's fill circle, in sprite pixels. */
+interface Bell {
+  readonly file: string;
+  readonly width: number;
+  readonly height: number;
+  readonly tagX: number;
+  readonly tagY: number;
+  readonly tagR: number;
+}
+
+/** The ring of flames: a square sprite centred on the ring, its hole's and its outer radius. */
+interface Ring {
+  readonly file: string;
+  readonly side: number;
+  readonly inner: number;
+  readonly outer: number;
+}
+
+/** A die: the lucky one, then the unlucky one. */
+interface Die {
+  readonly file: string;
+  readonly width: number;
+  readonly height: number;
+}
+
 export async function buildFx(): Promise<void> {
   await mkdir(OUT_DIR, { recursive: true });
   const flames = await buildFlames(await loadRgba(await findSource(SOURCE_DIR, 'fireball')));
   const { cracks, seams } = await buildPorcelain(
     await loadRgba(await findSource(SOURCE_DIR, 'porcelain')),
   );
-  await writeFile(DATA_FILE, dataModule({ flames, cracks, seams }));
-  console.log(`Fx: ${flames.length} flames, ${cracks.length} cracks, ${seams.length} seams`);
+  const { bell, ring } = await buildCurse(await loadRgba(await findSource(SOURCE_DIR, 'curse')));
+  const dice = await buildDice(await loadRgba(await findSource(SOURCE_DIR, 'dice')));
+  await writeFile(DATA_FILE, dataModule({ flames, cracks, seams, bell, ring, dice }));
+  console.log(
+    `Fx: ${flames.length} flames, ${cracks.length} cracks, ${seams.length} seams, ` +
+      `the cursed bell and its ring, ${dice.length} dice`,
+  );
+}
+
+/**
+ * Batch 19's curse sheet (docs/ART_ASSETS.md §4.13): the cursed bell on the left, the ring of
+ * flames on the right. All white goes, the ring's middle and the cord's loops too. The bell's tag
+ * is measured (its cream fill) so the game can write the drops left on it; the ring is cropped to
+ * a square centred on the circle through its flames' inner tips.
+ */
+async function buildCurse(sheet: Rgba): Promise<{ bell: Bell; ring: Ring }> {
+  cutBackground(sheet, undefined, whiteRegions(sheet));
+  const split = emptyColumnNear(sheet, sheet.width / 2, 'curse');
+  const left = trimmed(crop(sheet, { x: 0, y: 0, w: split, h: sheet.height }));
+  const right = crop(sheet, { x: split, y: 0, w: sheet.width - split, h: sheet.height });
+
+  const tag = tagCircle(left);
+  await saveWebp(left, join(OUT_DIR, 'curse-bell.webp'));
+  const bell: Bell = {
+    file: 'curse-bell.webp',
+    width: left.width,
+    height: left.height,
+    tagX: round(tag.cx),
+    tagY: round(tag.cy),
+    tagR: round(tag.r),
+  };
+  console.log(
+    `curse-bell.webp: ${left.width}×${left.height}, tag (${bell.tagX}, ${bell.tagY}) r=${bell.tagR}`,
+  );
+
+  const hole = innerCircle(right);
+  let outer = 0;
+  for (let y = 0; y < right.height; y++) {
+    for (let x = 0; x < right.width; x++) {
+      if ((right.data[4 * (y * right.width + x) + 3] ?? 0) > 8) {
+        outer = Math.max(outer, Math.hypot(x + 0.5 - hole.cx, y + 0.5 - hole.cy));
+      }
+    }
+  }
+  outer = Math.ceil(outer);
+  const side = 2 * (outer + MARGIN);
+  const square = crop(right, {
+    x: Math.round(hole.cx - side / 2),
+    y: Math.round(hole.cy - side / 2),
+    w: side,
+    h: side,
+  });
+  await saveWebp(square, join(OUT_DIR, 'curse-ring.webp'));
+  const ring: Ring = { file: 'curse-ring.webp', side, inner: round(hole.r), outer };
+  console.log(`curse-ring.webp: ${side}px, hole r=${ring.inner}, outer r=${outer}`);
+  return { bell, ring };
+}
+
+/** Cropped to what is drawn, with MARGIN around it. */
+function trimmed(image: Rgba): Rgba {
+  const box = opaqueBox(image);
+  return crop(image, {
+    x: box.x - MARGIN,
+    y: box.y - MARGIN,
+    w: box.w + 2 * MARGIN,
+    h: box.h + 2 * MARGIN,
+  });
+}
+
+/**
+ * The bell's blank tag: its pale cream fill is the only light, warm colour on the bell, so the
+ * biggest group of such pixels is the tag, and its box gives the circle the number goes in.
+ */
+function tagCircle(bell: Rgba): { cx: number; cy: number; r: number } {
+  const { data, width, height } = bell;
+  const cream = new Uint8ClampedArray(data.length);
+  for (let i = 0; i < width * height; i++) {
+    const r = data[4 * i] ?? 0;
+    const g = data[4 * i + 1] ?? 0;
+    const b = data[4 * i + 2] ?? 0;
+    const light = (data[4 * i + 3] ?? 0) > 200 && r > 225 && g > 205 && b > 160 && r > b + 15;
+    cream[4 * i + 3] = light ? 255 : 0;
+  }
+  const tag = components({ data: cream, width, height })[0];
+  if (!tag) throw new Error('fx/curse: no blank tag under the bell');
+  return { cx: tag.x + tag.w / 2, cy: tag.y + tag.h / 2, r: Math.min(tag.w, tag.h) / 2 };
+}
+
+/**
+ * The ring's hole: from the middle of what is drawn, rays find the first opaque pixel on every
+ * side (the flames' inner tips), and a circle is fitted through them.
+ */
+function innerCircle(ring: Rgba): { cx: number; cy: number; r: number } {
+  const box = opaqueBox(ring);
+  const cx = box.x + box.w / 2;
+  const cy = box.y + box.h / 2;
+  const points: [number, number][] = [];
+  const rays = 180;
+  for (let k = 0; k < rays; k++) {
+    const a = (2 * Math.PI * k) / rays;
+    for (let d = 0; d < Math.max(box.w, box.h); d++) {
+      const x = Math.round(cx + d * Math.cos(a));
+      const y = Math.round(cy + d * Math.sin(a));
+      if (x < 0 || y < 0 || x >= ring.width || y >= ring.height) break;
+      if ((ring.data[4 * (y * ring.width + x) + 3] ?? 0) > 128) {
+        points.push([x + 0.5, y + 0.5]);
+        break;
+      }
+    }
+  }
+  const fit = kasa(points);
+  // The flames' tips stand out from the circle between them; the hole is what is clear all round.
+  let clear = Infinity;
+  for (const [x, y] of points) clear = Math.min(clear, Math.hypot(x - fit.cx, y - fit.cy));
+  return { cx: fit.cx, cy: fit.cy, r: clear };
+}
+
+/**
+ * Batch 19's dice sheet (§4.13): the lucky die on the left, the unlucky one on the right. Only the
+ * white round them goes: the gold die's glossy highlights are near white too.
+ */
+async function buildDice(sheet: Rgba): Promise<Die[]> {
+  cutBackground(sheet);
+  const split = emptyColumnNear(sheet, sheet.width / 2, 'dice');
+  const dice: Die[] = [];
+  for (const [i, half] of [
+    { x: 0, y: 0, w: split, h: sheet.height },
+    { x: split, y: 0, w: sheet.width - split, h: sheet.height },
+  ].entries()) {
+    const die = trimmed(crop(sheet, half));
+    const file = `die-${i === 0 ? 'lucky' : 'unlucky'}.webp`;
+    await saveWebp(die, join(OUT_DIR, file));
+    console.log(`${file}: ${die.width}×${die.height}`);
+    dice.push({ file, width: die.width, height: die.height });
+  }
+  return dice;
 }
 
 async function buildFlames(sheet: Rgba): Promise<Flame[]> {
   cutBackground(sheet);
-  const split = emptyColumnNear(sheet, sheet.width / 2);
+  const split = emptyColumnNear(sheet, sheet.width / 2, 'fireball');
   const flames: Flame[] = [];
   for (const [i, half] of [
     { x: 0, y: 0, w: split, h: sheet.height },
@@ -101,7 +261,7 @@ async function buildFlames(sheet: Rgba): Promise<Flame[]> {
 }
 
 /** The empty column (no pixel with any alpha) nearest `x`. */
-function emptyColumnNear(image: Rgba, x: number): number {
+function emptyColumnNear(image: Rgba, x: number, sheet: string): number {
   const empty = (col: number): boolean => {
     for (let y = 0; y < image.height; y++) {
       if ((image.data[4 * (y * image.width + col) + 3] ?? 0) > 8) return false;
@@ -113,7 +273,7 @@ function emptyColumnNear(image: Rgba, x: number): number {
       if (col > 0 && col < image.width - 1 && empty(col)) return col;
     }
   }
-  throw new Error('fx/fireball: no empty column between the two flames');
+  throw new Error(`fx/${sheet}: no empty column between its two pieces`);
 }
 
 /** The head: the circle through the bottom of the flame's outline, over its middle columns. */
@@ -206,10 +366,18 @@ async function savePattern(image: Rgba, file: string): Promise<Pattern> {
   return { file, side, radius };
 }
 
-function dataModule(data: { flames: Flame[]; cracks: Pattern[]; seams: Pattern[] }): string {
+function dataModule(data: {
+  flames: Flame[];
+  cracks: Pattern[];
+  seams: Pattern[];
+  bell: Bell;
+  ring: Ring;
+  dice: Die[];
+}): string {
   return `/**
  * Generated by tools/build-art.ts (\`npm run art\`) from art-source/fx/: do not edit by hand.
- * Heavy Drop's flames and Porcelain's cracks and seams in public/assets/fx/ (see fxSprites.ts).
+ * Heavy Drop's flames, Porcelain's cracks and seams, the cursed bell, its ring of flames and the
+ * dice in public/assets/fx/ (see fxSprites.ts).
  */
 import type { FxSprites } from './fxSprites';
 

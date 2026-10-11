@@ -1,6 +1,7 @@
 /**
  * The raster art the canvas draws (GAME_DESIGN §13.1): the cats, the jar's two layers, the paw, the
- * special balls and Batch 18's effects (Heavy Drop's flames, Porcelain's cracks and seams).
+ * special balls and the effects (Heavy Drop's flames, Porcelain's cracks and seams, the cursed bell,
+ * its ring of flames and the dice).
  * Boot loads and decodes them with the fonts (main.ts), before the game is created, with the
  * main menu's, the stage doors' and the Upgrades screen's images; the backgrounds are DOM images.
  */
@@ -25,11 +26,15 @@ export interface ArtImages {
   readonly fx: FxImages;
 }
 
-/** Batch 18's effect art (config/fxSprites.ts), in the order of FX_ART's lists. */
+/** The effect art (config/fxSprites.ts), in the order of FX_ART's lists. */
 export interface FxImages {
   readonly flames: readonly HTMLImageElement[];
   readonly cracks: readonly HTMLImageElement[];
   readonly seams: readonly HTMLImageElement[];
+  /** Cursed Bell's bell and ring of flames, Dice's lucky and unlucky die (Batch 19). */
+  readonly bell: HTMLImageElement;
+  readonly ring: HTMLImageElement;
+  readonly dice: readonly HTMLImageElement[];
 }
 
 /** The special balls' images (config/specialSprites.ts). */
@@ -65,9 +70,20 @@ export function loadArt(baseUrl: string): Promise<ArtImages> {
   ]).then(([magnet, hanabi, joker, boulders]) => ({ magnet, hanabi, joker, boulders }));
   const fxList = (list: readonly { file: string }[]): Promise<HTMLImageElement[]> =>
     Promise.all(list.map(({ file }) => image(`${baseUrl}${FX_SPRITE_DIR}${file}`)));
-  const fx = Promise.all([fxList(FX_ART.flames), fxList(FX_ART.cracks), fxList(FX_ART.seams)]).then(
-    ([flames, cracks, seams]) => ({ flames, cracks, seams }),
-  );
+  const fx = Promise.all([
+    fxList(FX_ART.flames),
+    fxList(FX_ART.cracks),
+    fxList(FX_ART.seams),
+    fxList([FX_ART.bell, FX_ART.ring]),
+    fxList(FX_ART.dice),
+  ]).then(([flames, cracks, seams, [bell, ring], dice]) => ({
+    flames,
+    cracks,
+    seams,
+    bell: bell as HTMLImageElement,
+    ring: ring as HTMLImageElement,
+    dice,
+  }));
   const loads = Promise.all([
     Promise.all(CAT_SPRITES.map(({ file }) => image(`${baseUrl}${CAT_SPRITE_DIR}${file}`))),
     scene(JAR_ART.back),
