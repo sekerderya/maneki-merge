@@ -124,6 +124,31 @@ test('making the last cat (two 8s) clears stage 1 and moves on in the same jar',
   expect(errors).toEqual([]);
 });
 
+test('a rule pick (Batch 18) shows its rules and is chosen through the panel', async ({ page }) => {
+  const errors = watchConsole(page);
+  await startRun(page, 4);
+  // As at a clear that grows the jar (GAME_DESIGN §15.5): a rule, then a blessing.
+  await page.evaluate(() => window.__game?.offerPicks(true));
+  const overlay = page.getByTestId('pick-overlay');
+  await expect(overlay).toHaveAttribute('data-kind', 'rule', WAIT);
+  await expect(overlay.locator('.pick-title')).toHaveText('Choose a rule');
+  await expect(overlay.locator('.pick-card')).toHaveCount(2);
+  await expect(overlay.locator('.pick-card.is-rule .pick-level').first()).toHaveText('New rule');
+  const rule = await overlay.locator('.pick-card').first().getAttribute('data-id');
+  expect(['hubris', 'echo']).toContain(rule);
+  await page.waitForTimeout(500);
+  await overlay.locator('.pick-card').first().click();
+  await page.getByTestId('pick-choose').click();
+  await expect(overlay).toHaveAttribute('data-kind', 'blessing', WAIT);
+  await page.waitForTimeout(500);
+  await overlay.locator('.pick-card').first().click();
+  await page.getByTestId('pick-choose').click();
+  await expect(overlay).toBeHidden(WAIT);
+  await expect.poll(async () => (await state(page)).runState, WAIT).toBe('playing');
+  expect((await state(page)).pickLevels?.[rule!]).toBe(1);
+  expect(errors).toEqual([]);
+});
+
 test('with no upgrades, clearing stage 2 moves on into stage 3', async ({ page }) => {
   test.setTimeout(300_000);
   const errors = watchConsole(page);
