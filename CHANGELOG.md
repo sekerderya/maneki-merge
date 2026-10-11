@@ -2,6 +2,26 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] (0.34.0, Batch 18; waiting for the owner's phase 11 art)
+
+### Added
+
+- Rules, a new kind of pick: at the stage clears where the jar grows (5, 10, 15, …) a rule takes the trial's place, with vermilion cards that read "New rule". A rule is on for the rest of the run; once both are taken those clears offer a trial again.
+- Wind (trial): falling cats are blown sideways, harder each level (45 to 225 units on a full fall; the jar is 600 wide), one way for the whole run. Petals and wind lines drift across the top of the screen.
+- Heavy Drop (trial): cats fall faster (0.8 s down to 0.3 s) and hit harder; at the top level they come down like a fireball and land with sparks, a thud and a small shake.
+- Porcelain (trial): a merge can crack the cats beside it (20% per level); a cracked cat that cracks again breaks into two cats of the size below, which never merge with each other. A cracked cat that merges makes a whole one, with a flash of gold.
+- Hubris (rule): sizes 1–5 merge only in threes, and three make a cat two sizes bigger (three with a golden cat), paying half as much again.
+- Echo (rule): merges of sizes 4–7 leave a cat of their size beside the new cat.
+- New sounds: thud, tink, shatter and a bell echo. Debug: set the new levels, a rule pick, flip the wind, a cracked cat, crack the newest cat.
+
+### Decisions taken for the owner (docs/plans/batch-18.md §3; tell me to change any)
+
+- The wind and heavy drops act on every ball that leaves the paw (also boulders, hanabi, jokers and a magnet's catch), only until its first contact.
+- Porcelain spares cats of the merging size, so it doesn't spoil the next merge of a chain; the two pieces of a broken cat never merge with each other.
+- The joker stays the wild card under Hubris (it merges with one small cat); a golden cat among a Hubris three goes up three sizes; a joker's merge never echoes.
+- Heavy Drop's numbers: half the base gravity more per level, and a start speed solved for each fall time (the approved option). A falling heavy ball is kept from sinking more than half a size-1 radius into anything by a sweep along its path (instead of a speed cap, which can't reach 0.4 s or 0.3 s, or substepping the whole world).
+- Echo cats and broken pieces grow in from a quarter of their radius; six connected small cats make two threes in one step under Hubris.
+
 ## [0.33.5] - 2026-10-11
 
 ### Changed
