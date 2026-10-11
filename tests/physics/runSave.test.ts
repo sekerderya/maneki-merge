@@ -292,3 +292,29 @@ describe('a run saved by v0.33.5, before Batch 18', () => {
     expect(again.porcelainRng).toHaveLength(4);
   });
 });
+
+describe('a run saved by v0.34.0, before Batch 19', () => {
+  const text = readFileSync(new URL('./run-v0.34.0.json', import.meta.url), 'utf8');
+
+  it("loads with Batch 18's picks, cracks and waits as they were", () => {
+    const decoded = decodeRunSave(text);
+    if (!('save' in decoded)) throw new Error(decoded.error);
+    const saved = decoded.save.run;
+    expect(saved.levels.porcelain).toBe(2);
+    expect(saved.levels.hubris).toBe(1);
+    const run = RunController.restore(saved);
+    expect(run.balls.map((b) => [b.id, b.tier, b.x, b.cracked])).toEqual(
+      saved.world.balls.map((b) => [b.id, b.tier, b.x, b.cracked]),
+    );
+    expect(run.balls.some((b) => b.cracked)).toBe(true);
+  });
+
+  it('plays on', () => {
+    const decoded = decodeRunSave(text);
+    if (!('save' in decoded)) throw new Error(decoded.error);
+    const run = RunController.restore(decoded.save.run);
+    run.resume();
+    play(run, 1200);
+    expect(run.ticks).toBeGreaterThan(decoded.save.run.ticks + 600);
+  });
+});

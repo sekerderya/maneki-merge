@@ -31,6 +31,35 @@ const LEVELS: [PickId, number][] = [
   ['joker', 3],
 ];
 
+/**
+ * What a v0.34.0 run showed at these ticks (written by v0.34.0 itself): a seed with Batch 18's
+ * trials and rules on, a debug stage clear and the same kind of bot. Batch 19's picks
+ * (GAME_DESIGN §15) start at 0 and roll on their own generators, so it must play the same.
+ */
+const V0_34_0 = [
+  '600:6a8d1dbf:playing:3',
+  '1200:e68f6ccf:playing:9',
+  '1800:73bf9186:playing:11',
+  '2400:99e3d244:playing:13',
+  '3000:d963176c:playing:19',
+  '3600:e4ab5dd6:playing:16',
+  '4200:a12b74ac:playing:18',
+  '4800:be7f5794:playing:16',
+];
+
+const LEVELS_0_34: [PickId, number][] = [
+  ['moreBoulders', 2],
+  ['ironBands', 1],
+  ['goldenCats', 2],
+  ['joker', 2],
+  ['hanabi', 2],
+  ['wind', 2],
+  ['heavyDrop', 2],
+  ['porcelain', 2],
+  ['hubris', 1],
+  ['echo', 1],
+];
+
 describe('an old seed with the new trials and rules at 0', () => {
   it('plays exactly as it did in v0.33.5', () => {
     const run = new RunController({
@@ -49,5 +78,24 @@ describe('an old seed with the new trials and rules at 0', () => {
       }
     }
     expect(prints).toEqual(V0_33_5);
+  });
+
+  it('plays exactly as it did in v0.34.0, with Batch 18 on', () => {
+    const run = new RunController({
+      seed: 340,
+      upgrades: upgrades({ bigCatch: 1, luckyPaw: 1, secondChance: 1 }),
+    });
+    for (const [id, level] of LEVELS_0_34) run.setPickLevel(id, level);
+    const aim = new Rng(78);
+    const prints: string[] = [];
+    for (let t = 1; t <= 4800 && run.state !== 'over'; t++) {
+      if (t === 300) run.jumpToStage(2);
+      botMove(run, (aim.next() * 2 - 1) * 300, aim.next());
+      run.tick();
+      if (t % 600 === 0) {
+        prints.push(`${run.ticks}:${publicFingerprint(run)}:${run.state}:${run.balls.length}`);
+      }
+    }
+    expect(prints).toEqual(V0_34_0);
   });
 });
