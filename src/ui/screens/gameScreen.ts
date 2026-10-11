@@ -20,6 +20,7 @@ import {
 } from '../../config/view';
 import { reducedMotion } from '../../platform';
 import { createGrowthClouds } from '../fx/growthClouds';
+import { createWindGusts } from '../fx/windGusts';
 import { SCENERY_JAR, SCENERY_VIEW, sceneryMarkup } from '../scenery';
 
 export interface GameScreenActions extends HudActions {
@@ -70,8 +71,10 @@ export interface GameScreenView {
    * close as they part (§7.1); else it just switches. Only with the painted backgrounds.
    */
   setJar(jar: number, grow: boolean): void;
-  /** Freezes the growth clouds while the run is paused. */
+  /** Freezes the growth clouds and the wind's petals while the run is paused. */
   setPaused(paused: boolean): void;
+  /** Shows the run's wind (GAME_DESIGN §15.8): its level (0: none) and direction. */
+  setWind(level: number, direction: 1 | -1): void;
 }
 
 /**
@@ -118,7 +121,8 @@ export function createGameScreen(
   // The jar's glass: it never moves on screen while playing, so the DOM draws it once.
   const glass = el('div', 'jar-glass');
   playArea.append(glass);
-  // Over the jar and the garden, under the hint, the banners and the HUD.
+  // Over the jar and the garden, under the hint, the banners and the HUD; the clouds over the wind.
+  const wind = createWindGusts(playArea);
   const clouds = createGrowthClouds(playArea);
   const hint = createHint(playArea);
   const banners = createBanners(playArea);
@@ -218,8 +222,12 @@ export function createGameScreen(
         );
       });
     },
+    setWind(level, direction) {
+      wind.set(level, direction);
+    },
     setPaused(paused) {
       clouds.setPaused(paused);
+      wind.setPaused(paused);
       if (paused && settling?.playState === 'running') settling.pause();
       else if (!paused && settling?.playState === 'paused') settling.play();
     },

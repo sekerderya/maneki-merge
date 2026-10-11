@@ -11,7 +11,7 @@
  */
 import { RUN_SAVE_KEY } from '../config/app';
 import { PICK_IDS } from '../config/picks';
-import type { PickId, PickKind } from '../config/picks';
+import type { PickId, PickKind, WindDirection } from '../config/picks';
 import { UPGRADE_IDS } from '../config/upgrades';
 import type { UpgradeId } from '../config/upgrades';
 import type { DropKind } from './dropQueue';
@@ -115,6 +115,8 @@ export interface RunSnapshot {
   readonly dropAllowedAt: number;
   readonly savesLeft: number;
   readonly levels: Readonly<Record<PickId, number>>;
+  /** Which way the run's wind blows (missing before Batch 18: the seed's, RunController). */
+  readonly windDirection?: WindDirection;
   readonly offer: { readonly kind: PickKind; readonly options: readonly PickId[] } | null;
   readonly pickQueue: readonly PickKind[];
   readonly expansion: ExpansionSnapshot | null;
@@ -179,6 +181,7 @@ function runSnapshot(value: unknown): RunSnapshot {
     savesLeft: count(r['savesLeft'], 'savesLeft'),
     // A trial or blessing added since the snapshot was written starts at level 0.
     levels: levelsOf(r['levels'], PICK_IDS, 'levels', 0),
+    ...(r['windDirection'] === undefined ? {} : { windDirection: wind(r['windDirection']) }),
     offer: offer && {
       kind: oneOf(offer['kind'], PICK_KINDS, 'offer.kind'),
       options: list(offer['options'], 'offer.options').map((id) => oneOf(id, PICK_IDS, 'option')),
@@ -198,6 +201,11 @@ function runSnapshot(value: unknown): RunSnapshot {
 const PICK_KINDS = ['trial', 'blessing', 'rule'] as const;
 const DROP_KINDS = ['cat', 'magnet', 'boulder', 'hanabi', 'joker'] as const;
 const BALL_KINDS = ['cat', 'boulder', 'hanabi', 'joker'] as const;
+
+function wind(value: unknown): WindDirection {
+  if (value === 1 || value === -1) return value;
+  throw new InvalidRunSave('windDirection');
+}
 
 function expansion(value: unknown): ExpansionSnapshot {
   const e = record(value, 'expansion');

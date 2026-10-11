@@ -9,6 +9,7 @@
 import Matter from 'matter-js';
 import {
   ENABLE_SLEEPING,
+  FALL_GUARD_DEPTH,
   FLOOR_RESTITUTION,
   GRAVITY_BASE,
   GROWTH_NEIGHBOUR_MAX_SPEED_BASE,
@@ -26,6 +27,7 @@ import type { StateHasher } from '../core/hash';
 import type { SavedBall, WorldSnapshot } from '../core/runSave';
 import { ballOf, createBall, MATTER_TICKS_PER_SECOND } from './balls';
 import type { Ball, BallSpec } from './balls';
+import { fallPullback } from './fallGuard';
 
 /** A cat to add: the world works out its size at the current stage. */
 export type NewBall = Omit<BallSpec, 'size'>;
@@ -37,6 +39,21 @@ import { installRestitutionOverride } from './restitution';
 
 /** matter-js's gravity unit: gravity.y = 1 accelerates by 0.001 units/ms² (1000 units/s²). */
 const MATTER_GRAVITY_SCALE = 0.001;
+/** World units per second² in matter-js's units per ms². */
+const PER_MS2 = 1e-6;
+/** matter-js's base step: velocities are per this many ms, and air friction is set for it. */
+const MATTER_BASE_DELTA = 1000 / MATTER_TICKS_PER_SECOND;
+
+/**
+ * What acts on a ball from the drop until its first contact (GAME_DESIGN §15.8–§15.9): the wind's
+ * sideways push and Heavy Drop's extra gravity (world units per second², the wind's sign is its
+ * direction), and its speed limit while it falls (world units per second, at least the normal one).
+ */
+export interface FallForces {
+  readonly windAccel: number;
+  readonly gravityBonus: number;
+  readonly maxFallSpeed: number;
+}
 
 /** The fields of matter-js internals this module reads but @types/matter-js leaves out. */
 interface PairList {
@@ -45,6 +62,8 @@ interface PairList {
 interface VerletBody {
   readonly positionPrev: Matter.Vector;
   readonly anglePrev: number;
+  /** The last step's length in ms. */
+  readonly deltaTime: number;
 }
 /** The integrator's and solver's state a saved run writes back into a body. */
 interface BodyState {
@@ -127,6 +146,10 @@ export class PhysicsWorld {
   private readonly maxSpeed = MAX_SPEED_BASE / MATTER_TICKS_PER_SECOND;
   private readonly neighbourMaxSpeed = GROWTH_NEIGHBOUR_MAX_SPEED_BASE / MATTER_TICKS_PER_SECOND;
   private readonly maxAngularSpeed = MAX_ANGULAR_SPEED / MATTER_TICKS_PER_SECOND;
+  /** The falling balls' forces (units per ms²) and speed limit (matter-js units). */
+  private windAccel = 0;
+  private gravityBonus = 0;
+  private maxFallSpeed = this.maxSpeed;
 
   constructor(options: PhysicsWorldOptions = {}) {
     installCircleCollisions();
@@ -207,6 +230,21 @@ export class PhysicsWorld {
     return this.maxSpeed * MATTER_TICKS_PER_SECOND;
   }
 
+  /** The speed limit of a ball still falling from the dropper, in world units per second. */
+  get fallSpeedLimit(): number {
+    return this.maxFallSpeed * MATTER_TICKS_PER_SECOND;
+  }
+
+  /**
+   * Sets what acts on every ball from the drop until its first contact (the wind, Heavy Drop).
+   * Nothing (0, 0 and the normal limit) by default.
+   */
+  setFallForces(forces: FallForces): void {
+    this.windAccel = forces.windAccel * PER_MS2;
+    this.gravityBonus = forces.gravityBonus * PER_MS2;
+    this.maxFallSpeed = Math.max(this.maxSpeed, forces.maxFallSpeed / MATTER_TICKS_PER_SECOND);
+  }
+
   get paused(): boolean {
     return this.isPaused;
   }
@@ -240,7 +278,7 @@ export class PhysicsWorld {
     const ball = createBall(this.nextId++, { ...spec, size: this.sizeOf(spec.tier) });
     this.list.push(ball);
     Matter.Composite.add(this.engine.world, ball.body);
-    if (spec.vx || spec.vy) this.limitSpeed(ball.body, this.maxSpeed);
+    if (spec.vx || spec.vy) this.limitSpeed(ball.body, this.speedCap(ball));
     return ball;
   }
 
@@ -268,6 +306,7 @@ export class PhysicsWorld {
   /** Runs one fixed step, unless paused. Returns whether it ran. */
   step(): boolean {
     if (this.isPaused) return false;
+    if (this.windAccel !== 0 || this.gravityBonus !== 0) this.pushFalling();
     Matter.Engine.update(this.engine, PHYSICS_STEP_MS);
     this.stepCount++;
     this.scanContacts();
@@ -279,7 +318,7 @@ export class PhysicsWorld {
         ball.touchesGrowth = false;
         this.limitSpeed(ball.body, this.neighbourMaxSpeed);
       }
-      this.limitSpeed(ball.body, this.maxSpeed);
+      this.limitSpeed(ball.body, this.speedCap(ball));
       const spin = ball.body.angularVelocity;
       if (spin > this.maxAngularSpeed || spin < -this.maxAngularSpeed) {
         Matter.Body.setAngularVelocity(
@@ -402,6 +441,47 @@ export class PhysicsWorld {
       if (a.growing) b.touchesGrowth = true;
       if (b.growing) a.touchesGrowth = true;
     }
+  }
+
+  /** A falling ball's limit is the fall's (Heavy Drop); from its first contact the normal one. */
+  private speedCap(ball: Ball): number {
+    return ball.landedMs < 0 ? this.maxFallSpeed : this.maxSpeed;
+  }
+
+  /**
+   * The wind and Heavy Drop act on every ball that hasn't touched anything yet, as forces that
+   * matter-js integrates in this step. A heavy ball that could sink too deep into something this
+   * step starts further back along its path (fallGuard.ts).
+   */
+  private pushFalling(): void {
+    const ax = this.windAccel;
+    const ay = this.gravityBonus;
+    const gravity = this.engine.gravity.y * MATTER_GRAVITY_SCALE;
+    for (const ball of this.list) {
+      if (ball.landedMs >= 0) continue;
+      const body = ball.body;
+      body.force.x += body.mass * ax;
+      body.force.y += body.mass * ay;
+      if (ay > 0) this.guardFall(ball, ax, ay + gravity);
+    }
+  }
+
+  /** Moves a falling ball back along its path so that it sinks at most FALL_GUARD_DEPTH. */
+  private guardFall(ball: Ball, ax: number, ay: number): void {
+    const body = ball.body;
+    const prev = body as unknown as VerletBody;
+    // This step's move, as matter-js's Verlet integrator will make it.
+    const dt = PHYSICS_STEP_MS;
+    const keep = (dt / (prev.deltaTime || dt)) * (1 - body.frictionAir * (dt / MATTER_BASE_DELTA));
+    const dx = (body.position.x - prev.positionPrev.x) * keep + ax * dt * dt;
+    const dy = (body.position.y - prev.positionPrev.y) * keep + ay * dt * dt;
+    const back = fallPullback(ball, dx, dy, this.list, this.geo, FALL_GUARD_DEPTH);
+    if (back <= 0) return;
+    const k = back / Math.hypot(dx, dy);
+    this.scratch.x = body.position.x - dx * k;
+    this.scratch.y = body.position.y - dy * k;
+    // Without updateVelocity, the previous position moves along: its speed stays.
+    Matter.Body.setPosition(body, this.scratch);
   }
 
   private limitSpeed(body: Matter.Body, max: number): void {

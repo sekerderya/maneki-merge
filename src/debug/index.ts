@@ -48,6 +48,8 @@ export interface GameStateSnapshot {
   readonly pick: { readonly kind: string; readonly options: readonly string[] } | null;
   /** The trials' and blessings' levels this run. */
   readonly pickLevels: Readonly<Record<string, number>> | null;
+  /** Which way the run's wind blows (1 right, −1 left), or null. */
+  readonly wind: 1 | -1 | null;
   /** The danger countdown is running (a cat is over the line). */
   readonly danger: boolean;
   /** The stage's smallest and last cat (making the last one clears the stage). */
@@ -90,6 +92,8 @@ export interface GameHooks {
   setPickLevel(id: PickId, level: number): void;
   /** Opens a stage clear's picks now: a trial first, or a rule first with `rule`. */
   offerPicks(rule?: boolean): void;
+  /** Turns the run's wind the other way, or sets it (1 right, −1 left). */
+  setWind(direction?: 1 | -1): void;
   /** Puts a boulder of the stage's `size` needing `hits` merges into the jar at world x. */
   spawnBoulder(x?: number, size?: number, hits?: number): void;
   addCoins(coins: number): void;
@@ -153,6 +157,7 @@ export function installDebugHooks(ctx: DebugContext): GameHooks {
           ? { kind: run.pickOffer.kind, options: [...run.pickOffer.options] }
           : null,
         pickLevels: run?.pickLevels ?? null,
+        wind: run?.windDirection ?? null,
         danger: run?.dangerActive ?? false,
         firstTier: stageInfo(run?.stage ?? 1).firstTier,
         lastTier: stageInfo(run?.stage ?? 1).lastTier,
@@ -204,6 +209,9 @@ export function installDebugHooks(ctx: DebugContext): GameHooks {
     },
     offerPicks(rule = false) {
       session.run?.offerPicks(rule);
+    },
+    setWind(direction) {
+      session.run?.setWindDirection(direction);
     },
     spawnBoulder(x = 0, size = 2, hits = 1) {
       const run = session.run;
@@ -385,6 +393,7 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
       pickLevel,
       action('Set run', () => hooks.setPickLevel(pick.value as PickId, Number(pickLevel.value))),
     ),
+    row(action('Flip wind', () => hooks.setWind())),
     row(
       action('+1000 coins', () => hooks.addCoins(1000)),
       action('Game over', () => hooks.forceGameOver()),

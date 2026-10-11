@@ -62,7 +62,11 @@ export interface SessionParts {
   /** The doors that shut over the game while the picks are made (GAME_DESIGN §7.1). */
   readonly doors: DoorsView;
   /** The garden behind the jar: a new one each time the jar grows (GAME_DESIGN §7). */
-  readonly scenery: { setJar(jar: number, grow: boolean): void; setPaused(paused: boolean): void };
+  readonly scenery: {
+    setJar(jar: number, grow: boolean): void;
+    setPaused(paused: boolean): void;
+    setWind(level: number, direction: 1 | -1): void;
+  };
   /** Sound effects and haptics for the run's events. */
   readonly feedback: FeedbackOutputs;
   /** A fixed seed (`?seed=`) for every run, or null for a fresh one each time. */
@@ -247,7 +251,7 @@ export class GameSession {
     const levels = run.pickLevels;
     this.parts.picks.show(
       kind,
-      options.map((id) => pickCard(id, levels, run.stats.bigCatchLevel)),
+      options.map((id) => pickCard(id, levels, run.stats.bigCatchLevel, run.windDirection)),
     );
   }
 
@@ -262,6 +266,7 @@ export class GameSession {
     hud.setCoins(run.coins);
     hud.setStage(run.stage);
     this.parts.scenery.setJar(stageJar(run.stage), false);
+    this.parts.scenery.setWind(run.pickLevels.wind, run.windDirection);
     showPreview();
 
     events.on('scoreChanged', (e) => hud.setScore(e.score));
@@ -326,6 +331,8 @@ export class GameSession {
       showPreview();
       hud.setStage(run.stage);
     });
+    // The wind's petals (GAME_DESIGN §15.8) show its level and direction.
+    events.on('windChanged', (e) => this.parts.scenery.setWind(e.level, e.direction));
     events.on('expansionFinished', () => {
       showPreview();
       hud.setStage(run.stage);

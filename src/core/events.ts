@@ -2,7 +2,7 @@
  * Typed event bus. The run emits, and the presentation layers (HUD, FX, audio, haptics, save)
  * listen; `game` and `ui` only talk to each other through it (TECH_SPEC §3).
  */
-import type { PickId, PickKind } from '../config/picks';
+import type { PickId, PickKind, WindDirection } from '../config/picks';
 import type { UpgradeId } from '../config/upgrades';
 import type { DropKind } from './dropQueue';
 
@@ -188,6 +188,8 @@ export interface GameEvents {
   pickOffered: { readonly kind: PickKind; readonly options: readonly PickId[] };
   /** An option was chosen: its level for the rest of the run is now `level`. */
   pickChosen: { readonly kind: PickKind; readonly id: PickId; readonly level: number };
+  /** The wind (GAME_DESIGN §15.8) changed: its level (0: none) or, with the debug tools, its way. */
+  windChanged: { readonly level: number; readonly direction: WindDirection };
   paused: Record<string, never>;
   resumed: Record<string, never>;
   gameOver: {

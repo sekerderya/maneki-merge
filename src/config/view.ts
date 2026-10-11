@@ -335,3 +335,21 @@ export const DOORS_SHADE_OUTER = 0.1;
 export const DOORS_SHADE_INNER = 0.38;
 /** The picture reaches this many frame-image pixels under the frame, past its inner outline. */
 export const DOORS_PICTURE_BLEED = 6;
+
+/**
+ * The wind's look (GAME_DESIGN §15.8, ui/fx/windGusts.ts): sakura petals and thin streaks drift
+ * across the top WIND_BAND of the play area the wind's way, WIND_PETALS + WIND_PETALS_PER_LEVEL
+ * per level petals and WIND_STREAKS_PER_LEVEL streaks per level, each crossing the screen in
+ * WIND_CROSS_MS − WIND_CROSS_MS_PER_LEVEL × level. With reduced motion, WIND_CALM_PETALS slow
+ * petals (WIND_CALM_CROSS_MS) and no streaks.
+ */
+export const WIND_BAND = 0.5;
+export const WIND_PETALS = 4;
+export const WIND_PETALS_PER_LEVEL = 3;
+export const WIND_STREAKS_PER_LEVEL = 1;
+export const WIND_CROSS_MS = 4600;
+export const WIND_CROSS_MS_PER_LEVEL = 560;
+export const WIND_CALM_PETALS = 4;
+export const WIND_CALM_CROSS_MS = 9000;
+/** The petals' layout seed: the same flurry every time (no gameplay randomness involved). */
+export const WIND_LAYOUT_SEED = 518;

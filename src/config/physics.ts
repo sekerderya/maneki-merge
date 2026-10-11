@@ -89,6 +89,26 @@ export const MERGE_SPIN_MIN_SLIDE = 20;
  */
 export const GRAVITY_BASE = 2.15;
 
+/**
+ * Heavy Drop (GAME_DESIGN §15.9): at level L a dropped ball leaves the paw at
+ * HEAVY_DROP_START_SPEED[L] (world units per second, downward) and feels HEAVY_DROP_GRAVITY_BONUS[L]
+ * more gravity (units/s²: half the base gravity per level) until its first contact. Solved headless
+ * (tests/physics/heavyDrop.test.ts) for falls from the paw to the empty floor of about 1.0 (none),
+ * 0.8, 0.65, 0.5, 0.4 and 0.3 s (HEAVY_DROP_FALL_TIMES).
+ */
+export const HEAVY_DROP_START_SPEED = [0, 104, 277, 791, 1335, 2310] as const;
+export const HEAVY_DROP_GRAVITY_BONUS = [0, 1075, 2150, 3225, 4300, 5375] as const;
+/**
+ * A heavy ball's speed limit while it falls (world units per second): 40 units per step, under a
+ * size-1 radius. From its first contact MAX_SPEED_BASE applies again.
+ */
+export const HEAVY_DROP_MAX_SPEED = 4800;
+/**
+ * A falling heavy ball never starts a contact deeper than this (physics/fallGuard.ts): half a
+ * size-1 radius, what MAX_SPEED_BASE allows any ball per step.
+ */
+export const FALL_GUARD_DEPTH = sizeRadius(1) / 2;
+
 /** Density of a size-1 cat. Bigger sizes are lighter per area (see densityForSize). */
 export const BASE_DENSITY = 0.001;
 export const DENSITY_EXPONENT = 1.0;

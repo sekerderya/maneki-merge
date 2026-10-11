@@ -14,7 +14,14 @@
  * hits → hanabi blasts → combo expiry → stage clear → drop ready → danger. The stage clear goes first, so making
  * the stage's last cat saves the jar even on the step the danger timer would run out.
  */
-import { PHYSICS_STEP_MS, stepsFor } from '../config/physics';
+import {
+  HEAVY_DROP_GRAVITY_BONUS,
+  HEAVY_DROP_MAX_SPEED,
+  HEAVY_DROP_START_SPEED,
+  MAX_SPEED_BASE,
+  PHYSICS_STEP_MS,
+  stepsFor,
+} from '../config/physics';
 import {
   HANABI_REACH,
   HANABI_SIZE,
@@ -23,8 +30,9 @@ import {
   PICK_IDS,
   pickOrder,
   PICKS,
+  WIND_ACCEL_PER_LEVEL,
 } from '../config/picks';
-import type { PickId, PickKind } from '../config/picks';
+import type { PickId, PickKind, WindDirection } from '../config/picks';
 import { catRadius, clearGrowsJar, stageHoldsTier, stageInfo } from '../config/stages';
 import {
   DROP_COOLDOWN_MS,
@@ -56,6 +64,7 @@ import { fuseBurntOut, hanabiBlast } from '../physics/hanabi';
 import type { JarGeometry } from '../physics/geometry';
 import { MergeResolver } from '../physics/merges';
 import { FixedStepper, PhysicsWorld } from '../physics/PhysicsWorld';
+import type { FallForces } from '../physics/PhysicsWorld';
 
 /** `choosing`: a stage clear's pick waits for `choose` (GAME_DESIGN §15.5); time stands still. */
 export type RunState = 'playing' | 'paused' | 'expanding' | 'choosing' | 'over';
@@ -141,6 +150,13 @@ const TAKE_STEPS = stepsFor(MAGNET_TAKE_MS);
  */
 const SPECIAL_SEED_SALT = 0x9e3779b9;
 const PICK_SEED_SALT = 0x7f4a7c15;
+/** The wind's direction (GAME_DESIGN §15.8): one roll when the run starts. */
+const WIND_SEED_SALT = 0x2545f491;
+
+/** Which way a run's wind blows: one roll on its own generator, so it never moves another roll. */
+export function windDirectionOf(seed: number): WindDirection {
+  return new Rng((Math.trunc(seed) ^ WIND_SEED_SALT) >>> 0).next() < 0.5 ? -1 : 1;
+}
 
 export class RunController {
   readonly events: EventBus<GameEvents>;
@@ -184,6 +200,8 @@ export class RunController {
   /** The pick waiting for `choose`, and the kinds still to come at this clear. */
   private offer: PickOffer | null = null;
   private pickQueue: PickKind[] = [];
+  /** Which way the wind blows this run, whether or not Wind is ever picked. */
+  private wind: WindDirection;
 
   /**
    * Starts a run, or continues the saved one (`RunController.restore` passes it): it comes back
@@ -202,6 +220,7 @@ export class RunController {
     this.rng = new Rng(options.seed);
     this.specialRng = new Rng((Math.trunc(options.seed) ^ SPECIAL_SEED_SALT) >>> 0);
     this.pickRng = new Rng((Math.trunc(options.seed) ^ PICK_SEED_SALT) >>> 0);
+    this.wind = windDirectionOf(options.seed);
     this.queue = new DropQueue({
       rng: this.rng,
       specialRng: this.specialRng,
@@ -319,9 +338,14 @@ export class RunController {
     return this.offer;
   }
 
-  /** The trials' and blessings' levels this run. */
+  /** The trials', rules' and blessings' levels this run. */
   get pickLevels(): PickLevels {
     return { ...this.levels };
+  }
+
+  /** Which way the wind blows this run (GAME_DESIGN §15.8): 1 to the right, −1 to the left. */
+  get windDirection(): WindDirection {
+    return this.wind;
   }
 
   /** The HUD's progress bar: the biggest cat in the jar against the stage's last cat. */
@@ -388,6 +412,8 @@ export class RunController {
       hits: item.hits,
       x: at,
       y: dropStartY(radius, geo),
+      // Heavy Drop (GAME_DESIGN §15.9): it leaves the paw already falling.
+      vy: HEAVY_DROP_START_SPEED[this.levels.heavyDrop] ?? 0,
     });
     this.dropAllowedAt = this.world.steps + COOLDOWN_STEPS;
     this.dropAnnounced = false;
@@ -427,7 +453,9 @@ export class RunController {
     this.levels[id]++;
     this.offer = null;
     this.queue.setOdds(this.odds());
+    this.world.setFallForces(this.fallForces());
     this.events.emit('pickChosen', { kind: offer.kind, id, level: this.levels[id] });
+    if (id === 'wind') this.announceWind();
     if (!this.offerNextPick()) this.afterPicks();
     return true;
   }
@@ -504,6 +532,19 @@ export class RunController {
     if (!Number.isFinite(level)) return;
     this.levels[id] = Math.max(0, Math.min(PICKS[id].maxLevel, Math.round(level)));
     this.queue.setOdds(this.odds());
+    this.world.setFallForces(this.fallForces());
+    if (id === 'wind') this.announceWind();
+  }
+
+  /** Debug: turns the wind the other way (or sets it). */
+  setWindDirection(direction: WindDirection = this.wind === 1 ? -1 : 1): void {
+    this.wind = direction;
+    this.world.setFallForces(this.fallForces());
+    this.announceWind();
+  }
+
+  private announceWind(): void {
+    this.events.emit('windChanged', { level: this.levels.wind, direction: this.wind });
   }
 
   /**
@@ -560,6 +601,7 @@ export class RunController {
       dropAllowedAt: this.dropAllowedAt,
       savesLeft: this.savesLeft,
       levels: { ...this.levels },
+      windDirection: this.wind,
       offer: this.offer && { kind: this.offer.kind, options: [...this.offer.options] },
       pickQueue: [...this.pickQueue],
       expansion: e && {
@@ -593,6 +635,7 @@ export class RunController {
     }
     h.number(this.queue.dropsThisStage);
     for (const value of Object.values(this.levels)) h.number(value);
+    h.number(this.wind);
     h.string(this.offer ? `${this.offer.kind}:${this.offer.options.join(',')}` : '');
     h.string(this.pickQueue.join(','));
     h.number(this.dropAllowedAt).number(this.savesLeft).number(this.debugTargetStage);
@@ -611,6 +654,9 @@ export class RunController {
     this.specialRng.setState(saved.specialRng);
     this.pickRng.setState(saved.pickRng);
     for (const id of PICK_IDS) this.levels[id] = Math.min(PICKS[id].maxLevel, saved.levels[id]);
+    // A run saved before Batch 18 has no wind yet: the seed's.
+    this.wind = saved.windDirection ?? this.wind;
+    this.world.setFallForces(this.fallForces());
     this.queue.restore(saved.queue, stage);
     this.queue.setOdds(this.odds());
     for (const item of [this.queue.current, this.queue.next]) {
@@ -775,6 +821,16 @@ export class RunController {
   /** What the queue rolls now: the stage and the picks so far. */
   private odds(): DropOdds {
     return dropOdds(this.levels, this.world.stage, this.stats.bigCatchLevel);
+  }
+
+  /** What acts on a falling ball now: the wind and Heavy Drop (GAME_DESIGN §15.8–§15.9). */
+  private fallForces(): FallForces {
+    const heavy = this.levels.heavyDrop;
+    return {
+      windAccel: WIND_ACCEL_PER_LEVEL * this.levels.wind * this.wind,
+      gravityBonus: HEAVY_DROP_GRAVITY_BONUS[heavy] ?? 0,
+      maxFallSpeed: heavy > 0 ? HEAVY_DROP_MAX_SPEED : MAX_SPEED_BASE,
+    };
   }
 
   /**

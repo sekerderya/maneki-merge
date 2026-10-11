@@ -638,6 +638,41 @@
   will-change: transform, opacity;
 }
 
+/* The wind (GAME_DESIGN §15.8, ui/fx/windGusts.ts): petals and streaks over the top of the play
+   area, under the growth clouds; they never take a touch. */
+.wind-gusts {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.wind-petal,
+.wind-streak {
+  position: absolute;
+  top: 0;
+  left: 0;
+  will-change: transform;
+}
+
+/* The garden's petal: a pink ellipse. */
+.wind-petal {
+  border-radius: 50%;
+  background: #f7b6c6;
+  opacity: 0.9;
+}
+
+.wind-streak {
+  height: 2px;
+  border-radius: 1px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.75));
+}
+
+.wind-streak.is-left {
+  background: linear-gradient(270deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.75));
+}
+
 /* The cream of the clouds, under them while they cover the screen. */
 .growth-clouds-wash {
   position: absolute;
