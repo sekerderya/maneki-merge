@@ -45,6 +45,13 @@ describe("a pick card's icon is the game's own art (GAME_DESIGN §15.5)", () => 
     expect(art.path).toBe(`${PICK_SPRITE_DIR}${heap?.file}`);
     expect(art.width).toBeLessThanOrEqual(PICK_PICTURE_SHARE);
     expect(art.width).toBeGreaterThan(PICK_PICTURE_SHARE / 2);
+    expect(art.picture).toBe(true);
+  });
+
+  it('marks a ball as no picture, so a card never turns a cat round', () => {
+    expect(pickArt('goldenCats', 0).picture).toBe(false);
+    // Batch 18's picks show their cat until the owner's pictures come.
+    if (!pickPicture('wind')) expect(pickArt('wind', 0).picture).toBe(false);
   });
 
   it('has art for every pick', () => {

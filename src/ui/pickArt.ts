@@ -19,6 +19,8 @@ export interface PickArt {
   readonly width: number;
   /** A golden cat: it glows. */
   readonly golden: boolean;
+  /** The pick's own picture (not a ball): the Wind's may face the other way. */
+  readonly picture: boolean;
 }
 
 /** A ball's body fills this share of its medallion's width. */
@@ -35,12 +37,14 @@ export function pickArt(id: PickId, level: number): PickArt {
       path: `${PICK_SPRITE_DIR}${picture.file}`,
       width: PICK_PICTURE_SHARE * narrow,
       golden: false,
+      picture: true,
     };
   }
   const ball = (dir: string, sprite: CatSprite, golden = false): PickArt => ({
     path: `${dir}${sprite.file}`,
     width: (PICK_BALL_SHARE * sprite.side) / (2 * sprite.radius),
     golden,
+    picture: false,
   });
   const special = (sprite: CatSprite): PickArt => ball(SPECIAL_SPRITE_DIR, sprite);
   const cat = (size: number, golden: boolean): PickArt => {

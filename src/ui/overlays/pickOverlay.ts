@@ -118,7 +118,8 @@ function createCard(card: PickCard, art: boolean, onSelect: () => void): HTMLBut
     const image = artImage(ball.path, 'pick-icon-ball');
     image.style.width = `${ball.width * 100}%`;
     icon.classList.toggle('is-golden', ball.golden);
-    icon.classList.toggle('is-mirrored', card.mirror);
+    // A cat never turns round: its raised paw stays on the viewer's right.
+    icon.classList.toggle('is-mirrored', card.mirror && ball.picture);
     icon.append(image);
   } else {
     icon.insertAdjacentHTML('beforeend', PICK_ICONS[card.id]);
