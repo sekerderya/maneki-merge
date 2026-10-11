@@ -90,14 +90,16 @@ export const MERGE_SPIN_MIN_SLIDE = 20;
 export const GRAVITY_BASE = 2.15;
 
 /**
- * Heavy Drop (GAME_DESIGN §15.9): at level L a dropped ball leaves the paw at
+ * Heavy Drop (GAME_DESIGN §15.9): at level L a dropped ball shoots out of the paw at
  * HEAVY_DROP_START_SPEED[L] (world units per second, downward) and feels HEAVY_DROP_GRAVITY_BONUS[L]
- * more gravity (units/s²: half the base gravity per level) until its first contact. Solved headless
- * (tests/physics/heavyDrop.test.ts) for falls from the paw to the empty floor of about 1.0 (none),
- * 0.8, 0.65, 0.5, 0.4 and 0.3 s (HEAVY_DROP_FALL_TIMES).
+ * more gravity (units/s²: a quarter of the base gravity per level) until its first contact.
+ * Solved headless for falls from the paw to the empty floor of about 1.0 (none), 0.66, 0.53, 0.41,
+ * 0.33 and 0.24 s (HEAVY_DROP_FALL_TIMES), landing at 2000, 2339, 2789, 3327 and 4361 u/s.
+ * v0.34 (the owner's call, 17% faster than first built and shot out of the paw): until then 104 to
+ * 2310 u/s and half the base gravity per level, for 0.8 to 0.3 s.
  */
-export const HEAVY_DROP_START_SPEED = [0, 104, 277, 791, 1335, 2310] as const;
-export const HEAVY_DROP_GRAVITY_BONUS = [0, 1075, 2150, 3225, 4300, 5375] as const;
+export const HEAVY_DROP_START_SPEED = [0, 814, 1232, 1842, 2521, 3825] as const;
+export const HEAVY_DROP_GRAVITY_BONUS = [0, 537.5, 1075, 1612.5, 2150, 2687.5] as const;
 /**
  * A heavy ball's speed limit while it falls (world units per second): 40 units per step, under a
  * size-1 radius. From its first contact MAX_SPEED_BASE applies again.
@@ -108,6 +110,15 @@ export const HEAVY_DROP_MAX_SPEED = 4800;
  * size-1 radius, what MAX_SPEED_BASE allows any ball per step.
  */
 export const FALL_GUARD_DEPTH = sizeRadius(1) / 2;
+/**
+ * A heavy ball that lands on a ball from above knocks it aside (GAME_DESIGN §15.9): a straight hit
+ * would only press it into the pile. The ball it lands on gets this share of the landing speed
+ * sideways, times how squarely from above it was hit (the square of the contact's downward
+ * share), away from the heavy ball (a dead-centre hit picks a side by the heavy ball's id); the
+ * heavy ball gets HEAVY_DROP_KICK_BACK of that the other way, so it rolls off.
+ */
+export const HEAVY_DROP_KICK = 0.18;
+export const HEAVY_DROP_KICK_BACK = 0.5;
 
 /** Density of a size-1 cat. Bigger sizes are lighter per area (see densityForSize). */
 export const BASE_DENSITY = 0.001;

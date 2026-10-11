@@ -14,7 +14,12 @@ import { PhysicsWorld } from '../../src/physics/PhysicsWorld';
 import { RunController } from '../../src/run/RunController';
 
 const CAP = stageInfo(1).lastTier;
-const PORCELAIN: MergeRules = { threesUpTo: 0, porcelain: true };
+const PORCELAIN: MergeRules = {
+  threesUpTo: 0,
+  pairWaitSteps: 0,
+  pairGraceSteps: 0,
+  porcelain: true,
+};
 
 /** A cat of `size` (stage 1) resting on the floor at x. */
 function floorCat(world: PhysicsWorld, size: number, x: number) {

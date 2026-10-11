@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { THREE_WAY_PAYOUT } from '../../src/config/economy';
-import { BOULDER_HIT_REACH, HUBRIS_MAX_SIZE } from '../../src/config/picks';
+import { stepsFor } from '../../src/config/physics';
+import { BOULDER_HIT_REACH, HUBRIS_MAX_SIZE, HUBRIS_PAIR_WAIT_MS } from '../../src/config/picks';
 import { stageInfo } from '../../src/config/stages';
 import { sizeRadius, tierCoins, tierScore } from '../../src/config/tiers';
 import { coinPayout } from '../../src/core/economy';
@@ -9,10 +10,16 @@ import type { Ball } from '../../src/physics/balls';
 import type { MergeOutcome, MergeRules } from '../../src/physics/merges';
 import { MergeResolver } from '../../src/physics/merges';
 import { PhysicsWorld } from '../../src/physics/PhysicsWorld';
+import { decodeRunSave, RUN_SAVE_VERSION } from '../../src/core/runSave';
 import { RunController } from '../../src/run/RunController';
 
 const CAP = stageInfo(1).lastTier;
-const HUBRIS: MergeRules = { threesUpTo: HUBRIS_MAX_SIZE, porcelain: false };
+const HUBRIS: MergeRules = {
+  threesUpTo: HUBRIS_MAX_SIZE,
+  pairWaitSteps: stepsFor(HUBRIS_PAIR_WAIT_MS),
+  pairGraceSteps: 12,
+  porcelain: false,
+};
 
 /** Cats of `size` (stage 1: tier = size) side by side on the floor, each overlapping the next by 2. */
 function row(world: PhysicsWorld, size: number, count: number, left = -200, golden = -1): Ball[] {
@@ -34,13 +41,61 @@ function play(world: PhysicsWorld, steps: number, rules = HUBRIS): MergeOutcome[
 }
 
 describe('Hubris (GAME_DESIGN §15.11)', () => {
-  it('keeps two touching small cats apart', () => {
+  it('makes two touching small cats wait half a second, then merge as a pair', () => {
     for (let size = 1; size <= HUBRIS_MAX_SIZE; size++) {
       const world = new PhysicsWorld();
       row(world, size, 2, -150);
-      expect(play(world, 60)).toEqual([]);
-      expect(world.balls).toHaveLength(2);
+      const resolver = new MergeResolver();
+      const outcomes: MergeOutcome[] = [];
+      let at = -1;
+      for (let i = 1; i <= 90 && outcomes.length === 0; i++) {
+        world.step();
+        outcomes.push(...resolver.resolve(world, CAP, HUBRIS));
+        at = i;
+      }
+      expect(outcomes[0], `size ${size}`).toMatchObject({
+        tier: size,
+        newTier: size + 1,
+        parts: 2,
+      });
+      // They touch from the first step; HUBRIS_PAIR_WAIT_MS later they merge.
+      expect(at).toBe(1 + stepsFor(HUBRIS_PAIR_WAIT_MS));
     }
+  });
+
+  it('merges a third that comes while two wait into a three at once', () => {
+    const world = new PhysicsWorld();
+    const [a] = row(world, 2, 2, -200);
+    const resolver = new MergeResolver();
+    for (let i = 0; i < 30; i++) {
+      world.step();
+      expect(resolver.resolve(world, CAP, HUBRIS)).toEqual([]);
+    }
+    // A third 2 placed against the first one.
+    const r = sizeRadius(2);
+    world.addBall({ tier: 2, x: a!.x, y: a!.y - 2 * r + 2, landedMs: 0 });
+    world.step();
+    expect(resolver.resolve(world, CAP, HUBRIS)[0]).toMatchObject({
+      tier: 2,
+      newTier: 4,
+      parts: 3,
+    });
+  });
+
+  it('remembers since when each small pair has touched, and starts again when forgotten', () => {
+    const world = new PhysicsWorld();
+    const [a, b] = row(world, 2, 2, -150);
+    const resolver = new MergeResolver();
+    for (let i = 0; i < 40; i++) {
+      world.step();
+      resolver.resolve(world, CAP, HUBRIS);
+    }
+    expect(resolver.waits).toEqual([[a!.id, b!.id, 1, 40]]);
+    // Forgotten (as after the two let go of each other): the wait starts again.
+    resolver.restoreWaits([]);
+    world.step();
+    resolver.resolve(world, CAP, HUBRIS);
+    expect(resolver.waits).toEqual([[a!.id, b!.id, world.steps, world.steps]]);
   });
 
   it('merges three in a chain into a cat two sizes bigger at their centroid', () => {
@@ -137,6 +192,33 @@ describe('Hubris (GAME_DESIGN §15.11)', () => {
     expect(merged[0]!.score).toBe(THREE_WAY_PAYOUT * tierScore(3));
     expect(merged[0]!.coins).toBe(coinPayout(THREE_WAY_PAYOUT * tierCoins(3), 1, 0));
     expect(run.coins).toBe(merged[0]!.coins);
+  });
+
+  it('keeps a waiting pair through a save', () => {
+    const run = new RunController({ seed: 5 });
+    run.setPickLevel('hubris', 1);
+    const r = sizeRadius(2);
+    run.spawnBall(2, -150 + r, -r);
+    run.spawnBall(2, -150 + 3 * r - 2, -r);
+    for (let i = 0; i < 30; i++) run.tick();
+    run.pause();
+    const text = JSON.stringify({
+      version: RUN_SAVE_VERSION,
+      save: { run: run.snapshot(), recordsBefore: { bestScore: 0, bestStage: 1, highestTier: 0 } },
+    });
+    const decoded = decodeRunSave(text);
+    if (!('save' in decoded)) throw new Error(decoded.error);
+    expect(decoded.save.run.hubrisWaits).toHaveLength(1);
+    const back = RunController.restore(decoded.save.run);
+    expect(back.stateHash()).toBe(run.stateHash());
+    run.resume();
+    back.resume();
+    for (let i = 0; i < 40; i++) {
+      run.tick();
+      back.tick();
+    }
+    expect(back.balls.map((b) => b.tier)).toEqual([3]);
+    expect(run.balls.map((b) => b.tier)).toEqual([3]);
   });
 
   it('plays the same for the same seed and inputs', () => {

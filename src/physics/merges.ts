@@ -20,11 +20,12 @@
  *    crack, except cats of the merging size and of the last size; the caller rolls and applies it.
  * 7. A broken cat's two pieces (shard mates) never merge with each other.
  *
- * Hubris (GAME_DESIGN §15.11, `threesUpTo`): cats up to that size don't merge in pairs; three of
- * them that touch in a chain merge into a cat two sizes bigger (three for a golden one) at their
- * centroid. Every ball is then gone through oldest first, and each takes the oldest merge it can
- * still make (by the sorted ids of its cats): a pair of bigger cats, a joker's merge or a three.
- * Without Hubris that is exactly the pair order above.
+ * Hubris (GAME_DESIGN §15.11, `threesUpTo`): three cats up to that size that touch in a chain
+ * merge at once into a cat two sizes bigger (three for a golden one) at their centroid; two of them
+ * merge only once they have touched for `pairWaitSteps`. Every ball is then gone through oldest
+ * first, and each takes the oldest merge it can still make (by the sorted ids of its cats): a pair
+ * of bigger cats, a joker's merge or a three; failing those, a small pair that has waited long
+ * enough. Without Hubris that is exactly the pair order above.
  *
  * New cats aren't in this step's contacts, so a chain continues on the next step at the earliest.
  * Scores, coins, events and the hits' effect are the caller's job (RunController).
@@ -58,13 +59,34 @@ export interface MergeOutcome {
 
 /** What changes how cats merge this run. */
 export interface MergeRules {
-  /** Hubris: cats up to this size merge only in threes (0: off). */
+  /** Hubris: cats up to this size merge in threes at once, in pairs after a wait (0: off). */
   readonly threesUpTo: number;
+  /** Hubris: how many steps two small cats must touch before they merge as a pair. */
+  readonly pairWaitSteps: number;
+  /**
+   * Hubris: two resting cats' contact flickers on and off from step to step; a pair still counts
+   * as touching this many steps after its contact was last seen.
+   */
+  readonly pairGraceSteps: number;
   /** Porcelain is on: list the cats each merge may crack (`cracks`). */
   readonly porcelain: boolean;
 }
 
-const PLAIN_RULES: MergeRules = { threesUpTo: 0, porcelain: false };
+const PLAIN_RULES: MergeRules = {
+  threesUpTo: 0,
+  pairWaitSteps: 0,
+  pairGraceSteps: 0,
+  porcelain: false,
+};
+
+/** Hubris: a small pair's wait, from the step it started touching to the step it was last seen. */
+interface Wait {
+  readonly since: number;
+  seen: number;
+}
+
+/** A pair of balls' key in the waiting list: the older id, then the younger. */
+const pairKey = (a: Ball, b: Ball): string => (a.id < b.id ? `${a.id}:${b.id}` : `${b.id}:${a.id}`);
 
 const byAge = (p: readonly [Ball, Ball], q: readonly [Ball, Ball]): number =>
   p[0].id - q[0].id || p[1].id - q[1].id;
@@ -106,6 +128,8 @@ export class MergeResolver {
   /** Each merge's balls and the tier that merged (for Porcelain), by merge index. */
   private readonly members: Ball[][] = [];
   private readonly tiers: number[] = [];
+  /** Hubris: since when each pair of small cats (by `pairKey`) has been touching. */
+  private readonly touching = new Map<string, Wait>();
 
   /**
    * The boulders the last `resolve` hit, once per merge that hit each (a boulder two merges hit is
@@ -124,6 +148,23 @@ export class MergeResolver {
   }
 
   /**
+   * Hubris: the small pairs that are touching, for a saved run, as [older id, younger id, the
+   * step they started touching, the step they were last seen touching].
+   */
+  get waits(): [number, number, number, number][] {
+    return [...this.touching].map(([key, wait]) => {
+      const [a, b] = key.split(':').map(Number) as [number, number];
+      return [a, b, wait.since, wait.seen];
+    });
+  }
+
+  /** Continues a saved run's waiting pairs. */
+  restoreWaits(waits: readonly (readonly [number, number, number, number])[]): void {
+    this.touching.clear();
+    for (const [a, b, since, seen] of waits) this.touching.set(`${a}:${b}`, { since, seen });
+  }
+
+  /**
    * Resolves the last step's same-tier contacts. The returned list is reused by the next call.
    */
   resolve(
@@ -138,6 +179,7 @@ export class MergeResolver {
     this.members.length = 0;
     this.tiers.length = 0;
     const contacts = world.mergeContacts;
+    this.forgetWaits(world, rules);
     if (contacts.length === 0) {
       this.collectJokerHits(world.jokerBoulderContacts);
       return outcomes;
@@ -154,7 +196,7 @@ export class MergeResolver {
 
     const used = this.used;
     used.clear();
-    if (rules.threesUpTo > 0) this.resolveWithThrees(world, tierCap, rules.threesUpTo);
+    if (rules.threesUpTo > 0) this.resolveWithThrees(world, tierCap, rules);
     else {
       for (const [a, b] of pairs) {
         if (a.removed || b.removed || used.has(a) || used.has(b) || mates(a, b)) continue;
@@ -167,6 +209,24 @@ export class MergeResolver {
     this.mergeOf.clear();
     this.collectJokerHits(world.jokerBoulderContacts);
     return outcomes;
+  }
+
+  /**
+   * Hubris: forgets the waits of pairs that let go longer than the grace ago, or whose cats are
+   * gone (merged, popped); all of them without Hubris.
+   */
+  private forgetWaits(world: PhysicsWorld, rules: MergeRules): void {
+    if (this.touching.size === 0) return;
+    if (rules.threesUpTo <= 0) {
+      this.touching.clear();
+      return;
+    }
+    const ids = new Set(world.balls.map((ball) => ball.id));
+    for (const [key, wait] of [...this.touching]) {
+      const [a, b] = key.split(':').map(Number) as [number, number];
+      const gone = !ids.has(a) || !ids.has(b);
+      if (gone || world.steps - wait.seen > rules.pairGraceSteps) this.touching.delete(key);
+    }
   }
 
   /** Two balls merge: a joker and a cat, two cats, or two of the cap's cats (a Jackpot). */
@@ -214,12 +274,13 @@ export class MergeResolver {
   /**
    * Hubris: the step's merges with small cats in threes. Every ball is gone through oldest first;
    * each one still free takes the oldest merge it can make with free balls: a pair (bigger cats, a
-   * joker's merge) or a three of small cats that touch in a chain.
+   * joker's merge) or a three of small cats that touch in a chain; failing those, its oldest small
+   * partner it has touched for `pairWaitSteps`.
    */
-  private resolveWithThrees(world: PhysicsWorld, tierCap: number, threesUpTo: number): void {
+  private resolveWithThrees(world: PhysicsWorld, tierCap: number, rules: MergeRules): void {
     const used = this.used;
     const small = (ball: Ball): boolean =>
-      ball.kind === 'cat' && world.sizeOf(ball.tier) <= threesUpTo;
+      ball.kind === 'cat' && world.sizeOf(ball.tier) <= rules.threesUpTo;
     // Small cats that touch, and every other pair each ball is in (oldest partner first).
     const touching = new Map<Ball, Ball[]>();
     const partners = new Map<Ball, Ball[]>();
@@ -239,7 +300,21 @@ export class MergeResolver {
     }
     balls.sort((p, q) => p.id - q.id);
     for (const list of partners.values()) list.sort((p, q) => p.id - q.id);
+    for (const list of touching.values()) list.sort((p, q) => p.id - q.id);
     const free = (ball: Ball): boolean => !ball.removed && !used.has(ball);
+    // How long each small pair has been touching (pairs that let go start again).
+    const now = world.steps;
+    for (const [a, list] of touching) {
+      for (const b of list) {
+        if (a.id > b.id) continue;
+        const key = pairKey(a, b);
+        const wait = this.touching.get(key);
+        if (wait) wait.seen = now;
+        else this.touching.set(key, { since: now, seen: now });
+      }
+    }
+    const waited = (a: Ball, b: Ball): boolean =>
+      now - (this.touching.get(pairKey(a, b))?.since ?? now) >= rules.pairWaitSteps;
 
     for (const ball of balls) {
       if (!free(ball)) continue;
@@ -253,6 +328,10 @@ export class MergeResolver {
         this.mergeThree(world, [ball, three[0], three[1]], tierCap);
       } else if (partner) {
         this.mergePair(world, ball, partner, tierCap);
+      } else {
+        // No third came: a small pair merges once it has waited.
+        const mate = (touching.get(ball) ?? []).find((other) => free(other) && waited(ball, other));
+        if (mate) this.mergePair(world, ball, mate, tierCap);
       }
     }
   }

@@ -29,6 +29,8 @@ import {
   HANABI_REACH,
   HANABI_SIZE,
   HUBRIS_MAX_SIZE,
+  HUBRIS_PAIR_WAIT_MS,
+  HUBRIS_TOUCH_GRACE_MS,
   JOKER_SIZE,
   MAGNET_SIZE,
   PICK_IDS,
@@ -220,6 +222,8 @@ export class RunController {
   private pickQueue: PickKind[] = [];
   /** Which way the wind blows this run, whether or not Wind is ever picked. */
   private wind: WindDirection;
+  /** Echo: a merge has echoed since the last drop (only one does per drop). */
+  private echoUsed = false;
 
   /**
    * Starts a run, or continues the saved one (`RunController.restore` passes it): it comes back
@@ -442,6 +446,7 @@ export class RunController {
     });
     this.dropAllowedAt = this.world.steps + COOLDOWN_STEPS;
     this.dropAnnounced = false;
+    this.echoUsed = false;
     this.events.emit('catDropped', { kind, tier: item.tier, golden: item.golden, x: at });
     return true;
   }
@@ -652,6 +657,8 @@ export class RunController {
       pickRng: this.pickRng.state(),
       porcelainRng: this.porcelainRng.state(),
       echoRng: this.echoRng.state(),
+      echoUsed: this.echoUsed,
+      hubrisWaits: this.merges.waits,
       queue: this.queue.snapshot(),
       economy: this.economy.snapshot(),
       danger: this.danger.snapshot(),
@@ -670,6 +677,8 @@ export class RunController {
     for (const value of this.pickRng.state()) h.number(value);
     for (const value of this.porcelainRng.state()) h.number(value);
     for (const value of this.echoRng.state()) h.number(value);
+    h.bool(this.echoUsed);
+    for (const wait of this.merges.waits) for (const n of wait) h.number(n);
     for (const item of [this.queue.current, this.queue.next]) {
       h.string(item.kind).number(item.tier).bool(item.golden).number(item.hits);
     }
@@ -696,6 +705,8 @@ export class RunController {
     // Runs saved before Batch 18 never rolled these: they start fresh from the seed.
     if (saved.porcelainRng) this.porcelainRng.setState(saved.porcelainRng);
     if (saved.echoRng) this.echoRng.setState(saved.echoRng);
+    this.echoUsed = saved.echoUsed ?? false;
+    this.merges.restoreWaits(saved.hubrisWaits ?? []);
     for (const id of PICK_IDS) this.levels[id] = Math.min(PICKS[id].maxLevel, saved.levels[id]);
     // A run saved before Batch 18 has no wind yet: the seed's.
     this.wind = saved.windDirection ?? this.wind;
@@ -879,20 +890,24 @@ export class RunController {
   private mergeRules(): MergeRules {
     return {
       threesUpTo: this.levels.hubris > 0 ? HUBRIS_MAX_SIZE : 0,
+      pairWaitSteps: stepsFor(HUBRIS_PAIR_WAIT_MS),
+      pairGraceSteps: stepsFor(HUBRIS_TOUCH_GRACE_MS),
       porcelain: this.levels.porcelain > 0,
     };
   }
 
   /**
    * Echo (GAME_DESIGN §15.11): a merge of cats of ECHO_MIN_SIZE–ECHO_MAX_SIZE leaves a cat of their
-   * size beside the new cat, on a side the seed picks, growing in from small. Never for a joker's
-   * merge or the stage's last cat. It pays nothing and isn't a merge.
+   * size beside the new cat, on a side the seed picks, growing in from small; only the first such
+   * merge after each drop does, so an echo can't set off a chain. Never for a joker's merge or the
+   * stage's last cat. It pays nothing and isn't a merge.
    */
   private echo(o: MergeOutcome, last: number): void {
     const ball = o.ball;
-    if (this.levels.echo <= 0 || !ball || o.joker || o.newTier >= last) return;
+    if (this.levels.echo <= 0 || this.echoUsed || !ball || o.joker || o.newTier >= last) return;
     const size = this.world.sizeOf(o.tier);
     if (size < ECHO_MIN_SIZE || size > ECHO_MAX_SIZE) return;
+    this.echoUsed = true;
     const radius = sizeRadius(size);
     const side = this.echoRng.chance(0.5) ? 1 : -1;
     const spot = echoSpot(o.x, o.y, ball.targetRadius, radius, side, this.world.geometry);

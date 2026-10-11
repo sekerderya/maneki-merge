@@ -130,6 +130,13 @@ export interface RunSnapshot {
   /** Porcelain's cracks and Echo's sides (missing before Batch 18: fresh from the seed). */
   readonly porcelainRng?: RngState;
   readonly echoRng?: RngState;
+  /** Echo: a merge has echoed since the last drop (missing: none has). */
+  readonly echoUsed?: boolean;
+  /**
+   * Hubris: the small pairs waiting to merge, as [older id, younger id, the step they started
+   * touching, the step they were last seen touching].
+   */
+  readonly hubrisWaits?: readonly (readonly [number, number, number, number])[];
   readonly queue: QueueSnapshot;
   readonly economy: EconomySnapshot;
   readonly danger: DangerSnapshot;
@@ -202,6 +209,8 @@ function runSnapshot(value: unknown): RunSnapshot {
       ? {}
       : { porcelainRng: rngState(r['porcelainRng'], 'porcelainRng') }),
     ...(r['echoRng'] === undefined ? {} : { echoRng: rngState(r['echoRng'], 'echoRng') }),
+    ...(r['echoUsed'] === undefined ? {} : { echoUsed: bool(r['echoUsed'], 'echoUsed') }),
+    ...(r['hubrisWaits'] === undefined ? {} : { hubrisWaits: waits(r['hubrisWaits']) }),
     queue: queue(r['queue']),
     economy: economy(r['economy']),
     danger: danger(r['danger']),
@@ -212,6 +221,16 @@ function runSnapshot(value: unknown): RunSnapshot {
 const PICK_KINDS = ['trial', 'blessing', 'rule'] as const;
 const DROP_KINDS = ['cat', 'magnet', 'boulder', 'hanabi', 'joker'] as const;
 const BALL_KINDS = ['cat', 'boulder', 'hanabi', 'joker'] as const;
+
+function waits(value: unknown): [number, number, number, number][] {
+  return list(value, 'hubrisWaits').map((entry) => {
+    const [a, b, since, seen] = list(entry, 'hubrisWaits').map((n) => count(n, 'hubrisWaits'));
+    if (a === undefined || b === undefined || since === undefined || seen === undefined || a >= b) {
+      throw new InvalidRunSave('hubrisWaits');
+    }
+    return [a, b, since, seen];
+  });
+}
 
 function wind(value: unknown): WindDirection {
   if (value === 1 || value === -1) return value;

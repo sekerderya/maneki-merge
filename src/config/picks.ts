@@ -79,7 +79,7 @@ export type WindDirection = 1 | -1;
  * each level (index = level; 1.0 s without it), as its card shows them. The start speeds and the
  * gravity that make them are in config/physics.ts.
  */
-export const HEAVY_DROP_FALL_TIMES = [1.0, 0.8, 0.65, 0.5, 0.4, 0.3] as const;
+export const HEAVY_DROP_FALL_TIMES = [1.0, 0.66, 0.53, 0.41, 0.33, 0.24] as const;
 /**
  * Its look: speed lines from level 1, a small flame with embers from HEAVY_FLAME_LEVEL, and from
  * HEAVY_FIREBALL_LEVEL (the top level) the big fireball, which lands with sparks, a thud and a
@@ -97,18 +97,26 @@ export const PORCELAIN_REACH = BOULDER_HIT_REACH;
 export const PORCELAIN_CHANCE_PER_LEVEL = 0.2;
 
 /**
- * Hubris (GAME_DESIGN §15.11): cats up to this size merge only in threes (HUBRIS_PARTS cats that
- * touch in a chain), and a three-way merge makes a cat HUBRIS_SIZE_STEP sizes bigger.
+ * Hubris (GAME_DESIGN §15.11): three cats up to this size that touch in a chain merge at once into
+ * a cat HUBRIS_SIZE_STEP sizes bigger; two of them merge only after touching for HUBRIS_PAIR_WAIT_MS
+ * (v0.34, the owner's call: until then they never merged in pairs, which clogged the jar).
  */
 export const HUBRIS_MAX_SIZE = 5;
 export const HUBRIS_PARTS = 3;
 export const HUBRIS_SIZE_STEP = 2;
+export const HUBRIS_PAIR_WAIT_MS = 500;
+/**
+ * Two cats resting side by side touch on some steps and not on others; a pair still counts as
+ * touching this long after their contact was last seen, so its wait doesn't start over.
+ */
+export const HUBRIS_TOUCH_GRACE_MS = 100;
 
 /**
  * Echo (GAME_DESIGN §15.11): a merge of cats of these sizes leaves a cat of their size beside the
- * new cat.
+ * new cat, at most once per drop (v0.34, the owner's call: sizes 4–7 and every merge set off
+ * chains that ended a run within a minute, won or lost).
  */
-export const ECHO_MIN_SIZE = 4;
+export const ECHO_MIN_SIZE = 5;
 export const ECHO_MAX_SIZE = 7;
 
 /**
@@ -222,8 +230,8 @@ export const PICKS: Readonly<Record<PickId, PickDef>> = {
     id: 'hubris',
     kind: 'rule',
     name: 'Hubris',
-    description: 'Sizes 1–5 only merge in threes, and skip a size when they do',
-    statLabel: 'Small cats merge',
+    description: 'Sizes 1–5 wait a moment to merge in pairs; three merge at once and skip a size',
+    statLabel: 'Small pairs merge',
     maxLevel: 1,
     perLevel: 1,
   },
@@ -231,7 +239,7 @@ export const PICKS: Readonly<Record<PickId, PickDef>> = {
     id: 'echo',
     kind: 'rule',
     name: 'Echo',
-    description: 'Merges of sizes 4–7 leave a cat of their size behind',
+    description: 'Merges of sizes 5–7 leave a cat of their size behind, once per drop',
     statLabel: 'Echo',
     maxLevel: 1,
     perLevel: 1,

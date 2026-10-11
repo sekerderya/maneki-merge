@@ -124,7 +124,7 @@ Values are rounded only when paid (§5). Score and coins are doubles: `S(t)` sta
 
 ## 5. Merging
 
-- Two touching cats of the same tier merge into one cat of the next tier, with a pop. (With the Hubris rule, sizes 1–5 merge only in threes, §15.11.) The new cat is born at rest exactly at their midpoint and grows from the old size to its new size over about 120 ms, so neighbours get pushed but never launched.
+- Two touching cats of the same tier merge into one cat of the next tier, with a pop. (With the Hubris rule, two cats of sizes 1–5 wait half a second, and three merge at once and skip a size, §15.11.) The new cat is born at rest exactly at their midpoint and grows from the old size to its new size over about 120 ms, so neighbours get pushed but never launched.
 - The new cat starts to turn gently, as if another cat had clipped it: the way its parents slid past each other (when a cat lands on the right shoulder of another, the new cat turns clockwise), small cats faster than big ones. On the floor it rolls a short way.
 - A cat takes part in at most one merge per physics step. Merges are queued during collision handling and resolved after the step. When pairs compete for a cat, the oldest cats merge first.
 - **The last cat.** Two size-8 cats merge into the stage's last cat (size 9). That clears the stage (§7): every other cat in the jar pops into its value, the last cat pops too once it has settled, and the run moves on, with an empty jar, to the next stage (every 5 stages the jar grows on the way, §7).
@@ -427,17 +427,17 @@ Then play resumes in the next stage as the doors open: in the grown jar, or in t
 | `ironBands`    | Iron Bands    | Boulders need one more merge to break |   3 | 1 → 4 merges                  |
 | `bigBoulders`  | Big Boulders  | Boulders one size bigger              |   4 | size 2 (r 49) → size 6 (r 98) |
 | `wind`         | Wind          | +100 u/s² of wind (§15.8)             |   5 | Calm → Storm                  |
-| `heavyDrop`    | Heavy Drop    | Falls faster (§15.9)                  |   5 | 1.0 s → 0.3 s fall            |
+| `heavyDrop`    | Heavy Drop    | Falls faster (§15.9)                  |   5 | 1.0 s → 0.24 s fall           |
 | `porcelain`    | Porcelain     | +20% crack chance (§15.10)            |   4 | 0% → 80%                      |
 
 The boulder trials still multiply each other (more × bigger × harder to break); a pick now shows 3 of the 6 trials, so the player can steer around them. Balance comes later.
 
 **Rules** (v0.34, one level each, §15.11)
 
-| ID       | Name   | Effect                                                           | Card value           |
-| -------- | ------ | ---------------------------------------------------------------- | -------------------- |
-| `hubris` | Hubris | Sizes 1–5 only merge in threes, and skip a size when they do     | In pairs → In threes |
-| `echo`   | Echo   | Merges of sizes 4–7 leave a cat of their size beside the new cat | Off → On             |
+| ID       | Name   | Effect                                                                         | Card value                               |
+| -------- | ------ | ------------------------------------------------------------------------------ | ---------------------------------------- |
+| `hubris` | Hubris | Sizes 1–5 wait a moment to merge in pairs; three merge at once and skip a size | Small pairs merge: At once → After 0.5 s |
+| `echo`   | Echo   | Merges of sizes 5–7 leave a cat of their size behind, once per drop            | Off → On                                 |
 
 **Blessings**
 
@@ -493,13 +493,13 @@ The wind pushes falling balls sideways.
 - **Direction:** each run blows either to the right or to the left, picked at random when the run starts (the run's seed, on its own roll), whether or not Wind is ever taken. The card says which ("The wind blows falling cats to the right"), and its picture (a carp streamer) faces that way.
 - **Force:** with Wind at level L, every ball that leaves the paw (§15.1) is pushed sideways at 100 × L world units per second², from the drop until its first contact. A ball that has touched anything never feels it, so it never moves the pile. Measured headless (the jar is 600 wide), a size-1 cat dropped straight down drifts:
 
-  | Level | Name   | Empty jar (fall 1.04 s) | Half-full jar (pile top 340–420) | With Heavy Drop 5 (0.3 s) |
-  | ----: | ------ | ----------------------: | -------------------------------: | ------------------------: |
-  |     1 | Breeze |                      45 |                               28 |                         4 |
-  |     2 | Gusty  |                      90 |                               55 |                         9 |
-  |     3 | Strong |                     135 |                               85 |                        13 |
-  |     4 | Gale   |                     180 |                              117 |                        18 |
-  |     5 | Storm  |                     225 |                              141 |                        22 |
+  | Level | Name   | Empty jar (fall 1.04 s) | Half-full jar (pile top 340–420) | With Heavy Drop 5 (0.24 s) |
+  | ----: | ------ | ----------------------: | -------------------------------: | -------------------------: |
+  |     1 | Breeze |                      45 |                               28 |                          3 |
+  |     2 | Gusty  |                      90 |                               55 |                          5 |
+  |     3 | Strong |                     135 |                               85 |                          8 |
+  |     4 | Gale   |                     180 |                              117 |                         11 |
+  |     5 | Storm  |                     225 |                              141 |                         14 |
 
   (½·a·t² would be 54 per level on the full fall; air friction takes the rest.) A cat landing on the empty floor keeps the sideways speed the wind gave it and rolls on (no rug, §6).
 
@@ -512,21 +512,22 @@ The wind pushes falling balls sideways.
 
 Dropped balls fall faster and hit harder; at the top level they come down like a fireball.
 
-- With Heavy Drop at level L, every ball that leaves the paw (§15.1) starts with a downward speed and feels more gravity (half the base gravity more per level) until its first contact. While it falls it may go faster than the speed limit (up to 4800 units per second); from its first contact the normal limit applies again, so it bounces off as before. It pushes the pile harder because it arrives faster; it does nothing else.
-- Fall from the paw to the empty floor (size 1) and the speed it lands at, measured headless:
+- With Heavy Drop at level L, every ball that leaves the paw (§15.1) shoots out of it with a downward speed and feels more gravity (a quarter of the base gravity more per level) until its first contact. While it falls it may go faster than the speed limit (up to 4800 units per second); from its first contact the normal limit applies again, so it bounces off as before.
+- Fall from the paw to the empty floor (size 1) and the speed it lands at, measured headless (v0.34, the owner's call after playing it: 17% faster than first built, with most of the speed from the paw so it shoots out instead of just falling faster; until then 0.8 to 0.3 s, leaving the paw at 104 to 2310 u/s):
 
   | Level | Fall time | Start speed | Extra gravity | Lands at |
   | ----: | --------: | ----------: | ------------: | -------: |
   |     0 |    1.04 s |           0 |             0 | 1659 u/s |
-  |     1 |    0.80 s |         104 |     1075 u/s² | 2101 u/s |
-  |     2 |    0.65 s |         277 |     2150 u/s² | 2483 u/s |
-  |     3 |    0.50 s |         791 |     3225 u/s² | 2882 u/s |
-  |     4 |    0.40 s |        1335 |     4300 u/s² | 3311 u/s |
-  |     5 |    0.30 s |        2310 |     5375 u/s² | 3956 u/s |
+  |     1 |    0.66 s |         814 |      538 u/s² | 2000 u/s |
+  |     2 |    0.53 s |        1232 |     1075 u/s² | 2339 u/s |
+  |     3 |    0.41 s |        1842 |     1613 u/s² | 2789 u/s |
+  |     4 |    0.33 s |        2521 |     2150 u/s² | 3327 u/s |
+  |     5 |    0.24 s |        3825 |     2688 u/s² | 4361 u/s |
 
-  The card shows the fall time (1.0 s → 0.8 s, …). A faster fall leaves the wind less time to push (§15.8).
+  The card shows the fall time (1.0 s → 0.66 s, …). A faster fall leaves the wind less time to push (§15.8).
 
-- **Safe:** a heavy ball never passes through a cat, the floor or a wall, and never sinks deeper than half a size-1 radius into anything (TECH_SPEC §5). In a jar full to the rim, 100 drops at level 5 push no other cat over the rim (no more than ordinary drops do); the heavy cat itself may bounce back over the rim of such a jar, up to about 200 units per second (a few units high).
+- **It knocks cats aside** (v0.34, the owner's call): a straight hit from above would only press the cat into the pile (measured: a dead-centre hit didn't move it at all, at any level, while a hit 25 units off-centre pushed it 100–240 units). So the ball a heavy ball lands on from above is knocked sideways, away from it, at 18% of the landing speed times how squarely from above it was hit (the square of the contact's downward share; a dead-centre hit picks a side), and the heavy ball rolls off the other way at half that. Measured: a dead-centre hit on a lone size 3 now moves it 110 units at level 1 and about 240 at level 5; in a row, its neighbours 60–120.
+- **Safe:** a heavy ball never passes through a cat, the floor or a wall, and never sinks deeper than half a size-1 radius into anything (TECH_SPEC §5). In a jar full to the rim, 100 drops at level 5 leave every cat in the jar; a cat it knocks aside may squeeze one a little over the rim (up to about 240 units per second, at most 14 units high, in 3 of 6 seeds; never at levels 1 and 3), and the heavy cat itself may bounce back over the rim of such a jar, up to about 320 units per second.
 - **Look** (visual only): levels 1–2, thin speed lines behind the falling ball; levels 3–4, embers too (and the owner's small flame, docs/ART_ASSETS.md §4.12); level 5, the big fireball, and on landing a burst of fire sparks, a short heavy thud and a small shake (no shake with reduced motion).
 
 ### 15.10 Porcelain
@@ -545,16 +546,17 @@ A merge can crack the cats beside it; a cracked cat that cracks again breaks.
 
 > The owner's idea (2026-10-11), built in v0.34: picks that change how merging works, offered where the jar grows (§15.5).
 
-**Hubris:** cats of sizes 1–5 don't merge in pairs. Three cats of one such size that touch in a chain (A touches B and B touches C; A and C needn't touch) merge into one cat **two sizes** bigger at their centroid (three 3s make a 5); with a golden cat among them, three sizes, never above the stage's last size.
+**Hubris:** three cats of one size from 1 to 5 that touch in a chain (A touches B and B touches C; A and C needn't touch) merge at once into one cat **two sizes** bigger at their centroid (three 3s make a 5); with a golden cat among them, three sizes, never above the stage's last size. Two such cats **wait**: they merge as a pair (one size up) only after touching for 0.5 s, so a third that comes in time makes a three. (v0.34, the owner's call after playing it: at first two small cats never merged at all, which filled the jar with cats waiting for a third: a test bot cleared no stage 1 in 30 runs and lost 17, against 5 and 3 without Hubris; with the wait it clears 3 and loses 8, and about one small merge in seven is a three.) Two resting cats' contact flickers from step to step, so a pair counts as touching until 0.1 s after it was last seen.
 
-- Sizes 6–8 merge in pairs as before, and two 8s still make the stage's last cat. A joker still merges with one cat of any size and makes it one size bigger: a way around Hubris.
-- Order: every ball is gone through oldest first; each one still free takes the oldest merge it can make (by the sorted ids of its cats): a pair of bigger cats, a joker's merge or a three. A cat takes part in at most one merge per step, so four or five connected cats make one three now and the rest wait (six can make two).
+- Sizes 6–8 merge in pairs as before, and two 8s still make the stage's last cat. A joker still merges with one cat of any size and makes it one size bigger at once.
+- Order: every ball is gone through oldest first; each one still free takes the oldest merge it can make (by the sorted ids of its cats): a pair of bigger cats, a joker's merge or a three; failing those, a small pair that has waited 0.5 s. A cat takes part in at most one merge per step, so four or five connected cats make one three now and the rest wait (six can make two).
 - A three is one merge: it hits each boulder in reach once, cracks its neighbours once (Porcelain), counts once for the combo, and pays like a merge of its size **plus half** (a starting value; the economy comes later). It starts at the biggest one's radius and grows into its own, turning the way its two oldest cats slid past each other.
-- When Hubris is chosen, a hint shows as the next stage starts: "Hubris: sizes 1–5 merge in threes".
+- When Hubris is chosen, a hint shows as the next stage starts: "Hubris: three small cats merge at once and skip a size".
 
-**Echo:** when cats of sizes 4–7 merge (two, or three under Hubris; a golden merge too), a cat of **their** size appears beside the new cat: two 4s make a 5 and a 4; three 5s under Hubris make a 7 and a 5.
+**Echo:** when cats of sizes 5–7 merge (two, or three under Hubris; a golden merge too), a cat of **their** size appears beside the new cat: two 5s make a 6 and a 5; three 5s under Hubris make a 7 and a 5. Only the first such merge after each drop echoes, so an echo can never set off a chain.
 
-- Never for the stage's last cat (two 8s, or two golden 7s), never for a joker's merge, never for sizes 1–3.
+- (v0.34, the owner's call after playing it: sizes 4–7 and every merge set off chains that ended a run within about 40 s, won or lost; a test bot cleared 10 of 30 and lost 16, against 5 and 3 without Echo. A 50% chance still chained, up to 6 echoes on one drop, and lost 14. Now it clears 5 and loses 11, about one echo in 14 drops.)
+- Never for the stage's last cat (two 8s, or two golden 7s), never for a joker's merge, never for sizes 1–4.
 - **Where:** level with the new cat, on a side picked at random (the run's seed, on its own roll), just touching it once both have grown; on the other side if that one would put it through a wall; straight above the new cat if neither fits. It grows in from a quarter of its radius over 0.12 s (no launches), counts as landed, isn't golden or cracked, and may merge on the next step like any cat.
 - It pays nothing and isn't a merge (no boulder hit, no crack, no combo).
 - **Look:** it fades in from pale with three expanding ripple rings, and a soft bell echo.

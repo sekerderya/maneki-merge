@@ -77,7 +77,7 @@ export interface SessionParts {
 }
 
 /** A rule's hint pill (GAME_DESIGN §15.11). */
-const RULE_HINTS = { hubris: 'Hubris: sizes 1–5 merge in threes' } as const;
+const RULE_HINTS = { hubris: 'Hubris: three small cats merge at once and skip a size' } as const;
 
 export class GameSession {
   private current: RunController | null = null;

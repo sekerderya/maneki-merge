@@ -9,6 +9,7 @@ import {
   BOULDER_BASE_SIZE,
   BOULDER_FIRST_STAGE,
   HEAVY_DROP_FALL_TIMES,
+  HUBRIS_PAIR_WAIT_MS,
   MAGNET_BASE_CHANCE,
   MAX_DROP_TILT_LEVEL,
   PICK_IDS,
@@ -154,7 +155,7 @@ export function pickValue(id: PickId, levels: PickLevels, bigCatchLevel: number)
     case 'porcelain':
       return percent(PICKS.porcelain.perLevel * levels.porcelain);
     case 'hubris':
-      return levels.hubris > 0 ? 'In threes' : 'In pairs';
+      return levels.hubris > 0 ? `After ${HUBRIS_PAIR_WAIT_MS / 1000} s` : 'At once';
     case 'echo':
       return levels.echo > 0 ? 'On' : 'Off';
   }

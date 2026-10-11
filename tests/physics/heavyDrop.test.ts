@@ -57,9 +57,9 @@ describe('Heavy Drop (GAME_DESIGN §15.9)', () => {
       const world = heavyWorld(level);
       const ball = drop(world, level, size);
       for (let i = 0; i < 240 && ball.landedMs < 0; i++) world.step();
-      // Within a step (a size 4 touches down a step earlier than a size 1).
+      // Within two steps (a size 4 touches down a step earlier than a size 1).
       expect(ball.landedMs).toBeLessThanOrEqual(target + 1e-6);
-      expect(ball.landedMs).toBeGreaterThan(target - 1.5 * PHYSICS_STEP_MS);
+      expect(ball.landedMs).toBeGreaterThan(target - 2 * PHYSICS_STEP_MS);
     }
   });
 
@@ -109,6 +109,25 @@ describe('Heavy Drop (GAME_DESIGN §15.9)', () => {
     expect(landed).toEqual([{ id: ball.id, level: 5 }]);
   });
 
+  it('knocks a cat it lands on squarely aside, and rolls off the other way', () => {
+    const knock = (level: number) => {
+      const world = heavyWorld(level);
+      const cat = world.addBall({ tier: 3, x: 0, y: -sizeRadius(3), landedMs: 0 });
+      for (let i = 0; i < 30; i++) world.step();
+      const ball = drop(world, level, 2, 0);
+      while (ball.landedMs < 0) world.step();
+      for (let i = 0; i < 72; i++) world.step();
+      return { cat: cat.x, ball: ball.x };
+    };
+    // Without Heavy Drop a dead-centre hit only presses the cat into the floor.
+    expect(knock(0)).toEqual({ cat: 0, ball: 0 });
+    for (const level of [1, 3, 5]) {
+      const { cat, ball } = knock(level);
+      expect(Math.abs(cat), `level ${level}`).toBeGreaterThan(60);
+      expect(Math.sign(ball)).toBe(-Math.sign(cat));
+    }
+  });
+
   it('changes nothing at level 0', () => {
     const run = new RunController({ seed: 3 });
     while (!run.canDrop) run.tick();
@@ -120,8 +139,9 @@ describe('Heavy Drop (GAME_DESIGN §15.9)', () => {
 
   it('keeps every cat in the jar under 100 heavy drops on a full jar, and launches none', () => {
     // A jar filled to the rim; each dropped cat is taken away 0.25 s after it lands, as a merge
-    // would, so the jar stays full. Ordinary drops push no other cat over the rim here (measured
-    // over six seeds, TECH_SPEC §5), and neither may the fireballs.
+    // would, so the jar stays full. Ordinary drops push no other cat over the rim here; a fireball
+    // that knocks a cat aside may squeeze one a little over it (measured over six seeds,
+    // TECH_SPEC §5), but never launches one.
     const world = heavyWorld(5, fillJar(2, 45, 1));
     for (let i = 0; i < 900; i++) world.step();
     const rng = new Rng(3);
@@ -155,10 +175,12 @@ describe('Heavy Drop (GAME_DESIGN §15.9)', () => {
       }
       world.removeBall(ball);
     }
-    expect([escaped, sunk, othersOverRim]).toEqual([0, 0, 0]);
+    expect([escaped, sunk]).toEqual([0, 0]);
+    // Under 300 u/s, a cat rises at most 21 units: a nudge, not a launch.
+    expect(othersOverRim).toBeLessThan(300);
     expect(deepest).toBeLessThanOrEqual(FALL_GUARD_DEPTH + 1e-6);
     // A heavy cat that lands on a pile at the rim may bounce back over it, but only a little:
-    // the normal limit applies from its first contact (a few units above the rim).
-    expect(ownRebound).toBeLessThan(300);
+    // the normal limit applies from its first contact (at most a size-1 radius above the rim).
+    expect(ownRebound).toBeLessThan(420);
   }, 60_000);
 });

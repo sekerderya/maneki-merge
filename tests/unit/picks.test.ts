@@ -181,12 +181,12 @@ describe('the cards', () => {
     ['joker', { joker: 4 }, 0, '6%', '7.5%'],
     ['wind', {}, 0, 'Calm', 'Breeze'],
     ['wind', { wind: 4 }, 0, 'Gale', 'Storm'],
-    ['heavyDrop', {}, 0, '1.0 s', '0.8 s'],
-    ['heavyDrop', { heavyDrop: 1 }, 0, '0.8 s', '0.65 s'],
-    ['heavyDrop', { heavyDrop: 4 }, 0, '0.4 s', '0.3 s'],
+    ['heavyDrop', {}, 0, '1.0 s', '0.66 s'],
+    ['heavyDrop', { heavyDrop: 1 }, 0, '0.66 s', '0.53 s'],
+    ['heavyDrop', { heavyDrop: 4 }, 0, '0.33 s', '0.24 s'],
     ['porcelain', {}, 0, '0%', '20%'],
     ['porcelain', { porcelain: 3 }, 0, '60%', '80%'],
-    ['hubris', {}, 0, 'In pairs', 'In threes'],
+    ['hubris', {}, 0, 'At once', 'After 0.5 s'],
     ['echo', {}, 0, 'Off', 'On'],
   ])('%s with %j (Big Catch %i) shows %s → %s', (id, over, bigCatch, current, next) => {
     const card = pickCard(id, levels(over), bigCatch);

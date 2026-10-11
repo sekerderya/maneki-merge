@@ -10,6 +10,8 @@ import Matter from 'matter-js';
 import {
   ENABLE_SLEEPING,
   FALL_GUARD_DEPTH,
+  HEAVY_DROP_KICK,
+  HEAVY_DROP_KICK_BACK,
   FLOOR_RESTITUTION,
   GRAVITY_BASE,
   GROWTH_NEIGHBOUR_MAX_SPEED_BASE,
@@ -150,6 +152,8 @@ export class PhysicsWorld {
   private windAccel = 0;
   private gravityBonus = 0;
   private maxFallSpeed = this.maxSpeed;
+  /** Heavy Drop: each falling ball's speed at the start of this step (world units per second). */
+  private readonly fallSpeeds = new Map<Ball, number>();
 
   constructor(options: PhysicsWorldOptions = {}) {
     installCircleCollisions();
@@ -310,6 +314,7 @@ export class PhysicsWorld {
     Matter.Engine.update(this.engine, PHYSICS_STEP_MS);
     this.stepCount++;
     this.scanContacts();
+    if (this.fallSpeeds.size > 0) this.knockAside();
     for (const ball of this.list) {
       if (ball.growing) ball.grow(PHYSICS_STEP_MS);
     }
@@ -465,8 +470,40 @@ export class PhysicsWorld {
       const body = ball.body;
       body.force.x += body.mass * ax;
       body.force.y += body.mass * ay;
-      if (ay > 0) this.guardFall(ball, ax, ay + gravity);
+      if (ay > 0) {
+        this.guardFall(ball, ax, ay + gravity);
+        this.fallSpeeds.set(ball, ball.speed);
+      }
     }
+  }
+
+  /**
+   * Heavy Drop's landing (GAME_DESIGN §15.9): each ball a heavy ball lands on from above is knocked
+   * aside, away from it, HEAVY_DROP_KICK of its speed times how squarely from above (a straight hit
+   * would only press it into the pile), and the heavy ball rolls off the other way.
+   */
+  private knockAside(): void {
+    const now = this.timeMs;
+    for (const [heavy, speed] of this.fallSpeeds) {
+      if (heavy.removed || heavy.landedMs !== now) continue;
+      for (const pair of (this.engine.pairs as unknown as PairList).list) {
+        if (!pair.isActive) continue;
+        const a = ballOf(pair.bodyA);
+        const b = ballOf(pair.bodyB);
+        const hit = a === heavy ? b : b === heavy ? a : undefined;
+        if (!hit) continue;
+        const dx = hit.x - heavy.x;
+        const dy = hit.y - heavy.y;
+        // y grows downward: how much of the contact points straight down.
+        const down = Math.max(0, dy / (Math.hypot(dx, dy) || 1));
+        if (down === 0) continue;
+        const side = Math.abs(dx) > 0.5 ? Math.sign(dx) : heavy.id % 2 === 0 ? 1 : -1;
+        const kick = HEAVY_DROP_KICK * speed * down * down;
+        this.push(hit, side * kick, 0);
+        this.push(heavy, -side * kick * HEAVY_DROP_KICK_BACK, 0);
+      }
+    }
+    this.fallSpeeds.clear();
   }
 
   /** Moves a falling ball back along its path so that it sinks at most FALL_GUARD_DEPTH. */

@@ -29,7 +29,7 @@ function ticks(run: RunController, n: number): void {
 }
 
 describe('Echo (GAME_DESIGN §15.11)', () => {
-  it.each([4, 5, 6, 7])('leaves a %i beside the cat a pair of them makes', (size) => {
+  it.each([5, 6, 7])('leaves a %i beside the cat a pair of them makes', (size) => {
     const { run, echoes, merges } = setup();
     // Left of the middle, so it fits at least on the right.
     pair(run, size, -120);
@@ -48,8 +48,8 @@ describe('Echo (GAME_DESIGN §15.11)', () => {
     expect(ball.landedMs).toBeGreaterThanOrEqual(0);
   });
 
-  it("doesn't echo sizes 1–3, the stage's last cat or a joker's merge", () => {
-    for (const size of [1, 2, 3, 8]) {
+  it("doesn't echo sizes 1–4, the stage's last cat or a joker's merge", () => {
+    for (const size of [1, 2, 3, 4, 8]) {
       const { run, echoes, merges } = setup();
       pair(run, size);
       run.tick();
@@ -74,16 +74,34 @@ describe('Echo (GAME_DESIGN §15.11)', () => {
 
   it('echoes golden merges too, at the merged size', () => {
     const { run, echoes, merges } = setup();
-    pair(run, 4, 0, true);
+    pair(run, 5, -120, true);
     run.tick();
-    expect(merges[0]).toMatchObject({ tier: 4, newTier: 6 });
-    expect(echoes[0]!.tier).toBe(4);
+    expect(merges[0]).toMatchObject({ tier: 5, newTier: 7 });
+    expect(echoes[0]!.tier).toBe(5);
+  });
+
+  it('echoes once per drop, so an echo never sets off a chain', () => {
+    const { run, echoes, merges } = setup();
+    // Two pairs of 5s merge in the same step: only the first echoes.
+    pair(run, 5, -150);
+    pair(run, 6, 150);
+    run.tick();
+    expect(merges).toHaveLength(2);
+    expect(echoes).toHaveLength(1);
+    expect(echoes[0]!.tier).toBe(5);
+    // After a drop the next merge may echo again.
+    while (!run.canDrop) run.tick();
+    run.drop(0);
+    pair(run, 6, -150);
+    ticks(run, 3);
+    expect(echoes).toHaveLength(2);
+    expect(echoes[1]!.tier).toBe(6);
   });
 
   it('picks its side with the seed, either side across seeds', () => {
     const side = (seed: number): number => {
       const { run, echoes, merges } = setup(seed);
-      pair(run, 4);
+      pair(run, 5);
       run.tick();
       return Math.sign(echoes[0]!.at.x - merges[0]!.at.x);
     };
@@ -109,14 +127,14 @@ describe('Echo (GAME_DESIGN §15.11)', () => {
 
   it('pays nothing, and its cat merges later like any cat', () => {
     const { run, echoes, merges } = setup();
-    pair(run, 4, -100);
+    pair(run, 5, -120);
     run.tick();
-    expect(run.coins).toBe(coinPayout(tierCoins(4), 1, 0));
-    // A 4 dropped on the echo merges with it.
+    expect(run.coins).toBe(coinPayout(tierCoins(5), 1, 0));
+    // A 5 dropped on the echo merges with it.
     const echo = run.balls.find((b) => b.id === echoes[0]!.id)!;
-    run.spawnBall(4, echo.x, echo.y - 200);
+    run.spawnBall(5, echo.x, echo.y - 250);
     ticks(run, 240);
-    expect(merges.some((m) => m.tier === 4 && m !== merges[0])).toBe(true);
+    expect(merges.some((m) => m.tier === 5 && m !== merges[0])).toBe(true);
   });
 
   it('with Hubris, three 5s make a 7 and a 5', () => {
