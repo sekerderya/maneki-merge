@@ -151,9 +151,11 @@ export const CURSE_STONE_HITS = 1;
 
 /**
  * Copycat (GAME_DESIGN §15.13): the cat in NEXT takes the size of the stage's latest merge, at
- * most this size (the biggest drop).
+ * most this size. Planned at 4 (the biggest drop); the balance bot (`npm run sim`) then cleared
+ * stage 1 in 29 of 30 runs with a median of 29 s, against 11 runs and 67 s without it and about
+ * 45–50 s with Hubris or Echo. At 3: 29 runs, 48 s; at 2: 23 runs, 88 s.
  */
-export const COPYCAT_MAX_SIZE = 4;
+export const COPYCAT_MAX_SIZE = 3;
 
 /**
  * Dice (GAME_DESIGN §15.14): every merge of cats rolls a die. It is lucky (one size more) or

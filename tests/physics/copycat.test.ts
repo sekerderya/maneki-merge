@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { RUN_SAVE_VERSION, decodeRunSave } from '../../src/core/runSave';
 import type { RunSnapshot } from '../../src/core/runSave';
+import { COPYCAT_MAX_SIZE } from '../../src/config/picks';
 import { stageInfo } from '../../src/config/stages';
 import { sizeRadius } from '../../src/config/tiers';
 import type { GameEvents } from '../../src/core/events';
@@ -57,12 +58,12 @@ describe('Copycat (GAME_DESIGN §15.13)', () => {
     expect(changes.at(-1)).toMatchObject({ kind: 'cat', tier: 2 });
   });
 
-  it('copies at most size 4, the biggest drop', () => {
+  it('copies at most COPYCAT_MAX_SIZE', () => {
     const { run } = setup();
     dropAt(run, -250);
     spawnPair(run, 6, 100);
     run.tick();
-    expect(sizeOf(run, run.next.tier)).toBe(4);
+    expect(sizeOf(run, run.next.tier)).toBe(COPYCAT_MAX_SIZE);
   });
 
   it("rolls as usual before a stage's first merge and starts over at each stage", () => {
@@ -75,11 +76,11 @@ describe('Copycat (GAME_DESIGN §15.13)', () => {
       dropAt(run, x);
       expect(queued(run)).toEqual(queued(plain));
     }
-    spawnPair(run, 4, 0);
-    spawnPair(plain, 4, 0);
+    spawnPair(run, 3, 0);
+    spawnPair(plain, 3, 0);
     run.tick();
     plain.tick();
-    expect(sizeOf(run, run.next.tier)).toBe(4);
+    expect(sizeOf(run, run.next.tier)).toBe(3);
     // A new stage forgets the size until its first merge.
     run.jumpToStage(2);
     plain.jumpToStage(2);

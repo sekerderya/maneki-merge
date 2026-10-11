@@ -22,7 +22,8 @@
     "test:perf": "vitest run --mode perf tests/physics/performance.test.ts",
     "check": "npm run typecheck && npm run lint && npm run test:coverage",
     "icons": "pwa-assets-generator --config pwa-assets.config.ts",
-    "art": "node tools/build-art.ts"
+    "art": "node tools/build-art.ts",
+    "sim": "node tools/simulate.ts"
   },
   "dependencies": {
     "@fontsource/fredoka": "^5.3.0",
