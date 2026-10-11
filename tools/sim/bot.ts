@@ -11,7 +11,9 @@
 import { PICK_IDS } from '../../src/config/picks';
 import type { PickId } from '../../src/config/picks';
 import { Rng } from '../../src/core/rng';
-import { defaultUpgradeLevels } from '../../src/core/upgrades';
+import { UPGRADE_IDS, UPGRADES } from '../../src/config/upgrades';
+import type { UpgradeId } from '../../src/config/upgrades';
+import { defaultUpgradeLevels, maxUpgradeLevels } from '../../src/core/upgrades';
 import type { UpgradeLevels } from '../../src/core/upgrades';
 import { RunController } from '../../src/run/RunController';
 
@@ -50,6 +52,18 @@ export interface BotRun {
   readonly lucky: number;
   readonly fizzles: number;
   readonly copies: number;
+  /** The run's score and coins when it ended. */
+  readonly score: number;
+  readonly coins: number;
+  /** The run's score, coins and play time at each stage clear, in order. */
+  readonly clears: readonly ClearMark[];
+}
+
+/** Where a run stood when it cleared a stage. */
+export interface ClearMark {
+  readonly score: number;
+  readonly coins: number;
+  readonly seconds: number;
 }
 
 /** The bot's own aim, apart from the run's streams, so it never moves a roll. */
@@ -84,8 +98,12 @@ export function playBot(options: BotOptions): BotRun {
     fizzles: 0,
     copies: 0,
   };
+  const clears: ClearMark[] = [];
   const on = run.events.on.bind(run.events);
-  on('stageCleared', () => count.stagesCleared++);
+  on('stageCleared', () => {
+    count.stagesCleared++;
+    clears.push({ score: run.score, coins: run.coins, seconds: run.playTimeMs / 1000 });
+  });
   on('catDropped', () => count.drops++);
   on('merged', (e) => {
     count.merges++;
@@ -128,6 +146,9 @@ export function playBot(options: BotOptions): BotRun {
     ...count,
     lost: run.state === 'over',
     playSeconds: run.playTimeMs / 1000,
+    score: run.score,
+    coins: run.coins,
+    clears,
   };
 }
 
@@ -148,6 +169,24 @@ function matchX(run: RunController): number | null {
   return best?.x ?? null;
 }
 
+/**
+ * Shop cards from the command line (`--upgrades`): `max`, every card at its max level, or
+ * `id=level,…` on top of a fresh profile.
+ */
+export function upgradeLevels(text: string): Record<UpgradeId, number> {
+  if (text === 'max') return maxUpgradeLevels();
+  const levels = defaultUpgradeLevels();
+  for (const part of text.split(',').filter(Boolean)) {
+    const [id, level] = part.split('=');
+    if (!(UPGRADE_IDS as readonly string[]).includes(id as string)) {
+      throw new Error(`Unknown upgrade: ${id}`);
+    }
+    const def = UPGRADES[id as UpgradeId];
+    levels[def.id] = Math.max(def.startLevel, Math.min(def.maxLevel, Number(level)));
+  }
+  return levels;
+}
+
 /** One arm of a comparison: a name and the pick levels its runs start with. */
 export interface Arm {
   readonly name: string;
@@ -164,9 +203,11 @@ export interface ArmSummary {
   readonly lost: number;
   readonly medianSeconds: number;
   /** Totals over every run. */
-  readonly totals: Omit<BotRun, 'seed' | 'lost' | 'playSeconds' | 'stagesCleared'> & {
+  readonly totals: Omit<BotRun, 'seed' | 'lost' | 'playSeconds' | 'stagesCleared' | 'clears'> & {
     readonly stagesCleared: number;
   };
+  /** The mean score, coins and play time at each stage clear, over the runs that got there. */
+  readonly clears: readonly (ClearMark & { readonly runs: number })[];
 }
 
 export function summarize(name: string, runs: readonly BotRun[], stages = DEFAULT_STAGES) {
@@ -194,10 +235,24 @@ export function summarize(name: string, runs: readonly BotRun[], stages = DEFAUL
     lucky: 0,
     fizzles: 0,
     copies: 0,
+    score: 0,
+    coins: 0,
   };
   for (const run of runs) {
     for (const key of Object.keys(totals) as (keyof typeof totals)[]) totals[key] += run[key];
   }
+  const most = Math.max(0, ...runs.map((r) => r.clears.length));
+  const clears = Array.from({ length: most }, (_, i) => {
+    const marks = runs.flatMap((r) => r.clears[i] ?? []);
+    const mean = (pick: (m: ClearMark) => number): number =>
+      marks.reduce((sum, m) => sum + pick(m), 0) / marks.length;
+    return {
+      runs: marks.length,
+      score: mean((m) => m.score),
+      coins: mean((m) => m.coins),
+      seconds: mean((m) => m.seconds),
+    };
+  });
   const summary: ArmSummary = {
     name,
     runs: runs.length,
@@ -206,6 +261,7 @@ export function summarize(name: string, runs: readonly BotRun[], stages = DEFAUL
     lost,
     medianSeconds,
     totals,
+    clears,
   };
   return summary;
 }

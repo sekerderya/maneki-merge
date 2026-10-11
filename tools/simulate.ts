@@ -8,6 +8,7 @@
  *   npm run sim -- dice copycat=1                 arms: a pick at level 1, or id=level
  *   npm run sim -- "curse max:cursedBell=1,quickCurse=3,moreCurses=3"
  *   npm run sim -- --seeds 30 --cap 240 --stages 1 --workers 4 --aim random
+ *   npm run sim -- base --upgrades max --stages 5 --cap 900   shop cards: max, or id=level,…
  *
  * An arm is `[name:]id=level,id=level`; a bare id means level 1, and `base` is no picks. Seeds run
  * 1…n, the same for every arm, so arms differ only by their picks. The run code loads through
@@ -63,9 +64,11 @@ function parseArgs(argv: readonly string[]) {
   const flags: Record<string, number> = { seeds: 30, cap: 240, stages: 1, workers: 0 };
   const arms: string[] = [];
   let aim: BotAim = 'match';
+  let upgrades: string | undefined;
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i] as string;
     if (arg === '--aim') aim = argv[++i] === 'random' ? 'random' : 'match';
+    else if (arg === '--upgrades') upgrades = argv[++i] ?? '';
     else if (arg.startsWith('--')) flags[arg.slice(2)] = Number(argv[++i]);
     else arms.push(arg);
   }
@@ -77,6 +80,7 @@ function parseArgs(argv: readonly string[]) {
     stages: flags['stages'] as number,
     workers,
     aim,
+    upgrades,
   };
 }
 
@@ -105,23 +109,42 @@ function notes(s: ArmSummary): string {
 function table(summaries: readonly ArmSummary[], stages: number, cap: number): string {
   const head =
     `| Arm | Runs | Cleared ${stages === 1 ? 'stage 1' : `${stages} stages`} | ` +
-    `Out of time (${cap} s) | Lost | Median run | Drops/run | Merges/run | Per run |`;
-  const rule = '| --- | --: | --: | --: | --: | --: | --: | --: | --- |';
+    `Out of time (${cap} s) | Lost | Median run | Drops/run | Merges/run | Coins/run | ` +
+    `Per run |`;
+  const rule = '| --- | --: | --: | --: | --: | --: | --: | --: | --: | --- |';
   const rows = summaries.map(
     (s) =>
       `| ${s.name} | ${s.runs} | ${s.cleared} | ${s.timedOut} | ${s.lost} | ` +
       `${s.medianSeconds.toFixed(0)} s | ${per(s.totals.drops, s.runs)} | ` +
-      `${per(s.totals.merges, s.runs)} | ${notes(s)} |`,
+      `${per(s.totals.merges, s.runs)} | ${per(s.totals.coins, s.runs)} | ${notes(s)} |`,
+  );
+  return [head, rule, ...rows].join('\n');
+}
+
+/** Each arm's mean score, coins and play time at each stage clear (GAME_DESIGN §4, §9). */
+function clearsTable(summaries: readonly ArmSummary[]): string {
+  const head = '| Arm | Clear | Runs | Score | Coins | Play time |';
+  const rule = '| --- | --: | --: | --: | --: | --: |';
+  const rows = summaries.flatMap((s) =>
+    s.clears.map(
+      (c, i) =>
+        `| ${s.name} | ${i + 1} | ${c.runs} | ${c.score.toFixed(0)} | ${c.coins.toFixed(0)} | ` +
+        `${c.seconds.toFixed(0)} s |`,
+    ),
   );
   return [head, rule, ...rows].join('\n');
 }
 
 async function main(): Promise<void> {
-  const { arms, seeds, capSeconds, stages, workers, aim } = parseArgs(process.argv.slice(2));
+  const args = parseArgs(process.argv.slice(2));
+  const { arms, seeds, capSeconds, stages, workers, aim } = args;
+  const bot = await loadBot();
+  const upgrades = args.upgrades === undefined ? undefined : bot.upgradeLevels(args.upgrades);
   const jobs: Job[] = [];
   arms.forEach((arm, index) => {
     for (let seed = 1; seed <= seeds; seed++) {
-      jobs.push({ arm: index, options: { seed, levels: arm.levels, stages, capSeconds, aim } });
+      const options: BotOptions = { seed, levels: arm.levels, stages, capSeconds, aim };
+      jobs.push({ arm: index, options: upgrades ? { ...options, upgrades } : options });
     }
   });
   const started = performance.now();
@@ -132,7 +155,6 @@ async function main(): Promise<void> {
   };
 
   if (workers <= 1) {
-    const bot = await loadBot();
     for (const job of jobs) {
       results[job.arm]!.push(bot.playBot(job.options));
       report();
@@ -158,7 +180,6 @@ async function main(): Promise<void> {
     );
   }
 
-  const bot = await loadBot();
   const summaries = arms.map((arm, i) =>
     bot.summarize(
       arm.name,
@@ -171,6 +192,8 @@ async function main(): Promise<void> {
   console.log(`Bot aim: ${aim}, seeds 1–${seeds} per arm.
 `);
   console.log(table(summaries, stages, capSeconds));
+  console.log(`\nShop cards: ${upgrades ? 'as given' : 'a fresh profile'}.\n`);
+  console.log(clearsTable(summaries));
 }
 
 if (isMainThread) {

@@ -18,6 +18,8 @@ export interface GameOverSummary {
   /** The highest tier a merge made this run; 0 before the first merge. */
   readonly highestTier: number;
   readonly records: NewRecords;
+  /** The shop cards this run's best stage opened (GAME_DESIGN §2.2), by name. */
+  readonly unlocked: readonly string[];
 }
 
 export interface GameOverView {
@@ -28,7 +30,7 @@ export interface GameOverView {
 
 /**
  * Game Over overlay (GAME_DESIGN §2.3): score, best score, stage reached, the biggest cat made,
- * coins earned this run, and a badge for every record the run broke.
+ * coins earned this run, a badge for every record the run broke, and the shop cards it opened.
  */
 export function createGameOverOverlay(root: HTMLElement, actions: GameOverActions): GameOverView {
   const overlay = el('div', 'overlay game-overlay game-over-overlay');
@@ -75,6 +77,11 @@ export function createGameOverOverlay(root: HTMLElement, actions: GameOverAction
   coinValue.dataset['testid'] = 'go-coins-value';
   coins.append(coinValue);
 
+  // "New in the shop: Hanabi" when the run reached a card's gate (v0.36).
+  const unlocked = el('p', 'go-unlocked');
+  unlocked.dataset['testid'] = 'go-unlocked';
+  unlocked.hidden = true;
+
   const again = button('btn btn-primary overlay-main-btn', 'Play Again');
   again.dataset['testid'] = 'play-again';
   again.addEventListener('click', actions.onPlayAgain);
@@ -82,7 +89,7 @@ export function createGameOverOverlay(root: HTMLElement, actions: GameOverAction
   menu.dataset['testid'] = 'go-menu';
   menu.addEventListener('click', actions.onMenu);
 
-  panel.append(title, score, badge, stats, again, menu);
+  panel.append(title, score, badge, stats, unlocked, again, menu);
   overlay.append(panel);
   root.append(overlay);
 
@@ -103,6 +110,8 @@ export function createGameOverOverlay(root: HTMLElement, actions: GameOverAction
       if (tier >= 1) paintCatIcon(tierIcon, tier);
       tierChip.hidden = !records.highestTier;
       coinValue.textContent = formatNumber(summary.coins);
+      unlocked.hidden = summary.unlocked.length === 0;
+      unlocked.textContent = `New in the shop: ${summary.unlocked.join(', ')}`;
       overlay.hidden = false;
     },
     hide() {

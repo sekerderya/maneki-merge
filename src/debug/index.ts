@@ -37,6 +37,10 @@ export interface GameStateSnapshot {
   readonly combo: number;
   readonly luckySaves: number;
   readonly stage: number;
+  /** The profile's best stage, which opens the shop's cards (GAME_DESIGN §2.2). */
+  readonly bestStage: number;
+  /** The run's play time in ms (paused time, the picks and the jar's growth don't count). */
+  readonly playMs: number;
   readonly balls: number;
   readonly canDrop: boolean;
   /** The dropper holds a ready magnet (GAME_DESIGN §15.2). */
@@ -103,6 +107,10 @@ export interface GameHooks {
   addCoins(coins: number): void;
   /** Applies from the next run. */
   setUpgrade(id: UpgradeId, level: number): void;
+  /** Sets the profile's best stage, which opens the shop's cards. */
+  setBestStage(stage: number): void;
+  /** Every shop card at its max level and every gate open: a maxed profile, from the next run. */
+  maxProfile(): void;
   /** Clears stage after stage up to `stage`, playing each expansion in turn. */
   setStage(stage: number): void;
   /** Sets the run score (records only). */
@@ -169,6 +177,8 @@ export function installDebugHooks(ctx: DebugContext): GameHooks {
         combo: run?.combo ?? 0,
         luckySaves: run?.luckySavesLeft ?? 0,
         stage: run?.stage ?? 1,
+        bestStage: session.profile.records.bestStage,
+        playMs: run?.playTimeMs ?? 0,
         balls: run?.balls.length ?? 0,
         canDrop: run?.canDrop ?? false,
         canTake: run?.canTake ?? false,
@@ -245,6 +255,14 @@ export function installDebugHooks(ctx: DebugContext): GameHooks {
     },
     addCoins(coins) {
       session.addCoins(Math.max(0, Math.round(coins)));
+    },
+    setBestStage(stage) {
+      session.setBestStage(stage);
+    },
+    maxProfile() {
+      for (const id of UPGRADE_IDS) session.setUpgrade(id, UPGRADES[id].maxLevel);
+      const gates = Math.max(...UPGRADE_IDS.map((id) => UPGRADES[id].gate));
+      session.setBestStage(Math.max(session.profile.records.bestStage, gates));
     },
     setUpgrade(id, level) {
       session.setUpgrade(id, level);
@@ -382,14 +400,21 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
   level.type = 'number';
   level.min = '0';
   level.value = '1';
-  // The level field follows the chosen upgrade's range (0…max).
+  // The level field follows the chosen upgrade's range (start level…max).
   const syncLevelRange = (): void => {
-    const max = UPGRADES[upgrade.value as UpgradeId].maxLevel;
-    level.max = String(max);
-    if (Number(level.value) > max) level.value = String(max);
+    const { startLevel, maxLevel } = UPGRADES[upgrade.value as UpgradeId];
+    level.min = String(startLevel);
+    level.max = String(maxLevel);
+    if (Number(level.value) > maxLevel) level.value = String(maxLevel);
+    if (Number(level.value) < startLevel) level.value = String(startLevel);
   };
   upgrade.addEventListener('change', syncLevelRange);
   syncLevelRange();
+  const best = el('input', 'debug-input');
+  best.type = 'number';
+  best.min = '1';
+  best.value = '8';
+  best.title = 'Best stage (opens the shop cards)';
   // Trials and blessings (GAME_DESIGN §15.5): this run only.
   const pick = el('select', 'debug-input');
   for (const id of PICK_IDS) pick.append(new Option(PICKS[id].name, id));
@@ -425,6 +450,11 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
       upgrade,
       level,
       action('Set', () => hooks.setUpgrade(upgrade.value as UpgradeId, Number(level.value))),
+    ),
+    row(
+      best,
+      action('Set best stage', () => hooks.setBestStage(Number(best.value))),
+      action('Max profile', () => hooks.maxProfile()),
     ),
     row(
       action('Magnet', () => hooks.give('magnet')),
@@ -466,6 +496,7 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
     ),
     row(
       action('+1000 coins', () => hooks.addCoins(1000)),
+      action('+50K coins', () => hooks.addCoins(50_000)),
       action('Game over', () => hooks.forceGameOver()),
     ),
     row(
@@ -478,14 +509,35 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
   panel.append(toggle, body);
   document.body.append(panel);
 
+  // Stage times (play time) of this run, for pacing (docs/plans/batch-20.md §9): each stage's
+  // time is written down when the next one starts.
+  let timedStage = 1;
+  let stageStartMs = 0;
+  let stageTimes: number[] = [];
+  const clock = (ms: number): string => {
+    const total = Math.floor(ms / 1000);
+    return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+  };
   window.setInterval(() => {
-    if (body.hidden) return;
     const s = hooks.state();
+    if (s.playMs < stageStartMs || s.stage < timedStage) {
+      // A new run.
+      timedStage = s.stage;
+      stageStartMs = s.playMs;
+      stageTimes = [];
+    } else if (s.stage > timedStage) {
+      stageTimes.push(s.playMs - stageStartMs);
+      timedStage = s.stage;
+      stageStartMs = s.playMs;
+    }
+    if (body.hidden) return;
+    const recent = stageTimes.slice(-6).map(clock).join(' ');
     stats.textContent =
       `fps ${ctx.game.fps.toFixed(0)}  bodies ${s.balls}  res ${s.resolution}\n` +
       `${s.screen} · ${s.runState ?? '-'} · stage ${s.stage}\n` +
-      `score ${s.score}  wallet ${s.wallet}
-` +
-      `combo ${s.combo}  saves ${s.luckySaves}`;
+      `score ${s.score}  wallet ${s.wallet}\n` +
+      `combo ${s.combo}  saves ${s.luckySaves}  best stage ${s.bestStage}\n` +
+      `time ${clock(s.playMs)}  this stage ${clock(s.playMs - stageStartMs)}\n` +
+      `stages ${recent || '-'}`;
   }, 250);
 }

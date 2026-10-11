@@ -19,7 +19,9 @@ import {
 } from './config/view';
 import { stageJar } from './config/stages';
 import type { PickId, PickKind } from './config/picks';
+import { UPGRADES } from './config/upgrades';
 import type { UpgradeId } from './config/upgrades';
+import { comboScoreMultiplier, jarCoinMultiplier } from './core/economy';
 import { EventBus } from './core/events';
 import type { GameEvents } from './core/events';
 import { connectRunFeedback } from './feedback';
@@ -28,7 +30,7 @@ import { pickCard } from './core/picks';
 import { newRecords } from './core/profile';
 import type { Profile, Records, Settings } from './core/profile';
 import type { RunSave } from './core/runSave';
-import { comboBonus } from './core/upgrades';
+import { comboBonus, unlockedBetween } from './core/upgrades';
 import type { GameView } from './game';
 import { resumeProfileRun, startProfileRun } from './run/profileRun';
 import type { RunController } from './run/RunController';
@@ -130,6 +132,12 @@ export class GameSession {
   /** Debug: applies from the next run. */
   setUpgrade(id: UpgradeId, level: number): void {
     this.parts.profile.setUpgrade(id, level);
+    this.parts.onProfileChange();
+  }
+
+  /** Debug: the best stage, which opens the shop's cards (GAME_DESIGN §2.2). */
+  setBestStage(stage: number): void {
+    this.parts.profile.setBestStage(stage);
     this.parts.onProfileChange();
   }
 
@@ -259,7 +267,7 @@ export class GameSession {
   }
 
   private showPick(run: RunController, kind: PickKind, options: readonly PickId[]): void {
-    this.parts.banners.combo(0, 0);
+    this.parts.banners.combo(0);
     const levels = run.pickLevels;
     this.parts.picks.show(
       kind,
@@ -298,14 +306,16 @@ export class GameSession {
     };
     const bannerY = (): number | undefined => jarY(BANNER_JAR_OFFSET);
 
-    // Combo (GAME_DESIGN §5): "Combo ×N" from N = 2, with the Combo Charm bonus when it has one.
+    // Combo (GAME_DESIGN §5): "Combo ×N" from N = 2, with its score bonus, and the Combo Charm
+    // coin bonus when it has one.
     events.on('comboChanged', (e) => {
       if (e.combo < COMBO_BANNER_MIN) {
-        banners.combo(0, 0);
+        banners.combo(0);
         return;
       }
       banners.combo(
         e.combo,
+        comboScoreMultiplier(e.combo) - 1,
         comboBonus(run.stats.comboCharmLevel, e.combo),
         jarY(COMBO_JAR_OFFSET),
       );
@@ -323,7 +333,7 @@ export class GameSession {
     // Stage clears and expansions (GAME_DESIGN §7, §7.1): "Stage clear!" at every clear; it slides
     // up off the screen as the doors come.
     events.on('stageCleared', () => {
-      banners.combo(0, 0);
+      banners.combo(0);
       banners.show('Stage clear!', {
         y: bannerY(),
         durationMs: STAGE_CLEAR_BANNER_MS + STAGE_CLEAR_EXIT_MS,
@@ -335,7 +345,9 @@ export class GameSession {
     // "The shrine grows!" and the next garden (v0.33.2, the owner's call). It slides up as the
     // doors come for the picks.
     events.on('expansionStarted', (e) => {
+      // Every jar pays more: its number times the coins (GAME_DESIGN §4).
       banners.show('The shrine grows!', {
+        detail: `Coins ×${jarCoinMultiplier(e.to)}`,
         y: bannerY(),
         durationMs: SHRINE_GROWS_BANNER_MS,
         exit: 'up',
@@ -531,6 +543,9 @@ export class GameSession {
       coins: e.coins,
       highestTier: e.highestTier,
       records,
+      unlocked: unlockedBetween(this.recordsBefore.bestStage, e.stage).map(
+        (id) => UPGRADES[id].name,
+      ),
     });
     this.parts.onProfileChange();
   }

@@ -3,10 +3,10 @@
 /**
  * Score grows this much per stage (GAME_DESIGN §4, v0.36): merging two size-s cats at stage n
  * scores 2^s × SCORE_STAGE_GROWTH^(n−1), about 5 million in all by the time stage 30 is cleared
- * (the owner's target). Until v0.36 a merge scored 2^tier, 512× more every stage. Start value,
- * calibrated with the balance bot.
+ * (the owner's target). Until v0.36 a merge scored 2^tier, 512× more every stage. Calibrated with
+ * the balance bot: a maxed profile scores ~2,500 by its first clear, ~4.9 million over 30 stages.
  */
-export const SCORE_STAGE_GROWTH = 1.24;
+export const SCORE_STAGE_GROWTH = 1.225;
 
 /**
  * Every combo step (combo − 1, at most COMBO_BONUS_MAX_STEPS) adds this share of a merge's score,

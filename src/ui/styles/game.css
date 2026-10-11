@@ -834,14 +834,18 @@
   font-size: 2.3rem;
 }
 
-/* "Combo ×N": outlined text only, so cats stay visible under it. Pops at each step, fades at the end. */
+/*
+ * "Combo ×N": outlined text only, so cats stay visible under it, and its bonuses under it (v0.36:
+ * every combo scores more). Pops at each step, fades at the end.
+ */
 .combo {
   position: absolute;
   left: 50%;
   top: 34%;
   display: flex;
-  align-items: baseline;
-  gap: 8px;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
   white-space: nowrap;
   transform: translate(-50%, -50%);
   pointer-events: none;
@@ -855,6 +859,11 @@
   paint-order: stroke fill;
 }
 
+.combo-bonuses {
+  display: flex;
+  gap: 6px;
+}
+
 .combo-bonus {
   padding: 1px 8px;
   border: 2px solid var(--color-ink);
@@ -863,6 +872,10 @@
   color: var(--color-ink);
   font-size: 0.9rem;
   font-weight: var(--weight-bold);
+}
+
+.combo-bonus.is-score {
+  background: var(--color-paper);
 }
 
 /* The chain heats up: bigger and warmer at COMBO_HEAT_LEVELS (config/view.ts). */

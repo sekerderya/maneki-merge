@@ -45,12 +45,12 @@ describe('S(t) and C(t) (GAME_DESIGN §4)', () => {
   const TABLE: readonly [number, number, number][] = [
     [1, 2, 1], // stage 1, size 1
     [8, 256, 41], // stage 1, size 8: the last cat's merge
-    [10, 2 * 1.24, 1], // stage 2, size 1
-    [15, 64 * 1.24, 14], // stage 2, size 6
-    [46, 2 * 1.24 ** 5, 2], // stage 6 (jar 2), size 1
-    [53, 256 * 1.24 ** 5, 82], // stage 6, size 8
-    [107, 256 * 1.24 ** 11, 123], // stage 12 (jar 3), size 8
-    [269, 256 * 1.24 ** 29, 246], // stage 30 (jar 6), size 8
+    [10, 2 * 1.225, 1], // stage 2, size 1
+    [15, 64 * 1.225, 14], // stage 2, size 6
+    [46, 2 * 1.225 ** 5, 2], // stage 6 (jar 2), size 1
+    [53, 256 * 1.225 ** 5, 82], // stage 6, size 8
+    [107, 256 * 1.225 ** 11, 123], // stage 12 (jar 3), size 8
+    [269, 256 * 1.225 ** 29, 246], // stage 30 (jar 6), size 8
   ];
 
   it.each(TABLE)('tier %i: score %f, coins %i', (tier, score, coins) => {
@@ -72,13 +72,13 @@ describe('score and Jackpot (GAME_DESIGN §5, §9)', () => {
   it('scores S(t) per merge', () => {
     expect(mergeScore(1)).toBe(2);
     expect(mergeScore(7)).toBe(128);
-    expect(mergeScore(15)).toBeCloseTo(79.36, 9);
+    expect(mergeScore(15)).toBeCloseTo(78.4, 9); // 64 × 1.225
   });
 
   it('pays 2 × S(cap) score and 5 × C(cap) base coins for a Jackpot', () => {
     // A Jackpot is two of a stage's last cat: tiers 9 and 54 (stages 1 and 6).
     expect(jackpotScore(9)).toBe(1024);
-    expect(jackpotScore(54)).toBeCloseTo(1024 * 1.24 ** 5, 6);
+    expect(jackpotScore(54)).toBeCloseTo(1024 * 1.225 ** 5, 6);
     expect([9, 54].map(jackpotBaseCoins)).toEqual([350, 700]);
   });
 
