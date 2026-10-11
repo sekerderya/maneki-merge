@@ -1730,6 +1730,11 @@ from the big cat towards the small one. Both keep complete outlines. Centred, fi
 the canvas. No frame, no circle, no medallion, no ground, nothing else. Square 1:1.
 ```
 
+Delivered (v0.34): all seven are in. The fireball's heads came with a line drawn inside them; the
+game covers it with the ball (the head is fitted to the outline's bottom). Echo took three tries:
+two cats of one design at two sizes kept merging or getting cut, and the kept picture still has the
+small echo overlapping the big cat a little.
+
 Checks for these: the general checklist (§2); each cat is the attached design with one raised paw,
 collar and bell; the fireball heads are plain round glows with nothing drawn in them; the porcelain
 sheet has only lines, the circle not drawn, nothing touching its cell's edge; the gold seams are

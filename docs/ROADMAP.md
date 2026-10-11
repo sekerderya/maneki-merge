@@ -329,14 +329,14 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
   - [x] background 4, a temple stage on a mountainside between the hilltop and the peak (v0.33.2)
   - [x] the jar grows right after "Stage clear!", before the doors and the picks (v0.33.2, the owner's call)
   - [x] the growth transition through the owner's clouds (v0.33.3) (docs/ART_ASSETS.md §4.11): they well up and cover the screen, the background changes behind them, they part and the new place settles; the jar stays still (the owner's choice over the old shrink-and-fade)
-- [ ] Batch 18 (v0.34.0), new trials and stage rules (GAME_DESIGN §15; plan: docs/plans/batch-18.md; art: docs/ART_ASSETS.md §4.12). **Status:** the rules, physics and code-drawn looks are built and live (steps 5.1–5.6 and the debug hooks, E2E and docs of 5.8); waiting for the owner's phase 11 art before 5.7 and the v0.34.0 release:
-  - [ ] the owner's phase 11 art: the fireball and porcelain sheets, five card pictures
+- [x] Batch 18 (v0.34.0), new trials and stage rules (GAME_DESIGN §15; plan: docs/plans/batch-18.md; art: docs/ART_ASSETS.md §4.12). **Status:** done in v0.34.0, tuned twice after the owner played it (Echo, Hubris, Heavy Drop; then Porcelain, the wind with Heavy Drop and a wall bug):
+  - [x] the owner's phase 11 art: the fireball and porcelain sheets, five card pictures (`tools/buildFx.ts`, `tools/buildPicks.ts`)
   - [x] rules, a new pick kind: at the clears that grow the jar (every 5 stages) a rule takes the trial's place; one level each
   - [x] Wind (trial): falling balls drift sideways, one direction per run from the seed; petals show it
-  - [x] Heavy Drop (trial): balls fall faster and hit harder, a fireball at level 5 (code effects now, the flame art with phase 11); no tunnelling
-  - [x] Porcelain (trial): a merge may crack the cats beside it; cracked twice, a cat breaks into two of the size below; gold kintsugi when a cracked cat merges (a ring now, the crack and seam art with phase 11)
-  - [x] Hubris (rule): sizes 1–5 merge only in threes, and three make a cat two sizes bigger
-  - [x] Echo (rule): merges of sizes 4–7 leave a cat of their size beside the new cat
+  - [x] Heavy Drop (trial): balls shoot out of the paw, fall faster and knock the cat they land on aside; the owner's small flame from level 3, the fireball at level 5; no tunnelling
+  - [x] Porcelain (trial): a merge may crack the cats beside it (10% per level); cracked twice, a cat breaks into two of the size below, which merge with each other once they have come apart; the owner's crack lines, and gold kintsugi seams when a cracked cat merges
+  - [x] Hubris (rule): three cats of sizes 1–5 merge at once into a cat two sizes bigger; two of them merge after touching for half a second
+  - [x] Echo (rule): merges of sizes 5–7 leave a cat of their size beside the new cat, once per drop
 
 ## M13: Final art integration
 

@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased] (0.34.0, Batch 18; waiting for the owner's phase 11 art)
+## [0.34.0] - 2026-10-11 (Batch 18)
 
 ### Added
 
@@ -12,6 +12,7 @@ All notable changes to this project are documented here. Versions follow [Semant
 - Porcelain (trial): a merge can crack the cats beside it (10% per level); a cracked cat that cracks again breaks into two cats of the size below, which merge with each other only once they have come apart. A cracked cat that merges makes a whole one, with a flash of gold.
 - Hubris (rule): three small cats (sizes 1–5) that touch merge at once into a cat two sizes bigger (three with a golden cat), paying half as much again; two of them wait half a second before merging.
 - Echo (rule): merges of sizes 5–7 leave a cat of their size beside the new cat, once per drop.
+- The owner's art for them: Heavy Drop's small flame (levels 3–4) and fireball (level 5) trailing back along the falling cat's path, Porcelain's crack lines and gold kintsugi seams, and the five card pictures (the carp streamer turns with the wind).
 - New sounds: thud, tink, shatter and a bell echo. Debug: set the new levels, a rule pick, flip the wind, a cracked cat, crack the newest cat.
 
 ### Decisions taken for the owner (docs/plans/batch-18.md §3; tell me to change any)
