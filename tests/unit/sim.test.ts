@@ -109,7 +109,7 @@ describe('the meta bot (npm run sim -- --meta, TECH_SPEC §11)', () => {
     expect(player.runs.at(-1)!.minute).toBeGreaterThanOrEqual(1);
     expect(player.maxedMinute).toBeNull();
     const report = metaReport([player], 1, 1);
-    expect(report).toContain('Stage 1 cleared within 15 min');
+    expect(report).toContain('Stage 1 cleared within 1 min: ');
     expect(report).toContain('The first run reaches stage');
   });
 });

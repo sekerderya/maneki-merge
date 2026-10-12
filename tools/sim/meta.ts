@@ -132,8 +132,11 @@ export function metaReport(players: readonly MetaPlayer[], limit: number, goal: 
   const goals = players.map((p) => p.goalMinute ?? Infinity);
   const within = (m: number): number => goals.filter((g) => g <= m).length;
   const lines = [
-    `- Stage ${goal} cleared within 15 min: ${within(15)} of ${n}; within 30 min: ${within(30)}; ` +
-      `within ${limit} min: ${within(limit)}. Median: ${minutes(median(goals))}.`,
+    `- Stage ${goal} cleared ` +
+      [...new Set([15, 30, limit].filter((m) => m <= limit))]
+        .map((m, i) => `within ${m} min: ${within(m)}${i === 0 ? ` of ${n}` : ''}`)
+        .join('; ') +
+      `. Median: ${minutes(median(goals))}.`,
     `- The first run reaches stage ${median(players.map((p) => p.runs[0]?.stage ?? 1))} (median).`,
     `- Every card bought: ${minutes(median(players.map((p) => p.maxedMinute ?? Infinity)))}.`,
     '',
