@@ -2045,8 +2045,15 @@ outlines (never black), soft pastel cel shading, one small glossy highlight, lig
 left. No watermark, no signature. Portrait 9:16.
 ```
 
-Every word and number stays live text (Fredoka). Once the mockups are approved Claude restyles the
-panels in CSS to match them and asks for the pieces that need art (the icons, as edits of them).
+Every word and number stays live text (Fredoka).
+
+**Approved and in the game (2026-10-12, v0.37):** `art-source/ui/pause-mockup.jpg`,
+`gameover-mockup.jpg` and `settings-mockup.jpg` (768×1376). No new art was needed: the panels are
+built in CSS (`src/ui/styles/panel-art.css`) from the pieces already cut, the Upgrades card as the
+panel, the PLAY, UPGRADES and Buy pills as buttons and switches, the Upgrades close button and the
+menu's coin. The settings and pause icons stay the code-drawn line icons in the medallions; icon-kit
+art (§5) can replace them later. The mockups' heavier panel outline was left out: a ring round the
+card art showed a double line at the corners, so the panels keep the Upgrades cards' outline.
 
 ## 5. Icon kit (every new icon)
 

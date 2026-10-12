@@ -64,6 +64,7 @@ Layout: everything sits where it is in the mockup, on a stage of the mockup's si
 - **How to play**: the first-run hints show again in the next run.
 - The version and build hash, small, at the bottom.
 - Closing: the close button, a tap on the dimmed menu, or the back button. There is no music yet, so there is no music switch.
+- Look (v0.37, the owner's approved mockup `art-source/ui/settings-mockup.jpg`): the same layout, in the Upgrades screen's pieces: the Upgrades card as the panel (the version in its tan strip), the title in the Upgrades title's cream lettering, the Upgrades close button, each icon in a gold-rimmed cream medallion, a switch gold like the Buy button when ON and a sunken tan track when OFF. With `?skin=vector` it keeps the code-drawn card of v0.14.
 
 ### 2.3 Game
 
@@ -72,8 +73,9 @@ Layout: everything sits where it is in the mockup, on a stage of the mockup's si
 - The dropper: a calico cat's paw floats over the jar (v0.25, with the raster art: its arm fades out a little above the wrist; from v0.22 to v0.24 it reached out from under a noren curtain; with `?skin=vector` it reaches down from the top of the screen) and holds the current cat by the head, just above the jar's top rail (v0.21.1; until then the cat hung in front of the rail). It follows the aim, stays where it is while the next cat comes, lifts a little when it lets go, and is hidden while the jar grows. A dotted aim guide shows where the cat will fall, with a faint ghost of the cat where it lands.
 - HUD over the top of the scene. At the top in the middle, the stage in words ("STAGE 2"), dark brown with a cream edge, no card (v0.25). On the left, a narrow cream score card with "SCORE:" and the score in a sunken well, level with the coins card (their middles on one line, v0.26; until v0.24 it sat at the top, level with the pause button). (The stage card of v0.14–v0.17, with a progress bar and the stage's last cat, is gone; the banners still announce stage clears and the new goal.) On the right, a pink pause button, a "COINS:" card with the coins earned this run, which runs off the right edge, and under it the next cat in a round glass bubble with a small "NEXT" tag on its rim (v0.14.1). Only the pause button takes touches; everywhere else a touch aims.
 - Overlays:
-  - **Pause**: Resume, Sound, Haptics, Quit to Menu.
+  - **Pause**: Resume, Sound, Haptics, Quit to Menu. Sound and Haptics are gold when on, cream with a crossed-out icon when off.
   - **Game Over**: score, best score, stage reached, the biggest cat made this run, coins earned this run, new-record badges (best score, best stage, biggest cat ever), the shop cards the run opened ("New in the shop: Second Chance, Hanabi", v0.36, on a pale gold card), Play Again, Menu.
+  - Look (v0.37, the owner's approved mockups `art-source/ui/pause-mockup.jpg`, `gameover-mockup.jpg`): the v0.14 layout in the Upgrades screen's and the menu's pieces: the Upgrades card as the panel, the title (and Game Over's score) in the Upgrades title's cream lettering with a dark-brown edge, Resume and Play Again as the menu's coral PLAY pill, the quiet buttons as the cream UPGRADES pill, the menu's coin. With `?skin=vector` the code-drawn cards of v0.14.
 - Short banners: Combo, Jackpot, Stage clear! (every stage clear), The shrine grows! (as the jar grows, every 5 stages, v0.33; with the new jar's coin multiplier under it, "Coins ×2", since v0.36; from v0.29.4 to v0.32 no banner, and until v0.29.4 it replaced "Stage clear!" at a clear that grew the jar), Lucky Save!. (Until v0.29.5 the reveal of a new stage showed "New cats unlocked!" with the next goal; the owner removed it.)
 - First-run hints: "Drag to aim, release to drop" and "Merge two identical cats".
 

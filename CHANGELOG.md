@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.37.0] - 2026-10-12
+
+### Changed
+
+- **Settings, Pause and Game Over** wear the game's art, after the owner's approved mockups (`art-source/ui/*-mockup.jpg`): the same layout as before, built from the Upgrades screen's and the menu's pieces. The panel is the Upgrades card, the titles and Game Over's score use the Upgrades title's cream lettering, Resume and Play Again are the menu's PLAY pill, the quiet buttons the cream UPGRADES pill. Settings shows its icons in gold-rimmed medallions, its switches turn gold when ON, and the version sits in the card's tan strip. Pause's Sound and Haptics are gold when on and cream with a crossed-out icon when off (Haptics now has its own crossed-out icon). Mint is gone from these panels. `?skin=vector` keeps the old cards.
+
 ## [0.36.0] - 2026-10-12 (Batch 20)
 
 ### Changed
