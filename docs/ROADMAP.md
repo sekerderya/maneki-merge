@@ -353,6 +353,11 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
   - [x] Big Catch with 10 levels of 0.8 drop tilt; every price from the 8-hour pacing model
   - [x] save v7: every profile starts over, keeping its settings; older saved runs are dropped
   - [x] debug: best stage, max profile, stage times; the bot takes shop cards and reports each clear's score and coins
+- [ ] Batch 21, how-it-works clips (plan: docs/plans/batch-21.md; art: docs/ART_ASSETS.md §4.15). **Status:** planned; the recording method is tried:
+  - [ ] the clip recorder (`npm run clips`): scripted scenes recorded from the game on a fake clock, encoded to MP4 in the browser
+  - [ ] 17 clips: the special balls, the boulder trials, Wind, Heavy Drop, Porcelain, the Cursed Bell, every rule, Combo Charm and Second Chance
+  - [ ] a clip button on the shop and pick cards, a popup that plays the clip offline, a dot until it is seen
+  - [ ] the owner's art: the clip button and the tap pointer
 
 ## M13: Final art integration
 

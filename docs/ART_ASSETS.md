@@ -2055,6 +2055,46 @@ menu's coin. The settings and pause icons stay the code-drawn line icons in the 
 art (§5) can replace them later. The mockups' heavier panel outline was left out: a ring round the
 card art showed a double line at the corners, so the panels keep the Upgrades cards' outline.
 
+### 4.15 Phase 14: how-it-works clips (Batch 21)
+
+The shop's cards and the stage-clear picks get a small button that plays a short clip of the game
+showing what the card does (docs/plans/batch-21.md). Two pieces of art:
+
+**1. The clip button** (`art-source/icons/clip.png`): the icon kit's prompt (§5), gold rim. It is
+drawn small, about 34 px on the phone, on the corner of a card's icon, so it must read at 32 px.
+Attach the icon sheet (`art-source/ui/upgrade-icons.webp`) and the main menu
+(`art-source/menu/mockup.jpg`, for the PLAY button). The three parts to fill in:
+
+- rim: `gold`
+- subject: `a big rounded play triangle pointing right, glossy coral-pink like the PLAY button of
+the attached main menu, with a lighter shine along its top edge and its own dark-brown outline,
+centred a little right of the middle so it looks centred`
+- what it stands for: `"watch how this works": it plays a short clip`
+
+**2. The tap pointer** (`art-source/ui/tap-pointer.png`). Only the clips show it, where a clip
+shows a tap or a drag (the magnet's tap, then Take). It is a hand, not a paw: the dropper is
+already a paw. Attach the icon sheet and a cat from `art-source/cats/`. Paste this whole:
+
+```text
+Style: match the attached art exactly. Polished casual mobile-game art, cute chibi kawaii
+illustration, thick warm dark-brown outlines (never black) of even weight, soft pastel cel shading
+with gentle gradients and one small glossy highlight, light from the upper left, clean crisp
+vector-like edges, readable at 64 px.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow.
+No text, no letters, no numbers, no watermark, no signature.
+
+One tutorial pointer for the mobile game "Maneki Merge": a cute, chubby cartoon hand in a soft
+cream-white glove, seen from the back, its index finger pointing straight up and a little to the
+left, the other fingers curled in a loose fist, the thumb tucked in. The fingertip is the very top
+of the drawing: it marks the point being tapped. A small pink round cuff at the wrist, like the
+pink pads of the game's paw. Simple, round shapes, no nails, no wrinkles, no sleeve, no arm beyond
+the cuff. Nothing else in the picture. Centred, filling about 70% of the canvas. Square 1:1.
+```
+
+**Into the game.** Save them under those names and tell Claude. The badge goes through
+`npm run art` like every icon; the pointer is used only by the clip recorder (`npm run clips`),
+which draws it over the recorded taps and drags, and the clips are recorded again once it is in.
+
 ## 5. Icon kit (every new icon)
 
 > Read this before writing a prompt for any new icon: an upgrade, a trial or blessing card, a
