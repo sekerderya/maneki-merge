@@ -114,7 +114,7 @@ Lucky Paw, Big Catch and Big Drops have no clip.
 
 - Touch and drag anywhere in the play area. The dropper follows the finger horizontally, clamped so the cat stays inside the jar. Release to drop.
 - A tap without dragging drops the cat at the tapped x.
-- A dropped cat falls from the dropper to the empty jar floor in about 1 second (1.03–1.04 s since v0.21.1 raised the dropper; 1 s before), and lands without bouncing off the floor (cats still bounce a little off each other and the walls).
+- A dropped cat falls from the dropper to the empty jar floor in 0.88 seconds (0.875–0.883 s; v0.41, the owner's call: "a bit slow", 1.35 times the gravity; 1.03–1.04 s from v0.21.1, which raised the dropper; 1 s before), and lands without bouncing off the floor (cats still bounce a little off each other and the walls).
 - Cats roll over each other like balls instead of sliding like on ice (v0.23.7, the owner's report): a cat that lands on another's shoulder rolls down it, turning as it goes, and still shoves it aside as before.
 - After a drop, the next cat appears after a 0.45 s cooldown. Releases during the cooldown are ignored.
 - Mouse: move to aim, click to drop.
@@ -508,7 +508,7 @@ Then play resumes in the next stage as the doors open: in the grown jar, or in t
 | `moreBoulders` | More Boulders | +3% boulder chance (from stage 2)     |   5 | 3% → 18%                        | –           |
 | `ironBands`    | Iron Bands    | Boulders need one more merge to break |   3 | 1 → 4 merges                    | –           |
 | `bigBoulders`  | Big Boulders  | Boulders one size bigger              |   4 | size 2 (r 49) → size 6 (r 98)   | –           |
-| `wind`         | Wind          | +100 u/s² of wind (§15.8)             |   5 | Calm → Storm                    | –           |
+| `wind`         | Wind          | +135 u/s² of wind (§15.8)             |   5 | Calm → Storm                    | –           |
 | `porcelain`    | Porcelain     | +10% crack chance (§15.10)            |   4 | 0% → 40%                        | –           |
 | `cursedBell`   | Cursed Bell   | Now and then a cat is cursed (§15.12) |   1 | Off → On                        | –           |
 | `quickCurse`   | Quick Curse   | Cursed cats turn to stone sooner      |   3 | 10 → 8 → 7 → 6 drops to stone   | Cursed Bell |
@@ -524,7 +524,7 @@ The boulder trials still multiply each other (more × bigger × harder to break)
 | `echo`      | Echo       | Merges of sizes 5–7 leave a cat of their size behind, once per drop            | Off → On                                 |
 | `copycat`   | Copycat    | The next cat copies the size of your last merge (§15.13)                       | Next cat: Random → Copied                |
 | `dice`      | Dice       | Every merge rolls a die: sometimes a size more, sometimes it fizzles (§15.14)  | Merges: Sure → Rolled                    |
-| `heavyDrop` | Heavy Drop | Cats shoot down like fireballs and knock aside the cat they land on (§15.9)    | Fall time: 1.0 s → 0.24 s                |
+| `heavyDrop` | Heavy Drop | Cats shoot down like fireballs and knock aside the cat they land on (§15.9)    | Fall time: 0.88 s → 0.24 s               |
 
 **Blessings**
 
@@ -581,9 +581,9 @@ A wild cat that merges with any cat.
 The wind pushes falling balls sideways.
 
 - **Direction:** each run blows either to the right or to the left, picked at random when the run starts (the run's seed, on its own roll), whether or not Wind is ever taken. The card says which ("The wind blows falling cats to the right"), and its picture (a carp streamer) faces that way.
-- **Force:** with Wind at level L, every ball that leaves the paw (§15.1) is pushed sideways at 100 × L world units per second², from the drop until it first touches a ball or the floor. A ball that has touched one never feels it, so it never moves the pile. Measured headless (the jar is 600 wide), a size-1 cat dropped straight down drifts:
+- **Force:** with Wind at level L, every ball that leaves the paw (§15.1) is pushed sideways at 135 × L world units per second² (100 × L until v0.41, which raised it with the gravity, so the drift stays the same on a shorter fall), from the drop until it first touches a ball or the floor. A ball that has touched one never feels it, so it never moves the pile. Measured headless (the jar is 600 wide), a size-1 cat dropped straight down drifts:
 
-  | Level | Name   | Empty jar (fall 1.04 s) | Half-full jar (pile top 340–420) |
+  | Level | Name   | Empty jar (fall 0.88 s) | Half-full jar (pile top 340–420) |
   | ----: | ------ | ----------------------: | -------------------------------: |
   |     1 | Breeze |                      45 |                               28 |
   |     2 | Gusty  |                      90 |                               55 |
@@ -591,31 +591,31 @@ The wind pushes falling balls sideways.
   |     4 | Gale   |                     180 |                              117 |
   |     5 | Storm  |                     225 |                              141 |
 
-  (½·a·t² would be 54 per level on the full fall; air friction takes the rest.) A cat landing on the empty floor keeps the sideways speed the wind gave it and rolls on (no rug, §6).
+  (½·a·t² would be 53 per level on the full fall; air friction takes the rest. The half-full column was measured with v0.40's gravity and wind, which tilt a fall the same way.) A cat landing on the empty floor keeps the sideways speed the wind gave it and rolls on (no rug, §6).
 
-- **With Heavy Drop** the wind tilts the whole fall: Heavy Drop's extra gravity gets the same sideways share as the base gravity, and a heavy ball shoots out of the paw already slanted the wind's way (its start speed times the wind's push over gravity), so it comes down the very line a plain cat would, only faster. It drifts as far as in the table at every Heavy Drop level, on a full fall or a short one (12 to 61 units over 300 units of fall, as a plain cat), and at Storm with Heavy Drop 5 it lands moving 1014 units per second sideways (a plain cat 386). (v0.34, the owner's call after playing it: at first the wind only pushed, so a faster fall gave it less time and a level-5 heavy ball drifted 3 to 14 units: the wind didn't show.)
+- **With Heavy Drop** the wind tilts the whole fall: Heavy Drop's extra gravity gets the same sideways share as the base gravity, and a heavy ball shoots out of the paw already slanted the wind's way (its start speed times the wind's push over gravity), so it comes down the very line a plain cat would, only faster. It drifts as far as in the table at every Heavy Drop level, on a full fall or a short one (12 to 61 units over 300 units of fall, as a plain cat), and at Storm with Heavy Drop 5 it lands moving 1039 units per second sideways (a plain cat 464; v0.40: 1014 and 386). (v0.34, the owner's call after playing it: at first the wind only pushed, so a faster fall gave it less time and a level-5 heavy ball drifted 3 to 14 units: the wind didn't show.)
 - The wind can push a ball against a wall: it slides down the wall, still falling. A wall doesn't end the wind or Heavy Drop, and the wind doesn't press a ball into a wall it touches, so it slides freely and lands as soon as in the open. (v0.34, the owner found it: a heavy ball dropped against the wall the wind blows toward counted the wall as its first contact and lost its speed at once, falling 9% slower at level 1 and 71% at level 5.) The aim guide stays a straight line under the paw: it shows where the ball leaves the paw, not where it lands. The speed limit stays.
 - **Look:** sakura petals (the garden's petal shape) and thin ink streaks drift across the top half of the screen the wind's way, more and faster with its level (4 + 3 × L petals and L streaks, crossing in 4.6 − 0.56 × L s). With reduced motion: four slow petals and no streaks. Nothing at level 0.
 
 ### 15.9 Heavy Drop
 
-> The owner's pick (2026-10-11), built in v0.34 as a trial of five levels. **A rule since v0.40** (the owner's call, §15.11): it is offered where the jar grows, and taking it drops every ball at the old trial's last level (strength 5 below: shot out of the paw, a 0.24 s fall, the big fireball and the knock) for the rest of the run. Its card reads "New rule" and "Fall time: 1.0 s → 0.24 s"; a hint shows as the next stage starts ("Heavy Drop: cats shoot down like fireballs"). A run saved with the trial at any level comes back with the rule. Levels 1–4 below are kept as strengths of the effect, used by nothing in play now.
+> The owner's pick (2026-10-11), built in v0.34 as a trial of five levels. **A rule since v0.40** (the owner's call, §15.11): it is offered where the jar grows, and taking it drops every ball at the old trial's last level (strength 5 below: shot out of the paw, a 0.24 s fall, the big fireball and the knock) for the rest of the run. Its card reads "New rule" and "Fall time: 0.88 s → 0.24 s" (1.0 s → 0.24 s until v0.41); a hint shows as the next stage starts ("Heavy Drop: cats shoot down like fireballs"). A run saved with the trial at any level comes back with the rule. Levels 1–4 below are kept as strengths of the effect, used by nothing in play now.
 
 Dropped balls fall faster and hit harder, and come down like a fireball.
 
-- With Heavy Drop at strength L, every ball that leaves the paw (§15.1) shoots out of it with a downward speed and feels more gravity (a quarter of the base gravity more per level) until it first touches a ball or the floor (sliding down a wall, it is still falling, §15.8). While it falls it may go faster than the speed limit (up to 4800 units per second); from its first contact the normal limit applies again, so it bounces off as before.
-- Fall from the paw to the empty floor (size 1) and the speed it lands at, measured headless (v0.34, the owner's call after playing it: 17% faster than first built, with most of the speed from the paw so it shoots out instead of just falling faster; until then 0.8 to 0.3 s, leaving the paw at 104 to 2310 u/s):
+- With Heavy Drop at strength L, every ball that leaves the paw (§15.1) shoots out of it with a downward speed and feels more gravity (537.5 u/s² more per level, a quarter of the gravity before v0.41) until it first touches a ball or the floor (sliding down a wall, it is still falling, §15.8). While it falls it may go faster than the speed limit (up to 4800 units per second); from its first contact the normal limit applies again, so it bounces off as before.
+- Fall from the paw to the empty floor (size 1) and the speed it lands at, measured headless (v0.34, the owner's call after playing it: 17% faster than first built, with most of the speed from the paw so it shoots out instead of just falling faster; until then 0.8 to 0.3 s, leaving the paw at 104 to 2310 u/s). v0.41 re-solved the start speeds for its stronger base gravity, keeping the fall times (until then 814, 1232, 1842, 2521 and 3825, landing at 2000 to 4361 u/s):
 
   | Level | Fall time | Start speed | Extra gravity | Lands at |
   | ----: | --------: | ----------: | ------------: | -------: |
-  |     0 |    1.04 s |           0 |             0 | 1659 u/s |
-  |     1 |    0.66 s |         814 |      538 u/s² | 2000 u/s |
-  |     2 |    0.53 s |        1232 |     1075 u/s² | 2339 u/s |
-  |     3 |    0.41 s |        1842 |     1613 u/s² | 2789 u/s |
-  |     4 |    0.33 s |        2521 |     2150 u/s² | 3327 u/s |
-  |     5 |    0.24 s |        3825 |     2688 u/s² | 4361 u/s |
+  |     0 |    0.88 s |           0 |             0 | 1980 u/s |
+  |     1 |    0.66 s |         546 |      538 u/s² | 2223 u/s |
+  |     2 |    0.53 s |        1020 |     1075 u/s² | 2517 u/s |
+  |     3 |    0.41 s |        1679 |     1613 u/s² | 2928 u/s |
+  |     4 |    0.33 s |        2391 |     2150 u/s² | 3436 u/s |
+  |     5 |    0.24 s |        3732 |     2688 u/s² | 4438 u/s |
 
-  The card shows the fall time (1.0 s → 0.24 s since v0.40; the trial's card went 1.0 s → 0.66 s → …). The wind tilts a heavy fall as much as a plain one (§15.8).
+  The card shows the fall time (0.88 s → 0.24 s since v0.41, 1.0 s → 0.24 s in v0.40; the trial's card went 1.0 s → 0.66 s → …). The wind tilts a heavy fall as much as a plain one (§15.8).
 
 - **It knocks cats aside** (v0.34, the owner's call): a straight hit from above would only press the cat into the pile (measured: a dead-centre hit didn't move it at all, at any level, while a hit 25 units off-centre pushed it 100–240 units). So the ball a heavy ball lands on from above is knocked sideways, away from it, at 18% of the landing speed times how squarely from above it was hit (the square of the contact's downward share; a dead-centre hit picks a side), and the heavy ball rolls off the other way at half that. Measured: a dead-centre hit on a lone size 3 now moves it 110 units at level 1 and about 240 at level 5; in a row, its neighbours 60–120.
 - **Safe:** a heavy ball never passes through a cat, the floor or a wall, and never sinks deeper than half a size-1 radius into anything (TECH_SPEC §5). In a jar full to the rim, 100 drops at level 5 leave every cat in the jar; a cat it knocks aside may squeeze one a little over the rim (up to about 240 units per second, at most 14 units high, in 3 of 6 seeds; never at levels 1 and 3), and the heavy cat itself may bounce back over the rim of such a jar, up to about 320 units per second. With the wind at Storm the fireball comes in slanted and pushes harder: up to about 470 units per second and 55 units over the rim (in 5 of 6 seeds), still with no cat leaving the jar; the cat it meets may also move into it in the same step, so a contact can start up to 1.4 units deeper than the guard's half radius.
