@@ -11,6 +11,12 @@ export const ICON_SPRITE_DATA: Readonly<Record<string, CatSprite>> = {
     radius: 436.31,
     color: '#edd9a7',
   },
+  clip: {
+    file: 'clip.webp',
+    side: 810,
+    radius: 401.71,
+    color: '#f6d87e',
+  },
   comboCharm: {
     file: 'comboCharm.webp',
     side: 476,

@@ -2106,6 +2106,10 @@ the cuff. Nothing else in the picture. Centred, filling about 70% of the canvas.
 `npm run art` like every icon; the pointer is used only by the clip recorder (`npm run clips`),
 which draws it over the recorded taps and drags, and the clips are recorded again once it is in.
 
+**Arrived (2026-10-12):** `art-source/icons/clip.jpg` (through `npm run art` as
+`public/assets/icons/clip.webp`; it reads at 34 px) and `art-source/ui/tap-pointer.jpg` (the
+recorder cuts its white when it is built).
+
 ## 5. Icon kit (every new icon)
 
 > Read this before writing a prompt for any new icon: an upgrade, a trial or blessing card, a
