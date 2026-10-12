@@ -10,6 +10,7 @@
  */
 import { SAVE_THROTTLE_MS } from '../config/app';
 import type { HintId } from '../config/app';
+import type { ClipId } from '../config/clips';
 import { FIRST_STAGE } from '../config/stages';
 import { UPGRADES } from '../config/upgrades';
 import type { UpgradeId } from '../config/upgrades';
@@ -209,11 +210,26 @@ export class Profile {
     this.touch();
   }
 
-  /** "How to play" in the settings: every first-run hint shows again in the next run. */
+  clipSeen(id: ClipId): boolean {
+    return this.state.flags.clipsSeen[id];
+  }
+
+  /** A how-it-works clip was opened: its buttons lose the new dot. */
+  markClipSeen(id: ClipId): void {
+    if (this.state.flags.clipsSeen[id]) return;
+    this.state.flags.clipsSeen[id] = true;
+    this.touch();
+  }
+
+  /**
+   * "How to play" in the settings: every first-run hint shows again in the next run, and every
+   * clip button gets its new dot back.
+   */
   resetHints(): void {
-    const hints = this.state.flags.hintsSeen;
-    if (!Object.values(hints).some(Boolean)) return;
-    for (const id of Object.keys(hints) as HintId[]) hints[id] = false;
+    const { hintsSeen, clipsSeen } = this.state.flags;
+    if (![...Object.values(hintsSeen), ...Object.values(clipsSeen)].some(Boolean)) return;
+    for (const id of Object.keys(hintsSeen) as HintId[]) hintsSeen[id] = false;
+    for (const id of Object.keys(clipsSeen) as ClipId[]) clipsSeen[id] = false;
     this.touch();
   }
 

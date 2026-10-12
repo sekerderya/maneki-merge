@@ -79,6 +79,18 @@ describe('defaultSave (GAME_DESIGN §11)', () => {
     expect(s.stats).toEqual({ runsPlayed: 0, totalMerges: 0, totalCoinsEarned: 0, jackpots: 0 });
     expect(s.settings).toEqual({ sound: true, haptics: true, reduceMotion: false });
     expect(s.flags.hintsSeen).toEqual({ aim: false, merge: false, magnet: false, curse: false });
+    expect(Object.values(s.flags.clipsSeen).some(Boolean)).toBe(false);
+  });
+
+  it('gives a save from before v0.38 unseen clips, without an issue', () => {
+    const result = sanitize({ flags: { hintsSeen: { aim: true } } });
+    expect(result.issues).toEqual([]);
+    expect(result.data.flags.clipsSeen).toEqual(defaultSave().flags.clipsSeen);
+    const seen = sanitize({ flags: { clipsSeen: { magnet: true, echo: 'yes', nope: true } } });
+    expect(seen.issues).toEqual(['flags.clipsSeen.echo']);
+    expect(seen.data.flags.clipsSeen.magnet).toBe(true);
+    expect(seen.data.flags.clipsSeen.echo).toBe(false);
+    expect('nope' in seen.data.flags.clipsSeen).toBe(false);
   });
 
   it('returns a fresh object every time', () => {

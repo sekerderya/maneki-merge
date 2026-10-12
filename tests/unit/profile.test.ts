@@ -222,6 +222,20 @@ describe('Profile: wallet, records and stats (GAME_DESIGN §5, §11)', () => {
     expect(profile.pending).toBe(true);
   });
 
+  it('remembers the clips seen, and "How to play" brings their dots back', () => {
+    const { profile, store } = setup();
+    expect(profile.clipSeen('magnet')).toBe(false);
+    profile.markClipSeen('magnet');
+    profile.markClipSeen('magnet');
+    expect(profile.clipSeen('magnet')).toBe(true);
+    profile.flush();
+    expect(store.last?.flags.clipsSeen.magnet).toBe(true);
+    profile.resetHints();
+    expect(profile.clipSeen('magnet')).toBe(false);
+    profile.flush();
+    expect(store.last?.flags.clipsSeen.magnet).toBe(false);
+  });
+
   it('resets to defaults and writes at once', () => {
     const { profile, store, scheduler } = setup();
     profile.earn(50);

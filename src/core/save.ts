@@ -5,6 +5,8 @@
  */
 import { HINT_IDS, SAVE_BACKUP_LIMIT, SAVE_BACKUP_PREFIX, SAVE_KEY } from '../config/app';
 import type { HintId } from '../config/app';
+import { CLIP_IDS } from '../config/clips';
+import type { ClipId } from '../config/clips';
 import { FIRST_STAGE } from '../config/stages';
 import { UPGRADE_IDS, UPGRADES } from '../config/upgrades';
 import type { UpgradeId } from '../config/upgrades';
@@ -29,7 +31,11 @@ export interface SaveData {
     jackpots: number;
   };
   settings: { sound: boolean; haptics: boolean; reduceMotion: boolean };
-  flags: { hintsSeen: Record<HintId, boolean> };
+  flags: {
+    hintsSeen: Record<HintId, boolean>;
+    /** The how-it-works clips opened at least once (v0.38): their buttons lose the new dot. */
+    clipsSeen: Record<ClipId, boolean>;
+  };
 }
 
 export interface SaveEnvelope {
@@ -42,13 +48,15 @@ export function defaultSave(): SaveData {
   for (const id of UPGRADE_IDS) upgrades[id] = UPGRADES[id].startLevel;
   const hintsSeen = {} as Record<HintId, boolean>;
   for (const id of HINT_IDS) hintsSeen[id] = false;
+  const clipsSeen = {} as Record<ClipId, boolean>;
+  for (const id of CLIP_IDS) clipsSeen[id] = false;
   return {
     wallet: { coins: 0 },
     upgrades,
     records: { bestScore: 0, bestStage: FIRST_STAGE, highestTier: 0 },
     stats: { runsPlayed: 0, totalMerges: 0, totalCoinsEarned: 0, jackpots: 0 },
     settings: { sound: true, haptics: true, reduceMotion: false },
-    flags: { hintsSeen },
+    flags: { hintsSeen, clipsSeen },
   };
 }
 
@@ -322,6 +330,10 @@ export function sanitize(data: Record<string, unknown>): { data: SaveData; issue
   const hints = r.section(flags, 'flags.hintsSeen');
   for (const id of HINT_IDS) {
     out.flags.hintsSeen[id] = r.bool(hints, `flags.hintsSeen.${id}`, false);
+  }
+  const clips = r.section(flags, 'flags.clipsSeen');
+  for (const id of CLIP_IDS) {
+    out.flags.clipsSeen[id] = r.bool(clips, `flags.clipsSeen.${id}`, false);
   }
 
   return { data: out, issues };
