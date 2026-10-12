@@ -2,6 +2,25 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.41.0] - 2026-10-13
+
+### Changed
+
+- **Cats fall faster** (the owner's call: "a bit slow"): 1.35 times the gravity, so a drop reaches the empty floor in 0.88 s instead of 1.04 s. The wind is raised with it (135 per level instead of 100), so a falling cat drifts as far as before on the same slanted line. Heavy Drop keeps its fall times (0.24 s as a rule); its start speeds were re-solved. Its card reads 0.88 s → 0.24 s.
+
+### Fixed
+
+- **Smooth falls.** The balls are drawn between their last two physics steps instead of where the latest step left them. Physics runs 120 steps a second, and a screen frame saw 0, 1, 2 or 3 of them, so a falling cat moved unevenly and looked like a low frame rate, at 60, 90 and 120 Hz alike. Nothing changes in the simulation.
+
+### Added
+
+- `?gravity=<n>` scales the runs' gravity (0.5–2), to try other fall speeds on a phone: `?gravity=0.89` is about v0.40's 1.2×, `?gravity=1.11` 1.5×. `?interp=0` turns the smooth drawing off, to compare.
+
+### Measured
+
+- Fall times by gravity (size 1, dropper to empty floor): 1.0× 1.04 s, 1.2× 0.94 s, 1.35× 0.88 s, 1.5× 0.83 s, 1.75× 0.77 s; all land under the 2400 u/s speed limit.
+- The replay prints of `legacy.test.ts` were re-recorded, and the sim test's seed moved from 12 to 16 (the faster falls play another run).
+
 ## [0.40.0] - 2026-10-13
 
 ### Changed
