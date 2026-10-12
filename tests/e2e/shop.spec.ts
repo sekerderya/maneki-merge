@@ -105,33 +105,6 @@ test('buying with debug coins: prices, states, gates, feedback and persistence',
   expect(errors).toEqual([]);
 });
 
-test('game over lists the shop cards a run opened', async ({ page }) => {
-  // A stage clear takes long in software rendering (WebKit especially).
-  test.setTimeout(300_000);
-  const long = { timeout: 120_000 };
-  const errors = watchConsole(page);
-  await page.goto('./?debug=1&seed=42');
-  await page.getByTestId('play').click();
-  await expect.poll(() => page.evaluate(() => window.__game?.state().runState)).toBe('playing');
-  // Reaching stage 2 opens Combo Charm and More Magnets.
-  await page.evaluate(() => window.__game?.setStage(2));
-  await expect.poll(() => page.evaluate(() => window.__game?.state().stage), long).toBe(2);
-  await expect
-    .poll(() => page.evaluate(() => window.__game?.state().runState), long)
-    .toBe('playing');
-  await page.evaluate(() => window.__game?.forceGameOver());
-  await expect(page.getByTestId('go-unlocked')).toHaveText(
-    'New in the shop: Combo Charm, More Magnets',
-  );
-  // The next run opens nothing new.
-  await page.getByTestId('play-again').click();
-  await expect.poll(() => page.evaluate(() => window.__game?.state().runState)).toBe('playing');
-  await page.evaluate(() => window.__game?.forceGameOver());
-  await expect(page.getByTestId('game-over')).toBeVisible();
-  await expect(page.getByTestId('go-unlocked')).toBeHidden();
-  expect(errors).toEqual([]);
-});
-
 test('the back button closes the shop and stays on the menu', async ({ page }) => {
   await menuWithCoins(page, 100);
   await page.getByTestId('upgrades').click();

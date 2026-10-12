@@ -196,9 +196,10 @@ test('game over shows coins earned and new-record badges', async ({ page }) => {
   const first = await state(page);
   await expect(page.getByTestId('go-coins-value')).toHaveText(String(first.runCoins));
   await expect(page.getByTestId('go-new-best')).toBeVisible();
-  await expect(page.getByTestId('go-new-tier')).toBeVisible();
   await expect(page.getByTestId('go-new-stage')).toBeHidden();
-  await expect(page.getByTestId('go-tier').locator('.cat-icon')).toHaveAttribute('data-tier', '5');
+  // The biggest cat and the shop cards a run opened are gone (v0.39.1).
+  await expect(page.getByTestId('go-tier')).toHaveCount(0);
+  await expect(page.getByTestId('go-unlocked')).toHaveCount(0);
 
   // A smaller second run breaks no record.
   await page.getByTestId('play-again').click();
@@ -208,7 +209,6 @@ test('game over shows coins earned and new-record badges', async ({ page }) => {
   await page.evaluate(() => window.__game?.forceGameOver());
   await expect(page.getByTestId('game-over')).toBeVisible();
   await expect(page.getByTestId('go-new-best')).toBeHidden();
-  await expect(page.getByTestId('go-new-tier')).toBeHidden();
   await expect(page.getByTestId('go-best')).toHaveText(String(first.score));
   expect((await state(page)).wallet).toBe(first.runCoins + (await state(page)).runCoins);
 });

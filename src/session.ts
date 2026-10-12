@@ -19,7 +19,6 @@ import {
 } from './config/view';
 import { stageJar } from './config/stages';
 import type { PickId, PickKind } from './config/picks';
-import { UPGRADES } from './config/upgrades';
 import type { UpgradeId } from './config/upgrades';
 import { comboScoreMultiplier, jarCoinMultiplier } from './core/economy';
 import { EventBus } from './core/events';
@@ -30,7 +29,7 @@ import { pickCard } from './core/picks';
 import { newRecords } from './core/profile';
 import type { Profile, Records, Settings } from './core/profile';
 import type { RunSave } from './core/runSave';
-import { comboBonus, unlockedBetween } from './core/upgrades';
+import { comboBonus } from './core/upgrades';
 import type { GameView } from './game';
 import { resumeProfileRun, startProfileRun } from './run/profileRun';
 import type { RunController } from './run/RunController';
@@ -541,11 +540,7 @@ export class GameSession {
       bestScore: this.parts.profile.records.bestScore,
       stage: e.stage,
       coins: e.coins,
-      highestTier: e.highestTier,
       records,
-      unlocked: unlockedBetween(this.recordsBefore.bestStage, e.stage).map(
-        (id) => UPGRADES[id].name,
-      ),
     });
     this.parts.onProfileChange();
   }

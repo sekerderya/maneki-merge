@@ -165,18 +165,6 @@
   }
 }
 
-/* "New in the shop: …": the cards a run opened (v0.36). */
-.go-unlocked {
-  margin: 0 0 4px;
-  padding: 6px 12px;
-  border: 2px solid var(--color-ink);
-  border-radius: var(--radius-md);
-  background: var(--color-gold-light);
-  font-size: 0.95rem;
-  font-weight: var(--weight-bold);
-  text-align: center;
-}
-
 /* A small "New" chip next to a stat that set a record (GAME_DESIGN §2.3). */
 .record-chip {
   padding: 1px 7px;
@@ -188,10 +176,6 @@
   font-weight: var(--weight-bold);
   letter-spacing: 0.04em;
   text-transform: uppercase;
-}
-
-.go-stats .cat-icon {
-  --size: 34px;
 }
 
 .reduce-motion .overlay-panel,

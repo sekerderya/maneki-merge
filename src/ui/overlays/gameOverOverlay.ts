@@ -1,7 +1,6 @@
 import { MENU_ART, MENU_SPRITE_DIR } from '../../config/menuSprites';
 import { formatNumber } from '../../core/format';
 import type { NewRecords } from '../../core/profile';
-import { catIcon, paintCatIcon } from '../catIcon';
 import { button, el } from '../dom';
 import { ICON_COIN } from '../icons';
 import { artImage, setUiArtProperties } from '../uiArt';
@@ -17,11 +16,7 @@ export interface GameOverSummary {
   readonly stage: number;
   /** Coins earned this run (already in the wallet). */
   readonly coins: number;
-  /** The highest tier a merge made this run; 0 before the first merge. */
-  readonly highestTier: number;
   readonly records: NewRecords;
-  /** The shop cards this run's best stage opened (GAME_DESIGN §2.2), by name. */
-  readonly unlocked: readonly string[];
 }
 
 export interface GameOverView {
@@ -31,8 +26,9 @@ export interface GameOverView {
 }
 
 /**
- * Game Over overlay (GAME_DESIGN §2.3): score, best score, stage reached, the biggest cat made,
- * coins earned this run, a badge for every record the run broke, and the shop cards it opened.
+ * Game Over overlay (GAME_DESIGN §2.3): score, best score, stage reached, coins earned this run,
+ * and a badge for a new best score or best stage (v0.39.1, the owner's call: the biggest cat made
+ * and the shop cards a run opened are gone).
  * With `art` (the art skin) it is the owner's approved mockup (docs/ART_ASSETS.md §4.14), built
  * from the Upgrades and menu pieces (panel-art.css), with the menu's coin.
  */
@@ -75,11 +71,6 @@ export function createGameOverOverlay(
   stage.dataset['testid'] = 'go-stage';
   const stageChip = chip('go-new-stage');
   stageRow.replaceChildren(stageChip, stage);
-  const tierRow = row('Biggest cat', 'go-tier');
-  const tierIcon = catIcon(1);
-  const tierNone = el('span', '', '–');
-  const tierChip = chip('go-new-tier');
-  tierRow.replaceChildren(tierChip, tierIcon, tierNone);
   const coins = row('Coins earned', 'go-coins');
   coins.textContent = '';
   if (art) coins.append(artImage(`${MENU_SPRITE_DIR}${MENU_ART.coin.file}`, 'go-coin'));
@@ -88,11 +79,6 @@ export function createGameOverOverlay(
   coinValue.dataset['testid'] = 'go-coins-value';
   coins.append(coinValue);
 
-  // "New in the shop: Hanabi" when the run reached a card's gate (v0.36).
-  const unlocked = el('p', 'go-unlocked');
-  unlocked.dataset['testid'] = 'go-unlocked';
-  unlocked.hidden = true;
-
   const again = button('btn btn-primary overlay-main-btn', 'Play Again');
   again.dataset['testid'] = 'play-again';
   again.addEventListener('click', actions.onPlayAgain);
@@ -100,7 +86,7 @@ export function createGameOverOverlay(
   menu.dataset['testid'] = 'go-menu';
   menu.addEventListener('click', actions.onMenu);
 
-  panel.append(title, score, badge, stats, unlocked, again, menu);
+  panel.append(title, score, badge, stats, again, menu);
   overlay.append(panel);
   root.append(overlay);
 
@@ -115,14 +101,7 @@ export function createGameOverOverlay(
       best.textContent = formatNumber(summary.bestScore);
       stage.textContent = String(summary.stage);
       stageChip.hidden = !records.stage;
-      const tier = summary.highestTier;
-      tierIcon.hidden = tier < 1;
-      tierNone.hidden = tier >= 1;
-      if (tier >= 1) paintCatIcon(tierIcon, tier);
-      tierChip.hidden = !records.highestTier;
       coinValue.textContent = formatNumber(summary.coins);
-      unlocked.hidden = summary.unlocked.length === 0;
-      unlocked.textContent = `New in the shop: ${summary.unlocked.join(', ')}`;
       overlay.hidden = false;
     },
     hide() {

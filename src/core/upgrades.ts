@@ -68,11 +68,6 @@ export function upgradeUnlocked(id: UpgradeId, bestStage: number): boolean {
   return bestStage >= UPGRADES[id].gate;
 }
 
-/** The cards whose gate a run passed: reached `bestStage`, from `before`. In shop order. */
-export function unlockedBetween(before: number, bestStage: number): UpgradeId[] {
-  return UPGRADE_IDS.filter((id) => UPGRADES[id].gate > before && UPGRADES[id].gate <= bestStage);
-}
-
 export type BuyCheck =
   | { readonly ok: true; readonly price: number }
   | {

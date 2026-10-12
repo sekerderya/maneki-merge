@@ -150,25 +150,11 @@
   height: auto;
 }
 
-.game-over-overlay.is-art .go-stats .cat-icon {
-  --size: calc(64 * var(--u));
-}
-
 .game-over-overlay.is-art .record-chip {
   padding: calc(2 * var(--u)) calc(12 * var(--u));
   border: calc(3 * var(--u)) solid #4e2416;
   background: linear-gradient(#ffd866, #f2b83b);
   font-size: calc(20 * var(--u));
-}
-
-.game-over-overlay.is-art .go-unlocked {
-  margin: 0;
-  padding: calc(10 * var(--u)) calc(22 * var(--u));
-  border: calc(4 * var(--u)) solid #4e2416;
-  border-radius: calc(24 * var(--u));
-  background: #fff1c2;
-  color: #4e2416;
-  font-size: calc(30 * var(--u));
 }
 
 /* Settings: the title and the close button, then the four rows; the version in the tan strip. */

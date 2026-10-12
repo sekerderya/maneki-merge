@@ -11,7 +11,6 @@ import {
   isUpgradeId,
   maxUpgradeLevels,
   nextPrice,
-  unlockedBetween,
   upgradeUnlocked,
 } from '../../src/core/upgrades';
 import type { UpgradeLevels } from '../../src/core/upgrades';
@@ -190,10 +189,6 @@ describe('prices and purchases', () => {
     expect(upgradeUnlocked('secondChance', 1)).toBe(true);
     expect(upgradeUnlocked('comboCharm', 1)).toBe(false);
     expect(upgradeUnlocked('comboCharm', 2)).toBe(true);
-    expect(unlockedBetween(1, 1)).toEqual([]);
-    expect(unlockedBetween(1, 2)).toEqual(['comboCharm', 'moreMagnets']);
-    expect(unlockedBetween(2, 9)).toEqual(['hanabi', 'joker']);
-    expect(unlockedBetween(9, 40)).toEqual([]);
   });
 
   it('recognizes upgrade ids', () => {
