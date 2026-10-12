@@ -103,6 +103,9 @@ narrower than their canvas: Claude crops the empty space.
 | 27  | 12 trials  | `fx/stone.png`                            | Sheet: 4 stone patterns, a cursed cat turning to stone (§4.13)      | 1:1, 1024×1024    |
 | 28  | 12 trials  | `fx/dice.png`                             | Sheet: the lucky gold die, the cracked grey die                     | 3:2, 1536×1024    |
 | 29  | 12 trials  | `picks/cursedBell.png` … `picks/dice.png` | Card pictures: Cursed Bell, Quick Curse, More Curses, Copycat, Dice | 1:1, 1024×1024    |
+| 30  | 13 panels  | `ui/settings-mockup.png`                  | Settings panel over the menu, design reference (§4.14)              | 9:16 or 2:3       |
+| 31  | 13 panels  | `ui/pause-mockup.png`                     | Pause panel over the game, design reference                         | 9:16 or 2:3       |
+| 32  | 13 panels  | `ui/gameover-mockup.png`                  | Game Over panel over the game, design reference                     | 9:16 or 2:3       |
 
 How the pieces go into the game:
 
@@ -1913,6 +1916,131 @@ cursed bell over the cat with the drops left on its tag and a ring of ghostly fl
 cat instead, like Porcelain's cracks (`fx/stone`, above). The stone sheet came in v0.35.3: the game
 uses its top row only (the owner's call), the first pattern for the first half of the count and
 the second for the rest.
+
+### 4.14 Phase 13: Settings, Pause and Game Over
+
+These three panels are still the plain v0.14 cream cards (a big white card, flat coral and mint
+pills, code-drawn icons), plainer than the menu, the game and the Upgrades screen. As for the
+Upgrades screen (§4.9), the owner first generates a **whole-screen mockup** of each (a design
+reference, words allowed); Claude builds the panel from the approved mockup in CSS and then asks
+for the pieces that need art, as edits of the mockup. Generate at portrait 9:16 if the tool offers
+it, else 2:3. One chat per mockup; once one is approved, make the other two as edits of it in the
+same thread so the three panels stay one family.
+
+Attach to every mockup request: the approved main-menu mockup (`art-source/menu/mockup.jpg`), the
+approved Upgrades mockup (`art-source/ui/upgrades-mockup.jpg`, it sets the panel language: cream
+cards, gold-rimmed medallions, the title pill and the round close button) and the lineup sheet
+(`art-source/style/lineup.webp`), plus a screenshot of the panel as it is today (named below).
+Paste this style block first, then the panel's prompt:
+
+```text
+Style: match the attached main-menu mockup and Upgrades mockup exactly. Polished casual
+mobile-game art, cute chibi kawaii illustration, thick warm dark-brown outlines (never black),
+soft pastel cel shading with gentle gradients and small glossy highlights, light from the upper
+left, warm cream and sakura-pink palette, crisp clean edges. It must look like the same game as
+the attached main menu and Upgrades screen. Shown flat and full-bleed: no phone frame, no hands,
+no device mockup. A rounded friendly font like Fredoka. Only the words and numbers listed below;
+no other buttons, no ads, no stars, no watermark, no signature.
+```
+
+**Settings mockup** (`ui/settings-mockup.png`); also attach a screenshot of today's Settings panel:
+
+```text
+A complete portrait screen of the cute casual mobile game "Maneki Merge": the Settings panel open
+over the main menu. Use the content of the attached current Settings screenshot, but redesign its
+look to match the main menu and the Upgrades screen.
+
+Background: the attached main menu (the sakura shrine garden, the logo, the PLAY and UPGRADES
+buttons), dimmed with a soft warm-brown veil so the panel in front reads clearly.
+
+In the middle, one panel: a cream card (#fff6e7) with a thick dark-brown outline, soft rounded
+corners and a tan bottom edge, like the Upgrades cards, with a small sakura sprig tucked on its
+top-left corner. Inside, top to bottom:
+1. At the top centre, the title "Settings" on a plain cream pill like the Upgrades title, and on
+   the panel's top-right corner the same round cream close button with a dark-brown X.
+2. Four rows, each a small cream card with a thin dark-brown outline and a tan bottom edge, like
+   the Upgrades cards. Each row: on the left a round icon in a cream medallion with a gold rim
+   (the same family as the Upgrades icons); to its right the name in chunky dark-brown letters and
+   a short line in smaller brown letters under it; on the right a control.
+   - "Sound effects", "Merges, coins and buttons". Icon: a small gold bell ringing on a red cord,
+     with two little curved sound lines. Control: a pill-shaped switch, ON: a mint track with a
+     glossy cream knob on the right and "ON".
+   - "Haptics", "Vibration on Android phones". Icon: a little cream phone with a white cat paw
+     print on its screen, two short shake lines on each side. Control: the same switch, ON.
+   - "Reduce motion", "Less shake, fewer sparkles". Icon: a sleepy round white lucky cat curled
+     up asleep with closed eyes. Control: the switch OFF: a beige track, the knob on the left and
+     "OFF".
+   - "How to play", "Show the first-run tips again". Icon: a small rolled paper scroll with a
+     pink paw print on it. Control: a small dark-brown arrow pointing right.
+3. At the bottom of the panel, small and pale brown: "v0.36.0".
+Portrait 9:16 (or 2:3).
+```
+
+**Pause mockup** (`ui/pause-mockup.png`); also attach a game screenshot
+(`docs/screenshots/v0.36.0/combo-390.png`) and a screenshot of today's Pause panel:
+
+```text
+A complete portrait screen of the cute casual mobile game "Maneki Merge": the Pause panel open
+over the game. Use the content of the attached current Pause screenshot, but redesign its look to
+match the main menu and the Upgrades screen.
+
+Background: the attached game screen (the bamboo jar full of round lucky cats, the score and coins
+cards, the NEXT bubble, the paw, the sakura garden), dimmed with a soft warm-brown veil so the
+panel in front reads clearly.
+
+In the middle, one compact panel: a cream card (#fff6e7) with a thick dark-brown outline, soft
+rounded corners and a tan bottom edge, like the Upgrades cards. On its top edge, a sleepy round
+white lucky cat (the white cat of the attached lineup, with its red collar and gold bell) peeking
+over the edge with closed eyes, napping, its paws hooked over the edge. Inside, top to bottom:
+1. The title "Paused" in chunky rounded dark-brown letters with a soft pink shadow.
+2. A wide glossy coral-pink pill-shaped "Resume" button with a darker pink bottom edge, a white
+   play triangle and white rounded letters with a dark-brown outline, like the menu's PLAY button.
+3. Two smaller square-ish rounded cream buttons side by side with a tan bottom edge, each with a
+   round gold-rimmed icon medallion and its word: "Sound" (a small gold bell ringing, ON, with a
+   small mint dot) and "Haptics" (a little phone with a paw print, OFF, the icon greyed with a
+   thin brown slash and no dot), so ON and OFF are easy to tell apart.
+4. A wide cream pill-shaped "Quit to Menu" button with a tan bottom edge and a small torii icon,
+   quieter than Resume, like the menu's UPGRADES button.
+Portrait 9:16 (or 2:3).
+```
+
+**Game Over mockup** (`ui/gameover-mockup.png`); also attach a game screenshot
+(`docs/screenshots/v0.36.0/combo-390.png`), today's Game Over panel
+(`docs/screenshots/v0.36.0/game-over-unlocked-390.png`) and the purple cat (`art-source/cats/size-07.*`):
+
+```text
+A complete portrait screen of the cute casual mobile game "Maneki Merge": the Game Over panel at
+the end of a run, over the game. Use the content of the attached current Game Over screenshot, but
+redesign its look to match the main menu and the Upgrades screen. It is gentle and rewarding, not
+sad: the run is over, the coins are banked.
+
+Background: the attached game screen (the bamboo jar full of round lucky cats, the score and coins
+cards, the sakura garden), dimmed with a soft warm-brown veil so the panel in front reads clearly.
+
+In the middle, one panel: a cream card (#fff6e7) with a thick dark-brown outline, soft rounded
+corners and a tan bottom edge, like the Upgrades cards, with a small sakura sprig on its top-left
+corner. Inside, top to bottom:
+1. The title "Game Over" on a red ribbon banner with gold edges and folded ends, across the top
+   edge of the panel, white rounded letters with a dark-brown outline.
+2. The final score "8,266" big, chunky dark-brown numbers, and under it a small gold
+   "New best!" ribbon tag with a four-pointed sparkle.
+3. A record card like the menu's BEST SCORE card (cream with a sunken beige well), holding four
+   lines, each a label on the left in brown and its value on the right in dark brown:
+   - "Best" with a small pink paw badge, "34.3K";
+   - "Stage" with a small red torii icon, "4", with a little mint "New" chip;
+   - "Biggest cat" with the attached purple lucky cat as a small round icon;
+   - "Coins earned" with the shiny gold paw coin from the menu, "2,721".
+4. One small line in brown: "New in the shop: Joker Cat".
+5. A wide glossy coral-pink pill-shaped "Play Again" button with a darker pink bottom edge, a white
+   paw icon and white rounded letters with a dark-brown outline, like the menu's PLAY button.
+6. Under it a wide cream pill-shaped "Menu" button with a tan bottom edge, like the menu's
+   UPGRADES button.
+Portrait 9:16 (or 2:3).
+```
+
+The decorations (the sakura sprig, the napping cat, the ribbon) are proposals: the owner keeps or
+drops them on the mockup. Every word and number stays live text (Fredoka); the settings and pause
+icons come from the icon kit (§5) once a mockup is approved.
 
 ## 5. Icon kit (every new icon)
 
