@@ -56,22 +56,24 @@ export interface UpgradeDef {
 }
 
 /**
- * Prices and gates are start values from the pacing model in docs/plans/batch-20.md §7: every card
- * bought in about 8 hours of play (the owner's target), a new player's first run paying for two or
- * three cheap ones.
+ * Prices and gates come from the pacing model in docs/plans/batch-20.md §7, retuned in v0.39
+ * (the owner's call: every effect 1.5 times as strong, the first levels cheaper and the gates lower,
+ * so most players clear stage 5 in their first 15 minutes): the first levels are cheap and the last
+ * ones dearer, so every card is still bought in about 8 hours of play (the owner's target).
  */
 export const UPGRADES: Readonly<Record<UpgradeId, UpgradeDef>> = {
   luckyPaw: {
     id: 'luckyPaw',
     section: 'upgrade',
     name: 'Lucky Paw',
-    description: '+15% coins from everything',
+    description: '+22.5% coins from everything',
     statLabel: 'Coins',
     startLevel: 0,
     maxLevel: 10,
     gate: 1,
-    prices: [300, 600, 1000, 1600, 2500, 4000, 6500, 10_000, 16_000, 25_000],
-    perLevel: 0.15,
+    prices: [150, 400, 800, 1500, 3000, 7000, 12_000, 22_000, 36_000, 60_000],
+    // Until v0.39: +15% per level.
+    perLevel: 0.225,
   },
   bigCatch: {
     id: 'bigCatch',
@@ -82,22 +84,24 @@ export const UPGRADES: Readonly<Record<UpgradeId, UpgradeDef>> = {
     startLevel: 0,
     maxLevel: 10,
     gate: 1,
-    prices: [300, 800, 1600, 3000, 5000, 8000, 13_000, 20_000, 30_000, 45_000],
-    // Drop tilt levels per level (GAME_DESIGN §8): Big Catch 10 is a tilt of 8 (16, 22, 28, 34%),
-    // which leaves Big Drops room up to the most, 10. Until v0.36: 5 levels of a whole tilt level.
-    perLevel: 0.8,
+    prices: [150, 400, 900, 2000, 4000, 10_000, 17_000, 30_000, 50_000, 80_000],
+    // Drop tilt levels per level (GAME_DESIGN §8): Big Catch 10 is a tilt of 12 (4, 18, 32, 46%),
+    // which leaves Big Drops room up to the most, 13. Until v0.39: 0.8 per level (tilt 8 at the
+    // top); until v0.36: 5 levels of a whole tilt level.
+    perLevel: 1.2,
   },
   comboCharm: {
     id: 'comboCharm',
     section: 'upgrade',
     name: 'Combo Charm',
-    description: '+8% coins per combo step (up to 5 steps)',
+    description: '+12% coins per combo step (up to 5 steps)',
     statLabel: 'Per combo step',
     startLevel: 0,
     maxLevel: 5,
-    gate: 3,
-    prices: [1000, 3000, 6000, 12_000, 20_000],
-    perLevel: 0.08,
+    gate: 2,
+    prices: [1000, 3000, 10_000, 22_000, 40_000],
+    // Until v0.39: +8% per level.
+    perLevel: 0.12,
   },
   secondChance: {
     id: 'secondChance',
@@ -107,8 +111,10 @@ export const UPGRADES: Readonly<Record<UpgradeId, UpgradeDef>> = {
     statLabel: 'Lucky Saves',
     startLevel: 0,
     maxLevel: 2,
-    gate: 5,
-    prices: [10_000, 50_000],
+    // The strongest help for getting past the first jar, so it is open from the start and cheap
+    // (v0.39, the owner's call; until then stage 5, 10K and 50K).
+    gate: 1,
+    prices: [1000, 15_000],
     perLevel: 1,
   },
   goldenCats: {
@@ -120,7 +126,7 @@ export const UPGRADES: Readonly<Record<UpgradeId, UpgradeDef>> = {
     startLevel: 1,
     maxLevel: PICKS.goldenCats.maxLevel,
     gate: 1,
-    prices: [400, 2000, 5000, 12_000],
+    prices: [400, 2000, 10_000, 24_000],
     perLevel: 1,
   },
   bigDrops: {
@@ -130,11 +136,11 @@ export const UPGRADES: Readonly<Record<UpgradeId, UpgradeDef>> = {
     description: 'Blessing: bigger cats come more often',
     statLabel: 'Up to',
     startLevel: 1,
-    // Big Drops and Big Catch tilt the drops together, up to a tilt of 10 (MAX_DROP_TILT_LEVEL):
-    // three levels (2 each) on top of Big Catch's 8 already pass it.
+    // Big Drops and Big Catch tilt the drops together, up to a tilt of 13 (MAX_DROP_TILT_LEVEL):
+    // one level (3) on top of Big Catch's 12 already reaches it.
     maxLevel: 3,
     gate: 1,
-    prices: [2000, 8000],
+    prices: [2000, 14_000],
     perLevel: 1,
   },
   moreMagnets: {
@@ -145,8 +151,8 @@ export const UPGRADES: Readonly<Record<UpgradeId, UpgradeDef>> = {
     statLabel: 'Up to',
     startLevel: 0,
     maxLevel: PICKS.moreMagnets.maxLevel,
-    gate: 3,
-    prices: [1200, 3500, 8000, 15_000, 25_000],
+    gate: 2,
+    prices: [1200, 3500, 14_000, 30_000, 55_000],
     perLevel: 1,
   },
   hanabi: {
@@ -157,8 +163,8 @@ export const UPGRADES: Readonly<Record<UpgradeId, UpgradeDef>> = {
     statLabel: 'Up to',
     startLevel: 0,
     maxLevel: PICKS.hanabi.maxLevel,
-    gate: 5,
-    prices: [3500, 7000, 13_000, 22_000, 35_000],
+    gate: 3,
+    prices: [3000, 8000, 22_000, 42_000, 70_000],
     perLevel: 1,
   },
   joker: {
@@ -169,8 +175,8 @@ export const UPGRADES: Readonly<Record<UpgradeId, UpgradeDef>> = {
     statLabel: 'Up to',
     startLevel: 0,
     maxLevel: PICKS.joker.maxLevel,
-    gate: 8,
-    prices: [9000, 16_000, 26_000, 40_000, 60_000],
+    gate: 5,
+    prices: [10_000, 18_000, 48_000, 85_000, 130_000],
     perLevel: 1,
   },
 };

@@ -36,7 +36,7 @@ export const DROP_WEIGHTS: readonly number[] = [40, 30, 20, 10];
 /**
  * One level of drop tilt (Big Catch and Big Drops, GAME_DESIGN §8) moves this share of the chances
  * from the smallest drop to the biggest, and a third of it from size 2 to size 3: a tilt of 5 makes
- * them 25% each, the most, 10 (MAX_DROP_TILT_LEVEL), 10, 20, 30 and 40%.
+ * them 25% each, the most, 13 (MAX_DROP_TILT_LEVEL), 1, 17, 33 and 49%.
  */
 export const DROP_TILT_STEP = 0.03;
 

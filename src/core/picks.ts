@@ -219,7 +219,7 @@ function seconds(s: number): string {
   return `${Number.isInteger(s * 10) ? s.toFixed(1) : String(s)} s`;
 }
 
-/** A chance as a percentage with at most one decimal: 3%, 2.5%. */
+/** A chance as a percentage with at most two decimals: 3%, 2.5%, 3.25%. */
 function percent(fraction: number): string {
-  return `${roundStable(fraction * 1000) / 10}%`;
+  return `${roundStable(fraction * 10_000) / 100}%`;
 }

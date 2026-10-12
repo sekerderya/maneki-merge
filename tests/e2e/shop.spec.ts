@@ -31,7 +31,7 @@ test('buying with debug coins: prices, states, gates, feedback and persistence',
   await page.goto('./?debug=1');
   // Nothing affordable yet: no dot.
   await expect(page.getByTestId('upgrades-dot')).toBeHidden();
-  await menuWithCoins(page, 1200);
+  await menuWithCoins(page, 700);
   await expect(page.getByTestId('upgrades-dot')).toBeVisible();
 
   await page.getByTestId('upgrades').click();
@@ -40,60 +40,60 @@ test('buying with debug coins: prices, states, gates, feedback and persistence',
   // The four upgrades, the blessings' heading and the five blessing cards (v0.36).
   await expect(shop.locator('.shop-card')).toHaveCount(9);
   await expect(page.getByTestId('shop-blessings')).toContainText('Blessings');
-  await expect(page.getByTestId('shop-balance')).toHaveText('1,200');
+  await expect(page.getByTestId('shop-balance')).toHaveText('700');
 
-  // Lucky Paw 0 → 1 for 300.
+  // Lucky Paw 0 → 1 for 150.
   const paw = page.getByTestId('shop-buy-luckyPaw');
   // The art's button says "Buy" over the price.
-  await expect(paw.locator('.shop-price')).toHaveText('300');
-  await expect(page.getByTestId('shop-value-luckyPaw')).toHaveText('Coins+0%→+15%');
+  await expect(paw.locator('.shop-price')).toHaveText('150');
+  await expect(page.getByTestId('shop-value-luckyPaw')).toHaveText('Coins+0%→+22.5%');
   await buy(page, 'luckyPaw');
   await expect(page.getByTestId('shop-level-luckyPaw')).toHaveText('1/10');
-  await expect(paw.locator('.shop-price')).toHaveText('600');
-  await expect(page.getByTestId('shop-balance')).toHaveText('900'); // after the count-down
+  await expect(paw.locator('.shop-price')).toHaveText('400');
+  await expect(page.getByTestId('shop-balance')).toHaveText('550'); // after the count-down
 
-  // Big Catch shows what a level adds: 2.4 points of the biggest drop, rounded.
-  await expect(page.getByTestId('shop-value-bigCatch')).toHaveText('Biggest drop10%→12%');
+  // Big Catch shows what a level adds: 3.6 points of the biggest drop, rounded.
+  await expect(page.getByTestId('shop-value-bigCatch')).toHaveText('Biggest drop10%→14%');
 
-  // Golden Cats starts open at 1: the next level lets a run reach 8%.
+  // Golden Cats starts open at 1: the next level lets a run reach 12%.
   await expect(page.getByTestId('shop-level-goldenCats')).toHaveText('1/5');
-  await expect(page.getByTestId('shop-value-goldenCats')).toHaveText('Up to4%→8%');
+  await expect(page.getByTestId('shop-value-goldenCats')).toHaveText('Up to6%→12%');
   await buy(page, 'goldenCats');
   await expect(page.getByTestId('shop-level-goldenCats')).toHaveText('2/5');
-  await expect(page.getByTestId('shop-balance')).toHaveText('500');
+  await expect(page.getByTestId('shop-balance')).toHaveText('150');
 
-  // Combo Charm waits for stage 3: "Reach" over the stage, disabled.
+  // Combo Charm waits for stage 2: "Reach" over the stage, disabled.
   const combo = page.getByTestId('shop-buy-comboCharm');
   await expect(combo).toBeDisabled();
   await expect(combo).toHaveAttribute('data-state', 'locked');
   await expect(combo).toContainText('Reach');
-  await expect(combo.locator('.shop-price')).toHaveText('Stage 3');
+  await expect(combo.locator('.shop-price')).toHaveText('Stage 2');
 
-  // Not enough coins: Lucky Paw 2 (600) is disabled and says what is missing.
+  // Not enough coins: Lucky Paw 2 (400) is disabled and says what is missing.
   await expect(paw).toBeDisabled();
   await expect(paw).toHaveAttribute('data-state', 'insufficient');
-  await expect(page.getByTestId('shop-need-luckyPaw')).toHaveText('Need 100 more');
+  await expect(page.getByTestId('shop-need-luckyPaw')).toHaveText('Need 250 more');
 
   // Saved at once, outside any write throttle.
   const saved = await page.evaluate(
     (key) => JSON.parse(localStorage.getItem(key) ?? '{}'),
     SAVE_KEY,
   );
-  expect(saved.data.wallet.coins).toBe(500);
+  expect(saved.data.wallet.coins).toBe(150);
   expect(saved.data.upgrades).toMatchObject({ luckyPaw: 1, goldenCats: 2, bigDrops: 1 });
 
   // Closing returns to the menu with the new balance; a reload keeps the purchases.
   await page.getByTestId('shop-close').click();
   await expect(shop).toBeHidden();
-  await expect(page.getByTestId('coin-balance')).toHaveText('500');
+  await expect(page.getByTestId('coin-balance')).toHaveText('150');
   await page.reload();
   await page.getByTestId('upgrades').click();
   await expect(page.getByTestId('shop-level-luckyPaw')).toHaveText('1/10');
   await expect(page.getByTestId('shop-level-goldenCats')).toHaveText('2/5');
-  await expect(page.getByTestId('shop-balance')).toHaveText('500');
+  await expect(page.getByTestId('shop-balance')).toHaveText('150');
 
-  // Reaching stage 3 opens Combo Charm.
-  await page.evaluate(() => window.__game?.setBestStage(3));
+  // Reaching stage 2 opens Combo Charm.
+  await page.evaluate(() => window.__game?.setBestStage(2));
   await expect(combo).toHaveAttribute('data-state', 'insufficient');
   await expect(combo.locator('.shop-price')).toHaveText('1,000');
 
@@ -106,16 +106,16 @@ test('buying with debug coins: prices, states, gates, feedback and persistence',
 });
 
 test('game over lists the shop cards a run opened', async ({ page }) => {
-  // Two stage clears take long in software rendering (WebKit especially).
+  // A stage clear takes long in software rendering (WebKit especially).
   test.setTimeout(300_000);
   const long = { timeout: 120_000 };
   const errors = watchConsole(page);
   await page.goto('./?debug=1&seed=42');
   await page.getByTestId('play').click();
   await expect.poll(() => page.evaluate(() => window.__game?.state().runState)).toBe('playing');
-  // Reaching stage 3 opens Combo Charm and More Magnets.
-  await page.evaluate(() => window.__game?.setStage(3));
-  await expect.poll(() => page.evaluate(() => window.__game?.state().stage), long).toBe(3);
+  // Reaching stage 2 opens Combo Charm and More Magnets.
+  await page.evaluate(() => window.__game?.setStage(2));
+  await expect.poll(() => page.evaluate(() => window.__game?.state().stage), long).toBe(2);
   await expect
     .poll(() => page.evaluate(() => window.__game?.state().runState), long)
     .toBe('playing');

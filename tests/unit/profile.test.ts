@@ -135,11 +135,11 @@ describe('Profile: wallet, records and stats (GAME_DESIGN §5, §11)', () => {
     expect(profile.buy('luckyPaw')).toEqual({
       ok: true,
       levels: expect.objectContaining({ luckyPaw: 1 }) as unknown,
-      coins: 50,
-      price: 300,
+      coins: 200,
+      price: 150,
     });
     expect(store.writes).toHaveLength(writes + 1);
-    expect(store.last?.wallet.coins).toBe(50);
+    expect(store.last?.wallet.coins).toBe(200);
     expect(store.last?.upgrades.luckyPaw).toBe(1);
     expect(profile.pending).toBe(false);
     // Spending is not earning.
@@ -150,14 +150,16 @@ describe('Profile: wallet, records and stats (GAME_DESIGN §5, §11)', () => {
     const data = defaultSave();
     data.wallet.coins = 9000;
     data.upgrades.comboCharm = 5;
-    data.records.bestStage = 5;
+    data.upgrades.secondChance = 1;
+    data.records.bestStage = 4;
     const { profile, store } = setup(data);
     expect(profile.buy('comboCharm')).toEqual({ ok: false, reason: 'max' });
+    // Its second level costs 15K.
     expect(profile.buy('secondChance')).toEqual({ ok: false, reason: 'insufficient' });
-    // Joker Cat opens at stage 8.
+    // Joker Cat opens at stage 5.
     expect(profile.buy('joker')).toEqual({ ok: false, reason: 'locked' });
     expect(profile.coins).toBe(9000);
-    expect(profile.upgrades.secondChance).toBe(0);
+    expect(profile.upgrades.secondChance).toBe(1);
     expect(store.writes).toHaveLength(0);
   });
 

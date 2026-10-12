@@ -119,14 +119,14 @@ describe('the danger line (GAME_DESIGN §6)', () => {
 });
 
 describe('Lucky Save victims (GAME_DESIGN §6)', () => {
-  it('pops every landed cat over the line plus the 6 smallest others, oldest first', () => {
+  it('pops every landed cat over the line plus the 9 smallest others, oldest first', () => {
     const over1 = cat(5, RIM);
-    const small = [3, 1, 2, 1, 4, 2, 5, 6].map((t) => cat(t, -200));
+    const small = [3, 1, 2, 1, 4, 2, 5, 6, 7, 3].map((t) => cat(t, -200));
     const over2 = cat(2, RIM + 10);
     const falling = cat(1, RIM - 100, -1);
     const victims = luckySaveVictims([over1, ...small, over2, falling], RIM);
-    // Smallest six of [3, 1, 2, 1, 4, 2, 5, 6]: both 1s, both 2s, the 3 and the 4.
-    const expected = [over1, small[0], small[1], small[2], small[3], small[4], small[5], over2];
+    // Smallest nine of [3, 1, 2, 1, 4, 2, 5, 6, 7, 3]: all but the 7.
+    const expected = [over1, ...small.slice(0, 8), small[9], over2];
     expect(victims).toEqual(expected);
     expect(victims).not.toContain(falling);
   });

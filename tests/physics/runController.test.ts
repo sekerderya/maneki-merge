@@ -210,7 +210,7 @@ describe('merges and payouts (GAME_DESIGN §5, §9)', () => {
     const lucky = setup({ upgrades: upgrades({ luckyPaw: 2 }) });
     spawnPair(lucky.run, 3);
     lucky.run.tick();
-    expect(lucky.of('merged')[0]!.coins).toBe(4); // 3 × 1.3 = 3.9
+    expect(lucky.of('merged')[0]!.coins).toBe(4); // 3 × 1.45 = 4.35
   });
 
   it('raises the combo within 1 s and resets it after the window', () => {
@@ -222,7 +222,7 @@ describe('merges and payouts (GAME_DESIGN §5, §9)', () => {
     run.tick();
     expect(of('merged').map((m) => [m.combo, m.coins])).toEqual([
       [1, 5],
-      [2, 7], // 5 × (1 + 0.4) = 7
+      [2, 8], // 5 × (1 + 0.6) = 8
     ]);
     expect(run.combo).toBe(2);
     ticks(run, 125);

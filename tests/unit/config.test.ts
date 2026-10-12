@@ -222,7 +222,7 @@ describe('upgrades (GAME_DESIGN §10)', () => {
       0,
       10,
       1,
-      [300, 600, 1000, 1600, 2500, 4000, 6500, 10_000, 16_000, 25_000],
+      [150, 400, 800, 1500, 3000, 7000, 12_000, 22_000, 36_000, 60_000],
     ],
     [
       'bigCatch',
@@ -230,15 +230,15 @@ describe('upgrades (GAME_DESIGN §10)', () => {
       0,
       10,
       1,
-      [300, 800, 1600, 3000, 5000, 8000, 13_000, 20_000, 30_000, 45_000],
+      [150, 400, 900, 2000, 4000, 10_000, 17_000, 30_000, 50_000, 80_000],
     ],
-    ['comboCharm', 'Combo Charm', 0, 5, 3, [1000, 3000, 6000, 12_000, 20_000]],
-    ['secondChance', 'Second Chance', 0, 2, 5, [10_000, 50_000]],
-    ['goldenCats', 'Golden Cats', 1, 5, 1, [400, 2000, 5000, 12_000]],
-    ['bigDrops', 'Big Drops', 1, 3, 1, [2000, 8000]],
-    ['moreMagnets', 'More Magnets', 0, 5, 3, [1200, 3500, 8000, 15_000, 25_000]],
-    ['hanabi', 'Hanabi', 0, 5, 5, [3500, 7000, 13_000, 22_000, 35_000]],
-    ['joker', 'Joker Cat', 0, 5, 8, [9000, 16_000, 26_000, 40_000, 60_000]],
+    ['comboCharm', 'Combo Charm', 0, 5, 2, [1000, 3000, 10_000, 22_000, 40_000]],
+    ['secondChance', 'Second Chance', 0, 2, 1, [1000, 15_000]],
+    ['goldenCats', 'Golden Cats', 1, 5, 1, [400, 2000, 10_000, 24_000]],
+    ['bigDrops', 'Big Drops', 1, 3, 1, [2000, 14_000]],
+    ['moreMagnets', 'More Magnets', 0, 5, 2, [1200, 3500, 14_000, 30_000, 55_000]],
+    ['hanabi', 'Hanabi', 0, 5, 3, [3000, 8000, 22_000, 42_000, 70_000]],
+    ['joker', 'Joker Cat', 0, 5, 5, [10_000, 18_000, 48_000, 85_000, 130_000]],
   ];
 
   it('lists the 4 upgrades, then the 5 blessing cards, in shop order', () => {
@@ -261,10 +261,10 @@ describe('upgrades (GAME_DESIGN §10)', () => {
   );
 
   it('has per-level effects matching the table', () => {
-    expect(UPGRADES.luckyPaw.perLevel).toBe(0.15);
-    // Big Catch: 0.8 drop tilt levels per level (GAME_DESIGN §8).
-    expect(UPGRADES.bigCatch.perLevel).toBe(0.8);
-    expect(UPGRADES.comboCharm.perLevel).toBe(0.08);
+    expect(UPGRADES.luckyPaw.perLevel).toBe(0.225);
+    // Big Catch: 1.2 drop tilt levels per level (GAME_DESIGN §8).
+    expect(UPGRADES.bigCatch.perLevel).toBe(1.2);
+    expect(UPGRADES.comboCharm.perLevel).toBe(0.12);
     expect(UPGRADES.secondChance.perLevel).toBe(1);
   });
 

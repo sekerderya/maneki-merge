@@ -26,26 +26,26 @@ describe('shop cards (GAME_DESIGN §2.2)', () => {
   });
 
   it('shows an affordable price', () => {
-    expect(shopCard('luckyPaw', levels({ luckyPaw: 3 }), 1600, 1)).toEqual({
+    expect(shopCard('luckyPaw', levels({ luckyPaw: 3 }), 1500, 1)).toEqual({
       id: 'luckyPaw',
       section: 'upgrade',
       gate: 1,
       name: 'Lucky Paw',
-      description: '+15% coins from everything',
+      description: '+22.5% coins from everything',
       statLabel: 'Coins',
       level: 3,
       maxLevel: 10,
-      price: 1600,
+      price: 1500,
       state: 'affordable',
       shortfall: null,
-      current: '+45%',
-      next: '+60%',
+      current: '+67.5%',
+      next: '+90%',
     });
   });
 
   it('disables the price when coins are short', () => {
-    const card = shopCard('bigCatch', levels(), 299, 1);
-    expect(card).toMatchObject({ price: 300, state: 'insufficient', current: '10%', next: '12%' });
+    const card = shopCard('bigCatch', levels(), 149, 1);
+    expect(card).toMatchObject({ price: 150, state: 'insufficient', current: '10%', next: '14%' });
     // "Need 1 more" under the price.
     expect(card.shortfall).toBe(1);
   });
@@ -57,9 +57,9 @@ describe('shop cards (GAME_DESIGN §2.2)', () => {
   });
 
   it('locks a card until the best stage reaches its gate', () => {
-    const card = shopCard('joker', levels(), 1e9, 7);
-    expect(card).toMatchObject({ state: 'locked', gate: 8, price: 9000, shortfall: null });
-    expect(shopCard('joker', levels(), 1e9, 8).state).toBe('affordable');
+    const card = shopCard('joker', levels(), 1e9, 4);
+    expect(card).toMatchObject({ state: 'locked', gate: 5, price: 10_000, shortfall: null });
+    expect(shopCard('joker', levels(), 1e9, 5).state).toBe('affordable');
   });
 
   it('shows a blessing card at the highest level a run can reach', () => {
@@ -67,30 +67,31 @@ describe('shop cards (GAME_DESIGN §2.2)', () => {
       level: 1,
       maxLevel: 5,
       price: 400,
-      current: '4%',
-      next: '8%',
+      current: '6%',
+      next: '12%',
     });
   });
 
   it.each<[UpgradeId, number, string]>([
     ['luckyPaw', 0, '+0%'],
-    ['luckyPaw', 10, '+150%'],
-    // The biggest drop of a stage: 10%, then 2.4 points more per level, rounded (GAME_DESIGN §8).
+    ['luckyPaw', 1, '+22.5%'],
+    ['luckyPaw', 10, '+225%'],
+    // The biggest drop of a stage: 10%, then 3.6 points more per level, rounded (GAME_DESIGN §8).
     ['bigCatch', 0, '10%'],
-    ['bigCatch', 1, '12%'],
-    ['bigCatch', 2, '15%'],
-    ['bigCatch', 5, '22%'],
-    ['bigCatch', 10, '34%'],
-    ['comboCharm', 2, '+16%'],
+    ['bigCatch', 1, '14%'],
+    ['bigCatch', 2, '17%'],
+    ['bigCatch', 5, '28%'],
+    ['bigCatch', 10, '46%'],
+    ['comboCharm', 2, '+24%'],
     ['secondChance', 2, '2'],
     // A blessing card: its blessing at the card's level, without Big Catch.
-    ['goldenCats', 5, '20%'],
-    ['bigDrops', 1, '16%'],
-    ['bigDrops', 3, '28%'],
+    ['goldenCats', 5, '30%'],
+    ['bigDrops', 1, '19%'],
+    ['bigDrops', 3, '37%'],
     ['moreMagnets', 0, '1%'],
-    ['moreMagnets', 2, '4%'],
+    ['moreMagnets', 2, '5.5%'],
     ['hanabi', 0, '0%'],
-    ['joker', 5, '7.5%'],
+    ['joker', 5, '11.25%'],
   ])('%s at level %i shows %s', (id, level, text) => {
     expect(upgradeValue(id, level)).toBe(text);
   });

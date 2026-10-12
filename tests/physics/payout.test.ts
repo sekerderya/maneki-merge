@@ -54,12 +54,12 @@ describe('payout pipeline (GAME_DESIGN §5, §9)', () => {
     spawnPair(run, 3, 0);
     run.tick();
     expect(run.combo).toBe(3);
-    // coinMultiplier 1.6; comboBonus 0.08 × 3 × (combo − 1).
-    // 2 × 1.6 = 3.2 → 3 · 2 × 1.6 × 1.24 = 3.97 → 4 · 3 × 1.6 × 1.48 = 7.1 → 7
-    expect(coins).toEqual([3, 4, 7]);
-    expect(run.coins).toBe(14);
-    expect(profile.coins).toBe(14);
-    expect(profile.stats).toMatchObject({ totalMerges: 3, totalCoinsEarned: 14, jackpots: 0 });
+    // coinMultiplier 1.9; comboBonus 0.12 × 3 × (combo − 1).
+    // 2 × 1.9 = 3.8 → 4 · 2 × 1.9 × 1.36 = 5.17 → 5 · 3 × 1.9 × 1.72 = 9.8 → 10
+    expect(coins).toEqual([4, 5, 10]);
+    expect(run.coins).toBe(19);
+    expect(profile.coins).toBe(19);
+    expect(profile.stats).toMatchObject({ totalMerges: 3, totalCoinsEarned: 19, jackpots: 0 });
     // Score: 4, then 4 × 1.1 = 4.4 → 4 and 8 × 1.2 = 9.6 → 10 (every combo step adds 10%).
     expect(profile.records).toEqual({ bestScore: 18, bestStage: 1, highestTier: 4 });
   });
@@ -71,9 +71,9 @@ describe('payout pipeline (GAME_DESIGN §5, §9)', () => {
     run.spawnBall(last, 0, -r);
     run.spawnBall(last, 0, -3 * r + 2);
     run.tick();
-    // 5 × 70 × 1.15 = 402.5 → 403
-    expect(coins).toEqual([403]);
-    expect(profile.coins).toBe(403);
+    // 5 × 70 × 1.225 = 428.75 → 429
+    expect(coins).toEqual([429]);
+    expect(profile.coins).toBe(429);
     expect(profile.stats).toMatchObject({ jackpots: 1, totalMerges: 0 });
     expect(profile.records.bestScore).toBe(1024);
   });
@@ -92,18 +92,18 @@ describe('payout pipeline (GAME_DESIGN §5, §9)', () => {
     // The stage clear's picks wait for a choice; then the instant expansion runs.
     while (run.state === 'choosing') run.choose(run.pickOffer!.options[0]!);
     expect(run.stage).toBe(2);
-    // The merge: 41 × 1.3 = 53.3 → 53. Then each cat pays its value, half of C(t), oldest
-    // first: 1 → 0.5 × 1.3 = 0.65 → 1; 1 → 1; 2 → 1 × 1.3 = 1.3 → 1; and the last cat after it
-    // settled: 9 → 35 × 1.3 = 45.5 → 46.
-    expect(coins).toEqual([53, 1, 1, 1, 46]);
-    expect(profile.coins).toBe(102);
+    // The merge: 41 × 1.45 = 59.45 → 59. Then each cat pays its value, half of C(t), oldest
+    // first: 1 → 0.5 × 1.45 = 0.725 → 1; 1 → 1; 2 → 1 × 1.45 = 1.45 → 1; and the last cat after
+    // it settled: 9 → 35 × 1.45 = 50.75 → 51.
+    expect(coins).toEqual([59, 1, 1, 1, 51]);
+    expect(profile.coins).toBe(113);
     expect(profile.records).toEqual({ bestScore: 256, bestStage: 2, highestTier: 9 });
     expect(profile.stats.totalMerges).toBe(1);
 
-    // A debug jump clears with a stage-2 last cat, which pops like stage 1's (same jar): 46.
+    // A debug jump clears with a stage-2 last cat, which pops like stage 1's (same jar): 51.
     run.jumpToStage(3);
     expect(run.stage).toBe(3);
-    expect(coins.slice(5)).toEqual([46]);
+    expect(coins.slice(5)).toEqual([51]);
     expect(profile.records.bestStage).toBe(3);
   });
 

@@ -39,8 +39,8 @@ describe('deriveStats (GAME_DESIGN §10)', () => {
 
   it('applies every formula at max level', () => {
     const s = deriveStats(maxed());
-    expect(s.coinMultiplier).toBeCloseTo(2.5, 10); // 1 + 0.15 × 10
-    expect(s.bigCatchTilt).toBeCloseTo(8, 10); // 0.8 × 10
+    expect(s.coinMultiplier).toBeCloseTo(3.25, 10); // 1 + 0.225 × 10
+    expect(s.bigCatchTilt).toBeCloseTo(12, 10); // 1.2 × 10
     expect(s.comboCharmLevel).toBe(5);
     expect(s.luckySaves).toBe(2);
     expect(s.blessingCaps).toEqual({
@@ -54,23 +54,23 @@ describe('deriveStats (GAME_DESIGN §10)', () => {
 
   it.each([
     [0, 1],
-    [1, 1.15],
-    [4, 1.6],
-    [10, 2.5],
+    [1, 1.225],
+    [4, 1.9],
+    [10, 3.25],
   ])('Lucky Paw %i gives a ×%f coin multiplier', (level, multiplier) => {
     expect(deriveStats(levels({ luckyPaw: level })).coinMultiplier).toBeCloseTo(multiplier, 10);
   });
 });
 
 describe('comboBonus', () => {
-  it('is 0.08 × comboCharm × min(combo − 1, 5)', () => {
+  it('is 0.12 × comboCharm × min(combo − 1, 5)', () => {
     expect(comboBonus(0, 6)).toBe(0);
     expect(comboBonus(3, 0)).toBe(0);
     expect(comboBonus(3, 1)).toBe(0);
-    expect(comboBonus(3, 2)).toBeCloseTo(0.24, 10);
-    expect(comboBonus(5, 6)).toBeCloseTo(2, 10);
-    expect(comboBonus(5, 40)).toBeCloseTo(2, 10);
-    expect(comboBonus(1, 4)).toBeCloseTo(0.24, 10);
+    expect(comboBonus(3, 2)).toBeCloseTo(0.36, 10);
+    expect(comboBonus(5, 6)).toBeCloseTo(3, 10);
+    expect(comboBonus(5, 40)).toBeCloseTo(3, 10);
+    expect(comboBonus(1, 4)).toBeCloseTo(0.36, 10);
   });
 });
 
@@ -91,12 +91,12 @@ describe('the cards (GAME_DESIGN §10)', () => {
     expect(UPGRADE_IDS.slice(-BLESSING_CARD_IDS.length)).toEqual([...BLESSING_CARD_IDS]);
   });
 
-  it('costs about 610K coins in all (the 8-hour pacing model)', () => {
+  it('costs about 1M coins in all (the 8-hour pacing model)', () => {
     const total = UPGRADE_IDS.reduce(
       (sum, id) => sum + UPGRADES[id].prices.reduce((a, b) => a + b, 0),
       0,
     );
-    expect(total).toBe(609_800);
+    expect(total).toBe(1_021_400);
   });
 });
 
@@ -108,25 +108,27 @@ describe('prices and purchases', () => {
       expect(nextPrice(id, def.maxLevel)).toBeNull();
       expect(nextPrice(id, def.maxLevel + 3)).toBeNull();
     }
-    expect(nextPrice('luckyPaw', 0)).toBe(300);
-    expect(nextPrice('comboCharm', 4)).toBe(20_000);
+    expect(nextPrice('luckyPaw', 0)).toBe(150);
+    expect(nextPrice('comboCharm', 4)).toBe(40_000);
     // Golden Cats starts at level 1: its first price buys level 2.
     expect(nextPrice('goldenCats', 1)).toBe(400);
   });
 
   it('checks affordability, the gate and the max level', () => {
-    expect(canBuy('luckyPaw', levels(), 300, 1)).toEqual({ ok: true, price: 300 });
-    expect(canBuy('luckyPaw', levels(), 299, 1)).toEqual({
+    expect(canBuy('luckyPaw', levels(), 150, 1)).toEqual({ ok: true, price: 150 });
+    expect(canBuy('luckyPaw', levels(), 149, 1)).toEqual({
       ok: false,
       reason: 'insufficient',
-      price: 300,
+      price: 150,
     });
-    expect(canBuy('hanabi', levels(), 1e9, 4)).toEqual({
+    expect(canBuy('hanabi', levels(), 1e9, 2)).toEqual({
       ok: false,
       reason: 'locked',
-      price: 3500,
+      price: 3000,
     });
-    expect(canBuy('hanabi', levels(), 1e9, 5)).toEqual({ ok: true, price: 3500 });
+    expect(canBuy('hanabi', levels(), 1e9, 3)).toEqual({ ok: true, price: 3000 });
+    // Second Chance is open from the start (v0.39).
+    expect(canBuy('secondChance', levels(), 1000, 1)).toEqual({ ok: true, price: 1000 });
     expect(canBuy('secondChance', levels({ secondChance: 2 }), 1e9, ANY_STAGE)).toEqual({
       ok: false,
       reason: 'max',
@@ -140,15 +142,15 @@ describe('prices and purchases', () => {
     expect(result).toEqual({
       ok: true,
       levels: { ...before, luckyPaw: 3 },
-      coins: 200,
-      price: 1000,
+      coins: 400,
+      price: 800,
     });
     expect(before.luckyPaw).toBe(2);
   });
 
   it('refuses purchases it can’t make', () => {
-    expect(buy('bigCatch', levels(), 299, 1)).toEqual({ ok: false, reason: 'insufficient' });
-    expect(buy('joker', levels(), 1e9, 7)).toEqual({ ok: false, reason: 'locked' });
+    expect(buy('bigCatch', levels(), 149, 1)).toEqual({ ok: false, reason: 'insufficient' });
+    expect(buy('joker', levels(), 1e9, 4)).toEqual({ ok: false, reason: 'locked' });
     expect(buy('secondChance', levels({ secondChance: 2 }), 1e9, ANY_STAGE)).toEqual({
       ok: false,
       reason: 'max',
@@ -174,22 +176,23 @@ describe('prices and purchases', () => {
 
   it('knows when anything is affordable (the menu dot)', () => {
     expect(anyAffordable(levels(), 0, 1)).toBe(false);
-    expect(anyAffordable(levels(), 299, 1)).toBe(false);
-    expect(anyAffordable(levels(), 300, 1)).toBe(true);
+    expect(anyAffordable(levels(), 149, 1)).toBe(false);
+    expect(anyAffordable(levels(), 150, 1)).toBe(true);
     expect(anyAffordable(maxed(), 1e9, ANY_STAGE)).toBe(false);
-    // Only Second Chance is left, and only stage 5 opens it.
-    const allButSaves = { ...maxed(), secondChance: 0 };
-    expect(anyAffordable(allButSaves, 1e9, 4)).toBe(false);
-    expect(anyAffordable(allButSaves, 1e9, 5)).toBe(true);
+    // Only Joker Cat is left, and only stage 5 opens it.
+    const allButJoker = { ...maxed(), joker: 0 };
+    expect(anyAffordable(allButJoker, 1e9, 4)).toBe(false);
+    expect(anyAffordable(allButJoker, 1e9, 5)).toBe(true);
   });
 
   it('opens cards at their gates', () => {
     expect(upgradeUnlocked('luckyPaw', 1)).toBe(true);
-    expect(upgradeUnlocked('comboCharm', 2)).toBe(false);
-    expect(upgradeUnlocked('comboCharm', 3)).toBe(true);
+    expect(upgradeUnlocked('secondChance', 1)).toBe(true);
+    expect(upgradeUnlocked('comboCharm', 1)).toBe(false);
+    expect(upgradeUnlocked('comboCharm', 2)).toBe(true);
     expect(unlockedBetween(1, 1)).toEqual([]);
-    expect(unlockedBetween(1, 3)).toEqual(['comboCharm', 'moreMagnets']);
-    expect(unlockedBetween(3, 9)).toEqual(['secondChance', 'hanabi', 'joker']);
+    expect(unlockedBetween(1, 2)).toEqual(['comboCharm', 'moreMagnets']);
+    expect(unlockedBetween(2, 9)).toEqual(['hanabi', 'joker']);
     expect(unlockedBetween(9, 40)).toEqual([]);
   });
 

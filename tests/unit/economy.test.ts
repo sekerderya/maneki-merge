@@ -138,8 +138,8 @@ describe('RunEconomy', () => {
     const coins = (e: RunEconomy): number[] =>
       Array.from({ length: 8 }, (_, i) => e.merge(8, i * 500).coins);
     expect(coins(plain)).toEqual(Array(8).fill(41));
-    // Bonus 0.4 × min(combo − 1, 5): 0, 0.4, 0.8, 1.2, 1.6, 2, 2, 2.
-    expect(coins(charmed)).toEqual([41, 57, 74, 90, 107, 123, 123, 123]);
+    // Bonus 0.6 × min(combo − 1, 5): 0, 0.6, 1.2, 1.8, 2.4, 3, 3, 3.
+    expect(coins(charmed)).toEqual([41, 66, 90, 115, 139, 164, 164, 164]);
     expect(charmed.combo).toBe(8);
   });
 
@@ -169,7 +169,7 @@ describe('RunEconomy', () => {
     const e = new RunEconomy({ coinMultiplier: 1, comboCharmLevel: 1 });
     e.merge(6, 0);
     const p = e.jackpot(7, 500);
-    expect(p).toEqual({ score: 282, coins: 130, combo: 2 }); // 256 × 1.1; 120 × 1.08 = 129.6
+    expect(p).toEqual({ score: 282, coins: 134, combo: 2 }); // 256 × 1.1; 120 × 1.12 = 134.4
     expect(e.jackpots).toBe(1);
     expect(e.merges).toBe(1);
     expect(e.highestTier).toBe(7);

@@ -54,11 +54,13 @@ export const HANABI_PUSH_SPEED = 320;
 export const JOKER_SIZE = 2;
 
 /**
- * Big Drops adds this many Big Catch levels to the drop weights (GAME_DESIGN §8), up to
- * MAX_DROP_TILT_LEVEL in all: there every drop size has its own share (10, 20, 30, 40%).
+ * Big Drops adds this many tilt levels to the drop weights (GAME_DESIGN §8), up to
+ * MAX_DROP_TILT_LEVEL in all with Big Catch: there the smallest drop is almost gone (1, 17, 33,
+ * 49%). Until v0.39 (every shop effect 1.5 times as strong, the owner's call): 2 per level, up to 10
+ * (10, 20, 30, 40%).
  */
-export const BIG_DROPS_TILT_PER_LEVEL = 2;
-export const MAX_DROP_TILT_LEVEL = 10;
+export const BIG_DROPS_TILT_PER_LEVEL = 3;
+export const MAX_DROP_TILT_LEVEL = 13;
 
 /** A pick shows this many different options (fewer when fewer are left). */
 export const PICK_OPTIONS = 3;
@@ -344,10 +346,11 @@ export const PICKS: Readonly<Record<PickId, PickDef>> = {
     id: 'moreMagnets',
     kind: 'blessing',
     name: 'More Magnets',
-    description: '+1.5% magnet chance',
+    description: '+2.25% magnet chance',
     statLabel: 'Magnets',
     maxLevel: 5,
-    perLevel: 0.015,
+    // v0.39: 1.5 times v0.24's 1.5% (every shop effect 1.5 times as strong, the owner's call).
+    perLevel: 0.0225,
   },
   bigDrops: {
     id: 'bigDrops',
@@ -362,10 +365,11 @@ export const PICKS: Readonly<Record<PickId, PickDef>> = {
     id: 'goldenCats',
     kind: 'blessing',
     name: 'Golden Cats',
-    description: '+4% golden cats: they skip a size when they merge',
+    description: '+6% golden cats: they skip a size when they merge',
     statLabel: 'Golden cats',
     maxLevel: 5,
-    perLevel: 0.04,
+    // 4% until v0.39.
+    perLevel: 0.06,
   },
   hanabi: {
     id: 'hanabi',
@@ -374,7 +378,8 @@ export const PICKS: Readonly<Record<PickId, PickDef>> = {
     description: 'Fireworks that pop the small cats around them',
     statLabel: 'Hanabi',
     maxLevel: 5,
-    perLevel: 0.015,
+    // 1.5% until v0.39.
+    perLevel: 0.0225,
   },
   joker: {
     id: 'joker',
@@ -383,7 +388,8 @@ export const PICKS: Readonly<Record<PickId, PickDef>> = {
     description: 'Merges with any cat and makes it one size bigger',
     statLabel: 'Jokers',
     maxLevel: 5,
-    perLevel: 0.015,
+    // 1.5% until v0.39.
+    perLevel: 0.0225,
   },
 };
 

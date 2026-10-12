@@ -75,7 +75,8 @@ export function upgradeValue(id: UpgradeId, level: number): string {
   const stats = deriveStats({ ...defaultUpgradeLevels(), [id]: level });
   switch (id) {
     case 'luckyPaw':
-      return `+${percent(stats.coinMultiplier - 1)}`;
+      // Steps of 22.5%: one decimal (22.5%, 45%, 67.5%).
+      return `+${roundStable((stats.coinMultiplier - 1) * 1000) / 10}%`;
     case 'bigCatch': {
       // The share of the biggest cat in a stage's drop pool.
       const weights = dropWeights(stats.bigCatchTilt);

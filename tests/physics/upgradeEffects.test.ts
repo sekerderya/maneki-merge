@@ -67,7 +67,7 @@ describe('upgrade effects in runs (GAME_DESIGN §10)', () => {
       mergePair(run, 4, 0);
       return run.coins;
     });
-    expect(coins).toEqual([5, 8]); // 5 × 1.6
+    expect(coins).toEqual([5, 10]); // 5 × 1.9 = 9.5
   });
 
   it('Big Catch: bigger cats from the same seed', () => {
@@ -86,7 +86,7 @@ describe('upgrade effects in runs (GAME_DESIGN §10)', () => {
       expect(run.combo).toBe(2);
       return run.coins;
     });
-    expect(coins).toEqual([10, 12]); // 5 + 5 × 1.4 = 5 + 7
+    expect(coins).toEqual([10, 13]); // 5 + 5 × 1.6 = 5 + 8
   });
 
   it('Second Chance: a Lucky Save instead of game over', () => {

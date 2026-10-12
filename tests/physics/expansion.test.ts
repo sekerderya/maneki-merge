@@ -199,7 +199,7 @@ describe('stage clear payouts (GAME_DESIGN §7)', () => {
     const luckyPaw = 4;
     const { run, log, banked } = setup({ luckyPaw });
     const multiplier = run.stats.coinMultiplier;
-    expect(multiplier).toBeCloseTo(1.6, 12);
+    expect(multiplier).toBeCloseTo(1.9, 12);
 
     for (let stage = 1; stage <= 5; stage++) {
       expect(run.stage).toBe(stage);
@@ -246,9 +246,9 @@ describe('stage clear payouts (GAME_DESIGN §7)', () => {
         'expansionFinished',
       ]);
     }
-    // Spot checks of the rounding: tier 3 at ×1.6 → 1.5 × 1.6 = 2.4 → 2.
-    expect(popCoins(3, multiplier)).toBe(2);
-    expect(popCoins(53, multiplier)).toBe(66); // stage 6 (jar 2), size 8: 41 × 1.6 = 65.6
+    // Spot checks of the rounding: tier 3 at ×1.9 → 1.5 × 1.9 = 2.85 → 3.
+    expect(popCoins(3, multiplier)).toBe(3);
+    expect(popCoins(53, multiplier)).toBe(78); // stage 6 (jar 2), size 8: 41 × 1.9 = 77.9
   });
 
   it('announces the tiers each stage adds as it starts, and grows the jar every 5 stages', () => {
