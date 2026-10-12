@@ -246,6 +246,32 @@ test('a resize and a pause in the middle of an expansion are safe', async ({ pag
   expect(errors).toEqual([]);
 });
 
+test("a run quit from its pause leaves the next run's clouds free to move", async ({ page }) => {
+  const errors = watchConsole(page);
+  await startRun(page, 7);
+  await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pagehide')));
+  await expect(page.getByTestId('pause-overlay')).toBeVisible();
+  await page.getByTestId('quit').click();
+  await page.getByTestId('play').click();
+  await expect.poll(async () => (await state(page)).canDrop, WAIT).toBe(true);
+
+  await page.evaluate(() => window.__game?.setStage(6));
+  await expect
+    .poll(async () => (await state(page)).expansion?.phase ?? null, { timeout: 80_000 })
+    .toBe('zoom');
+  // The clouds play, and the next garden shows behind them before the zoom is over.
+  const cloudsRunning = (): Promise<boolean> =>
+    page.evaluate(() =>
+      (document.querySelector('.growth-clouds')?.getAnimations({ subtree: true }) ?? []).some(
+        (a) => a.playState === 'running',
+      ),
+    );
+  expect(await cloudsRunning()).toBe(true);
+  await expect(page.locator('.play-scenery')).toHaveAttribute('src', /background-2\.webp$/, WAIT);
+  expect((await state(page)).expansion?.phase).toBe('zoom');
+  expect(errors).toEqual([]);
+});
+
 test('the debug jump plays every expansion in turn', async ({ page }) => {
   const errors = watchConsole(page);
   await startRun(page, 6);

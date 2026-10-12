@@ -267,6 +267,8 @@ export class GameSession {
     hint.hide();
     banners.clear();
     coins.clear();
+    // A run quit from its pause never resumed: its clouds and petals would stay frozen.
+    this.parts.scenery.setPaused(false);
     window.clearTimeout(this.hintTimer);
     window.clearTimeout(this.ruleHintTimer);
     this.ruleHint = null;
