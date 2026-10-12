@@ -88,8 +88,8 @@ describe('shop cards (GAME_DESIGN §2.2)', () => {
     ['goldenCats', 5, '30%'],
     ['bigDrops', 1, '19%'],
     ['bigDrops', 3, '37%'],
-    ['moreMagnets', 0, '1%'],
-    ['moreMagnets', 2, '5.5%'],
+    ['moreMagnets', 0, '0%'],
+    ['moreMagnets', 2, '4.5%'],
     ['hanabi', 0, '0%'],
     ['joker', 5, '11.25%'],
   ])('%s at level %i shows %s', (id, level, text) => {

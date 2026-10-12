@@ -81,10 +81,10 @@ describe('the trials, rules and blessings (GAME_DESIGN §15.5)', () => {
 });
 
 describe('dropOdds (GAME_DESIGN §15.1)', () => {
-  it('starts with 1% magnets, 3% boulders from stage 2, no golden cats, hanabi or jokers', () => {
+  it('starts with 3% boulders from stage 2, no magnets, golden cats, hanabi or jokers', () => {
     expect(dropOdds(levels(), 1, 0)).toEqual({
       tiltLevel: 0,
-      magnetChance: 0.01,
+      magnetChance: 0,
       boulderChance: 0,
       goldenChance: 0,
       hanabiChance: 0,
@@ -99,7 +99,7 @@ describe('dropOdds (GAME_DESIGN §15.1)', () => {
   it('matches every table value at the max level', () => {
     const max = levels(Object.fromEntries(PICK_IDS.map((id) => [id, PICKS[id].maxLevel])));
     const odds = dropOdds(max, 3, 0);
-    expect(odds.magnetChance).toBeCloseTo(0.1225, 12);
+    expect(odds.magnetChance).toBeCloseTo(0.1125, 12);
     expect(odds.boulderChance).toBeCloseTo(0.18, 12);
     expect(odds.goldenChance).toBeCloseTo(0.3, 12);
     expect(odds.hanabiChance).toBeCloseTo(0.1125, 12);
@@ -237,8 +237,8 @@ describe('the cards', () => {
     ['moreBoulders', { moreBoulders: 4 }, 0, '15%', '18%'],
     ['ironBands', {}, 0, '1', '2'],
     ['bigBoulders', { bigBoulders: 1 }, 0, 'Size 3', 'Size 4'],
-    ['moreMagnets', {}, 0, '1%', '3.25%'],
-    ['moreMagnets', { moreMagnets: 4 }, 0, '10%', '12.25%'],
+    ['moreMagnets', {}, 0, '0%', '2.25%'],
+    ['moreMagnets', { moreMagnets: 4 }, 0, '9%', '11.25%'],
     ['bigDrops', {}, 0, '10%', '19%'],
     ['bigDrops', {}, 3, '19%', '28%'],
     ['goldenCats', { goldenCats: 2 }, 0, '12%', '18%'],

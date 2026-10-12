@@ -5,8 +5,11 @@
  * option's level for the rest of the run. Derived values: core/picks.ts.
  */
 
-/** The queue's base chances (GAME_DESIGN §15.1), before any pick. */
-export const MAGNET_BASE_CHANCE = 0.01;
+/**
+ * The boulders' chance before any pick (GAME_DESIGN §15.1). Magnets, like hanabi and jokers, come
+ * only with their blessing (v0.39.1, the owner's call: a profile without More Magnets saw them at
+ * 1% until then).
+ */
 export const BOULDER_BASE_CHANCE = 0.03;
 /**
  * No magnet comes in a stage's first drops: only items queued once the player has dropped this

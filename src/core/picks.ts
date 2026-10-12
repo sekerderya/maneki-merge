@@ -14,7 +14,6 @@ import {
   DICE_LUCKY_CHANCE,
   HEAVY_DROP_FALL_TIMES,
   HUBRIS_PAIR_WAIT_MS,
-  MAGNET_BASE_CHANCE,
   MAX_DROP_TILT_LEVEL,
   PICK_IDS,
   PICK_OPTIONS,
@@ -61,7 +60,7 @@ export function boulderChance(levels: PickLevels, stage: number): number {
 export function dropOdds(levels: PickLevels, stage: number, bigCatchTilt: number): DropOdds {
   return {
     tiltLevel: tiltLevel(levels, bigCatchTilt),
-    magnetChance: MAGNET_BASE_CHANCE + PICKS.moreMagnets.perLevel * levels.moreMagnets,
+    magnetChance: PICKS.moreMagnets.perLevel * levels.moreMagnets,
     boulderChance: boulderChance(levels, stage),
     goldenChance: PICKS.goldenCats.perLevel * levels.goldenCats,
     hanabiChance: PICKS.hanabi.perLevel * levels.hanabi,
