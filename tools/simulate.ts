@@ -9,6 +9,12 @@
  *   npm run sim -- "curse max:cursedBell=1,quickCurse=3,moreCurses=3"
  *   npm run sim -- --seeds 30 --cap 240 --stages 1 --workers 4 --aim random
  *   npm run sim -- base --upgrades max --stages 5 --cap 900   shop cards: max, or id=level,…
+ *   npm run sim -- base --aim smart --think 400 --extra-saves 1      a more human bot (v0.39)
+ *   npm run sim -- --meta 30 --seeds 24 --extra-saves 1 --goal 5     players from a fresh profile
+ *
+ * `--meta <minutes>` plays each seed as a player who starts from a fresh profile and buys the
+ * cheapest card after every run (tools/sim/meta.ts), with the smart bot unless `--aim` says
+ * otherwise, and reports when the goal stage is first cleared.
  *
  * An arm is `[name:]id=level,id=level`; a bare id means level 1, and `base` is no picks. Seeds run
  * 1…n, the same for every arm, so arms differ only by their picks. The run code loads through
@@ -20,13 +26,22 @@ import { isMainThread, parentPort, Worker, workerData } from 'node:worker_thread
 import { runnerImport } from 'vite';
 import type * as BotModuleNs from './sim/bot.ts';
 import type { Arm, ArmSummary, BotAim, BotOptions, BotRun } from './sim/bot.ts';
+import type * as MetaModuleNs from './sim/meta.ts';
+import type { MetaOptions, MetaPlayer } from './sim/meta.ts';
 
 type BotModule = typeof BotModuleNs;
+type MetaModule = typeof MetaModuleNs;
 
 const BOT = fileURLToPath(new URL('./sim/bot.ts', import.meta.url));
+const META = fileURLToPath(new URL('./sim/meta.ts', import.meta.url));
 
 async function loadBot(): Promise<BotModule> {
   const { module } = await runnerImport<BotModule>(BOT, { configFile: false, logLevel: 'error' });
+  return module;
+}
+
+async function loadMeta(): Promise<MetaModule> {
+  const { module } = await runnerImport<MetaModule>(META, { configFile: false, logLevel: 'error' });
   return module;
 }
 
@@ -41,10 +56,10 @@ const DEFAULT_ARMS = [
   'dice',
 ];
 
-interface Job {
-  readonly arm: number;
-  readonly options: BotOptions;
-}
+/** A run of an arm, or a whole player of `--meta`. */
+type Job =
+  | { readonly kind: 'run'; readonly arm: number; readonly options: BotOptions }
+  | { readonly kind: 'meta'; readonly arm: number; readonly options: MetaOptions };
 
 function parseArm(text: string): Arm {
   const colon = text.indexOf(':');
@@ -61,14 +76,24 @@ function parseArm(text: string): Arm {
 }
 
 function parseArgs(argv: readonly string[]) {
-  const flags: Record<string, number> = { seeds: 30, cap: 240, stages: 1, workers: 0 };
+  const flags: Record<string, number> = {
+    seeds: 30,
+    cap: 240,
+    stages: 1,
+    workers: 0,
+    meta: 0,
+    goal: 5,
+    'extra-saves': 0,
+  };
   const arms: string[] = [];
-  let aim: BotAim = 'match';
+  let aim: BotAim | undefined;
   let upgrades: string | undefined;
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i] as string;
-    if (arg === '--aim') aim = argv[++i] === 'random' ? 'random' : 'match';
-    else if (arg === '--upgrades') upgrades = argv[++i] ?? '';
+    if (arg === '--aim') {
+      const value = argv[++i];
+      aim = value === 'random' || value === 'smart' ? value : 'match';
+    } else if (arg === '--upgrades') upgrades = argv[++i] ?? '';
     else if (arg.startsWith('--')) flags[arg.slice(2)] = Number(argv[++i]);
     else arms.push(arg);
   }
@@ -79,8 +104,13 @@ function parseArgs(argv: readonly string[]) {
     capSeconds: flags['cap'] as number,
     stages: flags['stages'] as number,
     workers,
-    aim,
+    // The meta bot plays like a person unless told otherwise.
+    aim: aim ?? (flags['meta'] ? 'smart' : 'match'),
     upgrades,
+    meta: flags['meta'] as number,
+    goal: flags['goal'] as number,
+    thinkMs: flags['think'],
+    extraSaves: flags['extra-saves'] as number,
   };
 }
 
@@ -137,18 +167,40 @@ function clearsTable(summaries: readonly ArmSummary[]): string {
 
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
-  const { arms, seeds, capSeconds, stages, workers, aim } = args;
+  const { arms, seeds, capSeconds, stages, workers, aim, thinkMs, extraSaves } = args;
   const bot = await loadBot();
+  const meta = await loadMeta();
   const upgrades = args.upgrades === undefined ? undefined : bot.upgradeLevels(args.upgrades);
   const jobs: Job[] = [];
-  arms.forEach((arm, index) => {
-    for (let seed = 1; seed <= seeds; seed++) {
-      const options: BotOptions = { seed, levels: arm.levels, stages, capSeconds, aim };
-      jobs.push({ arm: index, options: upgrades ? { ...options, upgrades } : options });
+  if (args.meta > 0) {
+    for (let player = 1; player <= seeds; player++) {
+      const options = { player, minutes: args.meta, goal: args.goal, aim, thinkMs, extraSaves };
+      jobs.push({ kind: 'meta', arm: 0, options });
     }
-  });
+  } else {
+    arms.forEach((arm, index) => {
+      for (let seed = 1; seed <= seeds; seed++) {
+        const options: BotOptions = {
+          seed,
+          levels: arm.levels,
+          stages,
+          capSeconds,
+          aim,
+          thinkMs,
+          extraSaves,
+        };
+        jobs.push({
+          kind: 'run',
+          arm: index,
+          options: upgrades ? { ...options, upgrades } : options,
+        });
+      }
+    });
+  }
+  const play = (job: Job): BotRun | MetaPlayer =>
+    job.kind === 'run' ? bot.playBot(job.options) : meta.playMeta(job.options);
   const started = performance.now();
-  const results: BotRun[][] = arms.map(() => []);
+  const results: (BotRun | MetaPlayer)[][] = arms.map(() => []);
   let done = 0;
   const report = (): void => {
     process.stderr.write(`\r${++done}/${jobs.length} runs`);
@@ -156,7 +208,7 @@ async function main(): Promise<void> {
 
   if (workers <= 1) {
     for (const job of jobs) {
-      results[job.arm]!.push(bot.playBot(job.options));
+      results[job.arm]!.push(play(job));
       report();
     }
   } else {
@@ -164,15 +216,15 @@ async function main(): Promise<void> {
     await Promise.all(
       Array.from({ length: Math.min(workers, jobs.length) }, async () => {
         const worker = new Worker(fileURLToPath(import.meta.url), { workerData: { worker: true } });
-        const play = (job: Job): Promise<BotRun> =>
+        const playThere = (job: Job): Promise<BotRun | MetaPlayer> =>
           new Promise((resolve, reject) => {
             worker.once('message', resolve);
             worker.once('error', reject);
-            worker.postMessage(job.options);
+            worker.postMessage(job);
           });
         while (next < jobs.length) {
           const job = jobs[next++] as Job;
-          results[job.arm]!.push(await play(job));
+          results[job.arm]!.push(await playThere(job));
           report();
         }
         await worker.terminate();
@@ -180,16 +232,25 @@ async function main(): Promise<void> {
     );
   }
 
+  const seconds = ((performance.now() - started) / 1000).toFixed(0);
+  process.stderr.write(`\r${jobs.length} ${args.meta > 0 ? 'players' : 'runs'} in ${seconds} s\n`);
+  const how =
+    `Bot aim: ${aim}${aim === 'smart' ? `, ${thinkMs ?? bot.DEFAULT_THINK_MS} ms before each drop` : ''}` +
+    (extraSaves > 0 ? `, ${extraSaves} extra Lucky Save${extraSaves > 1 ? 's' : ''}` : '');
+  if (args.meta > 0) {
+    const players = (results[0] as MetaPlayer[]).sort((a, b) => a.player - b.player);
+    console.log(`${how}; ${seeds} players from a fresh profile, ${args.meta} min each.\n`);
+    console.log(meta.metaReport(players, args.meta, args.goal));
+    return;
+  }
   const summaries = arms.map((arm, i) =>
     bot.summarize(
       arm.name,
-      [...results[i]!].sort((a, b) => a.seed - b.seed),
+      (results[i] as BotRun[]).sort((a, b) => a.seed - b.seed),
       stages,
     ),
   );
-  const seconds = ((performance.now() - started) / 1000).toFixed(0);
-  process.stderr.write(`\r${jobs.length} runs in ${seconds} s\n`);
-  console.log(`Bot aim: ${aim}, seeds 1–${seeds} per arm.
+  console.log(`${how}, seeds 1–${seeds} per arm.
 `);
   console.log(table(summaries, stages, capSeconds));
   console.log(`\nShop cards: ${upgrades ? 'as given' : 'a fresh profile'}.\n`);
@@ -200,7 +261,10 @@ if (isMainThread) {
   await main();
 } else if ((workerData as { worker?: boolean } | null)?.worker) {
   const bot = await loadBot();
-  parentPort?.on('message', (options: BotOptions) => {
-    parentPort?.postMessage(bot.playBot(options));
+  const meta = await loadMeta();
+  parentPort?.on('message', (job: Job) => {
+    parentPort?.postMessage(
+      job.kind === 'run' ? bot.playBot(job.options) : meta.playMeta(job.options),
+    );
   });
 }
