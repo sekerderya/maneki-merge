@@ -219,7 +219,7 @@ export const SCENES: readonly ClipScene[] = [
     seed: 17,
     async setup(scene) {
       await scene.play();
-      await setPick(scene, 'heavyDrop', 5);
+      await setPick(scene, 'heavyDrop', 1);
       await scene.place(1, atWall(-1, 1));
       await scene.place(3, 0);
       await scene.place(1, atWall(1, 1));

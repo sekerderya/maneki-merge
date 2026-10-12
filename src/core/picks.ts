@@ -13,6 +13,7 @@ import {
   DICE_FIZZLE_CHANCE,
   DICE_LUCKY_CHANCE,
   HEAVY_DROP_FALL_TIMES,
+  HEAVY_DROP_RULE_LEVEL,
   HUBRIS_PAIR_WAIT_MS,
   MAX_DROP_TILT_LEVEL,
   PICK_IDS,
@@ -48,6 +49,11 @@ export type PickCaps = Readonly<Partial<Record<PickId, number>>>;
 /** The drop weights' tilt: Big Catch's tilt plus Big Drops, at most MAX_DROP_TILT_LEVEL. */
 export function tiltLevel(levels: PickLevels, bigCatchTilt: number): number {
   return Math.min(MAX_DROP_TILT_LEVEL, bigCatchTilt + BIG_DROPS_TILT_PER_LEVEL * levels.bigDrops);
+}
+
+/** Heavy Drop's strength (0–5, GAME_DESIGN §15.9): its last level once the rule is taken. */
+export function heavyDropStrength(levels: PickLevels): number {
+  return levels.heavyDrop > 0 ? HEAVY_DROP_RULE_LEVEL : 0;
 }
 
 /** The boulder chance at a stage: none before BOULDER_FIRST_STAGE. */
@@ -194,7 +200,7 @@ export function pickValue(id: PickId, levels: PickLevels, bigCatchTilt: number):
     case 'wind':
       return WIND_NAMES[levels.wind] ?? '';
     case 'heavyDrop':
-      return seconds(HEAVY_DROP_FALL_TIMES[levels.heavyDrop] ?? 0);
+      return seconds(HEAVY_DROP_FALL_TIMES[heavyDropStrength(levels)] ?? 0);
     case 'porcelain':
       return percent(PICKS.porcelain.perLevel * levels.porcelain);
     case 'hubris':

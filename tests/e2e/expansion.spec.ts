@@ -124,7 +124,7 @@ test('making the last cat (two 8s) clears stage 1 and moves on in the same jar',
   expect(errors).toEqual([]);
 });
 
-test('a rule pick shows three of its four rules and is chosen through the panel', async ({
+test('a rule pick shows three of its five rules and is chosen through the panel', async ({
   page,
 }) => {
   const errors = watchConsole(page);
@@ -137,7 +137,7 @@ test('a rule pick shows three of its four rules and is chosen through the panel'
   await expect(overlay.locator('.pick-card')).toHaveCount(3);
   await expect(overlay.locator('.pick-card.is-rule .pick-level').first()).toHaveText('New rule');
   const rule = await overlay.locator('.pick-card').first().getAttribute('data-id');
-  expect(['hubris', 'echo', 'copycat', 'dice']).toContain(rule);
+  expect(['hubris', 'echo', 'copycat', 'dice', 'heavyDrop']).toContain(rule);
   await page.waitForTimeout(500);
   await overlay.locator('.pick-card').first().click();
   await page.getByTestId('pick-choose').click();
@@ -161,7 +161,6 @@ test("Cursed Bell's follow-up trials are offered only once it is taken", async (
       ironBands: 3,
       bigBoulders: 4,
       wind: 5,
-      heavyDrop: 5,
       porcelain: 4,
     };
     for (const [id, level] of Object.entries(max)) {

@@ -69,7 +69,7 @@ import { RunEconomy } from '../core/economy';
 import { EventBus } from '../core/events';
 import type { GameEvents } from '../core/events';
 import { StateHasher } from '../core/hash';
-import { defaultPickLevels, diceRoll, drawOffer, dropOdds } from '../core/picks';
+import { defaultPickLevels, diceRoll, drawOffer, dropOdds, heavyDropStrength } from '../core/picks';
 import type { PickLevels } from '../core/picks';
 import { nextStage, stageProgress } from '../core/progression';
 import type { StageProgress } from '../core/progression';
@@ -416,6 +416,11 @@ export class RunController {
     return this.levels[id];
   }
 
+  /** Heavy Drop's strength, 0–5 (GAME_DESIGN §15.9): the top once the rule is taken. */
+  get heavyDropLevel(): number {
+    return heavyDropStrength(this.levels);
+  }
+
   /** Which way the wind blows this run (GAME_DESIGN §15.8): 1 to the right, −1 to the left. */
   get windDirection(): WindDirection {
     return this.wind;
@@ -488,7 +493,7 @@ export class RunController {
     const radius = this.radiusOf(item.tier);
     const at = clampDropX(x, radius, geo);
     // Heavy Drop (GAME_DESIGN §15.9): it leaves the paw already falling, as the wind tilts it.
-    const vy = HEAVY_DROP_START_SPEED[this.levels.heavyDrop] ?? 0;
+    const vy = HEAVY_DROP_START_SPEED[this.heavyDropLevel] ?? 0;
     this.world.addBall({
       kind,
       tier: item.tier,
@@ -879,7 +884,7 @@ export class RunController {
     const now = world.timeMs;
     const last = stageInfo(world.stage).lastTier;
 
-    if (this.levels.heavyDrop > 0) this.announceLandings(now);
+    if (this.heavyDropLevel > 0) this.announceLandings(now);
     const outcomes = this.merges.resolve(world, last, this.mergeRules());
     /** The first cat this step made of the stage's last tier: it clears the stage. */
     let cleared: Ball | null = null;
@@ -1050,7 +1055,7 @@ export class RunController {
     for (const ball of this.world.balls) {
       if (ball.landedMs !== now) continue;
       const at = { x: ball.x, y: ball.y };
-      this.events.emit('heavyLanded', { id: ball.id, level: this.levels.heavyDrop, at });
+      this.events.emit('heavyLanded', { id: ball.id, level: this.heavyDropLevel, at });
     }
   }
 
@@ -1220,7 +1225,7 @@ export class RunController {
 
   /** What acts on a falling ball now: the wind and Heavy Drop (GAME_DESIGN §15.8–§15.9). */
   private fallForces(): FallForces {
-    const heavy = this.levels.heavyDrop;
+    const heavy = this.heavyDropLevel;
     return {
       windAccel: WIND_ACCEL_PER_LEVEL * this.levels.wind * this.wind,
       gravityBonus: HEAVY_DROP_GRAVITY_BONUS[heavy] ?? 0,

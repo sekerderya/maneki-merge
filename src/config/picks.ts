@@ -81,14 +81,16 @@ export type WindDirection = 1 | -1;
 
 /**
  * Heavy Drop (GAME_DESIGN §15.9): how long a dropped cat takes from the paw to the empty floor at
- * each level (index = level; 1.0 s without it), as its card shows them. The start speeds and the
- * gravity that make them are in config/physics.ts.
+ * each strength (index = strength; 1.0 s without it). The start speeds and the gravity that make
+ * them are in config/physics.ts. It was a trial of five levels until v0.40; now it is a rule, and
+ * taking it drops every ball at HEAVY_DROP_RULE_LEVEL, the trial's last level (the owner's call).
  */
 export const HEAVY_DROP_FALL_TIMES = [1.0, 0.66, 0.53, 0.41, 0.33, 0.24] as const;
+export const HEAVY_DROP_RULE_LEVEL = 5;
 /**
- * Its look: speed lines from level 1, a small flame with embers from HEAVY_FLAME_LEVEL, and from
- * HEAVY_FIREBALL_LEVEL (the top level) the big fireball, which lands with sparks, a thud and a
- * small shake. Visual only.
+ * Its look: speed lines from strength 1, a small flame with embers from HEAVY_FLAME_LEVEL, and
+ * from HEAVY_FIREBALL_LEVEL (the top) the big fireball, which lands with sparks, a thud and a
+ * small shake. Visual only. The rule always plays at the top.
  */
 export const HEAVY_FLAME_LEVEL = 3;
 export const HEAVY_FIREBALL_LEVEL = 5;
@@ -180,13 +182,12 @@ export const TRIAL_IDS = [
   'ironBands',
   'bigBoulders',
   'wind',
-  'heavyDrop',
   'porcelain',
   'cursedBell',
   'quickCurse',
   'moreCurses',
 ] as const;
-export const RULE_IDS = ['hubris', 'echo', 'copycat', 'dice'] as const;
+export const RULE_IDS = ['hubris', 'echo', 'copycat', 'dice', 'heavyDrop'] as const;
 export const BLESSING_IDS = ['moreMagnets', 'bigDrops', 'goldenCats', 'hanabi', 'joker'] as const;
 export const PICK_IDS = [...TRIAL_IDS, ...BLESSING_IDS, ...RULE_IDS] as const;
 
@@ -264,12 +265,13 @@ export const PICKS: Readonly<Record<PickId, PickDef>> = {
   },
   heavyDrop: {
     id: 'heavyDrop',
-    kind: 'trial',
+    // A rule since v0.40 (the owner's call): the trial's last level, at once.
+    kind: 'rule',
     name: 'Heavy Drop',
-    description: 'Cats fall faster and hit harder',
+    description: 'Cats shoot down like fireballs and knock aside the cat they land on',
     statLabel: 'Fall time',
-    maxLevel: 5,
-    perLevel: 1,
+    maxLevel: 1,
+    perLevel: HEAVY_DROP_RULE_LEVEL,
   },
   porcelain: {
     id: 'porcelain',

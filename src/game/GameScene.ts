@@ -572,7 +572,7 @@ export class GameScene extends Phaser.Scene {
     this.renderFlights(run);
     this.renderCountdown(run, geo);
     this.lastCat.update(this.nowMs, run.balls, run.state === 'paused');
-    this.fall.update(this.nowMs, run.balls, run.levelOf('heavyDrop'), run.state === 'paused');
+    this.fall.update(this.nowMs, run.balls, run.heavyDropLevel, run.state === 'paused');
     this.kintsugi.update(this.nowMs, run.balls);
     this.curse.update(this.nowMs, run.curse, run.balls, this.fit.zoom, reducedMotion());
     this.dice.update(this.nowMs);

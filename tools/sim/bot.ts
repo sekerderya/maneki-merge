@@ -215,13 +215,12 @@ const SMART_TRIALS: readonly PickId[] = [
   'ironBands',
   'porcelain',
   'bigBoulders',
-  'heavyDrop',
   'wind',
   'cursedBell',
   'moreCurses',
   'quickCurse',
 ];
-const SMART_RULES: readonly PickId[] = ['hubris', 'echo', 'dice', 'copycat'];
+const SMART_RULES: readonly PickId[] = ['hubris', 'echo', 'dice', 'copycat', 'heavyDrop'];
 const SMART_BLESSINGS: readonly PickId[] = [
   'bigDrops',
   'goldenCats',

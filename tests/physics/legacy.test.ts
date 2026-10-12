@@ -43,17 +43,18 @@ const LEVELS: [PickId, number][] = [
  * a seed with Batch 18's trials and rules on, a debug stage clear and the same kind of bot. Batch 19's picks
  * (GAME_DESIGN §15) start at 0 and roll on their own generators, so it must play the same. The prints
  * from tick 3600 on were re-recorded by v0.39 and v0.39.1 (stronger blessings and Lucky Save, no
- * magnets without More Magnets; see above).
+ * magnets without More Magnets; see above), and all of them by v0.40, which made Heavy Drop a rule
+ * at the old trial's last level: this run's Heavy Drop 2 now falls at strength 5.
  */
 const V0_34_0 = [
-  '600:b522b839:playing:3',
-  '1200:ecff7c01:playing:9',
-  '1800:f7d43d51:playing:11',
-  '2400:7f878d0d:playing:13',
-  '3000:6353718a:playing:21',
-  '3600:0985450f:playing:16',
-  '4200:504b9f8d:playing:16',
-  '4800:a0aaf79f:playing:13',
+  '600:e40a9560:playing:3',
+  '1200:0741e09e:playing:9',
+  '1800:8f57a571:playing:12',
+  '2400:5c6feaca:playing:15',
+  '3000:8a1e054c:playing:17',
+  '3600:4647cf00:playing:13',
+  '4200:a799782a:playing:15',
+  '4800:56459630:playing:14',
 ];
 
 const LEVELS_0_34: [PickId, number][] = [
@@ -63,7 +64,7 @@ const LEVELS_0_34: [PickId, number][] = [
   ['joker', 2],
   ['hanabi', 2],
   ['wind', 2],
-  ['heavyDrop', 2],
+  ['heavyDrop', 1],
   ['porcelain', 2],
   ['hubris', 1],
   ['echo', 1],

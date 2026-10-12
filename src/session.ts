@@ -81,6 +81,7 @@ export interface SessionParts {
 const RULE_HINTS: Partial<Record<PickId, string>> = {
   hubris: 'Hubris: three small cats merge at once and skip a size',
   copycat: 'Copycat: the next cat copies your last merge',
+  heavyDrop: 'Heavy Drop: cats shoot down like fireballs',
 };
 
 export class GameSession {

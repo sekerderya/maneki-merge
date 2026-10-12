@@ -39,7 +39,6 @@ describe('the trials, rules and blessings (GAME_DESIGN §15.5)', () => {
     ['ironBands', 'trial', 'Iron Bands', 3, 1],
     ['bigBoulders', 'trial', 'Big Boulders', 4, 1],
     ['wind', 'trial', 'Wind', 5, 100],
-    ['heavyDrop', 'trial', 'Heavy Drop', 5, 1],
     ['porcelain', 'trial', 'Porcelain', 4, 0.1],
     ['cursedBell', 'trial', 'Cursed Bell', 1, 1],
     ['quickCurse', 'trial', 'Quick Curse', 3, 1],
@@ -53,9 +52,11 @@ describe('the trials, rules and blessings (GAME_DESIGN §15.5)', () => {
     ['echo', 'rule', 'Echo', 1, 1],
     ['copycat', 'rule', 'Copycat', 1, 1],
     ['dice', 'rule', 'Dice', 1, 1],
+    // A rule since v0.40: the old trial's last level (strength 5) at once.
+    ['heavyDrop', 'rule', 'Heavy Drop', 1, 5],
   ];
 
-  it('lists nine trials, five blessings and four rules, in card order', () => {
+  it('lists eight trials, five blessings and five rules, in card order', () => {
     expect([...PICK_IDS]).toEqual(TABLE.map(([id]) => id));
     expect(pickIds('trial')).toEqual(TRIAL_IDS);
     expect(pickIds('blessing')).toEqual(BLESSING_IDS);
@@ -130,7 +131,7 @@ describe('the cards', () => {
     expect(pickMaxed('bigDrops', levels({ bigDrops: 3 }), 5)).toBe(true); // 5 + 9 ≥ 13
   });
 
-  it('offers three of the seven trials open at first, each of them at times', () => {
+  it('offers three of the six trials open at first, each of them at times', () => {
     const seen = new Set<string>();
     for (let seed = 0; seed < 80; seed++) {
       const offer = drawOffer('trial', levels(), 0, new Rng(seed));
@@ -173,7 +174,7 @@ describe('the cards', () => {
     ]);
   });
 
-  it('offers three of the four rules in random order, then fewer, then none', () => {
+  it('offers three of the five rules in random order, then fewer, then none', () => {
     const seen = new Set<string>();
     for (let seed = 0; seed < 60; seed++) {
       const offer = drawOffer('rule', levels(), 0, new Rng(seed));
@@ -181,11 +182,9 @@ describe('the cards', () => {
       for (const id of offer) seen.add(id);
     }
     expect([...seen].sort()).toEqual([...RULE_IDS].sort());
-    expect([...drawOffer('rule', levels({ hubris: 1, dice: 1 }), 0, new Rng(1))].sort()).toEqual([
-      'copycat',
-      'echo',
-    ]);
-    const all = { hubris: 1, echo: 1, copycat: 1, dice: 1 };
+    const two = levels({ hubris: 1, dice: 1, heavyDrop: 1 });
+    expect([...drawOffer('rule', two, 0, new Rng(1))].sort()).toEqual(['copycat', 'echo']);
+    const all = { hubris: 1, echo: 1, copycat: 1, dice: 1, heavyDrop: 1 };
     expect(drawOffer('rule', levels(all), 0, new Rng(1))).toEqual([]);
   });
 
@@ -246,9 +245,8 @@ describe('the cards', () => {
     ['joker', { joker: 4 }, 0, '9%', '11.25%'],
     ['wind', {}, 0, 'Calm', 'Breeze'],
     ['wind', { wind: 4 }, 0, 'Gale', 'Storm'],
-    ['heavyDrop', {}, 0, '1.0 s', '0.66 s'],
-    ['heavyDrop', { heavyDrop: 1 }, 0, '0.66 s', '0.53 s'],
-    ['heavyDrop', { heavyDrop: 4 }, 0, '0.33 s', '0.24 s'],
+    // The rule: the fall of the old trial's last level.
+    ['heavyDrop', {}, 0, '1.0 s', '0.24 s'],
     ['porcelain', {}, 0, '0%', '10%'],
     ['porcelain', { porcelain: 3 }, 0, '30%', '40%'],
     ['hubris', {}, 0, 'At once', 'After 0.5 s'],
