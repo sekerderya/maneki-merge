@@ -218,8 +218,17 @@ async function main(): Promise<void> {
         const worker = new Worker(fileURLToPath(import.meta.url), { workerData: { worker: true } });
         const playThere = (job: Job): Promise<BotRun | MetaPlayer> =>
           new Promise((resolve, reject) => {
-            worker.once('message', resolve);
-            worker.once('error', reject);
+            // One pair of listeners per job, both gone once it settles (a worker plays many jobs).
+            const done = (result: BotRun | MetaPlayer): void => {
+              worker.off('error', fail);
+              resolve(result);
+            };
+            const fail = (error: Error): void => {
+              worker.off('message', done);
+              reject(error);
+            };
+            worker.once('message', done);
+            worker.once('error', fail);
             worker.postMessage(job);
           });
         while (next < jobs.length) {
