@@ -64,9 +64,16 @@ test.describe('update badge', () => {
 
 test.describe('URL flags', () => {
   test('are parsed from the query string', async ({ page }) => {
-    await page.goto('./?debug=1&seed=1234&skin=placeholder');
+    await page.goto('./?debug=1&seed=1234&skin=placeholder&gravity=1.2&interp=0');
     const flags = await page.evaluate(() => window.__game?.flags);
-    expect(flags).toEqual({ debug: true, seed: 1234, skin: 'placeholder', resolution: null });
+    expect(flags).toEqual({
+      debug: true,
+      seed: 1234,
+      skin: 'placeholder',
+      resolution: null,
+      gravity: 1.2,
+      interpolate: false,
+    });
   });
 
   test('?res= fixes the canvas resolution', async ({ page }) => {
