@@ -23,7 +23,8 @@
     "check": "npm run typecheck && npm run lint && npm run test:coverage",
     "icons": "pwa-assets-generator --config pwa-assets.config.ts",
     "art": "node tools/build-art.ts",
-    "sim": "node tools/simulate.ts"
+    "sim": "node tools/simulate.ts",
+    "clips": "node tools/record-clips.ts"
   },
   "dependencies": {
     "@fontsource/fredoka": "^5.3.0",
@@ -40,6 +41,7 @@
     "eslint": "^10.12.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.13.0",
+    "mp4-muxer": "^5.2.2",
     "prettier": "^3.9.9",
     "sharp": "^0.35.5",
     "typescript": "~6.0.3",

@@ -77,6 +77,14 @@ export interface GameStateSnapshot {
 }
 
 /** Test hooks on `window.__game` (TECH_SPEC §11), installed only with `?debug=1`. */
+/** The jar on the page (`GameHooks.jarRect`), in CSS pixels. */
+export interface JarRect {
+  readonly left: number;
+  readonly right: number;
+  readonly rim: number;
+  readonly floor: number;
+}
+
 export interface GameHooks {
   readonly flags: UrlFlags;
   screen(): ScreenId;
@@ -90,6 +98,10 @@ export interface GameHooks {
   takeableIds(): number[];
   /** Where the ball `id` is on the page, in CSS pixels (to tap it), or null. */
   ballPoint(id: number): { readonly x: number; readonly y: number } | null;
+  /** Where the world point (x, y) is on the page, in CSS pixels, or null without a run. */
+  screenPoint(x: number, y: number): { readonly x: number; readonly y: number } | null;
+  /** The jar on the page in CSS pixels: its inner walls, rim and floor; null without a run. */
+  jarRect(): JarRect | null;
   /** The magnet in the dropper takes the ball `id` (the oldest takeable one by default). */
   take(id?: number): boolean;
   /** Chooses an option of the waiting pick (its first by default). */
@@ -115,8 +127,13 @@ export interface GameHooks {
   setStage(stage: number): void;
   /** Sets the run score (records only). */
   setScore(score: number): void;
-  /** Drops a cat of `tier` at world x from the dropper's height; ignored if the stage can't hold it. */
-  spawnTier(tier: number, x?: number): void;
+  /**
+   * Puts a cat of `tier` at world x, at the dropper's height or at world y (its centre; −radius
+   * lays it on the floor). Returns its id, or null when the stage can't hold the tier.
+   */
+  spawnTier(tier: number, x?: number, y?: number): number | null;
+  /** The radius of a cat of `tier` at the current stage, in world units. */
+  radiusOf(tier: number): number;
   /** Drops a cracked cat (Porcelain) of the stage's `size` at world x; returns its id or null. */
   spawnCracked(size?: number, x?: number): number | null;
   /** Cracks the cat `id` as a merge beside it would (a cracked one breaks). */
@@ -213,16 +230,26 @@ export function installDebugHooks(ctx: DebugContext): GameHooks {
       return run ? run.balls.filter((ball) => run.takeable(ball)).map((ball) => ball.id) : [];
     },
     ballPoint(id) {
+      const ball = session.run?.balls.find((b) => b.id === id);
+      return ball ? hooks.screenPoint(ball.x, ball.y) : null;
+    },
+    screenPoint(x, y) {
       const run = session.run;
-      const ball = run?.balls.find((b) => b.id === id);
+      const jar = hooks.jarRect();
+      if (!run || !jar) return null;
+      const unit = (jar.right - jar.left) / run.geometry.width;
+      return { x: (jar.left + jar.right) / 2 + x * unit, y: jar.floor + y * unit };
+    },
+    jarRect() {
       const box = ctx.game.jarBox();
       const canvas = document.querySelector('#game-screen canvas');
-      if (!run || !ball || !box || !canvas) return null;
+      if (!box || !canvas) return null;
       const area = canvas.getBoundingClientRect();
-      const unit = (box.right - box.left) / run.geometry.width;
       return {
-        x: area.left + (box.left + box.right) / 2 + ball.x * unit,
-        y: area.top + box.bottom + ball.y * unit,
+        left: area.left + box.left,
+        right: area.left + box.right,
+        rim: area.top + box.top,
+        floor: area.top + box.bottom,
       };
     },
     take(id) {
@@ -273,10 +300,13 @@ export function installDebugHooks(ctx: DebugContext): GameHooks {
     setScore(score) {
       session.run?.setScore(Math.max(0, Math.round(score)));
     },
-    spawnTier(tier, x = 0) {
+    spawnTier(tier, x = 0, y) {
       const run = session.run;
-      if (!run || !stageHoldsTier(run.stage, tier)) return;
-      run.spawnBall(tier, x);
+      if (!run || !stageHoldsTier(run.stage, tier)) return null;
+      return run.spawnBall(tier, x, y).id;
+    },
+    radiusOf(tier) {
+      return session.run?.radiusOf(tier) ?? 0;
     },
     spawnCracked(size = 3, x = 0) {
       const run = session.run;
