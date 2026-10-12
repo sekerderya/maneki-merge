@@ -2060,16 +2060,27 @@ card art showed a double line at the corners, so the panels keep the Upgrades ca
 The shop's cards and the stage-clear picks get a small button that plays a short clip of the game
 showing what the card does (docs/plans/batch-21.md). Two pieces of art:
 
-**1. The clip button** (`art-source/icons/clip.png`): the icon kit's prompt (§5), gold rim. It is
-drawn small, about 34 px on the phone, on the corner of a card's icon, so it must read at 32 px.
-Attach the icon sheet (`art-source/ui/upgrade-icons.webp`) and the main menu
-(`art-source/menu/mockup.jpg`, for the PLAY button). The three parts to fill in:
+**1. The clip button** (`art-source/icons/clip.png`): the icon kit's prompt (§5) filled in, gold
+rim. It is drawn small, about 34 px on the phone, on the corner of a card's icon, so it must read
+at 32 px. Attach the icon sheet (`art-source/ui/upgrade-icons.webp`) and the main menu
+(`art-source/menu/mockup.jpg`, for the PLAY button). Paste this whole:
 
-- rim: `gold`
-- subject: `a big rounded play triangle pointing right, glossy coral-pink like the PLAY button of
-the attached main menu, with a lighter shine along its top edge and its own dark-brown outline,
-centred a little right of the middle so it looks centred`
-- what it stands for: `"watch how this works": it plays a short clip`
+```text
+Style: match the attached icons exactly. Polished casual mobile-game art, cute chibi kawaii
+illustration, thick warm dark-brown outlines (never black) of even weight, soft pastel cel shading
+with gentle gradients and one small glossy highlight, light from the upper left, clean crisp
+vector-like edges, readable at 32 px.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow
+under the icon. No text, no letters, no numbers, no kanji, no watermark, no signature.
+
+One round icon for the mobile game "Maneki Merge", drawn exactly like the attached icons: a
+perfect circle, centred, filling about 80% of the canvas, with a cream face inside a gold rim and
+the same thick dark-brown outline round it. Inside, big and centred: a big rounded play triangle
+pointing right, glossy coral-pink like the PLAY button of the attached main menu, with a lighter
+shine along its top edge and its own dark-brown outline, set a little right of the middle so it
+looks centred. It stands for "watch how this works": it plays a short clip. Nothing sticks out of
+the circle. Square 1:1.
+```
 
 **2. The tap pointer** (`art-source/ui/tap-pointer.png`). Only the clips show it, where a clip
 shows a tap or a drag (the magnet's tap, then Take). It is a hand, not a paw: the dropper is
