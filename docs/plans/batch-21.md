@@ -1,6 +1,10 @@
 # Batch 21 plan: how-it-works clips
 
-> **Status:** planned (2026-10-12). The recording method was tried first (§4): it works.
+> **Status:** built in v0.38.0 (2026-10-12). Differences from this plan: the clips are 480 × 850
+> (the play area from 200 px above the rim to 80 px below the floor); the recorder flushes the
+> page's rAF itself with exact 1/60 s timestamps (Playwright's clock alone gave uneven frames, the
+> owner saw it in the first clip); the Iron Bands clip shows one band; the Porcelain clip shows a
+> crack and a break, not the mending.
 >
 > Written 2026-10-12 from the owner's decisions in chat, for the agent that builds it. Read it whole
 > before you start, together with `CLAUDE.md`, GAME_DESIGN §2.2, §15 and TECH_SPEC §7–§9 and §11.

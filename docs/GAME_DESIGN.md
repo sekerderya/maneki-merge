@@ -53,6 +53,7 @@ Layout: everything sits where it is in the mockup, on a stage of the mockup's si
 - The price button has four states: affordable (gold, "Buy" over the coin and the price), not enough coins (faded grey and disabled, "Need N more" in red where "Buy" was), MAX (faded, a check and "MAX"), and **locked** (v0.36: faded and disabled, "Reach" over the BEST STAGE card's small torii and "Stage N", the stage that opens the card; the card's icon and value are faded too). With `?skin=vector` the shop keeps the code-drawn sheet of v0.14 (no pips either).
 - Buying gives feedback: a sound (from M9), a card pulse, and the balance counting down. The purchase is saved at once. The panel scrolls vertically if needed.
 - The UPGRADES dot on the menu shows only for a card that is open and affordable.
+- Combo Charm, Second Chance and the Golden Cats, More Magnets, Hanabi and Joker Cat cards have a clip button on their icon that shows what they do (§2.5, v0.38).
 - Closing: the close button, a tap on the dimmed menu above the panel, or the back button.
 
 ### 2.4 Settings panel (over the main menu)
@@ -61,10 +62,38 @@ Layout: everything sits where it is in the mockup, on a stage of the mockup's si
   - **Sound effects**: all sounds on or off.
   - **Haptics**: vibration; the row only shows where the browser can vibrate (Android).
   - **Reduce motion**: no camera shake, about a third of the particles, one flying coin per payout, and no decorative animations; banners fade instead of popping. The phone's own reduced-motion setting does the same whatever this switch says.
-- **How to play**: the first-run hints show again in the next run.
+- **How to play**: the first-run hints show again in the next run, and every clip button gets its new dot back (§2.5).
 - The version and build hash, small, at the bottom.
 - Closing: the close button, a tap on the dimmed menu, or the back button. There is no music yet, so there is no music switch.
 - Look (v0.37, the owner's approved mockup `art-source/ui/settings-mockup.jpg`): the same layout, in the Upgrades screen's pieces: the Upgrades card as the panel (the version in its tan strip), the title in the Upgrades title's cream lettering, the Upgrades close button, each icon in a gold-rimmed cream medallion, a switch gold like the Buy button when ON and a sunken tan track when OFF. With `?skin=vector` it keeps the code-drawn card of v0.14.
+
+### 2.5 How-it-works clips (v0.38)
+
+> The owner's request (2026-10-12), docs/plans/batch-21.md.
+
+A card whose effect can't be guessed from its line has a small round **clip button** on the lower right of its icon, in the shop (§2.2) and in the stage-clear picks (§15.5): the icon kit's play medallion (docs/ART_ASSETS.md §4.15), 34 px. Tapping it opens a popup over the shop or the picks (under the pause) with the card's name in the title lettering, a short clip of the game showing the effect, looping without sound, and one line of caption under it, built like the Settings panel. Closing: the close button, a tap outside the card, or the back button (which closes the popup only: the shop stays open, a run doesn't pause). In the picks time is stopped anyway, and a tap on the button never selects the card.
+
+- **New dot:** the button shows the menu's red dot until its clip has been opened once (saved, §11). "How to play" brings the dots back (§2.4).
+- **Reduced motion:** the clip waits on its first frame with a play button.
+- **One clip per mechanic**, recorded from the game itself by `npm run clips` (TECH_SPEC §11); every clip is cached for offline play with the rest of the app.
+
+| Clip                        | Cards                                 | Shows                                                                   |
+| --------------------------- | ------------------------------------- | ----------------------------------------------------------------------- |
+| Magnet                      | More Magnets (shop, blessing)         | a tap on a cat, Take, and the cat dropped again onto its pair           |
+| Boulder                     | More Boulders, Big Boulders           | a merge beside a bare boulder breaks it                                 |
+| Iron Bands                  | Iron Bands                            | a merge knocks the band off, the next breaks the boulder                |
+| Golden cat                  | Golden Cats (shop, blessing)          | a golden 3 and a 3 make a 5                                             |
+| Hanabi                      | Hanabi (shop, blessing)               | the burst popping small cats into coins and pushing a 6                 |
+| Joker                       | Joker Cat (shop, blessing)            | the joker making a 4 into a 5                                           |
+| Wind (two clips)            | Wind                                  | falling cats drifting the run's way (the clip blows like the card says) |
+| Heavy Drop                  | Heavy Drop                            | the fireball knocking a cat aside                                       |
+| Porcelain                   | Porcelain                             | a crack, then a break into two smaller cats                             |
+| Cursed Bell                 | Cursed Bell, Quick Curse, More Curses | a cursed cat turning to stone, then one merged in time                  |
+| Hubris, Echo, Copycat, Dice | the rule                              | the rule at work                                                        |
+| Combo                       | Combo Charm                           | quick merges building Combo ×2, ×3                                      |
+| Lucky Save                  | Second Chance                         | a full jar's countdown ending in a Lucky Save                           |
+
+Lucky Paw, Big Catch and Big Drops have no clip.
 
 ### 2.3 Game
 
@@ -271,7 +300,7 @@ Everything is stored locally, with a version number:
 - records: best score, best stage, highest tier ever made
 - stats: runs played, total merges, total coins earned, jackpots
 - settings: sound, haptics, reduce motion
-- flags: which first-run hints have been seen
+- flags: which first-run hints have been seen, and which how-it-works clips have been opened (§2.5; v0.38, added without a version step: a save without it has seen none)
 
 The run in progress is saved too (v0.27, the owner's call; until then closing the app ended it): the stage, every cat and boulder in the jar where it lies, the score and the run's coins, the dropper and NEXT, the trials, rules and blessings, the wind's direction, which cats are cracked (Porcelain), the cursed cat and its bell (§15.12) the Lucky Saves left, a stage clear's waiting pick or a growing jar. It is written whenever the wallet is (at most once a second while coins come in) and when the app goes to the background or closes. The next launch opens the game screen straight away, paused where the run stopped, with Resume (a waiting pick shows under the pause). Quit to Menu and game over end the run, and the next launch opens the menu. Cats that were still falling or rolling go on a little differently than they would have; a settled pile doesn't move. A saved run that a new version can't read is dropped (the profile is never lost).
 
@@ -452,7 +481,7 @@ Then play resumes in the next stage as the doors open: in the grown jar, or in t
 - **Options:** each pick shows up to 3 different options, drawn at random from those that are open, with the run's seeded RNG. An option is open when it isn't at its max level (for a blessing: at its shop card's level, §10, v0.36) and, for a **follow-up**, once the pick it needs has been taken (Batch 19): Quick Curse and More Curses are never offered before Cursed Bell. Today there are 9 trials (7 open at first), so the trial pick shows 3 of them, 4 rules, so a rule pick shows 3 of the 4 in random order, and 5 blessings (v0.28), so the blessing pick shows 3 of the 5. With fewer than 3 open it shows fewer cards; with none open the pick is skipped.
 - The player must pick exactly one: no skip, no reroll, no rarities.
 - **Levels:** a pick raises that option's level by 1. Levels last for the run, and every run starts at 0. They are saved with the run in progress (§11).
-- **Card:** an icon, the name, a one-line effect, the level as pips with "Lv 1 → 2", and the value it changes (current → next), like a shop card (§2.2).
+- **Card:** an icon, the name, a one-line effect, the level as pips with "Lv 1 → 2", and the value it changes (current → next), like a shop card (§2.2). Every trial, rule and blessing but Big Drops has a clip button on its icon that shows what it does (§2.5, v0.38); a tap on it doesn't select the card.
 - **Choosing:** tap a card to select it (it lifts and glows), then tap **Choose** to confirm. Taps are ignored for the panel's first 0.4 s, because a clear often comes right after a drop and a tap still in flight mustn't pick.
 - **Time:** time stays stopped while the panel is up (physics, the drop cooldown, the combo window, the danger timer). The pause button, the back button (→ pause) and backgrounding work as in play; resuming returns to the pick.
 

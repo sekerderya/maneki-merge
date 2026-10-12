@@ -2,6 +2,22 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.38.0] - 2026-10-12 (Batch 21)
+
+### Added
+
+- **How-it-works clips.** Cards whose effect is hard to picture have a small play button on their icon, in the shop and in the stage-clear picks: every special ball, the boulder trials, Wind, Heavy Drop, Porcelain, the Cursed Bell trials, every rule, Combo Charm and Second Chance (17 clips; Lucky Paw, Big Catch and Big Drops have none). It opens a popup with a short looping clip of the game doing it and one line of caption. The button wears the owner's play medallion and a red dot until its clip has been opened once; "How to play" brings the dots back. The back button closes the popup only, and a tap on the button never chooses a pick. With reduced motion the clip waits for a tap. The clips are cached for offline play (about 4 MB) and played from memory, so they work offline on iPhones too.
+- `npm run clips` records the clips from the game itself (docs/plans/batch-21.md): scripted scenes on a fixed clock, so every frame is exactly four physics ticks as on a phone, with the owner's tap pointer showing taps and drags, encoded to MP4 in the browser (no ffmpeg; `mp4-muxer`, MIT, as a dev dependency).
+- Debug hooks for the scenes: a cat of any size in the paw, a cat laid at a height, the balls with their positions, and world-to-screen points.
+
+### Decided for the owner
+
+- One clip per mechanic: the same clip opens from every card about it (the shop's and the pick's More Magnets, the three Cursed Bell trials). Porcelain, Combo Charm and Second Chance got clips too.
+- The button is a play triangle in the icon kit's medallion (no "?": the kit allows no signs), and the pointer a hand (the dropper is already a paw).
+- Wind has two clips, one per direction, so the clip blows the way the card says.
+- Captions are live text under the clip, not in the video.
+- The Iron Bands clip shows a boulder with one band: with two, the third merge's new cat grows away from the boulder, out of its reach.
+
 ## [0.37.0] - 2026-10-12
 
 ### Changed
