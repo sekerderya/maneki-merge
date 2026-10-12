@@ -103,9 +103,9 @@ narrower than their canvas: Claude crops the empty space.
 | 27  | 12 trials  | `fx/stone.png`                            | Sheet: 4 stone patterns, a cursed cat turning to stone (§4.13)      | 1:1, 1024×1024    |
 | 28  | 12 trials  | `fx/dice.png`                             | Sheet: the lucky gold die, the cracked grey die                     | 3:2, 1536×1024    |
 | 29  | 12 trials  | `picks/cursedBell.png` … `picks/dice.png` | Card pictures: Cursed Bell, Quick Curse, More Curses, Copycat, Dice | 1:1, 1024×1024    |
-| 30  | 13 panels  | `ui/settings-mockup.png`                  | Settings panel, today's layout restyled, design reference (§4.14)   | as screenshot     |
-| 31  | 13 panels  | `ui/pause-mockup.png`                     | Pause panel, today's layout restyled, design reference              | as screenshot     |
-| 32  | 13 panels  | `ui/gameover-mockup.png`                  | Game Over panel, today's layout restyled, design reference          | as screenshot     |
+| 30  | 13 panels  | `ui/settings-mockup.png`                  | Settings panel, today's layout restyled, design reference (§4.14)   | 9:16              |
+| 31  | 13 panels  | `ui/pause-mockup.png`                     | Pause panel, today's layout restyled, design reference              | 9:16              |
+| 32  | 13 panels  | `ui/gameover-mockup.png`                  | Game Over panel, today's layout restyled, design reference          | 9:16              |
 
 How the pieces go into the game:
 
@@ -1919,76 +1919,134 @@ the second for the rest.
 
 ### 4.14 Phase 13: Settings, Pause and Game Over
 
-These three panels are still the flat v0.14 cards (thin line icons, flat pills), plainer than the
-menu and the game behind them. **The owner keeps their layout as it is** (2026-10-12): a first
-whole-screen mockup in the Upgrades style (big row cards, a title pill above the panel) was turned
-down. So each mockup is an **edit of a screenshot of the panel as it is today**: same layout,
-sizes, words and positions; only the pieces are redrawn in the game's art style. Attach **only the
-screenshot**, one chat per panel, and paste the edit block, then the panel's list. Same canvas
-size as the screenshot.
+These three panels are still the flat v0.14 cards (white card, flat coral and mint pills, thin
+line icons), plainer than the menu, the game and the Upgrades screen. **The owner keeps their
+layout as it is** (2026-10-12). Two tries were turned down: a whole-screen redesign in the
+Upgrades style (big row cards, a title pill above the panel), and an edit of each panel's
+screenshot alone, which kept the layout but invented its own fonts and colours, so the panels
+matched neither the game nor each other. So each prompt now attaches the game's approved look
+(the game screen, the main menu and the Upgrades screen) and says which of their pieces every
+part of the panel copies; mint is dropped (no game button uses it): ON is the Buy button's gold.
+
+Attach to every request, in this order:
+
+1. a screenshot of the panel as it is today (from the phone);
+2. the game screen, `docs/screenshots/v0.36.0/combo-390.png`;
+3. the main menu, `art-source/menu/mockup.jpg`;
+4. the Upgrades screen, `docs/screenshots/v0.36.0/shop-top-390.png`.
+
+Make all three in **one chat**, Pause first, then Game Over, then Settings, so the later ones
+match the first. Every prompt is complete: paste it whole.
+
+**Pause** (`ui/pause-mockup.png`):
 
 ```text
-Edit the attached screenshot of my mobile game. Keep the layout exactly as it is: the panel's
-size, position and corner rounding, every element's position and size, all the words and numbers
-(same font, size and place), the spacing, and everything behind the panel. Do not add, remove,
-move, resize or rearrange anything, and add no new decorations. Only redraw the panel's pieces in
-the art style of the game behind it (the logo, the buttons, the cards): thick warm dark-brown
-outlines (never black), soft pastel cel shading with gentle gradients, one small glossy highlight,
-light from the upper left, crisp clean edges. No watermark, no signature. Same canvas size.
+Attached: (1) a screenshot of my mobile game's Pause panel as it is today, (2) the game screen,
+(3) the main menu, (4) the Upgrades screen. Images 2, 3 and 4 are the approved look of the game.
+The panel in image 1 is still plain and does not match them.
+
+Redraw image 1 so the panel looks like it belongs to the same game as images 2, 3 and 4. Keep its
+layout exactly: the panel's size, position and corner rounding, the same elements in the same
+order, place and size, the same words. Do not add, remove, move or resize anything, and add no
+decorations. Behind the panel the game screen stays as it is, dimmed with a soft warm-brown veil.
+If you already made another panel of this game in this chat, match it exactly too.
+
+Copy every colour, outline, font and button from images 2, 3 and 4; invent nothing new:
+- The panel: like the cards in image 4: warm cream (not white), a thick dark-brown outline, soft
+  rounded corners and a tan strip along the bottom.
+- The title "Paused": the same chunky bubbly letters as the "Upgrades" title in image 4 (cream
+  letters with a thick dark-brown outline), centred where it is now, nothing behind it.
+- "Resume": exactly the PLAY button of image 3: a glossy coral-pink pill with a lighter shine
+  along its top and a darker pink bottom edge, the word in the same chunky white letters with a
+  dark-brown outline.
+- "Sound" and "Haptics": two small pills like the UPGRADES button of image 3 (cream, dark-brown
+  outline, tan bottom edge, chunky dark-brown letters), each with a small dark-brown icon (a
+  speaker with sound waves; a vibrating phone). Sound is ON: its pill is the glossy gold of the
+  Buy buttons in image 4. Haptics is OFF: plain cream, its icon with a thin slash.
+- "Quit to Menu": a wide cream pill like the UPGRADES button of image 3, quieter than Resume.
+Colours: only the cream, tan, dark brown, coral-pink and gold already in images 2, 3 and 4. No
+mint, no grey, no white panel, no new colours, no new fonts. Thick warm dark-brown outlines (never
+black), soft pastel cel shading, one small glossy highlight, light from the upper left. No
+watermark, no signature. Portrait 9:16.
 ```
 
-**Settings** (`ui/settings-mockup.png`, edit of a Settings screenshot):
+**Game Over** (`ui/gameover-mockup.png`):
 
 ```text
-Redraw only these, each in its exact place and size:
-- the panel: the same cream card, with a soft gradient, a thick warm dark-brown outline and a
-  slightly darker tan bottom edge, like the cards in the menu behind it;
-- the four square icon tiles on the left: the same peach rounded squares, now with a small glossy
-  highlight and a tan bottom edge like small buttons; the icons inside keep their subjects (a
-  speaker with sound waves, a vibrating phone, a circle with speed lines, a question mark in a
-  circle) but are drawn as small cel-shaded illustrations in dark brown with gold accents instead
-  of thin line icons;
-- the three switches: the same size, place and state (ON, ON, OFF), drawn glossy: a mint track
-  for ON and a beige track for OFF, each with a darker bottom edge, a cream knob with a highlight,
-  the words "ON" and "OFF" where they are now;
-- the round close button: the same size and place, a cream button with a glossy highlight and a
-  tan bottom edge, like the gear button at the top left, with its dark-brown X.
-The title "Settings", the row names and lines, the dashed dividers, the arrow and the version
-line stay exactly as they are.
+Attached: (1) a screenshot of my mobile game's Game Over panel as it is today, (2) the game
+screen, (3) the main menu, (4) the Upgrades screen. Images 2, 3 and 4 are the approved look of the
+game. The panel in image 1 is still plain and does not match them.
+
+Redraw image 1 so the panel looks like it belongs to the same game as images 2, 3 and 4. Keep its
+layout exactly: the panel's size, position and corner rounding, the same elements in the same
+order, place and size, the same words and numbers. Do not add, remove, move or resize anything,
+and add no decorations (no ribbon, no badges, no sparkles, no flowers). Behind the panel the game
+screen stays as it is, dimmed with a soft warm-brown veil. If you already made another panel of
+this game in this chat, match it exactly too.
+
+Copy every colour, outline, font and button from images 2, 3 and 4; invent nothing new:
+- The panel: like the cards in image 4: warm cream (not white), a thick dark-brown outline, soft
+  rounded corners and a tan strip along the bottom.
+- The title "Game Over": the same chunky bubbly letters as the "Upgrades" title in image 4 (cream
+  letters with a thick dark-brown outline), centred where it is now, nothing behind it.
+- The big score: the same chunky numbers as the score in the SCORE card of image 2 (cream with a
+  thick dark-brown outline), as big as it is now.
+- The four lines (Best, Stage, Biggest cat, Coins earned): labels in the same rounded bold brown
+  letters as "Bigger cats come more often" in image 4, values in the same chunky dark-brown
+  letters as "0/10" in image 4. The cat icon stays as it is. The small coin becomes the shiny
+  gold coin with the paw print from the COINS card of image 2, the same size.
+- "Play Again": exactly the PLAY button of image 3: a glossy coral-pink pill with a lighter shine
+  along its top and a darker pink bottom edge, the words in the same chunky white letters with a
+  dark-brown outline.
+- "Menu": a wide cream pill like the UPGRADES button of image 3 (cream, dark-brown outline, tan
+  bottom edge, chunky dark-brown letters).
+Colours: only the cream, tan, dark brown, coral-pink and gold already in images 2, 3 and 4. No
+mint, no grey, no white panel, no new colours, no new fonts. Thick warm dark-brown outlines (never
+black), soft pastel cel shading, one small glossy highlight, light from the upper left. No
+watermark, no signature. Portrait 9:16.
 ```
 
-**Pause** (`ui/pause-mockup.png`, edit of a Pause screenshot):
+**Settings** (`ui/settings-mockup.png`):
 
 ```text
-Redraw only these, each in its exact place and size:
-- the panel: the same cream card, with a soft gradient, a thick warm dark-brown outline and a
-  slightly darker tan bottom edge, like the score and coins cards behind it;
-- the coral "Resume" button: the same pill, glossy like the pink pause button at the top right,
-  a lighter highlight along its top and a darker coral bottom edge;
-- the two mint "Sound" and "Haptics" buttons: the same pills, glossy, with a darker mint bottom
-  edge; their icons (a speaker with sound waves, a vibrating phone) drawn as small cel-shaded
-  illustrations instead of thin line icons;
-- the cream "Quit to Menu" button: the same pill, with a glossy highlight and a tan bottom edge.
-The title "Paused" and every word stay exactly as they are.
+Attached: (1) a screenshot of my mobile game's Settings panel as it is today, over the main menu,
+(2) the game screen, (3) the main menu, (4) the Upgrades screen. Images 2, 3 and 4 are the
+approved look of the game. The panel in image 1 is still plain and does not match them.
+
+Redraw image 1 so the panel looks like it belongs to the same game as images 2, 3 and 4. Keep its
+layout exactly: the panel's size, position and corner rounding, the title on the left and the
+close button on the right, the four rows with the dashed lines between them, the version line at
+the bottom, every element in the same place and size, the same words. Do not add, remove, move or
+resize anything, and add no decorations. Behind the panel the main menu stays as it is, dimmed
+with a soft warm-brown veil. If you already made another panel of this game in this chat, match
+it exactly too.
+
+Copy every colour, outline, font and button from images 2, 3 and 4; invent nothing new:
+- The panel: like the cards in image 4: warm cream (not white), a thick dark-brown outline, soft
+  rounded corners and a tan strip along the bottom.
+- The title "Settings": the same chunky bubbly letters as the "Upgrades" title in image 4 (cream
+  letters with a thick dark-brown outline), on the left where it is now, nothing behind it.
+- The close button: exactly the round close button of image 4 (cream, chunky dark-brown X), in
+  the same place and size as now.
+- Each row's name in the same rounded bold dark-brown letters as "Lucky Paw" in image 4, the line
+  under it like "+15% coins from everything"; the dashed lines between the rows thin and tan.
+- The four icons on the left: in place of today's square tiles, small round medallions like the
+  icons in image 4 (cream face, gold rim, dark-brown outline), the same size and place; inside,
+  the same pictures as now in dark brown: a speaker with sound waves, a vibrating phone, a circle
+  with speed lines, a question mark.
+- The switches, the same place, size and state (ON, ON, OFF): ON is a glossy gold pill like the
+  Buy buttons of image 4 with a cream knob on the right and "ON" in chunky dark-brown letters;
+  OFF is a sunken tan track like the well of the SCORE card in image 2, with a cream knob on the
+  left and "OFF".
+- The arrow on the last row: chunky dark brown. The version line: small, pale brown.
+Colours: only the cream, tan, dark brown, coral-pink and gold already in images 2, 3 and 4. No
+mint, no grey, no peach tiles, no white panel, no new colours, no new fonts. Thick warm dark-brown
+outlines (never black), soft pastel cel shading, one small glossy highlight, light from the upper
+left. No watermark, no signature. Portrait 9:16.
 ```
 
-**Game Over** (`ui/gameover-mockup.png`, edit of a Game Over screenshot):
-
-```text
-Redraw only these, each in its exact place and size:
-- the panel: the same cream card, with a soft gradient, a thick warm dark-brown outline and a
-  slightly darker tan bottom edge, like the score and coins cards behind it;
-- the coral "Play Again" button: the same pill, glossy like the pink pause button at the top
-  right, a lighter highlight along its top and a darker coral bottom edge;
-- the mint "Menu" button: the same pill, glossy, with a darker mint bottom edge;
-- the small coin next to "Coins earned": the same size, now the shiny gold coin from the COINS
-  card at the top right.
-The title "Game Over", the score, the labels, the numbers and the cat icon stay exactly as they
-are.
-```
-
-Every word and number stays live text (Fredoka). Once a mockup is approved Claude restyles the
-panel in CSS to match it and asks for the pieces that need art (the icons, as edits of it).
+Every word and number stays live text (Fredoka). Once the mockups are approved Claude restyles the
+panels in CSS to match them and asks for the pieces that need art (the icons, as edits of them).
 
 ## 5. Icon kit (every new icon)
 
