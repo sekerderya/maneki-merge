@@ -1,7 +1,9 @@
+import { pickClip } from '../../config/clips';
 import { ICON_SPRITE_DIR, iconSprite } from '../../config/iconSprites';
 import type { PickId, PickKind } from '../../config/picks';
 import { PICK_ARM_MS } from '../../config/view';
 import type { PickCard } from '../../core/picks';
+import type { ClipButtonFactory } from '../clipButtons';
 import { button, el } from '../dom';
 import { pickIcon } from '../icons';
 import { pickArt } from '../pickArt';
@@ -30,9 +32,16 @@ const TITLES: Readonly<Record<PickKind, { title: string; detail: string }>> = {
  * flight from the last drop can't pick. There is no skip and no reroll. With `art` (the art skin) it
  * is built from the Upgrades screen's pieces (pick-art.css): the title on its cream pill, the cards
  * with their stat strips, over the shut stage doors; each card's icon is the ball it is about, in a
- * cream medallion (pickArt.ts), unless the icon kit has an icon for it.
+ * cream medallion (pickArt.ts), unless the icon kit has an icon for it. A card with a how-it-works
+ * clip gets `clipButton`'s button on its icon (v0.38), so the card is a `role="button"` element
+ * rather than a `<button>`, which can't hold another button.
  */
-export function createPickOverlay(root: HTMLElement, actions: PickActions, art = false): PickView {
+export function createPickOverlay(
+  root: HTMLElement,
+  actions: PickActions,
+  art = false,
+  clipButton?: ClipButtonFactory,
+): PickView {
   const overlay = el('div', 'overlay game-overlay pick-overlay');
   overlay.classList.toggle('is-art', art);
   if (art) setUiArtProperties(overlay);
@@ -83,7 +92,9 @@ export function createPickOverlay(root: HTMLElement, actions: PickActions, art =
       detail.textContent = text.detail;
       overlay.setAttribute('aria-label', text.title);
       overlay.dataset['kind'] = kind;
-      list.replaceChildren(...cards.map((card) => createCard(card, art, () => select(card.id))));
+      list.replaceChildren(
+        ...cards.map((card) => createCard(card, art, () => select(card.id), clipButton)),
+      );
       selected = null;
       choose.disabled = true;
       armedAt = performance.now() + PICK_ARM_MS;
@@ -100,12 +111,24 @@ export function createPickOverlay(root: HTMLElement, actions: PickActions, art =
   };
 }
 
-function createCard(card: PickCard, art: boolean, onSelect: () => void): HTMLButtonElement {
-  const root = button(`pick-card is-${card.kind}`, '');
+function createCard(
+  card: PickCard,
+  art: boolean,
+  onSelect: () => void,
+  clipButton?: ClipButtonFactory,
+): HTMLElement {
+  const root = el('div', `pick-card is-${card.kind}`);
   root.dataset['id'] = card.id;
   root.dataset['testid'] = `pick-card-${card.id}`;
+  root.setAttribute('role', 'button');
+  root.tabIndex = 0;
   root.setAttribute('aria-pressed', 'false');
   root.addEventListener('click', onSelect);
+  root.addEventListener('keydown', (e) => {
+    if (e.target !== root || (e.key !== 'Enter' && e.key !== ' ')) return;
+    e.preventDefault();
+    onSelect();
+  });
 
   const icon = el('span', 'pick-icon');
   const sprite = art ? iconSprite(card.id) : null;
@@ -124,6 +147,9 @@ function createCard(card: PickCard, art: boolean, onSelect: () => void): HTMLBut
   } else {
     icon.insertAdjacentHTML('beforeend', pickIcon(card.id));
   }
+
+  const clip = pickClip(card.id, card.mirror);
+  if (clip && clipButton) icon.append(clipButton(clip, card.name));
 
   const info = el('span', 'pick-info');
   const head = el('span', 'pick-head');

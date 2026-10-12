@@ -1,0 +1,218 @@
+/*
+ * How-it-works clips (GAME_DESIGN §2.5): the round button on a card's icon, and the popup
+ * that plays the clip. The popup sits over the picks and under the pause overlay. With the art
+ * skin it is built like the Settings panel from the Upgrades screen's pieces (panel-art.css).
+ */
+
+/* The button: on the lower right of the card's icon medallion, with a 44 px hit area. */
+.shop-icon,
+.pick-icon {
+  position: relative;
+}
+
+.clip-btn {
+  position: absolute;
+  right: -9px;
+  bottom: -7px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 2.5px solid var(--color-ink);
+  border-radius: 50%;
+  background: var(--color-paper);
+  color: var(--color-coral);
+}
+
+/* The hit area reaches past the drawn button (44 px with the art's 34 px button). */
+.clip-btn::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+}
+
+.clip-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* The art skin's medallions are bigger: so is the button. */
+.shop-overlay.is-art .clip-btn,
+.pick-overlay.is-art .clip-btn {
+  right: -10px;
+  bottom: -6px;
+  width: 34px;
+  height: 34px;
+}
+
+/* The icon kit's medallion is the whole button. */
+.clip-btn:has(.clip-btn-art) {
+  border: 0;
+  background: none;
+}
+
+.clip-btn-art {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.clip-btn .clip-dot {
+  top: -4px;
+  right: -4px;
+  width: 14px;
+  height: 14px;
+  border-width: 2px;
+}
+
+/* The popup. */
+.clip-overlay {
+  z-index: 170;
+  background: var(--color-scrim);
+}
+
+.clip-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(100%, 360px);
+  max-height: 100%;
+  padding: 14px 16px 16px;
+  border: 4px solid var(--color-ink);
+  border-radius: var(--radius-lg);
+  background: var(--color-paper);
+  box-shadow: 0 8px 0 var(--color-ink);
+  color: var(--color-ink);
+  animation: panel-pop 240ms cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+
+.clip-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.clip-title {
+  flex: 1;
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: var(--weight-bold);
+  line-height: 1.05;
+  text-align: left;
+}
+
+.clip-close {
+  flex: none;
+  background: var(--color-card);
+}
+
+/* The clip (480 × 850): as wide as the card allows, short enough for the caption to fit. */
+.clip-frame {
+  position: relative;
+  align-self: center;
+  width: min(100%, calc((100dvh - var(--safe-top) - var(--safe-bottom) - 260px) * 480 / 850));
+  aspect-ratio: 480 / 850;
+  overflow: hidden;
+  border: 3px solid var(--color-ink);
+  border-radius: 18px;
+  background: #f6e7cf;
+}
+
+.clip-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* With reduced motion the clip waits for a tap. */
+.clip-play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 76px;
+  height: 76px;
+  margin: auto;
+  border: 3px solid var(--color-ink);
+  border-radius: 50%;
+  background: rgba(255, 246, 231, 0.92);
+  color: var(--color-coral);
+}
+
+.clip-play svg {
+  width: 40px;
+  height: 40px;
+}
+
+.clip-caption {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: var(--weight-semibold);
+  line-height: 1.3;
+  text-align: center;
+}
+
+/* The art skin: the Upgrades card as the panel, the Upgrades title lettering and close button. */
+.clip-overlay.is-art {
+  container-type: inline-size;
+  padding: calc(var(--safe-top) + 16px) var(--safe-right) calc(var(--safe-bottom) + 16px)
+    var(--safe-left);
+  background: rgba(60, 32, 20, 0.42);
+}
+
+.clip-overlay.is-art .clip-card {
+  --u: calc(min(100cqw, 520px) / var(--shop-mockup-w));
+  --s: calc(677 * var(--u) / var(--shop-card-w));
+  --strip: calc(var(--shop-card-bottom) * var(--s));
+  gap: calc(16 * var(--u));
+  width: calc(681 * var(--u));
+  padding: calc(30 * var(--u)) calc(42 * var(--u)) calc(var(--strip) + 6 * var(--u));
+  border: 0 solid transparent;
+  border-radius: 0;
+  border-image: var(--shop-card-art) var(--shop-card-corner) var(--shop-card-corner)
+    var(--shop-card-bottom) fill / calc(var(--shop-card-corner) * var(--s))
+    calc(var(--shop-card-corner) * var(--s)) var(--strip) stretch;
+  background: none;
+  box-shadow: none;
+  color: #4e2416;
+}
+
+.clip-overlay.is-art .clip-title {
+  color: #fbe7c6;
+  font-size: calc(60 * var(--u));
+  -webkit-text-stroke: calc(9 * var(--u)) #4e2416;
+  paint-order: stroke fill;
+  text-shadow: 0 calc(5 * var(--u)) 0 #4e2416;
+}
+
+.clip-overlay.is-art .clip-close {
+  width: max(calc(96 * var(--u)), 44px);
+  height: max(calc(96 * var(--u)), 44px);
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.clip-close-art {
+  width: 100%;
+  height: 100%;
+}
+
+.clip-overlay.is-art .clip-frame {
+  border: calc(6 * var(--u)) solid #4e2416;
+  border-radius: calc(28 * var(--u));
+}
+
+.clip-overlay.is-art .clip-caption {
+  font-size: calc(34 * var(--u));
+}
+
+.reduce-motion .clip-card {
+  animation: none;
+}

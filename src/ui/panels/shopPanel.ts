@@ -1,3 +1,4 @@
+import { upgradeClip } from '../../config/clips';
 import { ICON_SPRITE_DIR, iconSprite } from '../../config/iconSprites';
 import { MENU_ART, MENU_SPRITE_DIR } from '../../config/menuSprites';
 import { SHOP_ART, SHOP_SPRITE_DIR } from '../../config/shopSprites';
@@ -7,6 +8,7 @@ import type { UpgradeId } from '../../config/upgrades';
 import { formatNumber } from '../../core/format';
 import { shopCard } from '../../core/shop';
 import type { UpgradeLevels } from '../../core/upgrades';
+import type { ClipButtonFactory } from '../clipButtons';
 import { button, el } from '../dom';
 import { pickArt } from '../pickArt';
 import { artImage, setUiArtProperties } from '../uiArt';
@@ -53,9 +55,15 @@ interface CardParts {
  * stage opens it where its price would be. With `art`
  * (the art skin) it is the owner's approved mockup (docs/ART_ASSETS.md §4.9): the menu blurred
  * behind, the title on a cream pill, the menu's coins pill, and the cards, buttons and icons in the
- * owner's art (shop-art.css); otherwise the code-drawn sheet of v0.14.
+ * owner's art (shop-art.css); otherwise the code-drawn sheet of v0.14. A card whose effect has a
+ * how-it-works clip gets `clipButton`'s button on its icon (v0.38).
  */
-export function createShopPanel(root: HTMLElement, actions: ShopActions, art = false): ShopView {
+export function createShopPanel(
+  root: HTMLElement,
+  actions: ShopActions,
+  art = false,
+  clipButton?: ClipButtonFactory,
+): ShopView {
   const overlay = el('div', 'overlay shop-overlay');
   overlay.classList.toggle('is-art', art);
   if (art) setUiArtProperties(overlay);
@@ -97,7 +105,7 @@ export function createShopPanel(root: HTMLElement, actions: ShopActions, art = f
       );
       list.append(section);
     }
-    const card = createCard(id, art, () => actions.onBuy(id));
+    const card = createCard(id, art, () => actions.onBuy(id), clipButton);
     cards.set(id, card);
     list.append(card.root);
   }
@@ -153,7 +161,12 @@ export function createShopPanel(root: HTMLElement, actions: ShopActions, art = f
   };
 }
 
-function createCard(id: UpgradeId, art: boolean, onBuy: () => void): CardParts {
+function createCard(
+  id: UpgradeId,
+  art: boolean,
+  onBuy: () => void,
+  clipButton?: ClipButtonFactory,
+): CardParts {
   const def = UPGRADES[id];
   const root = el('article', 'shop-card');
   root.dataset['testid'] = `shop-card-${id}`;
@@ -179,6 +192,8 @@ function createCard(id: UpgradeId, art: boolean, onBuy: () => void): CardParts {
   } else {
     icon.insertAdjacentHTML('beforeend', UPGRADE_ICONS[id]);
   }
+  const clip = upgradeClip(id);
+  if (clip && clipButton) icon.append(clipButton(clip, def.name));
 
   const info = el('div', 'shop-info');
   const head = el('div', 'shop-head');

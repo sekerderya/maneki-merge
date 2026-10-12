@@ -103,6 +103,11 @@ export const ICON_VIBRATE_OFF = stroke(
   '<rect x="7" y="4" width="10" height="16" rx="2"/><path d="M3 9v6"/><path d="M21 9v6"/><path d="M4 3l16 18"/>',
 );
 
+/** The how-it-works clip button without the art: a rounded play triangle. */
+export const ICON_PLAY = svg(
+  '<path d="M9 6.5v11a1 1 0 0 0 1.5.86l8.6-5.5a1 1 0 0 0 0-1.72l-8.6-5.5A1 1 0 0 0 9 6.5z" fill="currentColor"/>',
+);
+
 export const ICON_CLOSE = svg(
   '<path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/>',
 );

@@ -2,6 +2,7 @@ import './ui/styles/index.css';
 import { AudioEngine } from './audio';
 import { Profile } from './core/profile';
 import { anyAffordable } from './core/upgrades';
+import type { ClipId } from './config/clips';
 import type { Scheduler } from './core/profile';
 import { RunSaveStore } from './core/runSave';
 import { SaveStore } from './core/save';
@@ -34,6 +35,8 @@ import { createSettingsPanel } from './ui/panels/settingsPanel';
 import { createShopPanel } from './ui/panels/shopPanel';
 import { createPauseOverlay } from './ui/overlays/pauseOverlay';
 import { createPickOverlay } from './ui/overlays/pickOverlay';
+import { createClipPopup } from './ui/overlays/clipPopup';
+import { createClipButtons } from './ui/clipButtons';
 import { createDoors } from './ui/fx/doors';
 import { createRotateOverlay } from './ui/overlays/rotateOverlay';
 import { ScreenManager } from './ui/screenManager';
@@ -87,7 +90,8 @@ async function boot(): Promise<void> {
   setReduceMotion(profile.settings.reduceMotion);
   // Every button clicks, except the ones that play their own sound (data-sfx="none").
   document.addEventListener('click', (event) => {
-    const target = event.target instanceof Element ? event.target.closest('button') : null;
+    const target =
+      event.target instanceof Element ? event.target.closest('button, [role="button"]') : null;
     if (target && !target.closest('[data-sfx="none"]')) audio.play('click');
   });
 
@@ -129,6 +133,41 @@ async function boot(): Promise<void> {
 
   menu.setInstallHint(installHintFor(installContext, installPrompt.available));
 
+  // How-it-works clips (GAME_DESIGN §2.5): a button on the shop and pick cards opens a
+  // popup over them, with its own back layer. Opening a clip takes its buttons' new dot away.
+  const clipButtons = createClipButtons(
+    (id) => profile.clipSeen(id),
+    (id, name) => openClip(id, name),
+    skin === 'art',
+  );
+  // Over the shop and the picks, under the pause (clips.css).
+  const clipPopup = createClipPopup(
+    byId('overlays'),
+    {
+      onOpen: (id) => {
+        profile.markClipSeen(id);
+        clipButtons.refresh();
+      },
+      onClose: () => closeClip(),
+    },
+    skin === 'art',
+  );
+  let clipLayer: number | null = null;
+  const openClip = (id: ClipId, name: string): void => {
+    if (clipPopup.visible) return;
+    clipPopup.show(id, name);
+    clipLayer = back.push(() => {
+      clipLayer = null;
+      clipPopup.hide();
+    });
+  };
+  const closeClip = (): void => {
+    if (!clipPopup.visible) return;
+    if (clipLayer !== null) back.release(clipLayer);
+    clipLayer = null;
+    clipPopup.hide();
+  };
+
   // Shop panel (GAME_DESIGN §2.2) over the menu, with its own back layer.
   let shopLayer: number | null = null;
   const shop = createShopPanel(
@@ -143,6 +182,7 @@ async function boot(): Promise<void> {
       onClose: () => closeShop(),
     },
     skin === 'art',
+    clipButtons.create,
   );
   const openShop = (): void => {
     if (shop.visible) return;
@@ -171,7 +211,10 @@ async function boot(): Promise<void> {
         session.setSetting(key, !session.settings[key]);
         if (key === 'haptics') haptics.play('tick');
       },
-      onReplayTips: () => session.replayHints(),
+      onReplayTips: () => {
+        session.replayHints();
+        clipButtons.refresh();
+      },
       onClose: () => closeSettings(),
     },
     skin === 'art',
@@ -208,6 +251,7 @@ async function boot(): Promise<void> {
     overlays,
     { onChoose: (id) => session.choosePick(id) },
     skin === 'art',
+    clipButtons.create,
   );
   const pause = createPauseOverlay(
     overlays,
@@ -287,6 +331,7 @@ async function boot(): Promise<void> {
     { menu: byId('menu-screen'), game: byId('game-screen') },
     back,
     (screen) => {
+      closeClip();
       // End (and save) the run first: back on the menu, a waiting update reloads the app soon.
       if (screen === 'menu') session.endRun();
       gate.setMenuActive(screen === 'menu' && !shop.visible && !settingsPanel.visible);
@@ -303,11 +348,15 @@ async function boot(): Promise<void> {
   const setRotateOverlay = createRotateOverlay(byId('overlays'));
   watchPhoneLandscape((landscape) => {
     setRotateOverlay(landscape);
-    if (landscape) session.autoPause();
+    if (landscape) {
+      closeClip();
+      session.autoPause();
+    }
   });
 
   watchLifecycle({
     onHidden: () => {
+      closeClip();
       session.autoPause();
       session.save();
       audio.suspend();

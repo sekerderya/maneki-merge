@@ -266,6 +266,19 @@
     background 90ms ease-out;
 }
 
+/* A card is a role="button" element (it holds the clip button), with a button's manners. */
+.pick-card {
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.pick-card:focus-visible {
+  outline: 3px solid var(--color-coral);
+  outline-offset: 3px;
+}
+
 .pick-card.is-selected {
   border-width: 3.5px;
   background: var(--color-gold-light);
