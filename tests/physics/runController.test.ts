@@ -652,6 +652,17 @@ describe('pause and frame timing', () => {
     expect(run.playTimeMs).toBeCloseTo(7 * PHYSICS_STEP_MS, 9);
   });
 
+  it('puts a debug cat of any size the stage holds in the dropper', () => {
+    const { run, of } = setup();
+    run.giveCat(4, true);
+    expect(run.current).toEqual({ kind: 'cat', tier: 4, golden: true, hits: 0 });
+    expect(of('dropReady').at(-1)).toEqual({ kind: 'cat', tier: 4 });
+    run.giveCat(3);
+    expect(run.current).toEqual({ kind: 'cat', tier: 3, golden: false, hits: 0 });
+    run.giveCat(42);
+    expect(run.current.tier).toBe(3);
+  });
+
   it('spawns debug cats at the dropper by default', () => {
     const { run } = setup();
     const cat = run.spawnBall(5, 0);

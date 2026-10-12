@@ -44,6 +44,15 @@ export interface WorldPoint {
   readonly y: number;
 }
 
+export interface DropOptions {
+  /** How long the finger takes to get there. */
+  readonly ms?: number;
+  /** A drag's pause before letting go. */
+  readonly holdMs?: number;
+  /** Runs right after the release. */
+  readonly then?: () => Promise<void>;
+}
+
 export interface SceneOptions {
   readonly seed: number;
 }
@@ -167,12 +176,21 @@ export class ClipBrowser {
       (window as unknown as { __flushRaf: (time: number) => void }).__flushRaf = (time) => {
         for (const [, callback] of queue.splice(0)) callback(time);
       };
+      // The page always counts as on screen: another window or process taking the focus mustn't
+      // send the run to its pause (the app pauses on visibilitychange and pagehide).
+      Object.defineProperty(document, 'visibilityState', { get: () => 'visible' });
+      Object.defineProperty(document, 'hidden', { get: () => false });
+      for (const type of ['visibilitychange', 'pagehide', 'blur']) {
+        window.addEventListener(type, (event) => event.stopImmediatePropagation(), true);
+      }
     });
     const flags = `?debug=1&seed=${options.seed}&res=2`;
     await page.goto(url + flags);
     await page.addStyleTag({
       content:
+        // No hints or debug button; the score and coins cards' bottoms would peek in at the top.
         '[data-testid=hint],[data-testid=debug-panel]{display:none!important}' +
+        '.hud-score-card,.hud-coins-card{visibility:hidden!important}' +
         '#clip-pointer{position:fixed;z-index:2147483647;pointer-events:none;left:0;top:0;' +
         `width:${this.pointer.width}px;transform-origin:${this.pointer.tipX}px 0;opacity:0}`,
     });
@@ -186,7 +204,18 @@ export class ClipBrowser {
     await cdp.send('Animation.enable');
     await cdp.send('Animation.setPlaybackRate', { playbackRate: 0 });
     const scene = new Scene(page, cdp, this.encoderPage, this.pointer.tipX, errors);
-    await scene.advance(3000);
+    // Boot waits on real fetches (fonts, art) as well as the clock: move time on until the menu
+    // and the hooks are there.
+    for (let i = 0; ; i++) {
+      await scene.advance(100);
+      const ready = await page.evaluate(
+        () => !!window.__game && !!document.querySelector('[data-testid=play]'),
+      );
+      if (ready) break;
+      if (i > 300) throw new Error('The game never booted');
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+    await scene.advance(500);
     return scene;
   }
 }
@@ -392,6 +421,22 @@ export class Scene {
     await this.tap();
   }
 
+  /**
+   * Points at an element of the page (by test id) without touching it: the pointer comes up from
+   * below, rests under it for `holdMs`, and goes. The mouse stays put, so the paw doesn't aim.
+   */
+  async pointAt(testId: string, holdMs = 900): Promise<void> {
+    const box = await this.page.getByTestId(testId).boundingBox();
+    if (!box) throw new Error(`Nothing to point at: ${testId}`);
+    const x = box.x + box.width / 2;
+    const y = box.y + box.height * 0.88;
+    this.pointerAt = { x, y: y + 60 };
+    await this.showPointer(true, 160);
+    await this.pointerTo(x, y, 350);
+    await this.advance(holdMs);
+    await this.showPointer(false, 200);
+  }
+
   /** Moves the pointer onto the magnet's Take button and taps it. */
   async tapTake(moveMs = 450): Promise<void> {
     const box = await this.page.getByTestId('take').boundingBox();
@@ -402,9 +447,11 @@ export class Scene {
 
   /**
    * Aims and drops like a finger: the pointer appears over the jar where the paw aims, presses,
-   * drags to world x `toX` over `ms` (the paw follows), waits `holdMs`, and lets go.
+   * drags to world x `toX` over `ms` (the paw follows), waits `holdMs`, and lets go. `then`
+   * runs right after the release, in the drop's cooldown (to put the next ball in the paw unseen).
    */
-  async dragDrop(toX: number, ms = 600, holdMs = 200): Promise<void> {
+  async dragDrop(toX: number, options: DropOptions = {}): Promise<void> {
+    const { ms = 600, holdMs = 200, then } = options;
     const y = await this.dragY();
     const from = await this.screen({ x: this.aimX, y: 0 });
     const to = await this.screen({ x: toX, y: 0 });
@@ -418,13 +465,48 @@ export class Scene {
     await this.advance(holdMs);
     await this.page.mouse.up();
     this.aimX = toX;
+    await then?.();
     await this.animate(140, (t) => {
       this.pointerPress = 0.86 + 0.14 * t;
     });
     await this.showPointer(false, 180);
   }
 
+  /**
+   * Drops with a quick tap: the pointer (and the mouse, so the paw follows) glides to world x `x`
+   * over the jar in `ms`, then taps there. The pointer stays shown; hide it when done.
+   */
+  async tapDrop(x: number, options: DropOptions = {}): Promise<void> {
+    const { ms = 300, then } = options;
+    const y = await this.dragY();
+    const to = await this.screen({ x, y: 0 });
+    if (this.pointerShown === 0) {
+      const from = await this.screen({ x: this.aimX, y: 0 });
+      await this.pointerAtPoint(from.x, y);
+      await this.showPointer(true, 160);
+    }
+    await this.pointerTo(to.x, y, ms, true);
+    await this.animate(100, (t) => {
+      this.pointerPress = 1 - 0.14 * t;
+    });
+    await this.page.mouse.click(to.x, y);
+    this.aimX = x;
+    await then?.();
+    await this.animate(140, (t) => {
+      this.pointerPress = 0.86 + 0.14 * t;
+    });
+  }
+
   // ── Time ────────────────────────────────────────────────────────────────
+
+  /** Moves time on, frame by frame, until `fn(window.__game, arg)` is true (at most `maxMs`). */
+  async advanceUntil<A>(fn: HookFn<A, boolean>, arg: A, maxMs: number): Promise<void> {
+    const end = this.elapsedMs + maxMs;
+    while (!(await this.game(fn, arg))) {
+      if (this.elapsedMs >= end) throw new Error(`Waited ${maxMs} ms for: ${fn.toString()}`);
+      await this.step();
+    }
+  }
 
   /** Runs `each(t)` (t from 0 to 1) on every half frame for `ms` of game time. */
   private async animate(ms: number, each: (t: number) => void | Promise<void>): Promise<void> {
@@ -445,7 +527,7 @@ export class Scene {
     this.clockMs = clockTarget;
     this.elapsedMs = next;
     const half = Math.round(next / HALF_MS);
-    await this.page.evaluate(
+    const paused = await this.page.evaluate(
       ([ahead, frame, dt, pointer]) => {
         if (frame) {
           for (const animation of document.getAnimations()) {
@@ -462,6 +544,8 @@ export class Scene {
         (window as unknown as { __flushRaf: (t: number) => void }).__flushRaf(
           performance.now() + ahead,
         );
+        const pause = document.querySelector<HTMLElement>('[data-testid=pause-overlay]');
+        return pause !== null && !pause.hidden;
       },
       [
         next - clockTarget,
@@ -476,6 +560,7 @@ export class Scene {
         },
       ] as const,
     );
+    if (paused && this.recording) throw new Error('The run paused while recording');
     if (this.recording && half % 2 === 0) await this.capture();
   }
 

@@ -615,6 +615,17 @@ export class RunController {
     this.announceDropIfReady();
   }
 
+  /**
+   * Debug (the clip scenes): puts a cat of `tier`, golden if asked, in the dropper instead of its
+   * ball. Ignored when the stage can't hold the tier or the run is over.
+   */
+  giveCat(tier: number, golden = false): void {
+    if (this.runState === 'over' || !stageHoldsTier(this.world.stage, tier)) return;
+    this.queue.replaceCurrent({ kind: 'cat', tier, golden, hits: 0 });
+    this.dropAnnounced = false;
+    this.announceDropIfReady();
+  }
+
   /** Sets a trial's or blessing's level (clamped to 0…max); it applies to the balls queued next. */
   setPickLevel(id: PickId, level: number): void {
     if (!Number.isFinite(level)) return;

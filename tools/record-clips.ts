@@ -19,7 +19,11 @@ async function main(): Promise<void> {
   if (unknown.length) throw new Error(`No scene: ${unknown.join(', ')}`);
   const scenes = wanted.length ? SCENES.filter((s) => wanted.includes(s.id)) : SCENES;
 
-  const server = await createServer({ logLevel: 'error', server: { port: 5190 } });
+  // No watcher and no HMR: an edit to the source mid-recording must not reload the page.
+  const server = await createServer({
+    logLevel: 'error',
+    server: { port: 5190, hmr: false, watch: null },
+  });
   await server.listen();
   const url = server.resolvedUrls?.local[0];
   if (!url) throw new Error('The dev server has no local URL');

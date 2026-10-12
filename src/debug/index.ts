@@ -76,7 +76,16 @@ export interface GameStateSnapshot {
   readonly resolution: number;
 }
 
-/** Test hooks on `window.__game` (TECH_SPEC §11), installed only with `?debug=1`. */
+/** A ball in the jar (`GameHooks.balls`), in world units. */
+export interface DebugBall {
+  readonly id: number;
+  readonly kind: string;
+  readonly size: number;
+  readonly x: number;
+  readonly y: number;
+  readonly radius: number;
+}
+
 /** The jar on the page (`GameHooks.jarRect`), in CSS pixels. */
 export interface JarRect {
   readonly left: number;
@@ -85,6 +94,7 @@ export interface JarRect {
   readonly floor: number;
 }
 
+/** Test hooks on `window.__game` (TECH_SPEC §11), installed only with `?debug=1`. */
 export interface GameHooks {
   readonly flags: UrlFlags;
   screen(): ScreenId;
@@ -92,6 +102,8 @@ export interface GameHooks {
   state(): GameStateSnapshot;
   /** World x of every cat in the jar, oldest first. */
   ballXs(): number[];
+  /** Every ball in the jar, oldest first, in world units (y grows downward; the floor is 0). */
+  balls(): DebugBall[];
   /** Drops the dropper's cat at world x (0 is the jar's centre). False during the cooldown. */
   dropAt(x: number): boolean;
   /** Ids of the balls a magnet could take (landed), oldest first. */
@@ -108,6 +120,8 @@ export interface GameHooks {
   choose(id?: PickId): boolean;
   /** Puts a magnet, a boulder, a hanabi, a joker or a golden cat in the dropper. */
   give(kind: 'magnet' | 'boulder' | 'hanabi' | 'joker' | 'golden'): void;
+  /** Puts a cat of `tier` (golden if asked) in the dropper; ignored if the stage can't hold it. */
+  giveCat(tier: number, golden?: boolean): void;
   /** Sets a trial's, rule's (0 or 1) or blessing's level for this run. */
   setPickLevel(id: PickId, level: number): void;
   /** Opens a stage clear's picks now: a trial first, or a rule first with `rule`. */
@@ -222,6 +236,16 @@ export function installDebugHooks(ctx: DebugContext): GameHooks {
     ballXs() {
       return session.run?.balls.map((ball) => ball.x) ?? [];
     },
+    balls() {
+      return (session.run?.balls ?? []).map(({ id, kind, size, x, y, radius }) => ({
+        id,
+        kind,
+        size,
+        x,
+        y,
+        radius,
+      }));
+    },
     dropAt(x) {
       return session.run?.drop(x) ?? false;
     },
@@ -263,6 +287,9 @@ export function installDebugHooks(ctx: DebugContext): GameHooks {
     },
     give(kind) {
       session.run?.giveSpecial(kind);
+    },
+    giveCat(tier, golden = false) {
+      session.run?.giveCat(tier, golden);
     },
     setPickLevel(id, level) {
       session.run?.setPickLevel(id, level);
