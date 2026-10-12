@@ -129,7 +129,7 @@ describe('PhysicsWorld', () => {
   });
 
   it.each([1, 2, 3, 4])(
-    'drops a size-%i cat from the dropper to the empty floor in about 1 s, without a bounce',
+    'drops a size-%i cat from the dropper to the empty floor in about 0.88 s, without a bounce',
     (tier) => {
       const world = new PhysicsWorld();
       const cat = world.addBall({ tier, x: 0, y: world.geometry.dropY });
@@ -138,10 +138,10 @@ describe('PhysicsWorld', () => {
         world.step();
         if (cat.landedMs >= 0) highest = Math.min(highest, cat.y);
       }
-      // First contact on the step that reaches the floor: 1.025 s (size 4) to 1.042 s (size 1)
-      // since v0.21.1 raised the dropper (1 s before), give or take a step.
-      expect(cat.landedMs).toBeGreaterThanOrEqual(1025 - PHYSICS_STEP_MS - 1e-9);
-      expect(cat.landedMs).toBeLessThanOrEqual(1042 + PHYSICS_STEP_MS + 1e-9);
+      // First contact on the step that reaches the floor: 0.875 s (size 4) to 0.883 s (size 1)
+      // since v0.41 (1.025 to 1.042 s before), give or take a step.
+      expect(cat.landedMs).toBeGreaterThanOrEqual(875 - PHYSICS_STEP_MS - 1e-9);
+      expect(cat.landedMs).toBeLessThanOrEqual(883.3 + PHYSICS_STEP_MS + 1e-9);
       // The floor never bounces: after landing the cat only sinks into place.
       expect(highest).toBeGreaterThan(-sizeRadius(tier) - 0.5);
     },
@@ -181,6 +181,35 @@ describe('PhysicsWorld', () => {
       expect(left.x).toBeGreaterThan(-300 + r * 0.85);
       expect(right.x).toBeLessThan(300 - r * 0.85);
     }
+  });
+
+  it("starts a ball's drawn motion where it was made, turned or restored", () => {
+    const world = new PhysicsWorld();
+    const turned = world.addBall({ tier: 2, x: 40, y: -300, angle: 1.25 });
+    expect([turned.fromX, turned.fromY, turned.fromAngle]).toEqual([40, -300, 1.25]);
+    world.step();
+    world.holdPoses();
+    expect([turned.fromX, turned.fromY, turned.fromAngle]).toEqual([
+      turned.x,
+      turned.y,
+      turned.angle,
+    ]);
+    const restored = new PhysicsWorld();
+    restored.restore(world.snapshot());
+    const back = restored.balls[0]!;
+    expect([back.fromX, back.fromY, back.fromAngle]).toEqual([back.x, back.y, back.angle]);
+  });
+
+  it('scales its gravity for ?gravity= and drops faster with more of it', () => {
+    const fallMs = (gravityScale: number): number => {
+      const world = new PhysicsWorld({ gravityScale });
+      expect(world.gravity).toBeCloseTo(GRAVITY_BASE * gravityScale, 9);
+      const cat = world.addBall({ tier: 1, x: 0, y: world.geometry.dropY });
+      while (cat.landedMs < 0) world.step();
+      return cat.landedMs;
+    };
+    expect(fallMs(1.2)).toBeLessThan(fallMs(1));
+    expect(fallMs(0.8)).toBeGreaterThan(fallMs(1));
   });
 
   it('moves into the next stage with an empty jar, the same jar as before', () => {

@@ -40,6 +40,13 @@ export interface BallView {
   readonly x: number;
   readonly y: number;
   readonly angle: number;
+  /**
+   * Rendering only: the position and angle at the start of the run's latest tick (or where the
+   * ball was made, if later). The scene draws the ball between these and x, y, angle.
+   */
+  readonly fromX: number;
+  readonly fromY: number;
+  readonly fromAngle: number;
   /** World units per second. */
   readonly vx: number;
   readonly vy: number;
@@ -113,6 +120,9 @@ export class Ball implements BallView, CircleShape {
   mate: number | null = null;
   /** A piece: the world step from which it parts from its mate even if they still touch. */
   mateUntil = Infinity;
+  fromX = 0;
+  fromY = 0;
+  fromAngle = 0;
   private growFrom: number;
   private growAgeMs = 0;
 
@@ -132,6 +142,14 @@ export class Ball implements BallView, CircleShape {
     this.growFrom = this.radius;
     this.landedMs = landedMs;
     this.hitsLeft = hitsLeft;
+    this.holdPose();
+  }
+
+  /** Rendering only: the drawn motion starts from where the ball is now. */
+  holdPose(): void {
+    this.fromX = this.body.position.x;
+    this.fromY = this.body.position.y;
+    this.fromAngle = this.body.angle;
   }
 
   get x(): number {
@@ -246,7 +264,10 @@ export function createBall(id: number, spec: BallSpec): Ball {
   }
   (body.plugin as { circle?: Ball }).circle = ball;
   setCircleMass(body, spec.size, radius);
-  if (spec.angle) Matter.Body.setAngle(body, spec.angle);
+  if (spec.angle) {
+    Matter.Body.setAngle(body, spec.angle);
+    ball.holdPose();
+  }
   if (spec.vx || spec.vy) {
     Matter.Body.setVelocity(body, {
       x: (spec.vx ?? 0) / MATTER_TICKS_PER_SECOND,

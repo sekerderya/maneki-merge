@@ -137,7 +137,7 @@ describe('Heavy Drop (GAME_DESIGN §15.9)', () => {
     run.drop(0);
     const ball = run.balls[0]!;
     while (ball.landedMs < 0) run.tick();
-    expect(ball.landedMs).toBeCloseTo(1041.7, 0);
+    expect(ball.landedMs).toBeCloseTo(883.3, 0);
   });
 
   it.each([

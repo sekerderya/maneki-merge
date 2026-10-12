@@ -61,7 +61,7 @@ describe('Wind (GAME_DESIGN §15.8)', () => {
         expect(direction * ball.x).toBeGreaterThan(0.75 * ideal);
         expect(direction * ball.x).toBeLessThan(ideal);
         // The fall itself takes as long as without wind.
-        expect(fallMs).toBeCloseTo(1041.7, 0);
+        expect(fallMs).toBeCloseTo(883.3, 0);
       }
     },
   );

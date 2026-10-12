@@ -22,6 +22,7 @@ import type { BallView } from '../../physics/balls';
 import { imageCanvas } from '../artImages';
 import type { BallRenderer, CatSprite } from '../BallRenderer';
 import { crackVariant } from '../BallRenderer';
+import { drawnAngle, drawnX, drawnY } from '../drawnPose';
 
 /** The text is drawn at this size and scaled to CURSE_NUMBER_SIZE world units. */
 const FONT_PX = 96;
@@ -101,13 +102,17 @@ export class CurseFx {
     this.balls.fadeIn(boulder, nowMs, 0, CURSE_STONE_FADE_MS);
   }
 
-  /** `zoom`: the camera's, for a crisp number. */
+  /**
+   * `zoom`: the camera's, for a crisp number; `alpha`: where between its last two poses the
+   * cursed cat is drawn (drawnPose.ts).
+   */
   update(
     nowMs: number,
     curse: CurseState | null,
     balls: readonly BallView[],
     zoom: number,
     reduced: boolean,
+    alpha: number,
   ): void {
     const cat = curse ? balls.find((b) => b.id === curse.id) : undefined;
     const stone = this.stone;
@@ -120,8 +125,8 @@ export class CurseFx {
         if (stone.texture.key !== STONE_KEY + stage) stone.setTexture(STONE_KEY + stage);
         const grow = cat.radius / cat.targetRadius;
         stone
-          .setPosition(cat.x, cat.y)
-          .setRotation(cat.angle + crackVariant(cat.id).turn)
+          .setPosition(drawnX(cat, alpha), drawnY(cat, alpha))
+          .setRotation(drawnAngle(cat, alpha) + crackVariant(cat.id).turn)
           .setScale(((CURSE_STONE_ART_RADIUS * cat.targetRadius) / (sprite?.radius ?? 1)) * grow);
       } else {
         const scale = CURSE_NUMBER_SIZE / FONT_PX;
@@ -130,7 +135,7 @@ export class CurseFx {
         this.number
           .setText(String(curse.dropsLeft))
           .setScale(scale)
-          .setPosition(cat.x, cat.y - cat.radius - CURSE_NUMBER_GAP)
+          .setPosition(drawnX(cat, alpha), drawnY(cat, alpha) - cat.radius - CURSE_NUMBER_GAP)
           .setRotation(curseSway(curse.dropsLeft, nowMs, reduced));
       }
     }

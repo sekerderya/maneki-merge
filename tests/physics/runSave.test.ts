@@ -94,8 +94,10 @@ describe('saved runs (GAME_DESIGN §11)', () => {
       const twin = back.balls.find((b) => b.id === ball.id);
       return twin ? Math.hypot(twin.x - ball.x, twin.y - ball.y) : Infinity;
     });
-    // Only matter-js's contact cache is lost: the cats settle again within a fraction of a pixel.
-    expect(Math.max(...drift)).toBeLessThan(0.5);
+    // Only matter-js's contact cache is lost: the cats settle again within a fraction of a pixel
+    // (a world unit is about 0.6 CSS px at stage 1). Over seeds 4–11 the farthest cat moved up to
+    // 0.56 units with v0.40's gravity and 1.07 (this seed) with v0.41's.
+    expect(Math.max(...drift)).toBeLessThan(1.5);
     expect(back.balls.length).toBe(run.balls.length);
   });
 

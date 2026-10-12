@@ -9,6 +9,7 @@ import { GOLDEN_GLOW } from '../../config/skin';
 import { LAST_CAT_GLOW, LAST_CAT_RAYS, LAST_CAT_SPARKS } from '../../config/view';
 import type { BallView } from '../../physics/balls';
 import type { SparkFx } from './SparkFx';
+import { drawnX, drawnY } from '../drawnPose';
 
 const HALO_KEY = 'fx-last-halo';
 const RAYS_KEY = 'fx-last-rays';
@@ -48,8 +49,11 @@ export class LastCatFx {
     this.lastSparkMs = nowMs;
   }
 
-  /** Follows the shining cat in `balls`; when it has popped, the final burst. */
-  update(nowMs: number, balls: readonly BallView[], paused: boolean): void {
+  /**
+   * Follows the shining cat in `balls` where it is drawn (`alpha`, drawnPose.ts); when it has
+   * popped, the final burst.
+   */
+  update(nowMs: number, balls: readonly BallView[], paused: boolean, alpha: number): void {
     if (this.id < 0) return;
     const cat = balls.find((b) => b.id === this.id);
     if (!cat) {
@@ -62,10 +66,12 @@ export class LastCatFx {
     const ease = 1 - (1 - appear) * (1 - appear);
     const wave = 0.5 + 0.5 * Math.sin((2 * Math.PI * t) / LAST_CAT_GLOW.pulseMs);
     const r = cat.targetRadius;
+    const x = drawnX(cat, alpha);
+    const y = drawnY(cat, alpha);
     const haloScale = ((r * LAST_CAT_GLOW.scale) / TEXTURE_PX) * ease * (1 + 0.06 * wave);
     this.halo
       .setVisible(true)
-      .setPosition(cat.x, cat.y)
+      .setPosition(x, y)
       .setScale(haloScale)
       .setAlpha(
         ease *
@@ -74,7 +80,7 @@ export class LastCatFx {
     const spin = this.still() ? 0 : (t / 1000) * LAST_CAT_RAYS.spinPerSecond;
     this.rays
       .setVisible(true)
-      .setPosition(cat.x, cat.y)
+      .setPosition(x, y)
       .setRotation(spin)
       .setScale(((r * LAST_CAT_RAYS.scale) / TEXTURE_PX) * ease)
       .setAlpha(ease * LAST_CAT_RAYS.alpha);
@@ -85,7 +91,7 @@ export class LastCatFx {
     for (let i = 0; i < count; i++) {
       this.sparkAngle += GOLDEN_ANGLE;
       const a = this.sparkAngle;
-      this.sparks.burst(cat.x + r * Math.cos(a), cat.y + r * Math.sin(a), 1);
+      this.sparks.burst(x + r * Math.cos(a), y + r * Math.sin(a), 1);
     }
   }
 

@@ -67,6 +67,7 @@ export function createGame(
   insetTop: () => number = () => 0,
   art: ArtImages | null = null,
   fixedResolution: number | null = null,
+  interpolate = true,
 ): GameView {
   let resolution = 1;
   /** The device pixel ratio `levels` were made for. */
@@ -104,7 +105,7 @@ export function createGame(
     scale: { mode: Phaser.Scale.NONE, width: 1, height: 1 },
     input: { activePointers: 1, keyboard: false, gamepad: false },
     render: { antialias: true, powerPreference: 'high-performance' },
-    scene: new GameScene(skin, art),
+    scene: new GameScene(skin, art, interpolate),
     callbacks: {
       postBoot: (booted) => {
         scene = booted.scene.getScene(GAME_SCENE_KEY) as GameScene;

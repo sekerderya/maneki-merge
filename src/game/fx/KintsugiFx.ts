@@ -10,6 +10,7 @@ import { KINTSUGI_FLASH_MS } from '../../config/view';
 import type { BallView } from '../../physics/balls';
 import { crackVariant } from '../BallRenderer';
 import type { BallSkin } from '../skins/BallSkin';
+import { drawnAngle, drawnX, drawnY } from '../drawnPose';
 
 /** MergeFx's ring texture (a white ring 512 px across, its line 6% of that). */
 const RING_KEY = 'fx-ring';
@@ -47,7 +48,8 @@ export class KintsugiFx {
     flash.image.setVisible(true);
   }
 
-  update(nowMs: number, balls: readonly BallView[]): void {
+  /** `alpha`: where between its last two poses each cat is drawn (drawnPose.ts). */
+  update(nowMs: number, balls: readonly BallView[], alpha: number): void {
     for (const flash of this.flashes) {
       if (flash.startMs === -Infinity) continue;
       const t = (nowMs - flash.startMs) / KINTSUGI_FLASH_MS;
@@ -60,8 +62,8 @@ export class KintsugiFx {
       // A ring sits just inside the cat's outline; seams cover the cat like its cracks.
       const scale = seam ? seam.unitsPerPixel * ball.radius : (2 * ball.radius * 0.94) / RING_PX;
       flash.image
-        .setPosition(ball.x, ball.y)
-        .setRotation(ball.angle + crackVariant(ball.id).turn)
+        .setPosition(drawnX(ball, alpha), drawnY(ball, alpha))
+        .setRotation(drawnAngle(ball, alpha) + crackVariant(ball.id).turn)
         .setScale(scale)
         // In quickly, then out.
         .setAlpha(t < 0.15 ? t / 0.15 : 1 - (t - 0.15) / 0.85);

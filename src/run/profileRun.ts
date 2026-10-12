@@ -14,6 +14,7 @@ export interface ProfileRunOptions {
   /** Subscribe before passing it in: the run emits `runStarted` while it is being built. */
   readonly events?: EventBus<GameEvents>;
   readonly instantExpansion?: boolean;
+  readonly gravityScale?: number;
 }
 
 /**

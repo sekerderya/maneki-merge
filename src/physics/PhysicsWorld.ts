@@ -124,6 +124,8 @@ export class FixedStepper {
 
 export interface PhysicsWorldOptions {
   readonly stage?: number;
+  /** Gravity as a multiple of GRAVITY_BASE (`?gravity=`); 1 by default. */
+  readonly gravityScale?: number;
 }
 
 export class PhysicsWorld {
@@ -165,7 +167,7 @@ export class PhysicsWorld {
       positionIterations: POSITION_ITERATIONS,
       velocityIterations: VELOCITY_ITERATIONS,
       enableSleeping: ENABLE_SLEEPING,
-      gravity: { x: 0, y: GRAVITY_BASE, scale: MATTER_GRAVITY_SCALE },
+      gravity: { x: 0, y: GRAVITY_BASE * (options.gravityScale ?? 1), scale: MATTER_GRAVITY_SCALE },
     });
 
     // The walls stand WALL_HEIGHT_FACTOR jar heights tall; the floor reaches under them.
@@ -308,6 +310,14 @@ export class PhysicsWorld {
     ball.removed = true;
   }
 
+  /**
+   * Rendering only: every ball's drawn motion starts from where it is now (BallView's fromX,
+   * fromY, fromAngle). The run calls it at the start of each tick.
+   */
+  holdPoses(): void {
+    for (const ball of this.list) ball.holdPose();
+  }
+
   /** Runs one fixed step, unless paused. Returns whether it ran. */
   step(): boolean {
     if (this.isPaused) return false;
@@ -394,6 +404,7 @@ export class PhysicsWorld {
     state.positionPrev.x = saved.prevX;
     state.positionPrev.y = saved.prevY;
     state.anglePrev = saved.anglePrev;
+    ball.holdPose();
     state.velocity.x = saved.vx;
     state.velocity.y = saved.vy;
     state.speed = Math.hypot(saved.vx, saved.vy);

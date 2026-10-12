@@ -84,21 +84,23 @@ export const MERGE_SPIN_RIM_SPEED = 80;
 export const MERGE_SPIN_MIN_SLIDE = 20;
 
 /**
- * matter-js gravity.y (2150 units/s²), the same at every stage. With the air friction above, a
- * dropped cat reaches the empty floor in 1 s (size 1: 1.00 s, size 4: 0.99 s).
+ * matter-js gravity.y (2900 units/s²), the same at every stage. With the air friction above, a
+ * dropped cat reaches the empty floor in 0.88 s (size 1: 0.883 s, size 4: 0.875 s).
+ * v0.41 (the owner's call, "a bit slow"): 1.35 times the 2150 of v0.13–v0.40, which took 1.04 s.
  */
-export const GRAVITY_BASE = 2.15;
+export const GRAVITY_BASE = 2.9;
 
 /**
  * Heavy Drop (GAME_DESIGN §15.9): at level L a dropped ball shoots out of the paw at
  * HEAVY_DROP_START_SPEED[L] (world units per second, downward) and feels HEAVY_DROP_GRAVITY_BONUS[L]
- * more gravity (units/s²: a quarter of the base gravity per level) until its first contact.
- * Solved headless for falls from the paw to the empty floor of about 1.0 (none), 0.66, 0.53, 0.41,
- * 0.33 and 0.24 s (HEAVY_DROP_FALL_TIMES), landing at 2000, 2339, 2789, 3327 and 4361 u/s.
- * v0.34 (the owner's call, 17% faster than first built and shot out of the paw): until then 104 to
- * 2310 u/s and half the base gravity per level, for 0.8 to 0.3 s.
+ * more gravity (units/s²: 537.5 per level, a quarter of the gravity before v0.41) until its first
+ * contact. Solved headless for falls from the paw to the empty floor of about 0.66, 0.53, 0.41,
+ * 0.33 and 0.24 s (HEAVY_DROP_FALL_TIMES), landing at 2223, 2517, 2928, 3436 and 4438 u/s.
+ * v0.41 re-solved the start speeds for the stronger base gravity (814, 1232, 1842, 2521 and
+ * 3825 before). v0.34 (the owner's call, 17% faster than first built and shot out of the paw):
+ * until then 104 to 2310 u/s and half the base gravity per level, for 0.8 to 0.3 s.
  */
-export const HEAVY_DROP_START_SPEED = [0, 814, 1232, 1842, 2521, 3825] as const;
+export const HEAVY_DROP_START_SPEED = [0, 546, 1020, 1679, 2391, 3732] as const;
 export const HEAVY_DROP_GRAVITY_BONUS = [0, 537.5, 1075, 1612.5, 2150, 2687.5] as const;
 /**
  * A heavy ball's speed limit while it falls (world units per second): 40 units per step, under a

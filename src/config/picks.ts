@@ -71,9 +71,11 @@ export const PICK_OPTIONS = 3;
 /**
  * Wind (GAME_DESIGN §15.8): every ball from the drop until its first contact is pushed sideways at
  * this many world units per second² per level, one way for the whole run (the seed decides). On a
- * one-second fall that drifts a ball ½·a·t² = 50 units per level (the jar is 600 wide).
+ * 0.88 s fall that drifts a ball ½·a·t² = 53 units per level (the jar is 600 wide). The drift is
+ * the fall's height times the wind over gravity, so v0.41 raised it from 100 with the gravity
+ * (× 2900 / 2150): balls come down the same slanted line as before, only faster.
  */
-export const WIND_ACCEL_PER_LEVEL = 100;
+export const WIND_ACCEL_PER_LEVEL = 135;
 /** The wind's card names its strength: index = level. */
 export const WIND_NAMES = ['Calm', 'Breeze', 'Gusty', 'Strong', 'Gale', 'Storm'] as const;
 /** Which way the run's wind blows: 1 to the right, −1 to the left. */
@@ -81,11 +83,12 @@ export type WindDirection = 1 | -1;
 
 /**
  * Heavy Drop (GAME_DESIGN §15.9): how long a dropped cat takes from the paw to the empty floor at
- * each strength (index = strength; 1.0 s without it). The start speeds and the gravity that make
- * them are in config/physics.ts. It was a trial of five levels until v0.40; now it is a rule, and
- * taking it drops every ball at HEAVY_DROP_RULE_LEVEL, the trial's last level (the owner's call).
+ * each strength (index = strength; 0.88 s without it, 1.0 s until v0.41). The start speeds and
+ * the gravity that make them are in config/physics.ts. It was a trial of five levels until v0.40;
+ * now it is a rule, and taking it drops every ball at HEAVY_DROP_RULE_LEVEL, the trial's last level
+ * (the owner's call).
  */
-export const HEAVY_DROP_FALL_TIMES = [1.0, 0.66, 0.53, 0.41, 0.33, 0.24] as const;
+export const HEAVY_DROP_FALL_TIMES = [0.88, 0.66, 0.53, 0.41, 0.33, 0.24] as const;
 export const HEAVY_DROP_RULE_LEVEL = 5;
 /**
  * Its look: speed lines from strength 1, a small flame with embers from HEAVY_FLAME_LEVEL, and

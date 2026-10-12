@@ -15,17 +15,18 @@ import { botMove, publicFingerprint, upgrades } from './fixtures';
  * re-recorded that way by v0.35.3, the last version before the change. v0.39 made the blessings' chances
  * 1.5 times as high and a Lucky Save pop 9 small cats instead of 6 (GAME_DESIGN §6, §15.1), also on
  * purpose: the prints from tick 2400 on were re-recorded by v0.39, and again by v0.39.1, which
- * dropped the 1% magnets of a run without More Magnets (§15.1).
+ * dropped the 1% magnets of a run without More Magnets (§15.1). v0.41 re-recorded all of them:
+ * its stronger gravity (TECH_SPEC §5) makes every fall shorter.
  */
 const V0_33_5 = [
-  '600:3419724d:playing:3',
-  '1200:9c829b50:playing:7',
-  '1800:dbe99b93:playing:12',
-  '2400:82d06b76:playing:16',
-  '3000:78dc55a6:playing:13',
-  '3600:44d2d999:playing:11',
-  '4200:9d7796bf:playing:18',
-  '4800:8a87346a:playing:21',
+  '600:75f77648:playing:3',
+  '1200:46922ed6:playing:7',
+  '1800:1c25fdca:playing:14',
+  '2400:d4325cce:playing:17',
+  '3000:10913ae5:playing:14',
+  '3600:8e2a1769:playing:17',
+  '4200:f40013dc:playing:27',
+  '4800:3a526f29:playing:29',
 ];
 
 const LEVELS: [PickId, number][] = [
@@ -44,17 +45,18 @@ const LEVELS: [PickId, number][] = [
  * (GAME_DESIGN §15) start at 0 and roll on their own generators, so it must play the same. The prints
  * from tick 3600 on were re-recorded by v0.39 and v0.39.1 (stronger blessings and Lucky Save, no
  * magnets without More Magnets; see above), and all of them by v0.40, which made Heavy Drop a rule
- * at the old trial's last level: this run's Heavy Drop 2 now falls at strength 5.
+ * at the old trial's last level: this run's Heavy Drop 2 now falls at strength 5. v0.41 re-recorded
+ * them all again for its stronger gravity.
  */
 const V0_34_0 = [
-  '600:e40a9560:playing:3',
-  '1200:0741e09e:playing:9',
-  '1800:8f57a571:playing:12',
-  '2400:5c6feaca:playing:15',
-  '3000:8a1e054c:playing:17',
-  '3600:4647cf00:playing:13',
-  '4200:a799782a:playing:15',
-  '4800:56459630:playing:14',
+  '600:6ad206aa:playing:3',
+  '1200:2c8e2bd6:playing:6',
+  '1800:2b017f67:playing:11',
+  '2400:5c9fa969:playing:12',
+  '3000:27de17f9:playing:18',
+  '3600:55824131:playing:16',
+  '4200:d9ec92ae:playing:17',
+  '4800:bc17c0e8:playing:18',
 ];
 
 const LEVELS_0_34: [PickId, number][] = [

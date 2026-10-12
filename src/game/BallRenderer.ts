@@ -28,6 +28,7 @@ import {
 import type { BallView } from '../physics/balls';
 import type { BallSkin, SkinFrame } from './skins/BallSkin';
 import type { SpecialSkin } from './skins/SpecialSkin';
+import { drawnAngle, drawnX, drawnY } from './drawnPose';
 
 /** A texture every Phaser game has; parked sprites point at it, never at a freed texture. */
 const PARKED_TEXTURE = '__DEFAULT';
@@ -102,8 +103,11 @@ export class BallRenderer {
     }
   }
 
-  /** Matches sprites to balls; `nowMs` drives the merge bumps and the golden glow's pulse. */
-  sync(balls: readonly BallView[], nowMs: number): void {
+  /**
+   * Matches sprites to balls; `nowMs` drives the merge bumps and the golden glow's pulse, and
+   * `alpha` places each ball between its last two poses (drawnPose.ts).
+   */
+  sync(balls: readonly BallView[], nowMs: number, alpha: number): void {
     if (this.skin.revision !== this.revision) this.retexture(balls);
     const frame = ++this.frame;
     const pulse = glowAlpha(nowMs);
@@ -118,9 +122,12 @@ export class BallRenderer {
       }
       const grow = (ball.radius / ball.targetRadius) * this.bumpAt(ball.id, nowMs);
       const body = this.frameOf(ball);
+      const x = drawnX(ball, alpha);
+      const y = drawnY(ball, alpha);
+      const angle = drawnAngle(ball, alpha);
       sprite.body
-        .setPosition(ball.x, ball.y)
-        .setRotation(ball.angle)
+        .setPosition(x, y)
+        .setRotation(angle)
         .setScale(body.unitsPerPixel * grow);
       if (this.fades.size > 0) sprite.body.setAlpha(this.fadeAt(ball.id, nowMs));
       sprite.crack.setVisible(ball.cracked);
@@ -129,8 +136,8 @@ export class BallRenderer {
         const crack = this.skin.crack(variant);
         if (sprite.crack.texture.key !== crack.key) sprite.crack.setTexture(crack.key, crack.frame);
         sprite.crack
-          .setPosition(ball.x, ball.y)
-          .setRotation(ball.angle + turn)
+          .setPosition(x, y)
+          .setRotation(angle + turn)
           .setScale(crack.unitsPerPixel * ball.targetRadius * grow);
       }
       // A hanabi glows while its fuse burns (from its first contact).
@@ -139,7 +146,7 @@ export class BallRenderer {
       if (ball.golden || lit) {
         const glow = this.special.glow();
         sprite.glow
-          .setPosition(ball.x, ball.y)
+          .setPosition(x, y)
           .setScale(glow.unitsPerPixel * ball.targetRadius * GOLDEN_GLOW_SCALE * grow)
           .setAlpha(lit ? fuseAlpha(nowMs) : pulse);
       }
@@ -149,7 +156,7 @@ export class BallRenderer {
         // The number rides on its plate as the cat rolls, but stays upright.
         const d = number.offset * ball.targetRadius * grow;
         sprite.number
-          .setPosition(ball.x - d * Math.sin(ball.angle), ball.y + d * Math.cos(ball.angle))
+          .setPosition(x - d * Math.sin(angle), y + d * Math.cos(angle))
           .setScale(number.unitsPerPixel * grow);
       }
     }

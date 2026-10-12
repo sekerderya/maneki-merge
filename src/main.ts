@@ -283,6 +283,7 @@ async function boot(): Promise<void> {
     () => gameScreen.hudBottom(),
     art,
     flags.resolution,
+    flags.interpolate,
   );
   gameScreen.onHudResize(() => game.refit());
   game.onJarBox((box, growing) => gameScreen.setJarBox(box, growing));
@@ -320,6 +321,7 @@ async function boot(): Promise<void> {
       vibrate: (name) => haptics.play(name),
     },
     seed: flags.seed,
+    gravityScale: flags.gravity,
     onProfileChange: showProfile,
   });
   onProfileWrite = () => session.profileWritten();

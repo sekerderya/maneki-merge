@@ -17,6 +17,16 @@ export interface UrlFlags {
    * Null when absent or invalid.
    */
   readonly resolution: number | null;
+  /**
+   * `?gravity=<n>`: every run's gravity is n times GRAVITY_BASE (MIN_GRAVITY_SCALE to
+   * MAX_GRAVITY_SCALE), to try fall speeds on a phone. Null when absent or invalid.
+   */
+  readonly gravity: number | null;
+  /**
+   * `?interp=0` (or `false`) draws the balls where the latest physics step left them instead
+   * of between the last two (TECH_SPEC §5), to compare the two on a phone. True by default.
+   */
+  readonly interpolate: boolean;
 }
 
 const MAX_SEED = 0xffffffff;
@@ -29,6 +39,8 @@ export function parseUrlFlags(search: string): UrlFlags {
     seed: parseSeed(params.get('seed')),
     skin: parseSkin(params.get('skin')),
     resolution: parseResolution(params.get('res')),
+    gravity: parseGravity(params.get('gravity')),
+    interpolate: !parseOff(params.get('interp')),
   };
 }
 
@@ -36,6 +48,12 @@ function parseBoolean(value: string | null): boolean {
   if (value === null) return false;
   const normalized = value.trim().toLowerCase();
   return normalized === '1' || normalized === 'true' || normalized === '';
+}
+
+function parseOff(value: string | null): boolean {
+  if (value === null) return false;
+  const normalized = value.trim().toLowerCase();
+  return normalized === '0' || normalized === 'false';
 }
 
 function parseSeed(value: string | null): number | null {
@@ -50,6 +68,16 @@ function parseResolution(value: string | null): number | null {
   if (value === null || !/^\d+(\.\d+)?$/.test(value.trim())) return null;
   const resolution = Number(value.trim());
   return resolution >= MIN_RESOLUTION && resolution <= MAX_RENDER_RESOLUTION ? resolution : null;
+}
+
+/** How far `?gravity=` may scale the gravity, to try fall speeds on a phone. */
+const MIN_GRAVITY_SCALE = 0.5;
+const MAX_GRAVITY_SCALE = 2;
+
+function parseGravity(value: string | null): number | null {
+  if (value === null || !/^\d+(\.\d+)?$/.test(value.trim())) return null;
+  const scale = Number(value.trim());
+  return scale >= MIN_GRAVITY_SCALE && scale <= MAX_GRAVITY_SCALE ? scale : null;
 }
 
 function parseSkin(value: string | null): SkinId | null {

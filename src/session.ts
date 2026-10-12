@@ -73,6 +73,8 @@ export interface SessionParts {
   readonly feedback: FeedbackOutputs;
   /** A fixed seed (`?seed=`) for every run, or null for a fresh one each time. */
   readonly seed: number | null;
+  /** Gravity for every run as a multiple of the normal one (`?gravity=`), or null for normal. */
+  readonly gravityScale: number | null;
   /** The wallet, records or settings changed (the menu shows them). */
   readonly onProfileChange: () => void;
 }
@@ -213,6 +215,7 @@ export class GameSession {
     const run = startProfileRun(this.parts.profile, {
       seed: this.parts.seed ?? freshSeed(),
       events,
+      gravityScale: this.parts.gravityScale ?? 1,
     });
     this.play(run, events);
     this.saveRun();
@@ -227,7 +230,10 @@ export class GameSession {
     const events = new EventBus<GameEvents>();
     let run: RunController;
     try {
-      run = resumeProfileRun(this.parts.profile, saved.run, { events });
+      run = resumeProfileRun(this.parts.profile, saved.run, {
+        events,
+        gravityScale: this.parts.gravityScale ?? 1,
+      });
     } catch (error) {
       console.warn('The saved run could not be restored.', error);
       this.parts.runSave.clear();

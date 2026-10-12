@@ -4,13 +4,28 @@ import { parseUrlFlags } from '../../src/core/urlFlags';
 
 describe('parseUrlFlags', () => {
   it('defaults everything off when the query is empty', () => {
-    expect(parseUrlFlags('')).toEqual({ debug: false, seed: null, skin: null, resolution: null });
+    expect(parseUrlFlags('')).toEqual({
+      debug: false,
+      seed: null,
+      skin: null,
+      resolution: null,
+      gravity: null,
+      interpolate: true,
+    });
   });
 
-  it('reads all four flags, with or without the leading ?', () => {
-    const expected = { debug: true, seed: 42, skin: 'placeholder', resolution: 1.5 };
-    expect(parseUrlFlags('?debug=1&seed=42&skin=placeholder&res=1.5')).toEqual(expected);
-    expect(parseUrlFlags('debug=1&seed=42&skin=placeholder&res=1.5')).toEqual(expected);
+  it('reads all six flags, with or without the leading ?', () => {
+    const expected = {
+      debug: true,
+      seed: 42,
+      skin: 'placeholder',
+      resolution: 1.5,
+      gravity: 1.2,
+      interpolate: false,
+    };
+    const query = 'debug=1&seed=42&skin=placeholder&res=1.5&gravity=1.2&interp=0';
+    expect(parseUrlFlags(`?${query}`)).toEqual(expected);
+    expect(parseUrlFlags(query)).toEqual(expected);
   });
 
   it.each([
@@ -56,6 +71,8 @@ describe('parseUrlFlags', () => {
       seed: null,
       skin: null,
       resolution: null,
+      gravity: null,
+      interpolate: true,
     });
   });
 
@@ -71,5 +88,29 @@ describe('parseUrlFlags', () => {
     ['?res=', null],
   ])('parses %s as resolution=%s', (search, resolution) => {
     expect(parseUrlFlags(search).resolution).toBe(resolution);
+  });
+
+  it.each([
+    ['?gravity=1.2', 1.2],
+    ['?gravity=0.5', 0.5],
+    ['?gravity=2', 2],
+    ['?gravity=0.4', null],
+    ['?gravity=2.5', null],
+    ['?gravity=-1', null],
+    ['?gravity=abc', null],
+    ['?gravity=', null],
+  ])('parses %s as gravity=%s', (search, gravity) => {
+    expect(parseUrlFlags(search).gravity).toBe(gravity);
+  });
+
+  it.each([
+    ['', true],
+    ['?interp=1', true],
+    ['?interp', true],
+    ['?interp=0', false],
+    ['?interp=false', false],
+    ['?interp=FALSE', false],
+  ])('parses %s as interpolate=%s', (search, interpolate) => {
+    expect(parseUrlFlags(search).interpolate).toBe(interpolate);
   });
 });

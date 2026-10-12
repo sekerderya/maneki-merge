@@ -80,6 +80,7 @@ import { ArtSkin } from './skins/ArtSkin';
 import { CatSkin } from './skins/CatSkin';
 import { PlaceholderSkin } from './skins/PlaceholderSkin';
 import { SpecialSkin } from './skins/SpecialSkin';
+import { drawnX, drawnY } from './drawnPose';
 
 /**
  * Which cat art the scene draws: the raster cats, the earlier vector cats (`?skin=vector`) or flat
@@ -173,11 +174,17 @@ export class GameScene extends Phaser.Scene {
   private countdownPulseMs = -Infinity;
   /** The stage whose textures are being drawn ahead of an expansion's reveal (0: none). */
   private preparing = 0;
+  /** This frame's place between the run's last two ticks (drawnPose.ts). */
+  private drawAlpha = 1;
 
-  /** `art`: the raster art (game/artImages.ts), needed by the `art` skin. */
+  /**
+   * `art`: the raster art (game/artImages.ts), needed by the `art` skin. `interpolate`: draw
+   * the balls between their last two poses (false: `?interp=0`, drawnPose.ts).
+   */
   constructor(
     private readonly skinId: SceneSkin = 'art',
     private readonly art: ArtImages | null = null,
+    private readonly interpolate = true,
   ) {
     super(GAME_SCENE_KEY);
   }
@@ -566,15 +573,17 @@ export class GameScene extends Phaser.Scene {
     const danger = run.dangerActive;
     const flash = danger ? Math.floor(this.nowMs / (DANGER_FLASH_PERIOD_MS / 2)) % 2 === 0 : null;
     this.jar.draw(geo.width, flash, false);
-    this.balls.sync(run.balls, this.nowMs);
+    // Between each ball's last two poses (drawnPose.ts); `?interp=0` draws the latest.
+    const alpha = (this.drawAlpha = this.interpolate ? run.renderAlpha : 1);
+    this.balls.sync(run.balls, this.nowMs, alpha);
     this.renderDropper(run);
     this.renderSelection(run);
     this.renderFlights(run);
     this.renderCountdown(run, geo);
-    this.lastCat.update(this.nowMs, run.balls, run.state === 'paused');
-    this.fall.update(this.nowMs, run.balls, run.heavyDropLevel, run.state === 'paused');
-    this.kintsugi.update(this.nowMs, run.balls);
-    this.curse.update(this.nowMs, run.curse, run.balls, this.fit.zoom, reducedMotion());
+    this.lastCat.update(this.nowMs, run.balls, run.state === 'paused', alpha);
+    this.fall.update(this.nowMs, run.balls, run.heavyDropLevel, run.state === 'paused', alpha);
+    this.kintsugi.update(this.nowMs, run.balls, alpha);
+    this.curse.update(this.nowMs, run.curse, run.balls, this.fit.zoom, reducedMotion(), alpha);
     this.dice.update(this.nowMs);
     this.pops.update(this.nowMs);
     this.fx.update(this.nowMs);
@@ -673,13 +682,15 @@ export class GameScene extends Phaser.Scene {
     const alpha = 0.7 + 0.3 * Math.sin(phase * 2 * Math.PI);
     const ring = ball.radius + SELECT_RING_GAP;
     g.lineStyle(SELECT_RING_WIDTH, SELECT_RING, alpha);
-    g.strokeCircle(ball.x, ball.y, ring);
+    const x = drawnX(ball, this.drawAlpha);
+    const y = drawnY(ball, this.drawAlpha);
+    g.strokeCircle(x, y, ring);
     if (run.state !== 'playing') {
       this.reportPrompt(null);
       return;
     }
     const cam = this.cameras.main;
-    const top = worldToView(this.fit, cam.width, cam.height, ball.x, ball.y - ring);
+    const top = worldToView(this.fit, cam.width, cam.height, x, y - ring);
     this.reportPrompt({ id, x: Math.round(top.x), y: Math.round(top.y) });
   }
 

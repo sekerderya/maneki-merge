@@ -15,6 +15,7 @@ import { HEAVY_FLAME, HEAVY_TRAIL } from '../../config/view';
 import type { BallView } from '../../physics/balls';
 import { imageCanvas } from '../artImages';
 import type { SparkFx } from './SparkFx';
+import { drawnX, drawnY } from '../drawnPose';
 
 const LINE_KEY = 'fx-speed-line';
 const LINE_W = 8;
@@ -46,8 +47,17 @@ export class FallFx {
     this.flameCount = Math.min(images.length, FX_ART.flames.length);
   }
 
-  /** Draws the trails of the falling balls at Heavy Drop's `level` (0: none). */
-  update(nowMs: number, balls: readonly BallView[], level: number, paused: boolean): void {
+  /**
+   * Draws the trails of the falling balls at Heavy Drop's `level` (0: none), at their drawn
+   * poses (`alpha`, drawnPose.ts).
+   */
+  update(
+    nowMs: number,
+    balls: readonly BallView[],
+    level: number,
+    paused: boolean,
+    alpha: number,
+  ): void {
     let used = 0;
     let burning = 0;
     const ember =
@@ -65,9 +75,11 @@ export class FallFx {
         // The textures' top goes the way it came (lines: brightest at the bottom, flames: the
         // head at the bottom).
         const angle = Math.atan2(ux, -uy);
+        const x = drawnX(ball, alpha);
+        const y = drawnY(ball, alpha);
         if (ember) {
           const r = ball.radius * 0.8;
-          this.sparks.embers(ball.x + ux * r, ball.y + uy * r, this.particles(2));
+          this.sparks.embers(x + ux * r, y + uy * r, this.particles(2));
         }
         if (sprite) {
           const share: readonly number[] = HEAVY_FLAME.headShare;
@@ -75,7 +87,7 @@ export class FallFx {
           const swing = Math.sin((2 * Math.PI * nowMs) / HEAVY_FLAME.flickerMs + ball.id);
           this.flame(burning++, flame)
             .setOrigin(sprite.headX / sprite.width, sprite.headY / sprite.height)
-            .setPosition(ball.x, ball.y)
+            .setPosition(x, y)
             .setRotation(angle)
             .setScale(scale, scale * (1 + HEAVY_FLAME.flicker * swing));
           continue;
@@ -88,7 +100,7 @@ export class FallFx {
           const long = (i === middle ? 1 : 0.7) * length;
           const back = ball.radius * 0.6 + long / 2;
           this.line(used++)
-            .setPosition(ball.x - uy * side + ux * back, ball.y + ux * side + uy * back)
+            .setPosition(x - uy * side + ux * back, y + ux * side + uy * back)
             .setRotation(angle)
             .setScale(HEAVY_TRAIL.width / LINE_W, long / LINE_H)
             .setAlpha(HEAVY_TRAIL.alpha);

@@ -337,8 +337,8 @@ describe('physics tunables (TECH_SPEC §5)', () => {
     expect(perStep).toBeLessThan(sizeRadius(1));
   });
 
-  it('keeps gravity at 2150 units/s² (the same at every stage)', () => {
-    expect(GRAVITY_BASE).toBe(2.15);
+  it('keeps gravity at 2900 units/s² (the same at every stage)', () => {
+    expect(GRAVITY_BASE).toBe(2.9);
   });
 
   it('lets cats roll over each other, bounce off each other and land dead on the floor', () => {

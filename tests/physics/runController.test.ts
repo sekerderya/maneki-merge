@@ -652,6 +652,26 @@ describe('pause and frame timing', () => {
     expect(run.playTimeMs).toBeCloseTo(7 * PHYSICS_STEP_MS, 9);
   });
 
+  it("keeps each tick's starting poses, so a frame can draw a ball between its last two", () => {
+    const { run } = setup();
+    const cat = run.spawnBall(2, 0);
+    // A new ball's drawn motion starts where it was made.
+    expect([cat.fromX, cat.fromY, cat.fromAngle]).toEqual([cat.x, cat.y, cat.angle]);
+    run.update(1.5 * PHYSICS_STEP_MS);
+    expect(run.ticks).toBe(1);
+    expect(run.renderAlpha).toBeCloseTo(0.5, 9);
+    const before = cat.y;
+    run.tick();
+    // It started this tick where the last one left it, and fell on.
+    expect(cat.fromY).toBe(before);
+    expect(cat.y).toBeGreaterThan(before);
+    // After a pause it is drawn where it stands: nothing jumps back.
+    run.pause();
+    run.resume();
+    expect(run.renderAlpha).toBe(0);
+    expect([cat.fromX, cat.fromY, cat.fromAngle]).toEqual([cat.x, cat.y, cat.angle]);
+  });
+
   it('puts a debug cat of any size the stage holds in the dropper', () => {
     const { run, of } = setup();
     run.giveCat(4, true);

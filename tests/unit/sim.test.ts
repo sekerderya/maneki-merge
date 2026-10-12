@@ -17,11 +17,11 @@ describe('the balance bot (npm run sim, TECH_SPEC §11)', () => {
   });
 
   it('notes the score and coins at each stage clear', () => {
-    // Seed 12 clears stage 1 in 58 s, then plays on into stage 2.
-    const run = playBot({ seed: 12, capSeconds: 70, stages: 2 });
+    // Seed 16 clears stage 1 in 53 s, then plays on into stage 2 (seed 12 until v0.41).
+    const run = playBot({ seed: 16, capSeconds: 70, stages: 2 });
     expect(run.stagesCleared).toBe(1);
     expect(run.clears).toHaveLength(1);
-    expect(run.clears[0]!.seconds).toBeCloseTo(58, -1);
+    expect(run.clears[0]!.seconds).toBeCloseTo(53, -1);
     expect(run.score).toBeGreaterThan(run.clears[0]!.score);
     expect(run.coins).toBeGreaterThan(run.clears[0]!.coins);
   });

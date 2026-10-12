@@ -110,6 +110,8 @@ export interface RunOptions {
    * after the last `choose` the rest runs at once too.
    */
   readonly instantExpansion?: boolean;
+  /** Gravity as a multiple of GRAVITY_BASE (`?gravity=`, trying fall speeds); 1 by default. */
+  readonly gravityScale?: number;
 }
 
 /** A curse on a cat (GAME_DESIGN §15.12): the cat's id and what its bell shows. */
@@ -280,7 +282,7 @@ export class RunController {
     this.bankCoins = options.bank ?? (() => {});
     this.instant = options.instantExpansion ?? false;
     this.savesLeft = this.stats.luckySaves;
-    this.world = new PhysicsWorld();
+    this.world = new PhysicsWorld({ gravityScale: options.gravityScale ?? 1 });
     this.rng = new Rng(options.seed);
     this.specialRng = new Rng((Math.trunc(options.seed) ^ SPECIAL_SEED_SALT) >>> 0);
     this.pickRng = new Rng((Math.trunc(options.seed) ^ PICK_SEED_SALT) >>> 0);
@@ -459,7 +461,8 @@ export class RunController {
 
   /**
    * How far the current frame is between two ticks (0–1). Rendering only: the scene uses it to
-   * move the expansion's camera smoothly at any refresh rate. It never affects the run.
+   * draw the balls between their poses (BallView's fromX, …) and to move the expansion's camera
+   * smoothly at any refresh rate. It never affects the run.
    */
   get renderAlpha(): number {
     return this.stepper.alpha;
@@ -564,6 +567,7 @@ export class RunController {
     if (this.runState !== 'paused') return;
     this.runState = this.resumeTo;
     this.stepper.reset();
+    this.world.holdPoses();
     this.events.emit('resumed', {});
   }
 
@@ -577,6 +581,7 @@ export class RunController {
   tick(): void {
     if (!this.ticking) return;
     this.tickCount++;
+    this.world.holdPoses();
     if (this.runState === 'expanding') this.expansionTick();
     else this.playStep();
   }

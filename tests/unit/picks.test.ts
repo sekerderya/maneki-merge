@@ -38,7 +38,7 @@ describe('the trials, rules and blessings (GAME_DESIGN §15.5)', () => {
     ['moreBoulders', 'trial', 'More Boulders', 5, 0.03],
     ['ironBands', 'trial', 'Iron Bands', 3, 1],
     ['bigBoulders', 'trial', 'Big Boulders', 4, 1],
-    ['wind', 'trial', 'Wind', 5, 100],
+    ['wind', 'trial', 'Wind', 5, 135],
     ['porcelain', 'trial', 'Porcelain', 4, 0.1],
     ['cursedBell', 'trial', 'Cursed Bell', 1, 1],
     ['quickCurse', 'trial', 'Quick Curse', 3, 1],
@@ -246,7 +246,7 @@ describe('the cards', () => {
     ['wind', {}, 0, 'Calm', 'Breeze'],
     ['wind', { wind: 4 }, 0, 'Gale', 'Storm'],
     // The rule: the fall of the old trial's last level.
-    ['heavyDrop', {}, 0, '1.0 s', '0.24 s'],
+    ['heavyDrop', {}, 0, '0.88 s', '0.24 s'],
     ['porcelain', {}, 0, '0%', '10%'],
     ['porcelain', { porcelain: 3 }, 0, '30%', '40%'],
     ['hubris', {}, 0, 'At once', 'After 0.5 s'],
