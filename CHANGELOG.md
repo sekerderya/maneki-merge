@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.40.0] - 2026-10-13
+
+### Changed
+
+- **Heavy Drop is a rule** (the owner's call): it left the trials and is offered with Hubris, Echo, Copycat and Dice where the jar grows (five rules now, so rule picks run through stage 25). Taking it drops every ball at the old trial's last level for the rest of the run: shot out of the paw, a 0.24 s fall, the fireball and the knock. A hint names it as the next stage starts. A run saved with the trial comes back with the rule. Eight trials remain (six open at first).
+- **More Magnets** opens from the start, its first level at 1,000 (stage 2 and 1,200).
+
 ## [0.39.1] - 2026-10-12
 
 ### Changed
