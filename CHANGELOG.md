@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.39.1] - 2026-10-12
+
+### Changed
+
+- **Game Over** shows the score, the best score, the stage and the coins earned (the owner's call): the biggest cat made this run, with its "New" chip, and the "New in the shop" line are gone.
+
+### Fixed
+
+- **No magnets without More Magnets.** Every run had a 1% magnet chance, a fresh profile too; magnets now come only with their blessing, like hanabi and jokers (2.25% per level).
+
+### Measured
+
+- The meta bot (24 players) after the magnet change: a better-than-bot player clears stage 5 within 15 minutes in 1 of 24 profiles (6 in v0.39.0) and within 30 in 15 (16); the weak bot 1 and 3 (1 and 7). At 24 players the 15-minute figure is noisy, but the early game lost a little help.
+
 ## [0.39.0] - 2026-10-12 (Batch 22)
 
 ### Changed
