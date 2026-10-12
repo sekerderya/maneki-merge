@@ -269,11 +269,13 @@ A card can be bought once the profile's **best stage** reaches its **gate** (the
 | `secondChance` | Second Chance | +1 Lucky Save per run                            |     0 |   2 |    1 | 1K, 15K                                         |
 | `goldenCats`   | Golden Cats   | Golden Cats can go one level higher in a run     |     1 |   5 |    1 | 400, 2K, 10K, 24K                               |
 | `bigDrops`     | Big Drops     | Big Drops can go one level higher in a run       |     1 |   3 |    1 | 2K, 14K                                         |
-| `moreMagnets`  | More Magnets  | More Magnets can go one level higher in a run    |     0 |   5 |    2 | 1.2K, 3.5K, 14K, 30K, 55K                       |
+| `moreMagnets`  | More Magnets  | More Magnets can go one level higher in a run    |     0 |   5 |    1 | 1K, 3.5K, 14K, 30K, 55K                         |
 | `hanabi`       | Hanabi        | Hanabi can go one level higher in a run          |     0 |   5 |    3 | 3K, 8K, 22K, 42K, 70K                           |
 | `joker`        | Joker Cat     | Joker Cat can go one level higher in a run       |     0 |   5 |    5 | 10K, 18K, 48K, 85K, 130K                        |
 
 **v0.39 (the owner's call):** the early game was too slow, runs stopped at stages 5–6 and even a maxed shop made the first stages dull, so every shop effect became 1.5 times as strong (Lucky Paw +15% → +22.5%, Big Catch 0.8 → 1.2 tilt levels, Combo Charm +8% → +12%, a Lucky Save pops 9 small cats instead of 6, and each blessing level 1.5 times as much, §15.5), the first levels got cheaper, the gates lower (Combo Charm and More Magnets stage 3 → 2, Hanabi 5 → 3, Joker Cat 8 → 5), and Second Chance, the strongest help for getting past the first jar, opened from the start at 1K and 15K (stage 5, 10K and 50K before). The last levels got dearer so that everything still takes about 8 hours.
+
+v0.40 (the owner's call): More Magnets opens from the start, its first level at 1K (stage 2 and 1.2K in v0.39), since magnets now come only with their blessing (§15.1).
 
 Every card costs ~1.02M coins in all (~610K in v0.36–v0.38). Big Drops has 3 levels: its tilt adds to Big Catch's up to 13 (§8), and one level (3) on top of Big Catch 10 (12) already reaches it. The prices come from a pacing model (docs/plans/batch-20.md §7): a player who keeps playing and buys whatever is affordable has bought everything in about 8 hours. Rerun with v0.39's effects (power 1.5 times as strong, so runs go further and pay more), the model buys everything in ~7.8 hours (12 runs; 8.9 hours and 23 runs with v0.36's numbers), with runs reaching stage ~14 after an hour and ~17 after two. In v0.36–v0.38 the first run (about 5 minutes) paid for two or three cheap cards, and runs reached stage ~7 after an hour, ~10 after two and ~16 after four. Until v0.36 the four upgrades cost 21,455 in all (Lucky Paw 50 to 3200, Big Catch 100 to 3500 for 5 levels of 3 points, Combo Charm 80 to 1280, Second Chance 500 and 4000), and the blessings were all open from the first run.
 
@@ -413,7 +415,7 @@ A maxed profile's smart bot clears 5 stages in 44 runs of 60 and reaches stage ~
 
 > The owner's design (2026-10-08), built in v0.21. Its numbers are starting values: balance and the economy come later.
 
-Later stages get harder and every run gets its own build. Every stage clear asks the player to pick a **trial**, which makes the coming stages harder, and then a **blessing**, which helps; every 5 stages, where the jar grows, a **rule**, which changes how the game works, takes the trial's place (v0.34, the owner's call). Picks stack by level for the rest of the run, like Vampire Survivors' level-ups: the same pick again raises its level; a rule has one level, on or off. Trials work through **boulders** (more, bigger, harder to break), the **wind**, **heavy drops**, **porcelain** cats (v0.34: trials that make the game harder in different ways, which don't build on each other) and the **Cursed Bell** with its two follow-ups (Batch 19). Rules: **Hubris** and **Echo** (v0.34), **Copycat** and **Dice** (Batch 19). Blessings work through **magnets**, bigger drops, **golden cats**, **hanabi** and **joker cats** (the last two since v0.28).
+Later stages get harder and every run gets its own build. Every stage clear asks the player to pick a **trial**, which makes the coming stages harder, and then a **blessing**, which helps; every 5 stages, where the jar grows, a **rule**, which changes how the game works, takes the trial's place (v0.34, the owner's call). Picks stack by level for the rest of the run, like Vampire Survivors' level-ups: the same pick again raises its level; a rule has one level, on or off. Trials work through **boulders** (more, bigger, harder to break), the **wind**, **porcelain** cats (v0.34: trials that make the game harder in different ways, which don't build on each other) and the **Cursed Bell** with its two follow-ups (Batch 19). Rules: **Hubris** and **Echo** (v0.34), **Copycat** and **Dice** (Batch 19), and **Heavy Drop** (a trial from v0.34, a rule since v0.40). Blessings work through **magnets**, bigger drops, **golden cats**, **hanabi** and **joker cats** (the last two since v0.28).
 
 ### 15.1 The queue
 
@@ -483,7 +485,7 @@ A boulder is a stone ball that only takes up room.
 
 ### 15.5 Stage-clear picks
 
-At every stage clear two picks come after the last cat settles alone and pops (§7.1 step 2), or, every 5 stages, after the jar has grown (§7.1 step 4). At the clears that grow the jar (stages 5, 10, 15, …) the first pick is a rule instead of a trial (v0.34, the owner's call); once every rule is taken (four since Batch 19, so rule picks run through stage 20), those clears offer a trial as usual:
+At every stage clear two picks come after the last cat settles alone and pops (§7.1 step 2), or, every 5 stages, after the jar has grown (§7.1 step 4). At the clears that grow the jar (stages 5, 10, 15, …) the first pick is a rule instead of a trial (v0.34, the owner's call); once every rule is taken (five since v0.40, so rule picks run through stage 25), those clears offer a trial as usual:
 
 The cards show in front of the shut stage doors (§7.1). With the art skin (v0.32) they are built from the Upgrades screen's pieces (§13.1): the title on its cream pill with a line under it, three cards with the icon, the name and the level change ("Lv 0 → 1"), the effect and the stat in the tan strip, and Choose on the menu's coral PLAY pill, faded until a card is chosen. The chosen card pops forward (0.22 s, overshooting a little) in a thick ring of light, blue for a trial, vermilion (the shrine's red) for a rule and gold for a blessing (v0.32.2, the owner found the first glow too faint; v0.32.4 dropped the dimming of the other cards, the owner's call; the rule's since v0.34). While the doors are shut the jar behind them isn't drawn, so the picks run smoothly on slow phones. Each card's icon is the game's own art for the ball it is about, in a cream medallion, stone-grey rimmed for a trial, vermilion for a rule and gold for a blessing (v0.32.1, the owner's call; the rule's rim since v0.34, drawn in CSS like the others): a pyramid of three boulders for More Boulders and a big boulder with a small one and an arrow for Big Boulders (the owner's pictures, v0.32.4); for Iron Bands the boulder as the pick will make it, with one band more than now; the magnet, the hanabi and the joker for theirs; the biggest drop (the size-4 cat) for Big Drops; a white cat with a gold glow for Golden Cats. Batch 18's five picks get the owner's own pictures (docs/ART_ASSETS.md §4.12; the Wind's carp streamer is mirrored when the run's wind blows to the left), and so do Batch 19's five (§4.13: the worried cat turning to stone for Cursed Bell, the bell and an hourglass for Quick Curse, three bells for More Curses, the black cat and its copy for Copycat, a dice cup for Dice); a pick whose picture hasn't come yet shows the cat it is about. An icon made later with the icon kit (docs/ART_ASSETS.md §5) would take its card's place.
 
@@ -492,7 +494,7 @@ The cards show in front of the shut stage doors (§7.1). With the art skin (v0.3
 
 Then play resumes in the next stage as the doors open: in the grown jar, or in the same empty jar.
 
-- **Options:** each pick shows up to 3 different options, drawn at random from those that are open, with the run's seeded RNG. An option is open when it isn't at its max level (for a blessing: at its shop card's level, §10, v0.36) and, for a **follow-up**, once the pick it needs has been taken (Batch 19): Quick Curse and More Curses are never offered before Cursed Bell. Today there are 9 trials (7 open at first), so the trial pick shows 3 of them, 4 rules, so a rule pick shows 3 of the 4 in random order, and 5 blessings (v0.28), so the blessing pick shows 3 of the 5. With fewer than 3 open it shows fewer cards; with none open the pick is skipped.
+- **Options:** each pick shows up to 3 different options, drawn at random from those that are open, with the run's seeded RNG. An option is open when it isn't at its max level (for a blessing: at its shop card's level, §10, v0.36) and, for a **follow-up**, once the pick it needs has been taken (Batch 19): Quick Curse and More Curses are never offered before Cursed Bell. Today there are 8 trials (6 open at first), so the trial pick shows 3 of them, 5 rules (v0.40: Heavy Drop became one), so a rule pick shows 3 of the 5 in random order, and 5 blessings (v0.28), so the blessing pick shows 3 of the 5. With fewer than 3 open it shows fewer cards; with none open the pick is skipped.
 - The player must pick exactly one: no skip, no reroll, no rarities.
 - **Levels:** a pick raises that option's level by 1. Levels last for the run, and every run starts at 0. They are saved with the run in progress (§11).
 - **Card:** an icon, the name, a one-line effect, the level as pips with "Lv 1 → 2", and the value it changes (current → next), like a shop card (§2.2). Every trial, rule and blessing but Big Drops has a clip button on its icon that shows what it does (§2.5, v0.38); a tap on it doesn't select the card.
@@ -507,7 +509,6 @@ Then play resumes in the next stage as the doors open: in the grown jar, or in t
 | `ironBands`    | Iron Bands    | Boulders need one more merge to break |   3 | 1 → 4 merges                    | –           |
 | `bigBoulders`  | Big Boulders  | Boulders one size bigger              |   4 | size 2 (r 49) → size 6 (r 98)   | –           |
 | `wind`         | Wind          | +100 u/s² of wind (§15.8)             |   5 | Calm → Storm                    | –           |
-| `heavyDrop`    | Heavy Drop    | Falls faster (§15.9)                  |   5 | 1.0 s → 0.24 s fall             | –           |
 | `porcelain`    | Porcelain     | +10% crack chance (§15.10)            |   4 | 0% → 40%                        | –           |
 | `cursedBell`   | Cursed Bell   | Now and then a cat is cursed (§15.12) |   1 | Off → On                        | –           |
 | `quickCurse`   | Quick Curse   | Cursed cats turn to stone sooner      |   3 | 10 → 8 → 7 → 6 drops to stone   | Cursed Bell |
@@ -517,12 +518,13 @@ The boulder trials still multiply each other (more × bigger × harder to break)
 
 **Rules** (v0.34, one level each, §15.11)
 
-| ID        | Name    | Effect                                                                         | Card value                               |
-| --------- | ------- | ------------------------------------------------------------------------------ | ---------------------------------------- |
-| `hubris`  | Hubris  | Sizes 1–5 wait a moment to merge in pairs; three merge at once and skip a size | Small pairs merge: At once → After 0.5 s |
-| `echo`    | Echo    | Merges of sizes 5–7 leave a cat of their size behind, once per drop            | Off → On                                 |
-| `copycat` | Copycat | The next cat copies the size of your last merge (§15.13)                       | Next cat: Random → Copied                |
-| `dice`    | Dice    | Every merge rolls a die: sometimes a size more, sometimes it fizzles (§15.14)  | Merges: Sure → Rolled                    |
+| ID          | Name       | Effect                                                                         | Card value                               |
+| ----------- | ---------- | ------------------------------------------------------------------------------ | ---------------------------------------- |
+| `hubris`    | Hubris     | Sizes 1–5 wait a moment to merge in pairs; three merge at once and skip a size | Small pairs merge: At once → After 0.5 s |
+| `echo`      | Echo       | Merges of sizes 5–7 leave a cat of their size behind, once per drop            | Off → On                                 |
+| `copycat`   | Copycat    | The next cat copies the size of your last merge (§15.13)                       | Next cat: Random → Copied                |
+| `dice`      | Dice       | Every merge rolls a die: sometimes a size more, sometimes it fizzles (§15.14)  | Merges: Sure → Rolled                    |
+| `heavyDrop` | Heavy Drop | Cats shoot down like fireballs and knock aside the cat they land on (§15.9)    | Fall time: 1.0 s → 0.24 s                |
 
 **Blessings**
 
@@ -597,11 +599,11 @@ The wind pushes falling balls sideways.
 
 ### 15.9 Heavy Drop
 
-> The owner's pick (2026-10-11), built in v0.34.
+> The owner's pick (2026-10-11), built in v0.34 as a trial of five levels. **A rule since v0.40** (the owner's call, §15.11): it is offered where the jar grows, and taking it drops every ball at the old trial's last level (strength 5 below: shot out of the paw, a 0.24 s fall, the big fireball and the knock) for the rest of the run. Its card reads "New rule" and "Fall time: 1.0 s → 0.24 s"; a hint shows as the next stage starts ("Heavy Drop: cats shoot down like fireballs"). A run saved with the trial at any level comes back with the rule. Levels 1–4 below are kept as strengths of the effect, used by nothing in play now.
 
-Dropped balls fall faster and hit harder; at the top level they come down like a fireball.
+Dropped balls fall faster and hit harder, and come down like a fireball.
 
-- With Heavy Drop at level L, every ball that leaves the paw (§15.1) shoots out of it with a downward speed and feels more gravity (a quarter of the base gravity more per level) until it first touches a ball or the floor (sliding down a wall, it is still falling, §15.8). While it falls it may go faster than the speed limit (up to 4800 units per second); from its first contact the normal limit applies again, so it bounces off as before.
+- With Heavy Drop at strength L, every ball that leaves the paw (§15.1) shoots out of it with a downward speed and feels more gravity (a quarter of the base gravity more per level) until it first touches a ball or the floor (sliding down a wall, it is still falling, §15.8). While it falls it may go faster than the speed limit (up to 4800 units per second); from its first contact the normal limit applies again, so it bounces off as before.
 - Fall from the paw to the empty floor (size 1) and the speed it lands at, measured headless (v0.34, the owner's call after playing it: 17% faster than first built, with most of the speed from the paw so it shoots out instead of just falling faster; until then 0.8 to 0.3 s, leaving the paw at 104 to 2310 u/s):
 
   | Level | Fall time | Start speed | Extra gravity | Lands at |
@@ -613,7 +615,7 @@ Dropped balls fall faster and hit harder; at the top level they come down like a
   |     4 |    0.33 s |        2521 |     2150 u/s² | 3327 u/s |
   |     5 |    0.24 s |        3825 |     2688 u/s² | 4361 u/s |
 
-  The card shows the fall time (1.0 s → 0.66 s, …). The wind tilts a heavy fall as much as a plain one (§15.8).
+  The card shows the fall time (1.0 s → 0.24 s since v0.40; the trial's card went 1.0 s → 0.66 s → …). The wind tilts a heavy fall as much as a plain one (§15.8).
 
 - **It knocks cats aside** (v0.34, the owner's call): a straight hit from above would only press the cat into the pile (measured: a dead-centre hit didn't move it at all, at any level, while a hit 25 units off-centre pushed it 100–240 units). So the ball a heavy ball lands on from above is knocked sideways, away from it, at 18% of the landing speed times how squarely from above it was hit (the square of the contact's downward share; a dead-centre hit picks a side), and the heavy ball rolls off the other way at half that. Measured: a dead-centre hit on a lone size 3 now moves it 110 units at level 1 and about 240 at level 5; in a row, its neighbours 60–120.
 - **Safe:** a heavy ball never passes through a cat, the floor or a wall, and never sinks deeper than half a size-1 radius into anything (TECH_SPEC §5). In a jar full to the rim, 100 drops at level 5 leave every cat in the jar; a cat it knocks aside may squeeze one a little over the rim (up to about 240 units per second, at most 14 units high, in 3 of 6 seeds; never at levels 1 and 3), and the heavy cat itself may bounce back over the rim of such a jar, up to about 320 units per second. With the wind at Storm the fireball comes in slanted and pushes harder: up to about 470 units per second and 55 units over the rim (in 5 of 6 seeds), still with no cat leaving the jar; the cat it meets may also move into it in the same step, so a contact can start up to 1.4 units deeper than the guard's half radius.
@@ -633,7 +635,7 @@ A merge can crack the cats beside it; a cracked cat that cracks again breaks.
 
 ### 15.11 Rules
 
-> The owner's idea (2026-10-11), built in v0.34: picks that change how merging works, offered where the jar grows (§15.5).
+> The owner's idea (2026-10-11), built in v0.34: picks that change how merging works, offered where the jar grows (§15.5). Hubris and Echo (v0.34), Copycat and Dice (Batch 19, §15.13–§15.14) and, since v0.40, Heavy Drop (§15.9), which was a trial until then.
 
 **Hubris:** three cats of one size from 1 to 5 that touch in a chain (A touches B and B touches C; A and C needn't touch) merge at once into one cat **two sizes** bigger at their centroid (three 3s make a 5); with a golden cat among them, three sizes, never above the stage's last size. Two such cats **wait**: they merge as a pair (one size up) only after touching for 0.5 s, so a third that comes in time makes a three. (v0.34, the owner's call after playing it: at first two small cats never merged at all, which filled the jar with cats waiting for a third: a test bot cleared no stage 1 in 30 runs and lost 17, against 5 and 3 without Hubris; with the wait it clears 3 and loses 8, and about one small merge in seven is a three.) Two resting cats' contact flickers from step to step, so a pair counts as touching until 0.1 s after it was last seen.
 

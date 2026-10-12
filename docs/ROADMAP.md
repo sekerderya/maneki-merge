@@ -362,6 +362,8 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
   - [x] every shop effect 1.5 times as strong (Lucky Paw, Big Catch, Combo Charm, the Lucky Save's pops, every blessing level)
   - [x] cheaper first levels, lower gates, Second Chance open from the start (1K, 15K); dearer last levels, about 8 hours in all
   - [x] `npm run sim -- --aim smart`: a bot that plays more like a person; `--meta`: players from a fresh profile who buy as they go
+  - [x] v0.39.1: Game Over without the biggest cat and the cards a run opened; magnets only with their blessing
+  - [x] v0.40.0: Heavy Drop is a rule at its last level; More Magnets open from the start at 1,000
 
 ## M13: Final art integration
 
