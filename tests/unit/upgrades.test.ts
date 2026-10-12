@@ -95,7 +95,7 @@ describe('the cards (GAME_DESIGN §10)', () => {
       (sum, id) => sum + UPGRADES[id].prices.reduce((a, b) => a + b, 0),
       0,
     );
-    expect(total).toBe(1_021_400);
+    expect(total).toBe(1_021_200);
   });
 });
 

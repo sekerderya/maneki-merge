@@ -151,8 +151,9 @@ export const UPGRADES: Readonly<Record<UpgradeId, UpgradeDef>> = {
     statLabel: 'Up to',
     startLevel: 0,
     maxLevel: PICKS.moreMagnets.maxLevel,
-    gate: 2,
-    prices: [1200, 3500, 14_000, 30_000, 55_000],
+    // Open from the start (v0.40, the owner's call; stage 2 and 1200 in v0.39, stage 3 before).
+    gate: 1,
+    prices: [1000, 3500, 14_000, 30_000, 55_000],
     perLevel: 1,
   },
   hanabi: {

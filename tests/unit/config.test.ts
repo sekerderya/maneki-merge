@@ -236,7 +236,7 @@ describe('upgrades (GAME_DESIGN §10)', () => {
     ['secondChance', 'Second Chance', 0, 2, 1, [1000, 15_000]],
     ['goldenCats', 'Golden Cats', 1, 5, 1, [400, 2000, 10_000, 24_000]],
     ['bigDrops', 'Big Drops', 1, 3, 1, [2000, 14_000]],
-    ['moreMagnets', 'More Magnets', 0, 5, 2, [1200, 3500, 14_000, 30_000, 55_000]],
+    ['moreMagnets', 'More Magnets', 0, 5, 1, [1000, 3500, 14_000, 30_000, 55_000]],
     ['hanabi', 'Hanabi', 0, 5, 3, [3000, 8000, 22_000, 42_000, 70_000]],
     ['joker', 'Joker Cat', 0, 5, 5, [10_000, 18_000, 48_000, 85_000, 130_000]],
   ];
