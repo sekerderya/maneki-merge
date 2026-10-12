@@ -92,12 +92,18 @@ const AIM_SALT = 0x51ed2701;
 export const DEFAULT_STAGES = 1;
 export const DEFAULT_CAP_SECONDS = 240;
 
+/**
+ * The levels a run plays with: the shop's, and `extraSaves` more Lucky Saves. They come from Second
+ * Chance's level (core/upgrades.ts), which isn't capped there.
+ */
+export function botUpgrades(upgrades: UpgradeLevels, extraSaves = 0): UpgradeLevels {
+  return { ...upgrades, secondChance: upgrades.secondChance + extraSaves };
+}
+
 export function playBot(options: BotOptions): BotRun {
-  const upgrades = options.upgrades ?? defaultUpgradeLevels();
   const run = new RunController({
     seed: options.seed,
-    // Lucky Saves come from Second Chance's level (core/upgrades.ts), which isn't capped there.
-    upgrades: { ...upgrades, secondChance: upgrades.secondChance + (options.extraSaves ?? 0) },
+    upgrades: botUpgrades(options.upgrades ?? defaultUpgradeLevels(), options.extraSaves),
     instantExpansion: true,
   });
   const smart = options.aim === 'smart';

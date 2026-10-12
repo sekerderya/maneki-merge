@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { playBot, summarize, upgradeLevels } from '../../tools/sim/bot';
-import type { BotRun } from '../../tools/sim/bot';
+import { deriveStats } from '../../src/core/upgrades';
+import { botUpgrades, playBot, summarize, upgradeLevels } from '../../tools/sim/bot';
+import type { BotOptions, BotRun } from '../../tools/sim/bot';
 import { metaReport, playMeta } from '../../tools/sim/meta';
 
 describe('the balance bot (npm run sim, TECH_SPEC §11)', () => {
@@ -37,12 +38,10 @@ describe('the balance bot (npm run sim, TECH_SPEC §11)', () => {
   });
 
   it('gives a run extra Lucky Saves on top of the shop’s', () => {
-    // Seed 11 loses stage 1 after about 130 s; a Lucky Save carries it on.
-    const options = { seed: 11, capSeconds: 300, stages: 99, aim: 'smart' } as const;
-    const plain = playBot(options);
-    expect(plain.lost).toBe(true);
-    const saved = playBot({ ...options, capSeconds: plain.playSeconds + 20, extraSaves: 1 });
-    expect(saved.playSeconds).toBeGreaterThan(plain.playSeconds);
+    const levels = upgradeLevels('secondChance=1,luckyPaw=3');
+    expect(deriveStats(botUpgrades(levels, 2)).luckySaves).toBe(3);
+    expect(botUpgrades(levels, 2)).toMatchObject({ luckyPaw: 3, secondChance: 3 });
+    expect(botUpgrades(levels)).toEqual(levels);
   });
 
   it('reads shop cards from the command line', () => {
@@ -98,18 +97,59 @@ describe('the balance bot (npm run sim, TECH_SPEC §11)', () => {
 });
 
 describe('the meta bot (npm run sim -- --meta, TECH_SPEC §11)', () => {
-  it('plays run after run from a fresh profile and buys the cheapest cards', () => {
-    const options = { player: 1, minutes: 1, goal: 1 } as const;
-    const player = playMeta(options);
-    expect(playMeta(options)).toEqual(player);
-    expect(player.runs.length).toBeGreaterThan(0);
-    // The first run pays for the cheapest levels (150 coins each).
-    expect(player.runs[0]!.coins).toBeGreaterThan(300);
-    expect(player.runs[0]!.levelsBought).toBeGreaterThan(1);
-    expect(player.runs.at(-1)!.minute).toBeGreaterThanOrEqual(1);
+  /** A made-up run that clears `cleared` stages, a minute each, and earns `coins`. */
+  const fakeRun = (options: BotOptions, cleared: number, coins: number): BotRun => ({
+    seed: options.seed,
+    stagesCleared: cleared,
+    lost: true,
+    playSeconds: 60 * cleared + 30,
+    drops: 0,
+    merges: 0,
+    threes: 0,
+    echoes: 0,
+    breaks: 0,
+    curses: 0,
+    lifted: 0,
+    taken: 0,
+    stones: 0,
+    lucky: 0,
+    fizzles: 0,
+    copies: 0,
+    score: 0,
+    coins,
+    clears: Array.from({ length: cleared }, (_, i) => ({
+      score: 0,
+      coins: 0,
+      seconds: 60 * (i + 1),
+    })),
+  });
+
+  it('plays run after run from a fresh profile and buys the cheapest cards after each', () => {
+    const played: BotOptions[] = [];
+    const player = playMeta({ player: 3, minutes: 6, goal: 5, extraSaves: 1 }, (options) => {
+      played.push(options);
+      return fakeRun(options, 2, 1000);
+    });
+    // A run: 20 s before it, 150 s of play and 15 s for each of its two clears.
+    expect(player.runs.map((r) => r.minute * 60)).toEqual([200, 400]);
+    expect(played.map((o) => [o.seed, o.aim, o.extraSaves])).toEqual([
+      [3001, 'smart', 1],
+      [3002, 'smart', 1],
+    ]);
+    // 1000 coins: Lucky Paw 1 and Big Catch 1 (150 each), Lucky Paw 2 (400). Then 300 + 1000:
+    // Big Catch 2 and Golden Cats 2 (400 each).
+    expect(player.runs.map((r) => r.levelsBought)).toEqual([3, 5]);
+    expect(played[1]!.upgrades).toMatchObject({ luckyPaw: 2, bigCatch: 1, goldenCats: 1 });
+    expect(player.goalMinute).toBeNull();
     expect(player.maxedMinute).toBeNull();
-    const report = metaReport([player], 1, 1);
-    expect(report).toContain('Stage 1 cleared within 1 min: ');
-    expect(report).toContain('The first run reaches stage');
+  });
+
+  it('times the first clear of the goal stage and reports it', () => {
+    const player = playMeta({ player: 1, minutes: 1, goal: 5 }, (o) => fakeRun(o, 5, 0));
+    // 20 s before the run, 300 s to the fifth clear and 15 s for each of the five clears.
+    expect(player.goalMinute! * 60).toBeCloseTo(395, 9);
+    const report = metaReport([player], 1, 5);
+    expect(report).toContain('Stage 5 cleared within 1 min: 0 of 1. Median: 6.6 min.');
+    expect(report).toContain('The first run reaches stage 6 (median).');
   });
 });

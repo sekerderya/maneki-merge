@@ -13,7 +13,7 @@ import type { UpgradeId } from '../../src/config/upgrades';
 import { buy, canBuy, defaultUpgradeLevels } from '../../src/core/upgrades';
 import type { UpgradeLevels } from '../../src/core/upgrades';
 import { playBot } from './bot';
-import type { BotAim } from './bot';
+import type { BotAim, BotOptions, BotRun } from './bot';
 
 /** Seconds a stage clear takes outside play: the last cat's shine, the banners, doors and picks. */
 export const CLEAR_OVERHEAD_SECONDS = 15;
@@ -58,7 +58,11 @@ const ALL_LEVELS = UPGRADE_IDS.reduce(
   0,
 );
 
-export function playMeta(options: MetaOptions): MetaPlayer {
+/** Plays the player's runs with `play` (the balance bot; tests hand in made-up runs). */
+export function playMeta(
+  options: MetaOptions,
+  play: (options: BotOptions) => BotRun = playBot,
+): MetaPlayer {
   let levels: UpgradeLevels = defaultUpgradeLevels();
   let wallet = 0;
   let best = 1;
@@ -67,7 +71,7 @@ export function playMeta(options: MetaOptions): MetaPlayer {
   let maxedMinute: number | null = null;
   const runs: MetaRun[] = [];
   for (let k = 1; seconds < options.minutes * 60; k++) {
-    const run = playBot({
+    const run = play({
       seed: options.player * 1000 + k,
       upgrades: levels,
       aim: options.aim ?? 'smart',
