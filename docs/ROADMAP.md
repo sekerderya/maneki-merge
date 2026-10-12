@@ -358,6 +358,10 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
   - [x] 17 clips: the special balls, the boulder trials, Wind, Heavy Drop, Porcelain, the Cursed Bell, every rule, Combo Charm and Second Chance
   - [x] a clip button on the shop and pick cards, a popup that plays the clip offline, a dot until it is seen
   - [x] the owner's art: the clip button and the tap pointer
+- [x] Batch 22 (v0.39.0), a quicker early game (GAME_DESIGN §10, §14). **Status:** done in v0.39.0; the owner checks the first 15 minutes on a fresh profile:
+  - [x] every shop effect 1.5 times as strong (Lucky Paw, Big Catch, Combo Charm, the Lucky Save's pops, every blessing level)
+  - [x] cheaper first levels, lower gates, Second Chance open from the start (1K, 15K); dearer last levels, about 8 hours in all
+  - [x] `npm run sim -- --aim smart`: a bot that plays more like a person; `--meta`: players from a fresh profile who buy as they go
 
 ## M13: Final art integration
 

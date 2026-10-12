@@ -38,17 +38,19 @@ Layout: everything sits where it is in the mockup, on a stage of the mockup's si
 - Under the four upgrades, the **Blessings** heading ("How far each blessing can go in a run", dark brown words with a cream edge) and the five blessing cards (v0.36, §10). A blessing card's icon is the blessing's own ball in a cream medallion with a gold rim, as on its pick card (§15.5); its effect line starts with "Blessing:".
 - The value each card shows (derived from §10; at MAX only the current value; a blessing card shows the blessing at the level a run can reach, without Big Catch):
 
-  | Card          | Value                                                          | First level | At max |
-  | ------------- | -------------------------------------------------------------- | ----------- | ------ |
-  | Lucky Paw     | Coins                                                          | +0% → +15%  | +150%  |
-  | Big Catch     | Biggest drop: the share of a stage's largest drop (size 4, §8) | 10% → 12%   | 34%    |
-  | Combo Charm   | Per combo step                                                 | +0% → +8%   | +40%   |
-  | Second Chance | Lucky Saves                                                    | 0 → 1       | 2      |
-  | Golden Cats   | Up to (golden cats)                                            | 4% → 8%     | 20%    |
-  | Big Drops     | Up to (biggest drop)                                           | 16% → 22%   | 28%    |
-  | More Magnets  | Up to (magnets)                                                | 1% → 2.5%   | 8.5%   |
-  | Hanabi        | Up to (hanabi)                                                 | 0% → 1.5%   | 7.5%   |
-  | Joker Cat     | Up to (jokers)                                                 | 0% → 1.5%   | 7.5%   |
+  | Card          | Value                                                          | First level  | At max |
+  | ------------- | -------------------------------------------------------------- | ------------ | ------ |
+  | Lucky Paw     | Coins                                                          | +0% → +22.5% | +225%  |
+  | Big Catch     | Biggest drop: the share of a stage's largest drop (size 4, §8) | 10% → 14%    | 46%    |
+  | Combo Charm   | Per combo step                                                 | +0% → +12%   | +60%   |
+  | Second Chance | Lucky Saves                                                    | 0 → 1        | 2      |
+  | Golden Cats   | Up to (golden cats)                                            | 6% → 12%     | 30%    |
+  | Big Drops     | Up to (biggest drop)                                           | 19% → 28%    | 37%    |
+  | More Magnets  | Up to (magnets)                                                | 1% → 3.25%   | 12.25% |
+  | Hanabi        | Up to (hanabi)                                                 | 0% → 2.25%   | 11.25% |
+  | Joker Cat     | Up to (jokers)                                                 | 0% → 2.25%   | 11.25% |
+
+  Lucky Paw shows one decimal, the blessings' chances up to two (v0.39).
 
 - The price button has four states: affordable (gold, "Buy" over the coin and the price), not enough coins (faded grey and disabled, "Need N more" in red where "Buy" was), MAX (faded, a check and "MAX"), and **locked** (v0.36: faded and disabled, "Reach" over the BEST STAGE card's small torii and "Stage N", the stage that opens the card; the card's icon and value are faded too). With `?skin=vector` the shop keeps the code-drawn sheet of v0.14 (no pips either).
 - Buying gives feedback: a sound (from M9), a card pulse, and the balance counting down. The purchase is saved at once. The panel scrolls vertically if needed.
@@ -167,7 +169,7 @@ A single cat's **value** is half of what its pair's merge pays: `C(t) / 2`. That
 |    20 |    47.3 |       4 |
 |    30 |     360 |       6 |
 
-Measured with the balance bot (TECH_SPEC §11): a stage pays ~530 coins before upgrades (a run that ends in stage 3 makes ~1.2K, in stage 10 ~7.5K, in stage 20 ~25K, in stage 30 ~52K; Lucky Paw 10 makes it 2.5 times as much), and a maxed profile scores ~2,500 by its first clear, ~4.9 million over 30 stages.
+Measured with the balance bot (TECH_SPEC §11): a stage pays ~530 coins before upgrades (a run that ends in stage 3 makes ~1.2K, in stage 10 ~7.5K, in stage 20 ~25K, in stage 30 ~52K; Lucky Paw 10 made it 2.5 times as much, 3.25 times since v0.39), and a maxed profile scores ~2,500 by its first clear, ~4.9 million over 30 stages.
 
 Until v0.36 both went by the tier: `S(t) = 2^t` and `C(t) = round(1.7^(t−1))`, so every stage paid 512 times the score and ~118 times the coins of the one before (the bot had ~530 coins at its first clear, ~60K at its second, ~7M at its third), and one run past stage 2 could buy the whole shop.
 
@@ -191,7 +193,7 @@ Values are rounded only when paid (§5). Implement the formulas. Unit tests asse
 - A cat alone on the floor rolls on, slowed only by the air, until a wall or another cat stops it (v0.23.6, the owner's call). From v0.19.4 to v0.23.5 the floor slowed a lone cat like a rug and stopped it within half a second.
 - A cat is _over the line_ when its top edge is above the rim. A cat is ignored until 0.5 s after it lands (first contact).
 - If at least one cat is over the line continuously for 2.5 s, the game is over. While that timer runs, the rim flashes red and a short countdown shows.
-- **Lucky Save** (from the Second Chance upgrade) replaces the game over: every cat over the line plus the 6 smallest other cats (smaller tier first, then older first) pop into their value, the timer resets, and a 2 s grace period follows. Only landed cats count, so a cat still falling from the dropper is left alone. You get one save per run per upgrade level.
+- **Lucky Save** (from the Second Chance upgrade) replaces the game over: every cat over the line plus the 9 smallest other cats (smaller tier first, then older first; 6 until v0.39) pop into their value, the timer resets, and a 2 s grace period follows. Only landed cats count, so a cat still falling from the dropper is left alone. You get one save per run per upgrade level.
 - At game over, physics stops and the Game Over overlay appears. Play Again starts a new run immediately.
 
 ## 7. Stages (signature mechanic)
@@ -231,16 +233,16 @@ Since v0.33 there is none. From v0.24 to v0.32 stage 5 was the last: its clear h
 ## 8. Drop pool
 
 - Every stage drops its sizes 1–4 (stage 1: tiers 1–4; stage 2: 10–13; …), with base weights `[40, 30, 20, 10]` (smallest first).
-- The **tilt** L moves the chances towards the bigger cats: each tilt level moves 3 points from the smallest to the biggest and 1 point from size 2 to size 3, so `share_i = base_i + L × (2i − 3)` % (i = 0 for the smallest). L = 0.8 × Big Catch + 2 × Big Drops (§15.5), at most 10. Each Big Catch level is 0.8 of a tilt level (v0.36: 10 levels, the owner's call; until then 5 levels of 1), so Big Catch 10 leaves room for Big Drops:
+- The **tilt** L moves the chances towards the bigger cats: each tilt level moves 3 points from the smallest to the biggest and 1 point from size 2 to size 3, so `share_i = base_i + L × (2i − 3)` % (i = 0 for the smallest). L = 1.2 × Big Catch + 3 × Big Drops (§15.5), at most 13, where the smallest drop is almost gone. Each Big Catch level is 1.2 tilt levels (v0.39, every shop effect 1.5 times as strong, the owner's call; 0.8 with a cap of 10 from v0.36, when it got 10 levels; until then 5 levels of 1), so Big Catch 10 leaves room for one Big Drops level:
 
   | Big Catch |   L |     1 |     2 |     3 |     4 |
   | --------: | --: | ----: | ----: | ----: | ----: |
   |         0 |   0 |   40% |   30% |   20% |   10% |
-  |         1 | 0.8 | 37.6% | 29.2% | 20.8% | 12.4% |
-  |         5 |   4 |   28% |   26% |   24% |   22% |
-  |        10 |   8 |   16% |   22% |   28% |   34% |
+  |         1 | 1.2 | 36.4% | 28.8% | 21.2% | 13.6% |
+  |         5 |   6 |   22% |   24% |   26% |   28% |
+  |        10 |  12 |    4% |   18% |   32% |   46% |
 
-  The shop card rounds the biggest drop's share (10, 12, 15, 17, 20, 22, 24, 27, 29, 32, 34%). Measured (bot, stage 1): the tilt of the old Big Catch 5 (L = 5) needs 97 drops to clear against 141 without it, L = 9 83, so a maxed profile clears a stage in about 40% fewer drops.
+  The shop card rounds the biggest drop's share (10, 14, 17, 21, 24, 28, 32, 35, 39, 42, 46%). Measured (bot, stage 1): the tilt of the old Big Catch 5 (L = 5) needs 97 drops to clear against 141 without it, L = 9 83, so a maxed profile clears a stage in about 40% fewer drops. The smart bot (v0.39) clears stage 1 in 122 s with no Big Catch, 71 s at L = 8 (v0.36's top) and 60 s at L = 12.
   Until v0.12 it was `base_i × (1 + 0.12 × L × i)`, normalized (10% → 17.5% at L = 5).
 
 - The first two drops of a run are always the pool's smallest tier.
@@ -259,26 +261,28 @@ The shop sells four permanent upgrades and, since v0.36 (the owner's call), a ca
 
 A card can be bought once the profile's **best stage** reaches its **gate** (the stage in the table; 1: from the start); until then it says "Reach stage N" (§2.2). The best stage only goes up, so a gate stays open.
 
-| ID             | Name          | Effect per level                                 | Start | Max | Gate | Price for each next level                         |
-| -------------- | ------------- | ------------------------------------------------ | ----: | --: | ---: | ------------------------------------------------- |
-| `luckyPaw`     | Lucky Paw     | +15% coins from everything                       |     0 |  10 |    1 | 300, 600, 1K, 1.6K, 2.5K, 4K, 6.5K, 10K, 16K, 25K |
-| `bigCatch`     | Big Catch     | Bigger cats come more often: +0.8 drop tilt (§8) |     0 |  10 |    1 | 300, 800, 1.6K, 3K, 5K, 8K, 13K, 20K, 30K, 45K    |
-| `comboCharm`   | Combo Charm   | +8% coins per combo step (up to 5 steps)         |     0 |   5 |    3 | 1K, 3K, 6K, 12K, 20K                              |
-| `secondChance` | Second Chance | +1 Lucky Save per run                            |     0 |   2 |    5 | 10K, 50K                                          |
-| `goldenCats`   | Golden Cats   | Golden Cats can go one level higher in a run     |     1 |   5 |    1 | 400, 2K, 5K, 12K                                  |
-| `bigDrops`     | Big Drops     | Big Drops can go one level higher in a run       |     1 |   3 |    1 | 2K, 8K                                            |
-| `moreMagnets`  | More Magnets  | More Magnets can go one level higher in a run    |     0 |   5 |    3 | 1.2K, 3.5K, 8K, 15K, 25K                          |
-| `hanabi`       | Hanabi        | Hanabi can go one level higher in a run          |     0 |   5 |    5 | 3.5K, 7K, 13K, 22K, 35K                           |
-| `joker`        | Joker Cat     | Joker Cat can go one level higher in a run       |     0 |   5 |    8 | 9K, 16K, 26K, 40K, 60K                            |
+| ID             | Name          | Effect per level                                 | Start | Max | Gate | Price for each next level                       |
+| -------------- | ------------- | ------------------------------------------------ | ----: | --: | ---: | ----------------------------------------------- |
+| `luckyPaw`     | Lucky Paw     | +22.5% coins from everything                     |     0 |  10 |    1 | 150, 400, 800, 1.5K, 3K, 7K, 12K, 22K, 36K, 60K |
+| `bigCatch`     | Big Catch     | Bigger cats come more often: +1.2 drop tilt (§8) |     0 |  10 |    1 | 150, 400, 900, 2K, 4K, 10K, 17K, 30K, 50K, 80K  |
+| `comboCharm`   | Combo Charm   | +12% coins per combo step (up to 5 steps)        |     0 |   5 |    2 | 1K, 3K, 10K, 22K, 40K                           |
+| `secondChance` | Second Chance | +1 Lucky Save per run                            |     0 |   2 |    1 | 1K, 15K                                         |
+| `goldenCats`   | Golden Cats   | Golden Cats can go one level higher in a run     |     1 |   5 |    1 | 400, 2K, 10K, 24K                               |
+| `bigDrops`     | Big Drops     | Big Drops can go one level higher in a run       |     1 |   3 |    1 | 2K, 14K                                         |
+| `moreMagnets`  | More Magnets  | More Magnets can go one level higher in a run    |     0 |   5 |    2 | 1.2K, 3.5K, 14K, 30K, 55K                       |
+| `hanabi`       | Hanabi        | Hanabi can go one level higher in a run          |     0 |   5 |    3 | 3K, 8K, 22K, 42K, 70K                           |
+| `joker`        | Joker Cat     | Joker Cat can go one level higher in a run       |     0 |   5 |    5 | 10K, 18K, 48K, 85K, 130K                        |
 
-Every card costs ~610K coins in all. Big Drops has 3 levels: its tilt adds to Big Catch's up to 10 (§8), and 3 levels (6) on top of Big Catch 10 (8) already pass it. The prices come from a pacing model (docs/plans/batch-20.md §7): a player who keeps playing and buys whatever is affordable has bought everything in about 8 hours (21 runs), the first run (about 5 minutes) pays for two or three cheap cards, and runs reach stage ~7 after an hour, ~10 after two and ~16 after four. Until v0.36 the four upgrades cost 21,455 in all (Lucky Paw 50 to 3200, Big Catch 100 to 3500 for 5 levels of 3 points, Combo Charm 80 to 1280, Second Chance 500 and 4000), and the blessings were all open from the first run.
+**v0.39 (the owner's call):** the early game was too slow, runs stopped at stages 5–6 and even a maxed shop made the first stages dull, so every shop effect became 1.5 times as strong (Lucky Paw +15% → +22.5%, Big Catch 0.8 → 1.2 tilt levels, Combo Charm +8% → +12%, a Lucky Save pops 9 small cats instead of 6, and each blessing level 1.5 times as much, §15.5), the first levels got cheaper, the gates lower (Combo Charm and More Magnets stage 3 → 2, Hanabi 5 → 3, Joker Cat 8 → 5), and Second Chance, the strongest help for getting past the first jar, opened from the start at 1K and 15K (stage 5, 10K and 50K before). The last levels got dearer so that everything still takes about 8 hours.
+
+Every card costs ~1.02M coins in all (~610K in v0.36–v0.38). Big Drops has 3 levels: its tilt adds to Big Catch's up to 13 (§8), and one level (3) on top of Big Catch 10 (12) already reaches it. The prices come from a pacing model (docs/plans/batch-20.md §7): a player who keeps playing and buys whatever is affordable has bought everything in about 8 hours. Rerun with v0.39's effects (power 1.5 times as strong, so runs go further and pay more), the model buys everything in ~7.8 hours (12 runs; 8.9 hours and 23 runs with v0.36's numbers), with runs reaching stage ~14 after an hour and ~17 after two. In v0.36–v0.38 the first run (about 5 minutes) paid for two or three cheap cards, and runs reached stage ~7 after an hour, ~10 after two and ~16 after four. Until v0.36 the four upgrades cost 21,455 in all (Lucky Paw 50 to 3200, Big Catch 100 to 3500 for 5 levels of 3 points, Combo Charm 80 to 1280, Second Chance 500 and 4000), and the blessings were all open from the first run.
 
 Derived values, where each name means that card's current level:
 
-- `coinMultiplier = 1 + 0.15 × luckyPaw`
-- `comboBonus = 0.08 × comboCharm × min(combo − 1, 5)`
+- `coinMultiplier = 1 + 0.225 × luckyPaw`
+- `comboBonus = 0.12 × comboCharm × min(combo − 1, 5)`
 - `luckySaves = secondChance`
-- the drop tilt from Big Catch: `0.8 × bigCatch` (§8)
+- the drop tilt from Big Catch: `1.2 × bigCatch` (§8)
 - each blessing's highest level in a run: its card's level
 
 Upgrade definitions are data in `src/config/upgrades.ts`: id, name, description, max level, prices and effect.
@@ -385,15 +389,25 @@ The owner generates the art phase by phase with the prompts in docs/ART_ASSETS.m
 - Cats roll like Suika fruit (v0.11).
 - Optional later: a music loop (OGG/MP3, licensed for use, with a music switch in Settings).
 
-## 14. Balance targets (v0.36, the owner's)
+## 14. Balance targets (v0.36 and v0.39, the owner's)
 
+- **Most players clear stage 5 within their first 15 minutes** (v0.39), two or three runs. The shop got stronger and its first levels cheaper for it (§10). The owner turned down two further helps: a first-jar protection (the Lucky Saves refilled at every clear of stages 1–5), which met the 15 minutes in the bot's play, and an opening blessing pick at the start of every run.
 - A **new player's** first run ends at stage 2–3, rarely 4 (the owner, a practised player, goes further on a fresh profile).
-- The first run pays for 2–3 cheap cards.
+- The first run pays for a few cheap levels (150–400 coins each since v0.39).
 - Every card is bought in about **8 hours** of continuous play, buying as soon as something is affordable.
 - A maxed profile clears **30 stages in about 50 minutes** on average, the early stages faster than before v0.36 (Big Catch 10, §8), and scores about **5 million** by then (§4).
 - Progress comes often: unlocks by stage gates and the shop only, no player levels or XP.
 
-The owner's playtests on a fresh profile check them; the debug panel shows each stage's play time (TECH_SPEC §11). (M10's targets, written for score thresholds, were set aside in v0.10.)
+The owner's playtests on a fresh profile check them; the debug panel shows each stage's play time (TECH_SPEC §11).
+
+Measured for v0.39 with the meta bot (`npm run sim -- --meta 30 --seeds 24`, TECH_SPEC §11): 24 players start from a fresh profile, play with the smart bot and buy the cheapest card after every run. Bots aren't people, so the numbers compare versions rather than predict play:
+
+| Player                                                                                            | Stage 5 within 15 min | Within 30 min | First run reaches |
+| ------------------------------------------------------------------------------------------------- | --------------------: | ------------: | ----------------: |
+| Smart bot with one extra Lucky Save (a better player; v0.38 stalls at stages 5–6, like the owner) |    6 of 24 (v0.38: 2) | 16 (v0.38: 8) |           stage 4 |
+| The smart bot alone (a weak new player)                                                           |    1 of 24 (v0.38: 2) |  7 (v0.38: 5) |           stage 2 |
+
+A maxed profile's smart bot clears 5 stages in 44 runs of 60 and reaches stage ~6 (median); v0.38's cleared 5 in 29. (M10's targets, written for score thresholds, were set aside in v0.10.)
 
 ## 15. Special balls, trials and blessings
 
@@ -405,19 +419,19 @@ Later stages get harder and every run gets its own build. Every stage clear asks
 
 The dropper hands out five kinds of ball: cats, magnets, boulders, hanabi and joker cats. Every item rolls its kind when it is queued, with one roll checked in this order:
 
-| Kind    | Chance per queued item                                               |
-| ------- | -------------------------------------------------------------------- |
-| Magnet  | 1% + 1.5% per More Magnets level; none in a stage's first 20 drops   |
-| Boulder | 0% at stage 1; from stage 2, 3% + 3% per More Boulders level         |
-| Hanabi  | 1.5% per Hanabi level (0% without); none in a stage's first 20 drops |
-| Joker   | 1.5% per Joker Cat level (0% without)                                |
-| Cat     | the rest; a cat is golden with 4% per Golden Cats level (0% without) |
+| Kind    | Chance per queued item                                                |
+| ------- | --------------------------------------------------------------------- |
+| Magnet  | 1% + 2.25% per More Magnets level; none in a stage's first 20 drops   |
+| Boulder | 0% at stage 1; from stage 2, 3% + 3% per More Boulders level          |
+| Hanabi  | 2.25% per Hanabi level (0% without); none in a stage's first 20 drops |
+| Joker   | 2.25% per Joker Cat level (0% without)                                |
+| Cat     | the rest; a cat is golden with 6% per Golden Cats level (0% without)  |
 
 - The first two drops of a run are always cats of the pool's smallest tier (§8).
 - The wind (§15.8) and Heavy Drop (§15.9) act on every ball that leaves the paw, whatever its kind (a cat, a golden cat, a boulder, a hanabi, a joker, a ball the magnet took and drops again), from the drop until it first touches a ball or the floor (a wall doesn't end a fall, §15.8).
 - **No magnet early in a stage** (v0.24, owner): only items queued after the player has dropped 20 balls in the stage can be magnets, so the first that can be one is the 22nd ball (NEXT after the 20th drop). Every stage starts with an empty jar, where a magnet would have nothing to take. The count starts again at every stage clear, the last stage's too. While magnets are held back the boulder chance stays the same. The same holds for hanabi (v0.28): an empty jar has nothing for one to pop.
 - **At a stage clear** a queued magnet or hanabi (in the paw or in NEXT) becomes a cat of the pool's smallest tier; other queued items stay as they are.
-- v0.24 (owner): the magnet chance was halved, 2% → 1% and +3% → +1.5% per More Magnets level.
+- v0.24 (owner): the magnet chance was halved, 2% → 1% and +3% → +1.5% per More Magnets level. v0.39 (owner): every blessing level counts 1.5 times as much, so +2.25% (golden cats 4% → 6%, hanabi and jokers 1.5% → 2.25%).
 - Magnets, boulders, hanabi and jokers are never golden.
 - Debug jumps (`?debug=1`, "Jump to stage") skip the stage-clear picks.
 - The NEXT bubble shows the item as it is: a cat (golden ones with their glow), the magnet, the boulder at its size with its bands, the hanabi or the joker.
@@ -454,7 +468,7 @@ A boulder is a stone ball that only takes up room.
   - With `?skin=placeholder`, a boulder is a grey circle showing the hits left as a number.
 - Breaking pays no score or coins for now and doesn't count for the combo.
 - **Stage clear:** every boulder in the jar crumbles along with the pops (§7.1), paying nothing.
-- **Lucky Save:** boulders over the line crumble; boulders don't count among the 6 smallest cats.
+- **Lucky Save:** boulders over the line crumble; boulders don't count among the 9 smallest cats.
 - The magnet can take a boulder (§15.2).
 
 ### 15.4 Golden cats
@@ -512,17 +526,19 @@ The boulder trials still multiply each other (more × bigger × harder to break)
 
 **Blessings**
 
-| ID            | Name         | Effect per level            | Max | Level 0 → max |
-| ------------- | ------------ | --------------------------- | --: | ------------- |
-| `moreMagnets` | More Magnets | +1.5% magnet chance         |   5 | 1% → 8.5%     |
-| `bigDrops`    | Big Drops    | +2 drop tilt levels (§8)    |   5 | see below     |
-| `goldenCats`  | Golden Cats  | +4% golden cat chance       |   5 | 0% → 20%      |
-| `hanabi`      | Hanabi       | +1.5% hanabi chance (§15.6) |   5 | 0% → 7.5%     |
-| `joker`       | Joker Cat    | +1.5% joker chance (§15.7)  |   5 | 0% → 7.5%     |
+| ID            | Name         | Effect per level             | Max | Level 0 → max |
+| ------------- | ------------ | ---------------------------- | --: | ------------- |
+| `moreMagnets` | More Magnets | +2.25% magnet chance         |   5 | 1% → 12.25%   |
+| `bigDrops`    | Big Drops    | +3 drop tilt levels (§8)     |   5 | see below     |
+| `goldenCats`  | Golden Cats  | +6% golden cat chance        |   5 | 0% → 30%      |
+| `hanabi`      | Hanabi       | +2.25% hanabi chance (§15.6) |   5 | 0% → 11.25%   |
+| `joker`       | Joker Cat    | +2.25% joker chance (§15.7)  |   5 | 0% → 11.25%   |
 
-- **Big Drops:** the drop weights use `L = 0.8 × Big Catch level + 2 × Big Drops level`, at most 10, in §8's formula `share_i = base_i + L × (2i − 3)` %.
-  - L = 6 gives 22/24/26/28%; L = 8 gives 16/22/28/34%; L = 10 gives 10/20/30/40%.
-  - Big Drops counts as maxed (not offered) once L reaches 10.
+Every blessing level counts 1.5 times as much since v0.39 (the owner's call, with the shop, §10): until then +1.5% magnets, +2 tilt levels, +4% golden cats, +1.5% hanabi and +1.5% jokers.
+
+- **Big Drops:** the drop weights use `L = 1.2 × Big Catch level + 3 × Big Drops level`, at most 13, in §8's formula `share_i = base_i + L × (2i − 3)` %.
+  - L = 6 gives 22/24/26/28%; L = 9 gives 13/21/29/37%; L = 12 gives 4/18/32/46%; L = 13 gives 1/17/33/49%.
+  - Big Drops counts as maxed (not offered) once L reaches 13.
 - Every blessing goes only as high as its shop card allows (§10, v0.36): a fresh profile has Golden Cats and Big Drops up to 1 and the others not at all.
 
 ### 15.6 Hanabi
