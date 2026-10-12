@@ -2,6 +2,26 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.39.0] - 2026-10-12 (Batch 22)
+
+### Changed
+
+- **A quicker early game** (the owner's call: runs stopped at stages 5–6, and even a maxed shop made the first stages slow). Every shop effect is 1.5 times as strong:
+  - Lucky Paw +22.5% coins per level (+15%), Combo Charm +12% per combo step (+8%).
+  - Big Catch 1.2 drop tilt levels per level (0.8): its top level makes 46% of the drops the biggest size (34%), and the tilt goes up to 13 with Big Drops (10).
+  - A Lucky Save pops the 9 smallest cats (6).
+  - Every blessing level counts 1.5 times as much: golden cats +6% (+4%), magnets, hanabi and jokers +2.25% (+1.5%), Big Drops +3 tilt levels (+2).
+- **Cheaper first levels, lower gates:** Lucky Paw and Big Catch start at 150; Combo Charm and More Magnets open at stage 2, Hanabi at 3, Joker Cat at 5. **Second Chance** is open from the start and costs 1,000, then 15,000 (stage 5, 10K and 50K). The last levels cost more, so buying everything still takes about 8 hours (the pacing model: ~7.8 hours). Your levels and coins stay as they are.
+- Shop and pick cards show Lucky Paw with one decimal (+22.5%) and the blessings' chances with up to two (3.25%).
+
+### Added
+
+- `npm run sim -- --aim smart`: a balance bot that plays more like a person (it thinks before each drop, aims where the ball will land, keeps the big cats on one side, aims into the wind and picks sensibly); a fresh profile's runs end at stage 2–3 with it. `--meta <minutes>` plays players from a fresh profile who buy the cheapest card after every run and reports when they first clear stage 5; `--extra-saves` stands in for a better player.
+
+### Measured (the meta bot, 24 players, GAME_DESIGN §14)
+
+- A better-than-bot player (one extra Lucky Save) clears stage 5 within 15 minutes in 6 of 24 profiles (v0.38: 2) and within 30 in 16 (8). A maxed profile clears 5 stages in 44 runs of 60 (29). The owner turned down a first-jar protection and an opening blessing pick, which would have gone further.
+
 ## [0.38.0] - 2026-10-12 (Batch 21)
 
 ### Added
