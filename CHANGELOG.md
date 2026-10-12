@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.41.1] - 2026-10-13
+
+### Fixed
+
+- **The shrine grows through its clouds again after a quit run.** Quitting a run from the pause menu left the growth clouds (and the wind's petals) paused, and the next run never resumed them: at its first growth (stage 5, 10, 15, …) the clouds stayed frozen below the screen, the background didn't change, the doors shut, and the new garden popped in only after the picks. A new run now starts with them running. An E2E test covers it.
+
 ## [0.41.0] - 2026-10-13
 
 ### Changed
