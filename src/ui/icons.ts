@@ -99,6 +99,10 @@ export const ICON_VIBRATE = stroke(
   '<rect x="7" y="4" width="10" height="16" rx="2"/><path d="M3 9v6"/><path d="M21 9v6"/>',
 );
 
+export const ICON_VIBRATE_OFF = stroke(
+  '<rect x="7" y="4" width="10" height="16" rx="2"/><path d="M3 9v6"/><path d="M21 9v6"/><path d="M4 3l16 18"/>',
+);
+
 export const ICON_CLOSE = svg(
   '<path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/>',
 );

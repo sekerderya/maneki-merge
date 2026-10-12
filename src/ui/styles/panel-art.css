@@ -1,0 +1,303 @@
+/*
+ * The Settings, Pause and Game Over panels in the owner's art (GAME_DESIGN §2.3–2.4), laid out on
+ * the approved mockups (art-source/ui/{settings,pause,gameover}-mockup.jpg, 768 px wide,
+ * docs/ART_ASSETS.md §4.14). The layout is the v0.14 one; the pieces are the Upgrades screen's and
+ * the menu's: the Upgrades card as the panel (its tan strip along the bottom), the title lettering,
+ * the PLAY pill as the main button, the cream UPGRADES pill as the quiet one and the gold Buy pill
+ * for ON. Sizes are mockup pixels times --u, as in shop-art.css.
+ */
+.settings-overlay.is-art,
+.pause-overlay.is-art,
+.game-over-overlay.is-art {
+  container-type: inline-size;
+  padding: calc(var(--safe-top) + 16px) var(--safe-right) calc(var(--safe-bottom) + 16px)
+    var(--safe-left);
+  background: rgba(60, 32, 20, 0.42);
+}
+
+.settings-overlay.is-art .settings-card,
+.pause-overlay.is-art .overlay-panel,
+.game-over-overlay.is-art .overlay-panel {
+  --u: calc(min(100cqw, 520px) / var(--shop-mockup-w));
+  /* Card art pixels → CSS px, as on the Upgrades cards, so the outlines match. */
+  --s: calc(677 * var(--u) / var(--shop-card-w));
+  --strip: calc(var(--shop-card-bottom) * var(--s));
+  width: calc(681 * var(--u));
+  max-width: none;
+  border: 0 solid transparent;
+  border-radius: 0;
+  border-image: var(--shop-card-art) var(--shop-card-corner) var(--shop-card-corner)
+    var(--shop-card-bottom) fill / calc(var(--shop-card-corner) * var(--s))
+    calc(var(--shop-card-corner) * var(--s)) var(--strip) stretch;
+  background: none;
+  box-shadow: none;
+  color: #4e2416;
+}
+
+/* Titles: the Upgrades title's lettering, cream with a dark-brown edge, on the card itself. */
+.settings-overlay.is-art .settings-title,
+.pause-overlay.is-art .overlay-title,
+.game-over-overlay.is-art .overlay-title {
+  margin: 0;
+  color: #fbe7c6;
+  font-size: calc(76 * var(--u));
+  line-height: 1.15;
+  white-space: nowrap;
+  -webkit-text-stroke: calc(10 * var(--u)) #4e2416;
+  paint-order: stroke fill;
+  text-shadow: 0 calc(5 * var(--u)) 0 #4e2416;
+}
+
+/* Pause and Game Over: a column of pills. */
+.pause-overlay.is-art .overlay-panel,
+.game-over-overlay.is-art .overlay-panel {
+  gap: calc(18 * var(--u));
+  padding: calc(46 * var(--u)) calc(60 * var(--u)) calc(var(--strip) + 2 * var(--u));
+}
+
+.pause-overlay.is-art .overlay-title {
+  margin-bottom: calc(18 * var(--u));
+}
+
+.pause-overlay.is-art .btn,
+.game-over-overlay.is-art .btn {
+  --h: calc(100 * var(--u));
+  min-height: max(var(--h), 48px);
+  padding: 0 calc(24 * var(--u)) calc(8 * var(--u));
+  border: 0 solid transparent;
+  border-radius: 0;
+  border-image: var(--shop-upgrades-art) 0 var(--shop-upgrades-slice) fill / 0
+    calc(var(--h) * var(--shop-upgrades-cap)) stretch;
+  background: none;
+  box-shadow: none;
+  color: #4e2416;
+  font-size: calc(42 * var(--u));
+  text-shadow: none;
+}
+
+/* Resume and Play Again: the menu's coral PLAY pill. */
+.pause-overlay.is-art .overlay-main-btn,
+.game-over-overlay.is-art .overlay-main-btn {
+  --h: calc(116 * var(--u));
+  padding-bottom: calc(10 * var(--u));
+  border-image: var(--shop-play-art) 0 var(--shop-play-slice) fill / 0
+    calc(var(--h) * var(--shop-play-cap)) stretch;
+  color: #fff;
+  font-size: calc(52 * var(--u));
+  -webkit-text-stroke: calc(8 * var(--u)) #4e2416;
+  paint-order: stroke fill;
+  text-shadow: 0 calc(5 * var(--u)) 0 #4e2416;
+}
+
+.pause-overlay.is-art .overlay-toggles {
+  gap: calc(22 * var(--u));
+}
+
+/* Sound and Haptics: gold like the Buy button when on, the cream pill when off. */
+.pause-overlay.is-art .btn-toggle {
+  gap: calc(14 * var(--u));
+  border-image: var(--shop-buy-art) 0 var(--shop-buy-slice) fill / 0
+    calc(var(--h) * var(--shop-buy-cap)) stretch;
+}
+
+.pause-overlay.is-art .btn-toggle.is-off {
+  border-image: var(--shop-upgrades-art) 0 var(--shop-upgrades-slice) fill / 0
+    calc(var(--h) * var(--shop-upgrades-cap)) stretch;
+}
+
+.pause-overlay.is-art .btn-toggle svg {
+  width: calc(44 * var(--u));
+  height: calc(44 * var(--u));
+  stroke-width: 2.6;
+}
+
+/* Game Over: the score in the HUD score's lettering, the stats in the Upgrades cards' brown. */
+.game-over-overlay.is-art .go-score {
+  margin: calc(4 * var(--u)) 0;
+  color: #fbe7c6;
+  font-size: calc(100 * var(--u));
+  -webkit-text-stroke: calc(12 * var(--u)) #4e2416;
+  paint-order: stroke fill;
+  text-shadow: 0 calc(6 * var(--u)) 0 #4e2416;
+}
+
+.game-over-overlay.is-art .record-badge {
+  padding: calc(6 * var(--u)) calc(22 * var(--u));
+  border: calc(4 * var(--u)) solid #4e2416;
+  background: linear-gradient(#ffd866, #f2b83b);
+  font-size: calc(26 * var(--u));
+}
+
+.game-over-overlay.is-art .go-stats {
+  gap: calc(10 * var(--u)) calc(24 * var(--u));
+  margin: calc(6 * var(--u)) 0 calc(10 * var(--u));
+  font-size: calc(35 * var(--u));
+}
+
+.game-over-overlay.is-art .go-stats dt {
+  align-self: center;
+  color: #4e2416;
+  font-weight: var(--weight-semibold);
+}
+
+.game-over-overlay.is-art .go-stats dd {
+  gap: calc(12 * var(--u));
+  min-height: calc(46 * var(--u));
+}
+
+.game-over-overlay.is-art .go-coin {
+  width: calc(46 * var(--u));
+  height: auto;
+}
+
+.game-over-overlay.is-art .go-stats .cat-icon {
+  --size: calc(64 * var(--u));
+}
+
+.game-over-overlay.is-art .record-chip {
+  padding: calc(2 * var(--u)) calc(12 * var(--u));
+  border: calc(3 * var(--u)) solid #4e2416;
+  background: linear-gradient(#ffd866, #f2b83b);
+  font-size: calc(20 * var(--u));
+}
+
+.game-over-overlay.is-art .go-unlocked {
+  margin: 0;
+  padding: calc(10 * var(--u)) calc(22 * var(--u));
+  border: calc(4 * var(--u)) solid #4e2416;
+  border-radius: calc(24 * var(--u));
+  background: #fff1c2;
+  color: #4e2416;
+  font-size: calc(30 * var(--u));
+}
+
+/* Settings: the title and the close button, then the four rows; the version in the tan strip. */
+.settings-overlay.is-art .settings-card {
+  padding: calc(30 * var(--u)) calc(42 * var(--u)) 0;
+}
+
+.settings-overlay.is-art .settings-header {
+  gap: calc(20 * var(--u));
+  margin-bottom: calc(6 * var(--u));
+}
+
+.settings-overlay.is-art .settings-close {
+  width: max(calc(96 * var(--u)), 44px);
+  height: max(calc(96 * var(--u)), 44px);
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.settings-close-art {
+  width: 100%;
+  height: 100%;
+}
+
+.settings-overlay.is-art .settings-row {
+  gap: calc(24 * var(--u));
+  min-height: calc(193 * var(--u));
+  padding: calc(20 * var(--u)) 0;
+}
+
+.settings-overlay.is-art .settings-row + .settings-row {
+  border-top: calc(4 * var(--u)) dashed #dcc29e;
+}
+
+/* The icons in the Upgrades icons' medallion: a cream face in a gold rim. */
+.settings-overlay.is-art .settings-icon {
+  width: calc(125 * var(--u));
+  height: calc(125 * var(--u));
+  border: calc(6 * var(--u)) solid #4e2416;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%, #fffaf0, #f6e6c8);
+  box-shadow:
+    inset 0 0 0 calc(12 * var(--u)) #f2c552,
+    inset 0 0 0 calc(15 * var(--u)) #c9962f;
+  color: #4e2416;
+}
+
+.settings-overlay.is-art .settings-icon svg {
+  width: calc(58 * var(--u));
+  height: calc(58 * var(--u));
+}
+
+.settings-overlay.is-art .settings-label {
+  font-size: calc(44 * var(--u));
+  font-weight: var(--weight-bold);
+  line-height: 1.15;
+}
+
+.settings-overlay.is-art .settings-sub {
+  color: #5b3324;
+  font-size: calc(32 * var(--u));
+  font-weight: var(--weight-semibold);
+  line-height: 1.15;
+}
+
+/* A switch: the gold Buy pill when on, a sunken tan track when off; a cream knob. */
+.settings-overlay.is-art .switch {
+  width: calc(128 * var(--u));
+  height: calc(56 * var(--u));
+  border: calc(4 * var(--u)) solid #4e2416;
+  background: linear-gradient(#c9a77d, #dcc4a1 60%);
+  box-shadow: inset 0 calc(4 * var(--u)) calc(4 * var(--u)) rgba(78, 36, 22, 0.25);
+}
+
+.settings-overlay.is-art .settings-row.is-on .switch {
+  border: 0 solid transparent;
+  border-image: var(--shop-buy-art) 0 var(--shop-buy-slice) fill / 0
+    calc(56 * var(--u) * var(--shop-buy-cap)) stretch;
+  background: none;
+  box-shadow: none;
+}
+
+.settings-overlay.is-art .switch-text {
+  right: calc(12 * var(--u));
+  color: #6b4632;
+  font-size: calc(26 * var(--u));
+}
+
+.settings-overlay.is-art .settings-row.is-on .switch-text {
+  left: calc(16 * var(--u));
+  padding-bottom: calc(3 * var(--u));
+  color: #4e2416;
+}
+
+.settings-overlay.is-art .switch-knob {
+  top: 50%;
+  left: calc(2 * var(--u));
+  width: calc(44 * var(--u));
+  height: calc(44 * var(--u));
+  border: calc(4 * var(--u)) solid #4e2416;
+  background: radial-gradient(circle at 38% 30%, #fff, #f3e3c8);
+  transform: translateY(-50%);
+}
+
+.settings-overlay.is-art .settings-row.is-on .switch-knob {
+  left: calc(78 * var(--u));
+  top: calc(50% - 2 * var(--u));
+}
+
+.settings-overlay.is-art .settings-chevron {
+  margin-right: calc(10 * var(--u));
+}
+
+.settings-overlay.is-art .settings-chevron svg {
+  width: calc(46 * var(--u));
+  height: calc(46 * var(--u));
+  stroke-width: 3.4;
+}
+
+.settings-overlay.is-art .settings-version {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--strip);
+  margin: calc(8 * var(--u)) 0 0;
+  padding-bottom: calc(4 * var(--u));
+  color: #8a6a55;
+  font-size: calc(26 * var(--u));
+  font-weight: var(--weight-semibold);
+}

@@ -1,8 +1,8 @@
 /**
  * The pieces cut from the owner's approved Upgrades mockup (docs/ART_ASSETS.md §4.9), shared by
- * the screens built from them: the Upgrades screen and the stage-clear picks. Their images and
- * nine-slice measurements go on the screen's root as CSS custom properties (shop-art.css,
- * pick-art.css lay them out in mockup pixels).
+ * the screens built from them: the Upgrades screen, the stage-clear picks and the Settings, Pause
+ * and Game Over panels. Their images and nine-slice measurements go on the screen's root as CSS
+ * custom properties (shop-art.css, pick-art.css and panel-art.css lay them out in mockup pixels).
  */
 import { MENU_ART, MENU_SPRITE_DIR } from '../config/menuSprites';
 import { SHOP_ART, SHOP_MOCKUP_WIDTH, SHOP_SPRITE_DIR } from '../config/shopSprites';
@@ -21,9 +21,10 @@ export function setUiArtProperties(node: HTMLElement): void {
   const strips = [
     ['buy', SHOP_SPRITE_DIR, buy],
     ['title', SHOP_SPRITE_DIR, title],
-    // The menu's coins pill and PLAY button.
+    // The menu's coins pill, PLAY button and cream UPGRADES pill.
     ['coins', MENU_SPRITE_DIR, MENU_ART.coinsPill],
     ['play', MENU_SPRITE_DIR, MENU_ART.play],
+    ['upgrades', MENU_SPRITE_DIR, MENU_ART.upgrades],
   ] as const;
   for (const [name, dir, sprite] of strips) {
     set(`--shop-${name}-art`, url(`${dir}${sprite.file}`));

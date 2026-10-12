@@ -164,14 +164,18 @@ async function boot(): Promise<void> {
 
   // Settings panel (GAME_DESIGN §2.4) over the menu, with its own back layer.
   let settingsLayer: number | null = null;
-  const settingsPanel = createSettingsPanel(byId('overlays'), {
-    onToggle: (key) => {
-      session.setSetting(key, !session.settings[key]);
-      if (key === 'haptics') haptics.play('tick');
+  const settingsPanel = createSettingsPanel(
+    byId('overlays'),
+    {
+      onToggle: (key) => {
+        session.setSetting(key, !session.settings[key]);
+        if (key === 'haptics') haptics.play('tick');
+      },
+      onReplayTips: () => session.replayHints(),
+      onClose: () => closeSettings(),
     },
-    onReplayTips: () => session.replayHints(),
-    onClose: () => closeSettings(),
-  });
+    skin === 'art',
+  );
   settingsPanel.setHapticsSupported(haptics.supported);
   const openSettings = (): void => {
     if (settingsPanel.visible) return;
@@ -205,19 +209,27 @@ async function boot(): Promise<void> {
     { onChoose: (id) => session.choosePick(id) },
     skin === 'art',
   );
-  const pause = createPauseOverlay(overlays, {
-    onResume: () => session.resumeRun(),
-    onToggleSound: () => toggleSound(),
-    onToggleHaptics: () => {
-      session.setSetting('haptics', !session.settings.haptics);
-      haptics.play('tick');
+  const pause = createPauseOverlay(
+    overlays,
+    {
+      onResume: () => session.resumeRun(),
+      onToggleSound: () => toggleSound(),
+      onToggleHaptics: () => {
+        session.setSetting('haptics', !session.settings.haptics);
+        haptics.play('tick');
+      },
+      onQuit: () => screens?.showMenu(),
     },
-    onQuit: () => screens?.showMenu(),
-  });
-  const gameOver = createGameOverOverlay(overlays, {
-    onPlayAgain: () => session.startRun(),
-    onMenu: () => screens?.showMenu(),
-  });
+    skin === 'art',
+  );
+  const gameOver = createGameOverOverlay(
+    overlays,
+    {
+      onPlayAgain: () => session.startRun(),
+      onMenu: () => screens?.showMenu(),
+    },
+    skin === 'art',
+  );
 
   // Phaser renders into the play area under the HUD; its loop sleeps while the menu is up. The
   // jar fits below the HUD, and the garden behind the canvas follows the jar.

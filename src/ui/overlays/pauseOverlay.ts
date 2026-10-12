@@ -1,5 +1,6 @@
 import { button, el } from '../dom';
-import { ICON_SOUND_OFF, ICON_SOUND_ON, ICON_VIBRATE } from '../icons';
+import { ICON_SOUND_OFF, ICON_SOUND_ON, ICON_VIBRATE, ICON_VIBRATE_OFF } from '../icons';
+import { setUiArtProperties } from '../uiArt';
 
 export interface PauseActions {
   onResume(): void;
@@ -16,9 +17,19 @@ export interface PauseView {
   setHapticsOn(on: boolean): void;
 }
 
-/** Pause overlay (GAME_DESIGN §2.3): Resume, Sound, Haptics, Quit to Menu. */
-export function createPauseOverlay(root: HTMLElement, actions: PauseActions): PauseView {
+/**
+ * Pause overlay (GAME_DESIGN §2.3): Resume, Sound, Haptics, Quit to Menu. With `art` (the art skin)
+ * it is the owner's approved mockup (docs/ART_ASSETS.md §4.14) built from the Upgrades and menu
+ * pieces (panel-art.css); otherwise the code-drawn card of v0.14.
+ */
+export function createPauseOverlay(
+  root: HTMLElement,
+  actions: PauseActions,
+  art = false,
+): PauseView {
   const overlay = el('div', 'overlay game-overlay pause-overlay');
+  overlay.classList.toggle('is-art', art);
+  if (art) setUiArtProperties(overlay);
   overlay.dataset['testid'] = 'pause-overlay';
   overlay.setAttribute('role', 'dialog');
   overlay.setAttribute('aria-label', 'Paused');
@@ -35,7 +46,7 @@ export function createPauseOverlay(root: HTMLElement, actions: PauseActions): Pa
   const sound = button('btn btn-toggle', 'Sound');
   sound.dataset['testid'] = 'pause-sound';
   sound.addEventListener('click', actions.onToggleSound);
-  const haptics = button('btn btn-toggle', 'Haptics', ICON_VIBRATE);
+  const haptics = button('btn btn-toggle', 'Haptics');
   haptics.dataset['testid'] = 'pause-haptics';
   haptics.addEventListener('click', actions.onToggleHaptics);
   toggles.append(sound, haptics);
@@ -48,7 +59,9 @@ export function createPauseOverlay(root: HTMLElement, actions: PauseActions): Pa
   overlay.append(panel);
   root.append(overlay);
 
-  const setToggle = (node: HTMLButtonElement, on: boolean): void => {
+  const setToggle = (node: HTMLButtonElement, on: boolean, icon: string): void => {
+    node.querySelector('svg')?.remove();
+    node.insertAdjacentHTML('afterbegin', icon);
     node.setAttribute('aria-pressed', String(on));
     node.classList.toggle('is-off', !on);
   };
@@ -64,12 +77,10 @@ export function createPauseOverlay(root: HTMLElement, actions: PauseActions): Pa
       overlay.hidden = true;
     },
     setSoundOn(on) {
-      sound.querySelector('svg')?.remove();
-      sound.insertAdjacentHTML('afterbegin', on ? ICON_SOUND_ON : ICON_SOUND_OFF);
-      setToggle(sound, on);
+      setToggle(sound, on, on ? ICON_SOUND_ON : ICON_SOUND_OFF);
     },
     setHapticsOn(on) {
-      setToggle(haptics, on);
+      setToggle(haptics, on, on ? ICON_VIBRATE : ICON_VIBRATE_OFF);
     },
   };
 }

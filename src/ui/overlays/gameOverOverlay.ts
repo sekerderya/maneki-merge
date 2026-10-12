@@ -1,8 +1,10 @@
+import { MENU_ART, MENU_SPRITE_DIR } from '../../config/menuSprites';
 import { formatNumber } from '../../core/format';
 import type { NewRecords } from '../../core/profile';
 import { catIcon, paintCatIcon } from '../catIcon';
 import { button, el } from '../dom';
 import { ICON_COIN } from '../icons';
+import { artImage, setUiArtProperties } from '../uiArt';
 
 export interface GameOverActions {
   onPlayAgain(): void;
@@ -31,9 +33,17 @@ export interface GameOverView {
 /**
  * Game Over overlay (GAME_DESIGN §2.3): score, best score, stage reached, the biggest cat made,
  * coins earned this run, a badge for every record the run broke, and the shop cards it opened.
+ * With `art` (the art skin) it is the owner's approved mockup (docs/ART_ASSETS.md §4.14), built
+ * from the Upgrades and menu pieces (panel-art.css), with the menu's coin.
  */
-export function createGameOverOverlay(root: HTMLElement, actions: GameOverActions): GameOverView {
+export function createGameOverOverlay(
+  root: HTMLElement,
+  actions: GameOverActions,
+  art = false,
+): GameOverView {
   const overlay = el('div', 'overlay game-overlay game-over-overlay');
+  overlay.classList.toggle('is-art', art);
+  if (art) setUiArtProperties(overlay);
   overlay.dataset['testid'] = 'game-over';
   overlay.setAttribute('role', 'dialog');
   overlay.setAttribute('aria-label', 'Game over');
@@ -72,7 +82,8 @@ export function createGameOverOverlay(root: HTMLElement, actions: GameOverAction
   tierRow.replaceChildren(tierChip, tierIcon, tierNone);
   const coins = row('Coins earned', 'go-coins');
   coins.textContent = '';
-  coins.insertAdjacentHTML('beforeend', ICON_COIN);
+  if (art) coins.append(artImage(`${MENU_SPRITE_DIR}${MENU_ART.coin.file}`, 'go-coin'));
+  else coins.insertAdjacentHTML('beforeend', ICON_COIN);
   const coinValue = el('span', '', '0');
   coinValue.dataset['testid'] = 'go-coins-value';
   coins.append(coinValue);

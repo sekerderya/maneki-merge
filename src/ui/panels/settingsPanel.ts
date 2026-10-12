@@ -1,3 +1,4 @@
+import { SHOP_ART, SHOP_SPRITE_DIR } from '../../config/shopSprites';
 import { formatVersionLabel } from '../../core/version';
 import { button, el } from '../dom';
 import {
@@ -9,6 +10,7 @@ import {
   ICON_SOUND_ON,
   ICON_VIBRATE,
 } from '../icons';
+import { artImage, setUiArtProperties } from '../uiArt';
 
 /** The settings the panel switches (GAME_DESIGN §2.4); each one is a save setting. */
 export type SettingKey = 'sound' | 'haptics' | 'reduceMotion';
@@ -37,9 +39,17 @@ interface SwitchRow {
 /**
  * Settings panel over the main menu (GAME_DESIGN §2.4): sound effects, haptics, reduce motion,
  * "How to play" and the version. Each switch is a whole row, so the target is the full width.
+ * With `art` (the art skin) it is the owner's approved mockup (docs/ART_ASSETS.md §4.14), built
+ * from the Upgrades and menu pieces (panel-art.css): gold-rimmed icons, gold switches.
  */
-export function createSettingsPanel(root: HTMLElement, actions: SettingsActions): SettingsView {
+export function createSettingsPanel(
+  root: HTMLElement,
+  actions: SettingsActions,
+  art = false,
+): SettingsView {
   const overlay = el('div', 'overlay settings-overlay');
+  overlay.classList.toggle('is-art', art);
+  if (art) setUiArtProperties(overlay);
   overlay.dataset['testid'] = 'settings-panel';
   overlay.setAttribute('role', 'dialog');
   overlay.setAttribute('aria-label', 'Settings');
@@ -51,7 +61,8 @@ export function createSettingsPanel(root: HTMLElement, actions: SettingsActions)
 
   const card = el('section', 'settings-card');
   const header = el('header', 'settings-header');
-  const close = button('icon-btn settings-close', '', ICON_CLOSE);
+  const close = button('icon-btn settings-close', '', art ? '' : ICON_CLOSE);
+  if (art) close.append(artImage(`${SHOP_SPRITE_DIR}${SHOP_ART.close.file}`, 'settings-close-art'));
   close.setAttribute('aria-label', 'Close');
   close.dataset['testid'] = 'settings-close';
   close.addEventListener('click', actions.onClose);
