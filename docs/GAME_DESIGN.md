@@ -46,7 +46,7 @@ Layout: everything sits where it is in the mockup, on a stage of the mockup's si
   | Second Chance | Lucky Saves                                                    | 0 → 1        | 2      |
   | Golden Cats   | Up to (golden cats)                                            | 6% → 12%     | 30%    |
   | Big Drops     | Up to (biggest drop)                                           | 19% → 28%    | 37%    |
-  | More Magnets  | Up to (magnets)                                                | 1% → 3.25%   | 12.25% |
+  | More Magnets  | Up to (magnets)                                                | 0% → 2.25%   | 11.25% |
   | Hanabi        | Up to (hanabi)                                                 | 0% → 2.25%   | 11.25% |
   | Joker Cat     | Up to (jokers)                                                 | 0% → 2.25%   | 11.25% |
 
@@ -105,7 +105,7 @@ Lucky Paw, Big Catch and Big Drops have no clip.
 - HUD over the top of the scene. At the top in the middle, the stage in words ("STAGE 2"), dark brown with a cream edge, no card (v0.25). On the left, a narrow cream score card with "SCORE:" and the score in a sunken well, level with the coins card (their middles on one line, v0.26; until v0.24 it sat at the top, level with the pause button). (The stage card of v0.14–v0.17, with a progress bar and the stage's last cat, is gone; the banners still announce stage clears and the new goal.) On the right, a pink pause button, a "COINS:" card with the coins earned this run, which runs off the right edge, and under it the next cat in a round glass bubble with a small "NEXT" tag on its rim (v0.14.1). Only the pause button takes touches; everywhere else a touch aims.
 - Overlays:
   - **Pause**: Resume, Sound, Haptics, Quit to Menu. Sound and Haptics are gold when on, cream with a crossed-out icon when off.
-  - **Game Over**: score, best score, stage reached, the biggest cat made this run, coins earned this run, new-record badges (best score, best stage, biggest cat ever), the shop cards the run opened ("New in the shop: Second Chance, Hanabi", v0.36, on a pale gold card), Play Again, Menu.
+  - **Game Over**: score, best score, stage reached, coins earned this run, new-record badges (best score, best stage), Play Again, Menu. v0.39.1 (the owner's call) took out the biggest cat made this run (with its "New" chip for the biggest cat ever) and the shop cards the run opened ("New in the shop: …", v0.36).
   - Look (v0.37, the owner's approved mockups `art-source/ui/pause-mockup.jpg`, `gameover-mockup.jpg`): the v0.14 layout in the Upgrades screen's and the menu's pieces: the Upgrades card as the panel, the title (and Game Over's score) in the Upgrades title's cream lettering with a dark-brown edge, Resume and Play Again as the menu's coral PLAY pill, the quiet buttons as the cream UPGRADES pill, the menu's coin. With `?skin=vector` the code-drawn cards of v0.14.
 - Short banners: Combo, Jackpot, Stage clear! (every stage clear), The shrine grows! (as the jar grows, every 5 stages, v0.33; with the new jar's coin multiplier under it, "Coins ×2", since v0.36; from v0.29.4 to v0.32 no banner, and until v0.29.4 it replaced "Stage clear!" at a clear that grew the jar), Lucky Save!. (Until v0.29.5 the reveal of a new stage showed "New cats unlocked!" with the next goal; the owner removed it.)
 - First-run hints: "Drag to aim, release to drop" and "Merge two identical cats".
@@ -407,7 +407,7 @@ Measured for v0.39 with the meta bot (`npm run sim -- --meta 30 --seeds 24`, TEC
 | Smart bot with one extra Lucky Save (a better player; v0.38 stalls at stages 5–6, like the owner) |    6 of 24 (v0.38: 2) | 16 (v0.38: 8) |           stage 4 |
 | The smart bot alone (a weak new player)                                                           |    1 of 24 (v0.38: 2) |  7 (v0.38: 5) |           stage 2 |
 
-A maxed profile's smart bot clears 5 stages in 44 runs of 60 and reaches stage ~6 (median); v0.38's cleared 5 in 29. (M10's targets, written for score thresholds, were set aside in v0.10.)
+A maxed profile's smart bot clears 5 stages in 44 runs of 60 and reaches stage ~6 (median); v0.38's cleared 5 in 29. After v0.39.1 took the magnets out of runs without More Magnets (§15.1), the better player clears stage 5 within 15 minutes in 1 of 24 profiles and within 30 in 15, the weak bot in 1 and 3: at 24 players the 15-minute figure is noisy, but the early game lost a little help. (M10's targets, written for score thresholds, were set aside in v0.10.)
 
 ## 15. Special balls, trials and blessings
 
@@ -419,19 +419,19 @@ Later stages get harder and every run gets its own build. Every stage clear asks
 
 The dropper hands out five kinds of ball: cats, magnets, boulders, hanabi and joker cats. Every item rolls its kind when it is queued, with one roll checked in this order:
 
-| Kind    | Chance per queued item                                                |
-| ------- | --------------------------------------------------------------------- |
-| Magnet  | 1% + 2.25% per More Magnets level; none in a stage's first 20 drops   |
-| Boulder | 0% at stage 1; from stage 2, 3% + 3% per More Boulders level          |
-| Hanabi  | 2.25% per Hanabi level (0% without); none in a stage's first 20 drops |
-| Joker   | 2.25% per Joker Cat level (0% without)                                |
-| Cat     | the rest; a cat is golden with 6% per Golden Cats level (0% without)  |
+| Kind    | Chance per queued item                                                      |
+| ------- | --------------------------------------------------------------------------- |
+| Magnet  | 2.25% per More Magnets level (0% without); none in a stage's first 20 drops |
+| Boulder | 0% at stage 1; from stage 2, 3% + 3% per More Boulders level                |
+| Hanabi  | 2.25% per Hanabi level (0% without); none in a stage's first 20 drops       |
+| Joker   | 2.25% per Joker Cat level (0% without)                                      |
+| Cat     | the rest; a cat is golden with 6% per Golden Cats level (0% without)        |
 
 - The first two drops of a run are always cats of the pool's smallest tier (§8).
 - The wind (§15.8) and Heavy Drop (§15.9) act on every ball that leaves the paw, whatever its kind (a cat, a golden cat, a boulder, a hanabi, a joker, a ball the magnet took and drops again), from the drop until it first touches a ball or the floor (a wall doesn't end a fall, §15.8).
 - **No magnet early in a stage** (v0.24, owner): only items queued after the player has dropped 20 balls in the stage can be magnets, so the first that can be one is the 22nd ball (NEXT after the 20th drop). Every stage starts with an empty jar, where a magnet would have nothing to take. The count starts again at every stage clear, the last stage's too. While magnets are held back the boulder chance stays the same. The same holds for hanabi (v0.28): an empty jar has nothing for one to pop.
 - **At a stage clear** a queued magnet or hanabi (in the paw or in NEXT) becomes a cat of the pool's smallest tier; other queued items stay as they are.
-- v0.24 (owner): the magnet chance was halved, 2% → 1% and +3% → +1.5% per More Magnets level. v0.39 (owner): every blessing level counts 1.5 times as much, so +2.25% (golden cats 4% → 6%, hanabi and jokers 1.5% → 2.25%).
+- v0.24 (owner): the magnet chance was halved, 2% → 1% and +3% → +1.5% per More Magnets level. v0.39 (owner): every blessing level counts 1.5 times as much, so +2.25% (golden cats 4% → 6%, hanabi and jokers 1.5% → 2.25%). v0.39.1 (owner): no magnets without the More Magnets blessing, like hanabi and jokers; until then every run had 1%, a fresh profile too.
 - Magnets, boulders, hanabi and jokers are never golden.
 - Debug jumps (`?debug=1`, "Jump to stage") skip the stage-clear picks.
 - The NEXT bubble shows the item as it is: a cat (golden ones with their glow), the magnet, the boulder at its size with its bands, the hanabi or the joker.
@@ -528,7 +528,7 @@ The boulder trials still multiply each other (more × bigger × harder to break)
 
 | ID            | Name         | Effect per level             | Max | Level 0 → max |
 | ------------- | ------------ | ---------------------------- | --: | ------------- |
-| `moreMagnets` | More Magnets | +2.25% magnet chance         |   5 | 1% → 12.25%   |
+| `moreMagnets` | More Magnets | +2.25% magnet chance         |   5 | 0% → 11.25%   |
 | `bigDrops`    | Big Drops    | +3 drop tilt levels (§8)     |   5 | see below     |
 | `goldenCats`  | Golden Cats  | +6% golden cat chance        |   5 | 0% → 30%      |
 | `hanabi`      | Hanabi       | +2.25% hanabi chance (§15.6) |   5 | 0% → 11.25%   |
