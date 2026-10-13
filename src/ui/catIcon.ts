@@ -7,7 +7,7 @@ import { SPECIAL_ART, SPECIAL_SPRITE_DIR, boulderSprite } from '../config/specia
 import { darken } from '../core/color';
 import type { Drop } from '../core/dropQueue';
 import { el } from './dom';
-import { boulderSvg, HANABI_SVG, JOKER_SVG, MAGNET_SVG } from './icons';
+import { boulderSvg, HANABI_SVG, JOKER_SVG, LIGHTNING_SVG, MAGNET_SVG } from './icons';
 
 /** Which art DOM icons use; `?skin=` switches them along with the game. */
 export type IconSkin = 'art' | 'vector' | 'placeholder';
@@ -64,7 +64,7 @@ export function catIcon(tier: number): HTMLElement {
 
 /**
  * A ball from the dropper's queue as a DOM icon (the HUD's NEXT, GAME_DESIGN §15.1): a cat (a
- * golden one glows), the magnet, a boulder with its bands, a hanabi or a joker.
+ * golden one glows), the magnet, a boulder with its bands, a hanabi, a joker or a lightning ball.
  */
 export function paintDropIcon(icon: HTMLElement, drop: Drop): void {
   icon.classList.toggle('is-golden', drop.golden);
@@ -80,11 +80,17 @@ export function paintDropIcon(icon: HTMLElement, drop: Drop): void {
   icon.classList.remove('is-placeholder', 'is-two-digits');
   icon.style.removeProperty('--cat-color');
   icon.style.removeProperty('--cat-outline');
-  if (iconSkin === 'art') {
-    const sprite = drop.kind === 'boulder' ? boulderSprite(drop.hits - 1) : SPECIAL_ART[drop.kind];
+  const sprite =
+    iconSkin !== 'art'
+      ? null
+      : drop.kind === 'boulder'
+        ? boulderSprite(drop.hits - 1)
+        : SPECIAL_ART[drop.kind];
+  if (sprite) {
     paintSpecialArt(icon, sprite);
     return;
   }
+  // The code-drawn looks (`?skin=vector`, and a ball whose art hasn't come yet).
   icon.innerHTML =
     drop.kind === 'magnet'
       ? MAGNET_SVG
@@ -92,7 +98,9 @@ export function paintDropIcon(icon: HTMLElement, drop: Drop): void {
         ? HANABI_SVG
         : drop.kind === 'joker'
           ? JOKER_SVG
-          : boulderSvg(Math.max(0, drop.hits - 1));
+          : drop.kind === 'lightning'
+            ? LIGHTNING_SVG
+            : boulderSvg(Math.max(0, drop.hits - 1));
 }
 
 export function paintCatIcon(icon: HTMLElement, tier: number): void {

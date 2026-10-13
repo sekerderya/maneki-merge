@@ -15,6 +15,7 @@ export const UPGRADE_IDS = [
   'moreMagnets',
   'hanabi',
   'joker',
+  'lightning',
 ] as const;
 
 export type UpgradeId = (typeof UPGRADE_IDS)[number];
@@ -26,6 +27,7 @@ export const BLESSING_CARD_IDS = [
   'moreMagnets',
   'hanabi',
   'joker',
+  'lightning',
 ] as const;
 
 export type BlessingCardId = (typeof BLESSING_CARD_IDS)[number];
@@ -178,6 +180,21 @@ export const UPGRADES: Readonly<Record<UpgradeId, UpgradeDef>> = {
     maxLevel: PICKS.joker.maxLevel,
     gate: 5,
     prices: [10_000, 18_000, 48_000, 85_000, 130_000],
+    perLevel: 1,
+  },
+  lightning: {
+    id: 'lightning',
+    section: 'blessing',
+    name: PICKS.lightning.name,
+    description: 'Blessing: strikes every cat of the size it touches',
+    statLabel: 'Up to',
+    startLevel: 0,
+    maxLevel: PICKS.lightning.maxLevel,
+    // Batch 23 (the owner's call: it opens later, so the early game stays as it is): from the
+    // second jar on, its first level dearer than the Joker Cat's. It adds 225K to the ~1.02M the other
+    // cards cost: about an hour more in the 8-hour pacing model, at its end.
+    gate: 8,
+    prices: [15_000, 25_000, 40_000, 60_000, 85_000],
     perLevel: 1,
   },
 };

@@ -32,7 +32,14 @@ describe('deriveStats (GAME_DESIGN §10)', () => {
       bigCatchTilt: 0,
       comboCharmLevel: 0,
       luckySaves: 0,
-      blessingCaps: { goldenCats: 1, bigDrops: 1, moreMagnets: 0, hanabi: 0, joker: 0 },
+      blessingCaps: {
+        goldenCats: 1,
+        bigDrops: 1,
+        moreMagnets: 0,
+        hanabi: 0,
+        joker: 0,
+        lightning: 0,
+      },
     });
   });
 
@@ -48,6 +55,7 @@ describe('deriveStats (GAME_DESIGN §10)', () => {
       moreMagnets: 5,
       hanabi: 5,
       joker: 5,
+      lightning: 5,
     });
   });
 
@@ -90,12 +98,11 @@ describe('the cards (GAME_DESIGN §10)', () => {
     expect(UPGRADE_IDS.slice(-BLESSING_CARD_IDS.length)).toEqual([...BLESSING_CARD_IDS]);
   });
 
-  it('costs about 1M coins in all (the 8-hour pacing model)', () => {
-    const total = UPGRADE_IDS.reduce(
-      (sum, id) => sum + UPGRADES[id].prices.reduce((a, b) => a + b, 0),
-      0,
-    );
-    expect(total).toBe(1_021_200);
+  it('costs about 1M coins in all (the 8-hour pacing model), plus the late Lightning card', () => {
+    const cost = (id: UpgradeId): number => UPGRADES[id].prices.reduce((a, b) => a + b, 0);
+    const total = UPGRADE_IDS.reduce((sum, id) => sum + cost(id), 0);
+    expect(total - cost('lightning')).toBe(1_021_200);
+    expect(cost('lightning')).toBe(225_000);
   });
 });
 

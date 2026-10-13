@@ -83,7 +83,9 @@ export function pickClip(id: PickId, windLeft = false): ClipId | null {
     case 'quickCurse':
     case 'moreCurses':
       return 'curse';
+    // The lightning ball's clip is recorded once its art is in (docs/ART_ASSETS.md §4.16).
     case 'bigDrops':
+    case 'lightning':
       return null;
   }
 }
@@ -100,6 +102,7 @@ export function upgradeClip(id: UpgradeId): ClipId | null {
     case 'hanabi':
     case 'joker':
     case 'bigDrops':
+    case 'lightning':
       return pickClip(id);
     case 'luckyPaw':
     case 'bigCatch':

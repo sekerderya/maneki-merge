@@ -71,6 +71,7 @@ export function dropOdds(levels: PickLevels, stage: number, bigCatchTilt: number
     goldenChance: PICKS.goldenCats.perLevel * levels.goldenCats,
     hanabiChance: PICKS.hanabi.perLevel * levels.hanabi,
     jokerChance: PICKS.joker.perLevel * levels.joker,
+    lightningChance: PICKS.lightning.perLevel * levels.lightning,
     boulderSize: BOULDER_BASE_SIZE + PICKS.bigBoulders.perLevel * levels.bigBoulders,
     boulderHits: BOULDER_BASE_HITS + PICKS.ironBands.perLevel * levels.ironBands,
   };
@@ -197,6 +198,8 @@ export function pickValue(id: PickId, levels: PickLevels, bigCatchTilt: number):
       return percent(odds.hanabiChance);
     case 'joker':
       return percent(odds.jokerChance);
+    case 'lightning':
+      return percent(odds.lightningChance);
     case 'wind':
       return WIND_NAMES[levels.wind] ?? '';
     case 'heavyDrop':

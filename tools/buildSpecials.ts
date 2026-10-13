@@ -1,7 +1,8 @@
 /**
  * The special balls part of the art pipeline (TECH_SPEC §14, docs/ART_ASSETS.md phase 7): the
- * magnet, the hanabi, the joker cat and the boulder sheet from `art-source/specials/`, written to
- * `public/assets/specials/` with their measurements in `src/config/specialSpriteData.ts`.
+ * magnet, the hanabi, the joker cat, the boulder sheet and the lightning ball (phase 15, null
+ * until its image is in) from `art-source/specials/`, written to `public/assets/specials/` with
+ * their measurements in `src/config/specialSpriteData.ts`.
  *
  * Each ball goes through tools/artBall.ts like a cat. The boulder sheet is a 2×2 grid of the same
  * stone with 0, 1, 2 and 3 iron bands; it is cut into its four quarters first.
@@ -19,6 +20,7 @@ interface SpecialData {
   magnet: BallSprite;
   hanabi: BallSprite;
   joker: BallSprite;
+  lightning: BallSprite | null;
   boulders: BallSprite[];
 }
 
@@ -28,6 +30,11 @@ export async function buildSpecials(): Promise<void> {
   const magnet = await buildBall(await source('magnet'), OUT_DIR, 'magnet.webp');
   const hanabi = await buildBall(await source('hanabi'), OUT_DIR, 'hanabi.webp');
   const joker = await buildBall(await source('joker'), OUT_DIR, 'joker.webp');
+  // The lightning ball (Batch 23) until the owner's image comes: the game draws a stand-in.
+  const lightningSource = await source('lightning').catch(() => null);
+  const lightning = lightningSource
+    ? await buildBall(lightningSource, OUT_DIR, 'lightning.webp')
+    : null;
 
   // Top left, top right, bottom left, bottom right: 0, 1, 2 and 3 bands.
   const sheet = await loadRgba(await source('boulders'));
@@ -39,9 +46,10 @@ export async function buildSpecials(): Promise<void> {
     boulders.push(await buildBall(quarter, OUT_DIR, `boulder-${bands}.webp`));
   }
 
-  await writeFile(DATA_FILE, dataModule({ magnet, hanabi, joker, boulders }));
+  await writeFile(DATA_FILE, dataModule({ magnet, hanabi, joker, lightning, boulders }));
   console.log(
-    `Specials: magnet, hanabi, joker and ${boulders.length} boulders; wrote ${DATA_FILE}`,
+    `Specials: magnet, hanabi, joker${lightning ? ', lightning' : ''} and ` +
+      `${boulders.length} boulders; wrote ${DATA_FILE}`,
   );
 }
 

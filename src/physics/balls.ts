@@ -2,8 +2,9 @@
  * Balls in the physics world: a matter-js body plus the game data the world tracks for it
  * (kind, tier, size, golden, growth after a merge, first contact). A ball is a cat, a boulder
  * (GAME_DESIGN §15.3), which never merges and breaks after `hitsLeft` merges next to it, a hanabi
- * (§15.6), which goes off a moment after it lands, or a joker cat (§15.7), which merges with the
- * first cat it touches. The tier
+ * (§15.6), which goes off a moment after it lands, a joker cat (§15.7), which merges with the
+ * first cat it touches, or a lightning ball (§15.15), which strikes the first cat or boulder it
+ * touches and every ball like it. The tier
  * is the cat's number (a boulder's is the tier of its size); the size (its place in the current
  * stage, 1–10) sets its radius and density. Contacts use the exact circle (circleCollision.ts);
  * the body's polygon only feeds matter-js's broadphase bounds.
@@ -23,8 +24,8 @@ import type { CircleShape } from './circleCollision';
 /** matter-js velocities are per base tick of 1000/60 ms; config speeds are per second. */
 export const MATTER_TICKS_PER_SECOND = 60;
 
-/** A ball is a cat, a boulder, a hanabi or a joker cat. */
-export type BallKind = 'cat' | 'boulder' | 'hanabi' | 'joker';
+/** A ball is a cat, a boulder, a hanabi, a joker cat or a lightning ball. */
+export type BallKind = 'cat' | 'boulder' | 'hanabi' | 'joker' | 'lightning';
 
 /** What rendering and game rules may read about a ball. */
 export interface BallView {

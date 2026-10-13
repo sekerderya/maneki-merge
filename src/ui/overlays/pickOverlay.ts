@@ -132,12 +132,12 @@ function createCard(
 
   const icon = el('span', 'pick-icon');
   const sprite = art ? iconSprite(card.id) : null;
+  // The ball itself (or the pick's own picture), centred in the medallion.
+  const ball = art && !sprite ? pickArt(card.id, card.level) : null;
   if (sprite) {
     icon.classList.add('is-art');
     icon.append(artImage(`${ICON_SPRITE_DIR}${sprite.file}`, 'pick-icon-art'));
-  } else if (art) {
-    // The ball itself (or the pick's own picture), centred in the medallion.
-    const ball = pickArt(card.id, card.level);
+  } else if (ball) {
     const image = artImage(ball.path, 'pick-icon-ball');
     image.style.width = `${ball.width * 100}%`;
     icon.classList.toggle('is-golden', ball.golden);

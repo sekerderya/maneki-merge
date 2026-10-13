@@ -177,8 +177,8 @@ function createCard(
   if (isBlessingCard(id)) {
     // The blessing's own ball in a gold-rimmed medallion, as on its pick card (pickArt.ts).
     icon.classList.add('is-blessing');
-    if (art) {
-      const ball = pickArt(id, 0);
+    const ball = art ? pickArt(id, 0) : null;
+    if (ball) {
       const image = artImage(ball.path, 'shop-icon-ball');
       image.style.width = `${ball.width * 100}%`;
       icon.classList.toggle('is-golden', ball.golden);

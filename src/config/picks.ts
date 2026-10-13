@@ -57,6 +57,17 @@ export const HANABI_PUSH_SPEED = 320;
 export const JOKER_SIZE = 2;
 
 /**
+ * The lightning ball (GAME_DESIGN §15.15): a ball of this size that strikes the first cat or
+ * boulder it touches, and with it every cat of that tier (or every boulder) in the jar. Time stands
+ * still for LIGHTNING_HOLD_MS while the lightning chains through them; then they pop into their
+ * value (boulders break) and the ball is gone. None comes in a stage's first LIGHTNING_FREE_DROPS
+ * drops: an empty jar has nothing to strike.
+ */
+export const LIGHTNING_SIZE = 2;
+export const LIGHTNING_FREE_DROPS = 20;
+export const LIGHTNING_HOLD_MS = 450;
+
+/**
  * Big Drops adds this many tilt levels to the drop weights (GAME_DESIGN §8), up to
  * MAX_DROP_TILT_LEVEL in all with Big Catch: there the smallest drop is almost gone (1, 17, 33,
  * 49%). Until v0.39 (every shop effect 1.5 times as strong, the owner's call): 2 per level, up to 10
@@ -191,7 +202,14 @@ export const TRIAL_IDS = [
   'moreCurses',
 ] as const;
 export const RULE_IDS = ['hubris', 'echo', 'copycat', 'dice', 'heavyDrop'] as const;
-export const BLESSING_IDS = ['moreMagnets', 'bigDrops', 'goldenCats', 'hanabi', 'joker'] as const;
+export const BLESSING_IDS = [
+  'moreMagnets',
+  'bigDrops',
+  'goldenCats',
+  'hanabi',
+  'joker',
+  'lightning',
+] as const;
 export const PICK_IDS = [...TRIAL_IDS, ...BLESSING_IDS, ...RULE_IDS] as const;
 
 export type TrialId = (typeof TRIAL_IDS)[number];
@@ -398,6 +416,16 @@ export const PICKS: Readonly<Record<PickId, PickDef>> = {
     maxLevel: 5,
     // 1.5% until v0.39.
     perLevel: 0.0225,
+  },
+  lightning: {
+    id: 'lightning',
+    kind: 'blessing',
+    name: 'Lightning',
+    description: 'Strikes every cat of the size it touches, or every boulder',
+    statLabel: 'Lightning',
+    maxLevel: 5,
+    // Rarer than a hanabi or a joker: it clears a whole size, where the player aims it.
+    perLevel: 0.015,
   },
 };
 

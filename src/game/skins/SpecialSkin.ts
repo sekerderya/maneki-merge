@@ -4,11 +4,12 @@
  * lands on the physics radius. Otherwise they are drawn in code with the 2D canvas API: the magnet
  * (a cream disc with a red horseshoe magnet), boulders (grey stone with one iron band per extra
  * merge they need; with `?skin=placeholder` a grey circle showing the merges left), the hanabi
- * (a navy ball with a firework burst and a fuse) and the joker (a white ball with a rainbow ring
- * and a gold star). The gold glow behind golden cats is always drawn in code. Like the cats, each
- * texture is drawn at CAT_PX_PER_UNIT for the radius of its size, with the outline's outer edge on
- * the physics radius, and is shared by every stage. Textures are drawn the first time they are
- * asked for.
+ * (a navy ball with a firework burst and a fuse), the joker (a white ball with a rainbow ring
+ * and a gold star) and the lightning ball (a violet ball with a yellow bolt; its stand-in with the
+ * art skin too until the owner's image comes). The gold glow behind golden cats is always drawn
+ * in code. Like the cats, each texture is drawn at CAT_PX_PER_UNIT for the radius of its size,
+ * with the outline's outer edge on the physics radius, and is shared by every stage. Textures are
+ * drawn the first time they are asked for.
  */
 import type Phaser from 'phaser';
 import { CAT_OUTLINE_MIN, CAT_OUTLINE_RATIO } from '../../config/catSprites';
@@ -28,6 +29,8 @@ import {
   JOKER_BALL,
   JOKER_RAINBOW,
   JOKER_STAR,
+  LIGHTNING_BALL,
+  LIGHTNING_BOLT,
   MAGNET_DISC,
   MAGNET_RED,
   MAGNET_RED_DARK,
@@ -99,6 +102,16 @@ export class SpecialSkin {
     const { art } = this;
     return this.frame(`special-joker-${size}`, (canvas) =>
       art ? drawArt(canvas, art.joker, SPECIAL_ART.joker, radius) : drawJoker(canvas, radius),
+    );
+  }
+
+  /** A lightning ball of `size` (GAME_DESIGN §15.15). */
+  lightning(size: number): SkinFrame {
+    const radius = sizeRadius(size);
+    const image = this.art?.lightning ?? null;
+    const sprite = SPECIAL_ART.lightning;
+    return this.frame(`special-lightning-${size}`, (canvas) =>
+      image && sprite ? drawArt(canvas, image, sprite, radius) : drawLightning(canvas, radius),
     );
   }
 
@@ -346,6 +359,31 @@ function drawJoker(canvas: HTMLCanvasElement, radius: number): void {
   }
   ctx.closePath();
   ctx.fillStyle = JOKER_STAR;
+  ctx.fill();
+  ctx.lineWidth = line * 0.6;
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = SPECIAL_INK;
+  ctx.stroke();
+}
+
+function drawLightning(canvas: HTMLCanvasElement, radius: number): void {
+  const [ctx, c, r] = disc(canvas, radius);
+  const line = outlinePx(radius);
+  outlinedCircle(ctx, c, r, line, LIGHTNING_BALL);
+  // A zigzag bolt from the upper right to the lower left.
+  const bolt: readonly (readonly [number, number])[] = [
+    [0.3, -0.62],
+    [-0.22, 0.04],
+    [0.06, 0.04],
+    [-0.3, 0.62],
+    [0.26, -0.1],
+    [-0.02, -0.1],
+    [0.3, -0.62],
+  ];
+  ctx.beginPath();
+  for (const [x, y] of bolt) ctx.lineTo(c + x * r, c + y * r);
+  ctx.closePath();
+  ctx.fillStyle = LIGHTNING_BOLT;
   ctx.fill();
   ctx.lineWidth = line * 0.6;
   ctx.lineJoin = 'round';

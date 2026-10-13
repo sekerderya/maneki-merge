@@ -239,9 +239,10 @@ describe('upgrades (GAME_DESIGN §10)', () => {
     ['moreMagnets', 'More Magnets', 0, 5, 1, [1000, 3500, 14_000, 30_000, 55_000]],
     ['hanabi', 'Hanabi', 0, 5, 3, [3000, 8000, 22_000, 42_000, 70_000]],
     ['joker', 'Joker Cat', 0, 5, 5, [10_000, 18_000, 48_000, 85_000, 130_000]],
+    ['lightning', 'Lightning', 0, 5, 8, [15_000, 25_000, 40_000, 60_000, 85_000]],
   ];
 
-  it('lists the 4 upgrades, then the 5 blessing cards, in shop order', () => {
+  it('lists the 4 upgrades, then the 6 blessing cards, in shop order', () => {
     expect([...UPGRADE_IDS]).toEqual(TABLE.map(([id]) => id));
   });
 

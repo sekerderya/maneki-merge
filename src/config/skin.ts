@@ -103,5 +103,21 @@ export const JOKER_RAINBOW = [
   '#a77bff',
 ] as const;
 export const JOKER_STAR = '#f2b83b';
+/**
+ * The lightning ball's stand-in until the owner's art (docs/ART_ASSETS.md §4.16), and for
+ * `?skin=vector`: a stormy violet ball with a yellow bolt across it.
+ */
+export const LIGHTNING_BALL = '#4a3a86';
+export const LIGHTNING_BOLT = '#ffe14d';
+/**
+ * A lightning strike: the stormy dark over the jar, and the colours of the code-drawn bolts and
+ * crackles until the owner's art comes (white core, yellow glow, a violet haze).
+ */
+export const LIGHTNING_VEIL = 0x1b1446;
+export const LIGHTNING_CORE = '#ffffff';
+export const LIGHTNING_GLOW = '#ffe14d';
+export const LIGHTNING_HAZE = 'rgba(176, 140, 255, 0.55)';
+/** The sparks the struck balls pop in. */
+export const LIGHTNING_SPARKS = 0xfff1a8;
 /** The magnet's selection ring round the chosen ball. */
 export const SELECT_RING = 0xf2b83b;

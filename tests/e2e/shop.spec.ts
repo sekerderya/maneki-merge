@@ -37,8 +37,8 @@ test('buying with debug coins: prices, states, gates, feedback and persistence',
   await page.getByTestId('upgrades').click();
   const shop = page.getByTestId('shop');
   await expect(shop).toBeVisible();
-  // The four upgrades, the blessings' heading and the five blessing cards (v0.36).
-  await expect(shop.locator('.shop-card')).toHaveCount(9);
+  // The four upgrades, the blessings' heading and the six blessing cards (v0.36, Lightning v0.42).
+  await expect(shop.locator('.shop-card')).toHaveCount(10);
   await expect(page.getByTestId('shop-blessings')).toContainText('Blessings');
   await expect(page.getByTestId('shop-balance')).toHaveText('700');
 
@@ -158,6 +158,7 @@ test('a save from before v0.36 starts over, keeping its settings', async ({ page
     'moreMagnets',
     'hanabi',
     'joker',
+    'lightning',
   ]);
   expect(errors).toEqual([]);
 });
@@ -203,7 +204,7 @@ for (const [width, height] of [
     });
     expect(issues).toEqual([]);
     // The last card scrolls into view.
-    const last = page.getByTestId('shop-card-joker');
+    const last = page.getByTestId('shop-card-lightning');
     await last.scrollIntoViewIfNeeded();
     await expect(last).toBeInViewport({ ratio: 1 });
   });

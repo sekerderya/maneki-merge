@@ -225,6 +225,7 @@ const SMART_BLESSINGS: readonly PickId[] = [
   'bigDrops',
   'goldenCats',
   'joker',
+  'lightning',
   'hanabi',
   'moreMagnets',
 ];
@@ -278,7 +279,8 @@ const SMART_STEP = 8;
  * Scores spots across the jar for the ball in the paw and returns the best x: a cat goes onto a
  * cat of its tier or next to one, never onto a smaller cat, low, and where its size belongs (big
  * cats left, small ones right); a joker onto the biggest cat it can reach; a hanabi among small
- * cats and boulders; a boulder low and out of the way. Then it aims into the wind.
+ * cats and boulders; a lightning ball onto the boulders, else onto the small size (1–4) that
+ * clutters the jar most; a boulder low and out of the way. Then it aims into the wind.
  */
 function smartX(run: RunController): number {
   const { halfWidth, dropY } = run.geometry;
@@ -306,6 +308,8 @@ function smartX(run: RunController): number {
       score -= SMART_ORDER * Math.abs(x - place);
     } else if (item.kind === 'joker') {
       if (on?.kind === 'cat') score += 200 + on.size * 60;
+    } else if (item.kind === 'lightning') {
+      score += lightningScore(balls, on);
     } else if (item.kind === 'hanabi') {
       for (const ball of balls) {
         const near = Math.hypot(ball.x - x, ball.y - y) - ball.radius < 200;
@@ -329,6 +333,16 @@ function smartX(run: RunController): number {
     bestX -= run.windDirection * 0.5 * WIND_ACCEL_PER_LEVEL * wind * t2;
   }
   return Math.max(-halfWidth + r, Math.min(halfWidth - r, bestX));
+}
+
+/** How much a lightning ball that lands on `on` is worth: the balls it would strike. */
+function lightningScore(balls: readonly BallView[], on: BallView | null): number {
+  if (on?.kind === 'boulder') return 200 * balls.filter((b) => b.kind === 'boulder').length;
+  if (on?.kind !== 'cat') return -100;
+  // The bigger cats are the way to the last cat: keep them, and clear the small ones that pile up.
+  if (on.size > 4) return -50 * on.size;
+  const same = balls.filter((b) => b.kind === 'cat' && b.tier === on.tier).length;
+  return 100 * same - 20 * on.size;
 }
 
 /**

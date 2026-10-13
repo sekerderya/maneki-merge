@@ -28,8 +28,11 @@ export const PICK_BALL_SHARE = 0.62;
 /** A picture fits in a square of this share of its medallion's width. */
 export const PICK_PICTURE_SHARE = 0.72;
 
-/** The art for a card of `id` whose level is `level` now. */
-export function pickArt(id: PickId, level: number): PickArt {
+/**
+ * The art for a card of `id` whose level is `level` now, or null while its ball's art hasn't come
+ * (the lightning ball's, docs/ART_ASSETS.md §4.16): the card shows its glyph then.
+ */
+export function pickArt(id: PickId, level: number): PickArt | null {
   const picture = pickPicture(id);
   if (picture) {
     const narrow = Math.min(1, picture.width / picture.height);
@@ -65,6 +68,8 @@ export function pickArt(id: PickId, level: number): PickArt {
       return special(SPECIAL_ART.hanabi);
     case 'joker':
       return special(SPECIAL_ART.joker);
+    case 'lightning':
+      return SPECIAL_ART.lightning && special(SPECIAL_ART.lightning);
     // The biggest cat the paw drops.
     case 'bigDrops':
       return cat(DROP_SIZES, false);

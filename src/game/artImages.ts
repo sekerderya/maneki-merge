@@ -40,6 +40,8 @@ export interface SpecialImages {
   readonly magnet: HTMLImageElement;
   readonly hanabi: HTMLImageElement;
   readonly joker: HTMLImageElement;
+  /** Null until the owner's image comes (docs/ART_ASSETS.md §4.16). */
+  readonly lightning: HTMLImageElement | null;
   /** With 0, 1, 2 and 3 iron bands. */
   readonly boulders: readonly HTMLImageElement[];
 }
@@ -64,8 +66,15 @@ export function loadArt(baseUrl: string): Promise<ArtImages> {
     special(SPECIAL_ART.magnet.file),
     special(SPECIAL_ART.hanabi.file),
     special(SPECIAL_ART.joker.file),
+    SPECIAL_ART.lightning ? special(SPECIAL_ART.lightning.file) : null,
     Promise.all(SPECIAL_ART.boulders.map(({ file }) => special(file))),
-  ]).then(([magnet, hanabi, joker, boulders]) => ({ magnet, hanabi, joker, boulders }));
+  ]).then(([magnet, hanabi, joker, lightning, boulders]) => ({
+    magnet,
+    hanabi,
+    joker,
+    lightning,
+    boulders,
+  }));
   const fxList = (list: readonly { file: string }[]): Promise<HTMLImageElement[]> =>
     Promise.all(list.map(({ file }) => image(`${baseUrl}${FX_SPRITE_DIR}${file}`)));
   const fx = Promise.all([

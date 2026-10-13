@@ -48,6 +48,7 @@ describe('the trials, rules and blessings (GAME_DESIGN §15.5)', () => {
     ['goldenCats', 'blessing', 'Golden Cats', 5, 0.06],
     ['hanabi', 'blessing', 'Hanabi', 5, 0.0225],
     ['joker', 'blessing', 'Joker Cat', 5, 0.0225],
+    ['lightning', 'blessing', 'Lightning', 5, 0.015],
     ['hubris', 'rule', 'Hubris', 1, 1],
     ['echo', 'rule', 'Echo', 1, 1],
     ['copycat', 'rule', 'Copycat', 1, 1],
@@ -56,7 +57,7 @@ describe('the trials, rules and blessings (GAME_DESIGN §15.5)', () => {
     ['heavyDrop', 'rule', 'Heavy Drop', 1, 5],
   ];
 
-  it('lists eight trials, five blessings and five rules, in card order', () => {
+  it('lists eight trials, six blessings and five rules, in card order', () => {
     expect([...PICK_IDS]).toEqual(TABLE.map(([id]) => id));
     expect(pickIds('trial')).toEqual(TRIAL_IDS);
     expect(pickIds('blessing')).toEqual(BLESSING_IDS);
@@ -82,7 +83,7 @@ describe('the trials, rules and blessings (GAME_DESIGN §15.5)', () => {
 });
 
 describe('dropOdds (GAME_DESIGN §15.1)', () => {
-  it('starts with 3% boulders from stage 2, no magnets, golden cats, hanabi or jokers', () => {
+  it('starts with 3% boulders from stage 2, no magnets, golden cats, hanabi, jokers or lightning', () => {
     expect(dropOdds(levels(), 1, 0)).toEqual({
       tiltLevel: 0,
       magnetChance: 0,
@@ -90,6 +91,7 @@ describe('dropOdds (GAME_DESIGN §15.1)', () => {
       goldenChance: 0,
       hanabiChance: 0,
       jokerChance: 0,
+      lightningChance: 0,
       boulderSize: 2,
       boulderHits: 1,
     });
@@ -105,6 +107,7 @@ describe('dropOdds (GAME_DESIGN §15.1)', () => {
     expect(odds.goldenChance).toBeCloseTo(0.3, 12);
     expect(odds.hanabiChance).toBeCloseTo(0.1125, 12);
     expect(odds.jokerChance).toBeCloseTo(0.1125, 12);
+    expect(odds.lightningChance).toBeCloseTo(0.075, 12);
     expect(odds.boulderSize).toBe(6);
     expect(odds.boulderHits).toBe(4);
     expect(odds.tiltLevel).toBe(13);
@@ -188,7 +191,7 @@ describe('the cards', () => {
     expect(drawOffer('rule', levels(all), 0, new Rng(1))).toEqual([]);
   });
 
-  it('offers three of the five blessings, each of them at times', () => {
+  it('offers three of the six blessings, each of them at times', () => {
     const seen = new Set<string>();
     for (let seed = 0; seed < 60; seed++) {
       const offer = drawOffer('blessing', levels(), 0, new Rng(seed));
@@ -199,7 +202,7 @@ describe('the cards', () => {
   });
 
   it('leaves maxed options out, and offers nothing when every one is maxed', () => {
-    const maxed = { goldenCats: 5, hanabi: 5, joker: 5 };
+    const maxed = { goldenCats: 5, hanabi: 5, joker: 5, lightning: 5 };
     const some = drawOffer('blessing', levels(maxed), 0, new Rng(1));
     expect([...some].sort()).toEqual(['bigDrops', 'moreMagnets']);
     const none = levels(Object.fromEntries(TRIAL_IDS.map((id) => [id, PICKS[id].maxLevel])));
@@ -208,7 +211,14 @@ describe('the cards', () => {
 
   it('offers a blessing only below its shop card’s level (GAME_DESIGN §10)', () => {
     // A fresh profile: Golden Cats and Big Drops up to 1, the others not at all.
-    const fresh = { goldenCats: 1, bigDrops: 1, moreMagnets: 0, hanabi: 0, joker: 0 };
+    const fresh = {
+      goldenCats: 1,
+      bigDrops: 1,
+      moreMagnets: 0,
+      hanabi: 0,
+      joker: 0,
+      lightning: 0,
+    };
     const first = drawOffer('blessing', levels(), 0, new Rng(1), fresh);
     expect([...first].sort()).toEqual(['bigDrops', 'goldenCats']);
     expect(drawOffer('blessing', levels({ goldenCats: 1 }), 0, new Rng(1), fresh)).toEqual([
@@ -243,6 +253,8 @@ describe('the cards', () => {
     ['goldenCats', { goldenCats: 2 }, 0, '12%', '18%'],
     ['hanabi', {}, 0, '0%', '2.25%'],
     ['joker', { joker: 4 }, 0, '9%', '11.25%'],
+    ['lightning', {}, 0, '0%', '1.5%'],
+    ['lightning', { lightning: 4 }, 0, '6%', '7.5%'],
     ['wind', {}, 0, 'Calm', 'Breeze'],
     ['wind', { wind: 4 }, 0, 'Gale', 'Storm'],
     // The rule: the fall of the old trial's last level.

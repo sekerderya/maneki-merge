@@ -157,10 +157,22 @@ export interface RunSnapshot {
   readonly curseRng?: RngState;
   /** Dice's rolls (GAME_DESIGN §15.14; missing before Batch 19: fresh from the seed). */
   readonly diceRng?: RngState;
+  /**
+   * A lightning strike holding time still (GAME_DESIGN §15.15): the lightning ball's id, the ids
+   * of the balls it struck (the one it touched first) and the steps it has held so far; null or
+   * missing when none.
+   */
+  readonly lightning?: LightningSnapshot | null;
   readonly queue: QueueSnapshot;
   readonly economy: EconomySnapshot;
   readonly danger: DangerSnapshot;
   readonly world: WorldSnapshot;
+}
+
+export interface LightningSnapshot {
+  readonly id: number;
+  readonly targets: readonly number[];
+  readonly elapsedSteps: number;
 }
 
 /** What the store keeps: the run, and the records from before it (the Game Over badges). */
@@ -235,6 +247,7 @@ function runSnapshot(value: unknown): RunSnapshot {
     ...(r['curseDue'] === undefined ? {} : { curseDue: count(r['curseDue'], 'curseDue') }),
     ...(r['curseRng'] === undefined ? {} : { curseRng: rngState(r['curseRng'], 'curseRng') }),
     ...(r['diceRng'] === undefined ? {} : { diceRng: rngState(r['diceRng'], 'diceRng') }),
+    ...(r['lightning'] === undefined ? {} : { lightning: lightning(r['lightning']) }),
     queue: queue(r['queue']),
     economy: economy(r['economy']),
     danger: danger(r['danger']),
@@ -243,8 +256,8 @@ function runSnapshot(value: unknown): RunSnapshot {
 }
 
 const PICK_KINDS = ['trial', 'blessing', 'rule'] as const;
-const DROP_KINDS = ['cat', 'magnet', 'boulder', 'hanabi', 'joker'] as const;
-const BALL_KINDS = ['cat', 'boulder', 'hanabi', 'joker'] as const;
+const DROP_KINDS = ['cat', 'magnet', 'boulder', 'hanabi', 'joker', 'lightning'] as const;
+const BALL_KINDS = ['cat', 'boulder', 'hanabi', 'joker', 'lightning'] as const;
 
 function waits(value: unknown): [number, number, number, number][] {
   return list(value, 'hubrisWaits').map((entry) => {
@@ -263,6 +276,16 @@ function curse(value: unknown): { id: number; dropsLeft: number; total?: number 
     id: count(c['id'], 'curse.id'),
     dropsLeft: count(c['dropsLeft'], 'curse.dropsLeft'),
     ...(c['total'] === undefined ? {} : { total: count(c['total'], 'curse.total') }),
+  };
+}
+
+function lightning(value: unknown): LightningSnapshot | null {
+  if (value === null) return null;
+  const l = record(value, 'lightning');
+  return {
+    id: count(l['id'], 'lightning.id'),
+    targets: list(l['targets'], 'lightning.targets').map((id) => count(id, 'lightning.targets')),
+    elapsedSteps: count(l['elapsedSteps'], 'lightning.elapsedSteps'),
   };
 }
 

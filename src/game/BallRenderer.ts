@@ -98,6 +98,8 @@ export class BallRenderer {
         return this.special.hanabi(ball.size);
       case 'joker':
         return this.special.joker(ball.size);
+      case 'lightning':
+        return this.special.lightning(ball.size);
       case 'cat':
         return this.skin.body(ball.tier);
     }

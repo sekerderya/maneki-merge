@@ -2,8 +2,8 @@
  * The matter-js world of one run (TECH_SPEC §4–§5): the jar walls, the cats of the current stage,
  * and one fixed step at a time. Every stage has the same jar and gravity; the next stage starts
  * with an empty jar (`setStage`). Each step also tracks first contacts, collects the contacts that
- * can merge (same-tier cats, a joker and a cat) for the merge resolver, grows merged cats and
- * clamps speeds. No randomness and no wall clock:
+ * can merge (same-tier cats, a joker and a cat) for the merge resolver and the ones a lightning
+ * ball strikes, grows merged cats and clamps speeds. No randomness and no wall clock:
  * the same calls always give the same world.
  */
 import Matter from 'matter-js';
@@ -137,6 +137,11 @@ export class PhysicsWorld {
   readonly mergeContacts: Ball[] = [];
   /** Jokers touching boulders during the last step, flat like `mergeContacts`: joker, boulder. */
   readonly jokerBoulderContacts: Ball[] = [];
+  /**
+   * Lightning balls touching a cat or a boulder during the last step (GAME_DESIGN §15.15), flat
+   * like `mergeContacts`: lightning ball, the ball it touches.
+   */
+  readonly lightningContacts: Ball[] = [];
 
   private readonly engine: Matter.Engine;
   private readonly list: Ball[] = [];
@@ -446,6 +451,8 @@ export class PhysicsWorld {
     contacts.length = 0;
     const struck = this.jokerBoulderContacts;
     struck.length = 0;
+    const strikes = this.lightningContacts;
+    strikes.length = 0;
     // With the wind or Heavy Drop, a ball sliding down a wall is still falling (GAME_DESIGN §15.8).
     const wallsKeepFalling = this.windAccel !== 0 || this.gravityBonus !== 0;
 
@@ -463,6 +470,9 @@ export class PhysicsWorld {
       if (b.landedMs < 0) b.landedMs = now;
       if (a.kind === 'cat' && b.kind === 'cat') {
         if (a.tier === b.tier) contacts.push(a, b);
+      } else if (a.kind === 'lightning' || b.kind === 'lightning') {
+        const [bolt, other] = a.kind === 'lightning' ? [a, b] : [b, a];
+        if (other.kind === 'cat' || other.kind === 'boulder') strikes.push(bolt, other);
       } else if (a.kind === 'joker' || b.kind === 'joker') {
         const [joker, other] = a.kind === 'joker' ? [a, b] : [b, a];
         if (other.kind === 'cat') contacts.push(joker, other);

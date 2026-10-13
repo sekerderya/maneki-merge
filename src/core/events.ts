@@ -71,7 +71,7 @@ export interface WorldPoint {
  */
 export interface GameEvents {
   runStarted: { readonly seed: number; readonly stage: number };
-  /** A ball left the dropper: a cat, a boulder, a hanabi or a joker. */
+  /** A ball left the dropper: a cat, a boulder, a hanabi, a joker or a lightning ball. */
   catDropped: {
     readonly kind: Exclude<DropKind, 'magnet'>;
     readonly tier: number;
@@ -94,14 +94,14 @@ export interface GameEvents {
   /** A merge next to a boulder knocked a band off; it breaks after `hitsLeft` more. */
   boulderHit: { readonly id: number; readonly hitsLeft: number; readonly at: WorldPoint };
   /**
-   * A boulder crumbled: its last hit, a hanabi's blast, or it went with a stage clear's pops or a
-   * Lucky Save. It pays nothing.
+   * A boulder crumbled: its last hit, a hanabi's blast, a lightning strike, or it went with a stage
+   * clear's pops or a Lucky Save. It pays nothing.
    */
   boulderBroken: {
     readonly id: number;
     readonly tier: number;
     readonly at: WorldPoint;
-    readonly reason: 'hits' | 'hanabi' | 'cashOut' | 'luckySave';
+    readonly reason: 'hits' | 'hanabi' | 'lightning' | 'cashOut' | 'luckySave';
   };
   /**
    * A hanabi went off (GAME_DESIGN §15.6): the small cats within `reach` of `at` pop
@@ -109,12 +109,35 @@ export interface GameEvents {
    */
   hanabiExploded: { readonly id: number; readonly at: WorldPoint; readonly reach: number };
   /**
-   * A hanabi or a joker vanished without doing anything (a stage clear's pops, a Lucky Save). It
-   * pays nothing.
+   * A lightning ball (GAME_DESIGN §15.15) touched the ball `struck`: it strikes `targets` (`struck`
+   * first), every cat of that tier (`kind` cat) or every boulder. Time stands still for `holdMs`
+   * while the lightning chains through them (RunController.lightning); then they pop (`catPopped`,
+   * `boulderBroken`, reason `lightning`) and `lightningDischarged` follows.
+   */
+  lightningStruck: {
+    readonly id: number;
+    readonly struck: number;
+    readonly kind: 'cat' | 'boulder';
+    readonly tier: number;
+    readonly targets: readonly number[];
+    readonly at: WorldPoint;
+    readonly holdMs: number;
+  };
+  /** The strike is over: the struck balls have popped and the lightning ball `id` is gone. */
+  lightningDischarged: {
+    readonly id: number;
+    readonly tier: number;
+    readonly at: WorldPoint;
+    /** How many balls it struck. */
+    readonly count: number;
+  };
+  /**
+   * A hanabi, a joker or a lightning ball vanished without doing anything (a stage clear's pops, a
+   * Lucky Save). It pays nothing.
    */
   specialPopped: {
     readonly id: number;
-    readonly kind: 'hanabi' | 'joker';
+    readonly kind: 'hanabi' | 'joker' | 'lightning';
     readonly tier: number;
     readonly at: WorldPoint;
     readonly reason: 'cashOut' | 'luckySave';
@@ -155,8 +178,8 @@ export interface GameEvents {
     readonly combo: number;
   };
   /**
-   * A single cat popped into coins: its value (half of C(t)), at a stage clear, a Lucky Save or a
-   * hanabi's blast.
+   * A single cat popped into coins: its value (half of C(t)), at a stage clear, a Lucky Save, a
+   * hanabi's blast or a lightning strike.
    */
   catPopped: {
     /** The cat's id (BallView.id), so the scene can pop the cat's own sprite. */
@@ -164,7 +187,7 @@ export interface GameEvents {
     readonly tier: number;
     readonly at: WorldPoint;
     readonly coins: number;
-    readonly reason: 'cashOut' | 'luckySave' | 'hanabi';
+    readonly reason: 'cashOut' | 'luckySave' | 'hanabi' | 'lightning';
   };
   scoreChanged: { readonly score: number };
   runCoinsChanged: { readonly coins: number };
@@ -243,7 +266,8 @@ export interface GameEvents {
   curseTicked: { readonly id: number; readonly dropsLeft: number };
   /**
    * The curse on `id` is over: `lifted` by a merge (which paid `bonus` coins more), `taken` by
-   * the magnet, `gone` with the cat (a hanabi, a Lucky Save, a break, a stage clear), or `stone`.
+   * the magnet, `gone` with the cat (a hanabi, a lightning strike, a Lucky Save, a break, a stage
+   * clear), or `stone`.
    */
   curseEnded: {
     readonly id: number;

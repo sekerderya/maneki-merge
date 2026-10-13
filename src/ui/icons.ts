@@ -173,6 +173,16 @@ export const JOKER_SVG = svg(
   '0 0 100 100',
 );
 
+/**
+ * The lightning ball (GAME_DESIGN §15.15): a violet ball with a yellow bolt, until the owner's art
+ * comes, and with `?skin=vector`.
+ */
+export const LIGHTNING_SVG = svg(
+  '<circle cx="50" cy="50" r="46" fill="#4a3a86" stroke="#3b2620" stroke-width="5"/>' +
+    '<path d="M65 19L39 52h14L35 81l28-35H49z" fill="#ffe14d" stroke="#3b2620" stroke-width="3" stroke-linejoin="round"/>',
+  '0 0 100 100',
+);
+
 const boulderSvgs = new Map<number, string>();
 
 /** A boulder with `bands` iron bands (the merges it needs, minus one). */
@@ -233,6 +243,7 @@ const PICK_ICONS: Readonly<Record<GlyphPick, string>> = {
   hanabi: svg(
     '<path d="M12 9V2.5M12 15v6.5M9 12H2.5M15 12h6.5M9.9 9.9L5.3 5.3M14.1 14.1l4.6 4.6M14.1 9.9l4.6-4.6M9.9 14.1l-4.6 4.6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
   ),
+  lightning: svg('<path d="M14.5 2L5.5 13.5h6L8.5 22l10-12.5h-6z" fill="currentColor"/>'),
   joker: svg(
     '<circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.4"/>' +
       '<path d="M12 7.2l1.5 3.1 3.4.4-2.5 2.3.7 3.4-3.1-1.7-3.1 1.7.7-3.4-2.5-2.3 3.4-.4z" fill="currentColor"/>',

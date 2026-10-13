@@ -3,9 +3,9 @@
  * payouts, the combo timer, stage clears and the expansion timeline, the danger line, Lucky Saves
  * and game over; and the special balls, trials and blessings of GAME_DESIGN §15 (magnets taking a
  * ball out of the jar, boulders breaking, golden cats, hanabi going off, joker cats merging with any
- * cat, the picks at every stage clear, cursed cats turning to stone, Copycat's NEXT and Dice's
- * rolls). The game scene renders it and forwards input; the HUD, FX, audio and save listen to its
- * events.
+ * cat, lightning balls striking every cat of a size, the picks at every stage clear, cursed cats
+ * turning to stone, Copycat's NEXT and Dice's rolls). The game scene renders it and forwards
+ * input; the HUD, FX, audio and save listen to its events.
  *
  * Time comes in fixed ticks of PHYSICS_STEP_MS. `update(frameMs)` only decides how many ticks a
  * frame runs, and every timer counts ticks, so a run is a pure function of its seed and of the
@@ -13,7 +13,9 @@
  *
  * Tick pipeline while playing: physics step → merges (payouts and events, oldest first, each with
  * its echo, a lifted curse's bonus) → Copycat's NEXT → boulder hits → porcelain cracks → hanabi
- * blasts → a curse whose cat is gone ends → combo expiry → stage clear → drop ready → danger.
+ * blasts → a lightning strike → a curse whose cat is gone ends → combo expiry → stage clear → drop
+ * ready → danger. A lightning strike then holds time still: the next ticks step nothing (no
+ * physics, cooldown, combo or danger) until the struck balls pop.
  * The stage clear goes first, so making the stage's last cat saves the jar even on the step the
  * danger timer would run out. A drop first counts down a curse (or turns its cat to stone), then
  * may begin the next one.
@@ -42,6 +44,8 @@ import {
   HUBRIS_PAIR_WAIT_MS,
   HUBRIS_TOUCH_GRACE_MS,
   JOKER_SIZE,
+  LIGHTNING_HOLD_MS,
+  LIGHTNING_SIZE,
   MAGNET_SIZE,
   PICK_IDS,
   pickOrder,
@@ -74,13 +78,14 @@ import type { PickLevels } from '../core/picks';
 import { nextStage, stageProgress } from '../core/progression';
 import type { StageProgress } from '../core/progression';
 import { Rng } from '../core/rng';
-import type { ExpansionSnapshot, RunSnapshot } from '../core/runSave';
+import type { ExpansionSnapshot, LightningSnapshot, RunSnapshot } from '../core/runSave';
 import { defaultUpgradeLevels, deriveStats } from '../core/upgrades';
 import type { DerivedStats, UpgradeLevels } from '../core/upgrades';
 import type { Ball, BallKind, BallView } from '../physics/balls';
 import { DangerMonitor, isOverLine, luckySaveVictims } from '../physics/danger';
 import { clampDropX, dropStartY } from '../physics/geometry';
 import { fuseBurntOut, hanabiBlast } from '../physics/hanabi';
+import { strikeTargets } from '../physics/lightning';
 import type { JarGeometry } from '../physics/geometry';
 import { MergeResolver } from '../physics/merges';
 import type { MergeOutcome, MergeRules } from '../physics/merges';
@@ -120,6 +125,27 @@ export interface CurseView {
   readonly dropsLeft: number;
   /** What the count started at (its look turns to more stone at half of it). */
   readonly total: number;
+}
+
+/**
+ * A lightning strike holding time still (GAME_DESIGN §15.15): the lightning ball `id` struck the
+ * balls `targets` (the one it touched first), every cat of `tier` or every boulder. They pop
+ * when `elapsedMs` reaches `holdMs`.
+ */
+export interface LightningView {
+  readonly id: number;
+  readonly kind: 'cat' | 'boulder';
+  readonly tier: number;
+  readonly targets: readonly number[];
+  readonly elapsedMs: number;
+  readonly holdMs: number;
+}
+
+interface Strike {
+  readonly bolt: Ball;
+  readonly targets: readonly Ball[];
+  readonly ids: readonly number[];
+  elapsedSteps: number;
 }
 
 /** Debug and test balls (`spawnBall`): a cat by default. */
@@ -178,6 +204,7 @@ const ZOOM_START_STEPS = stepsFor(EXPANSION_ZOOM_START_MS);
 const ZOOM_STEPS = stepsFor(EXPANSION_ZOOM_MS);
 const EXPANSION_STEPS = stepsFor(EXPANSION_DURATION_MS);
 const TAKE_STEPS = stepsFor(MAGNET_TAKE_MS);
+const STRIKE_STEPS = stepsFor(LIGHTNING_HOLD_MS);
 /**
  * The special balls' rolls and the picks' draws use their own generators, seeded from the run seed
  * with these salts, so the tiers a seed drops never depend on the picks.
@@ -258,6 +285,8 @@ export class RunController {
   private curseTotal = 0;
   /** The stage's drop count at which the next curse comes due. */
   private curseDue = CURSE_FIRST_DROP;
+  /** A lightning strike holding time still, or null. */
+  private strike: Strike | null = null;
   /** Debug only: what the next die shows. */
   private forcedDice: 'lucky' | 'fizzle' | 'normal' | null = null;
   /** Dice: one draw per merge that may roll (MergeRules.dice). */
@@ -435,6 +464,21 @@ export class RunController {
     return { id: cat.id, dropsLeft: this.curseDropsLeft, total: this.curseTotal };
   }
 
+  /** The lightning strike holding time still (GAME_DESIGN §15.15), or null. */
+  get lightning(): LightningView | null {
+    const strike = this.strike;
+    if (!strike) return null;
+    const first = strike.targets[0] as Ball;
+    return {
+      id: strike.bolt.id,
+      kind: first.kind === 'boulder' ? 'boulder' : 'cat',
+      tier: first.tier,
+      targets: strike.ids,
+      elapsedMs: strike.elapsedSteps * PHYSICS_STEP_MS,
+      holdMs: STRIKE_STEPS * PHYSICS_STEP_MS,
+    };
+  }
+
   /** The HUD's progress bar: the biggest cat in the jar against the stage's last cat. */
   get progress(): StageProgress {
     let biggest = 0;
@@ -468,9 +512,11 @@ export class RunController {
     return this.stepper.alpha;
   }
 
-  /** The dropper's cooldown is over while playing (whatever it holds). */
+  /** The dropper's cooldown is over while playing (whatever it holds), and no strike holds time. */
   private get ready(): boolean {
-    return this.runState === 'playing' && this.world.steps >= this.dropAllowedAt;
+    return (
+      this.runState === 'playing' && this.strike === null && this.world.steps >= this.dropAllowedAt
+    );
   }
 
   /** Time runs while playing or expanding; a pause, a pick and game over stop it. */
@@ -602,10 +648,10 @@ export class RunController {
   }
 
   /**
-   * Puts a magnet, a boulder (with the current trials' size and hits), a hanabi, a joker or a
-   * golden cat (of the stage's smallest tier) in the dropper instead of its ball.
+   * Puts a magnet, a boulder (with the current trials' size and hits), a hanabi, a joker, a
+   * lightning ball or a golden cat (of the stage's smallest tier) in the dropper instead of its ball.
    */
-  giveSpecial(kind: 'magnet' | 'boulder' | 'hanabi' | 'joker' | 'golden'): void {
+  giveSpecial(kind: 'magnet' | 'boulder' | 'hanabi' | 'joker' | 'lightning' | 'golden'): void {
     if (this.runState === 'over') return;
     const first = stageInfo(this.world.stage).firstTier;
     const odds = this.odds();
@@ -617,9 +663,16 @@ export class RunController {
           ? { kind, tier: first + HANABI_SIZE - 1, ...plain }
           : kind === 'joker'
             ? { kind, tier: first + JOKER_SIZE - 1, ...plain }
-            : kind === 'boulder'
-              ? { kind, tier: first + odds.boulderSize - 1, golden: false, hits: odds.boulderHits }
-              : { kind: 'cat', tier: first, golden: true, hits: 0 },
+            : kind === 'lightning'
+              ? { kind, tier: first + LIGHTNING_SIZE - 1, ...plain }
+              : kind === 'boulder'
+                ? {
+                    kind,
+                    tier: first + odds.boulderSize - 1,
+                    golden: false,
+                    hits: odds.boulderHits,
+                  }
+                : { kind: 'cat', tier: first, golden: true, hits: 0 },
     );
     this.dropAnnounced = false;
     this.announceDropIfReady();
@@ -771,6 +824,11 @@ export class RunController {
       curseDue: this.curseDue,
       curseRng: this.curseRng.state(),
       diceRng: this.diceRng.state(),
+      lightning: this.strike && {
+        id: this.strike.bolt.id,
+        targets: [...this.strike.ids],
+        elapsedSteps: this.strike.elapsedSteps,
+      },
       queue: this.queue.snapshot(),
       economy: this.economy.snapshot(),
       danger: this.danger.snapshot(),
@@ -798,6 +856,9 @@ export class RunController {
       .number(curse?.total ?? 0)
       .number(this.curseDue);
     for (const wait of this.merges.waits) for (const n of wait) h.number(n);
+    const strike = this.strike;
+    h.number(strike?.bolt.id ?? 0).number(strike?.elapsedSteps ?? 0);
+    for (const id of strike?.ids ?? []) h.number(id);
     for (const item of [this.queue.current, this.queue.next]) {
       h.string(item.kind).number(item.tier).bool(item.golden).number(item.hits);
     }
@@ -841,6 +902,7 @@ export class RunController {
       // Saved before v0.35.3: the count it would start at now.
       this.curseTotal = Math.max(dropsLeft, total ?? this.curseDrops());
     }
+    if (saved.lightning) this.strike = restoreStrike(saved.lightning, this.world.balls);
     for (const id of PICK_IDS) this.levels[id] = Math.min(PICKS[id].maxLevel, saved.levels[id]);
     // A run saved before Batch 18 has no wind yet: the seed's.
     this.wind = saved.windDirection ?? this.wind;
@@ -884,6 +946,10 @@ export class RunController {
   // ── Tick pipeline ──────────────────────────────────────────────────────────
 
   private playStep(): void {
+    if (this.strike) {
+      this.holdStrike(this.strike);
+      return;
+    }
     const world = this.world;
     world.step();
     const now = world.timeMs;
@@ -934,6 +1000,8 @@ export class RunController {
     this.hitBoulders(this.merges.hits);
     this.crackPorcelain(this.merges.cracks, now);
     this.fireHanabi(now);
+    // A lightning ball that touched a cat or a boulder strikes; a stage clear sweeps it away instead.
+    const struck = !cleared && this.strikeLightning();
     this.curseGone();
     const combo = this.economy.comboAt(now);
     if (combo !== this.shownCombo) {
@@ -944,6 +1012,8 @@ export class RunController {
       this.clearStage(cleared);
       if (this.runState !== 'playing') return;
     }
+    // Time stands still from here until the struck balls pop.
+    if (struck) return;
     this.announceDropIfReady();
     this.updateDanger(now);
   }
@@ -1137,6 +1207,85 @@ export class RunController {
     if (paid) this.events.emit('runCoinsChanged', { coins: this.economy.coins });
   }
 
+  /**
+   * The oldest lightning ball touching a cat or a boulder strikes it (GAME_DESIGN §15.15), and with
+   * it every cat of its tier or every boulder; time stands still for LIGHTNING_HOLD_MS. The ball it
+   * touches decides, the oldest when it touched several in one step. Returns whether one struck.
+   */
+  private strikeLightning(): boolean {
+    const contacts = this.world.lightningContacts;
+    let bolt: Ball | null = null;
+    let struck: Ball | null = null;
+    for (let i = 0; i < contacts.length; i += 2) {
+      const b = contacts[i] as Ball;
+      const s = contacts[i + 1] as Ball;
+      if (b.removed || s.removed) continue;
+      const older = !bolt || b.id < bolt.id || (b === bolt && s.id < (struck as Ball).id);
+      if (older) {
+        bolt = b;
+        struck = s;
+      }
+    }
+    if (!bolt || !struck) return false;
+    const targets = strikeTargets(struck, this.world.balls);
+    const ids = targets.map((ball) => ball.id);
+    this.strike = { bolt, targets, ids, elapsedSteps: 0 };
+    this.events.emit('lightningStruck', {
+      id: bolt.id,
+      struck: struck.id,
+      kind: struck.kind === 'boulder' ? 'boulder' : 'cat',
+      tier: struck.tier,
+      targets: ids,
+      at: { x: bolt.x, y: bolt.y },
+      holdMs: STRIKE_STEPS * PHYSICS_STEP_MS,
+    });
+    return true;
+  }
+
+  /** A tick of a lightning strike: nothing moves; at the end of the hold the struck balls pop. */
+  private holdStrike(strike: Strike): void {
+    strike.elapsedSteps++;
+    if (strike.elapsedSteps >= STRIKE_STEPS) this.dischargeLightning(strike);
+  }
+
+  /**
+   * The strike is over: every struck cat pops into its value (coins, no score, no combo), every
+   * struck boulder breaks (paying nothing), and the lightning ball is gone. Time runs again.
+   */
+  private dischargeLightning(strike: Strike): void {
+    this.strike = null;
+    const { bolt } = strike;
+    const at = { x: bolt.x, y: bolt.y };
+    if (!bolt.removed) this.world.removeBall(bolt);
+    let paid = false;
+    for (const ball of strike.targets) {
+      if (ball.removed) continue;
+      const where = { x: ball.x, y: ball.y };
+      this.world.removeBall(ball);
+      if (ball.kind === 'boulder') {
+        const event = { id: ball.id, tier: ball.tier, at: where, reason: 'lightning' } as const;
+        this.events.emit('boulderBroken', event);
+        continue;
+      }
+      const { coins } = this.economy.pop(ball.tier);
+      this.bankCoins(coins);
+      paid = true;
+      const event = {
+        id: ball.id,
+        tier: ball.tier,
+        at: where,
+        coins,
+        reason: 'lightning',
+      } as const;
+      this.events.emit('catPopped', event);
+    }
+    const tier = (strike.targets[0] as Ball).tier;
+    this.events.emit('lightningDischarged', { id: bolt.id, tier, at, count: strike.ids.length });
+    if (paid) this.events.emit('runCoinsChanged', { coins: this.economy.coins });
+    this.curseGone();
+    this.announceDropIfReady();
+  }
+
   /** How cats merge now: Hubris's threes and Porcelain's cracks (GAME_DESIGN §15.10–§15.11). */
   private mergeRules(): MergeRules {
     return {
@@ -1247,6 +1396,8 @@ export class RunController {
    */
   private clearStage(last: Ball, picks = true): void {
     const stage = this.world.stage;
+    // A debug clear during a lightning strike sweeps it away with the rest.
+    this.strike = null;
     this.pop(
       this.world.balls.filter((ball) => ball !== last),
       'cashOut',
@@ -1298,6 +1449,7 @@ export class RunController {
 
   private gameOver(): void {
     this.runState = 'over';
+    this.strike = null;
     this.expansionState = null;
     this.offer = null;
     this.world.pause();
@@ -1311,7 +1463,7 @@ export class RunController {
 
   /**
    * Pops cats into their value in coins (stage clear, Lucky Save): no score, no combo. Boulders
-   * crumble, hanabi and jokers vanish; they pay nothing.
+   * crumble, hanabi, jokers and lightning balls vanish; they pay nothing.
    */
   private pop(balls: readonly Ball[], reason: 'cashOut' | 'luckySave'): void {
     if (balls.length === 0) return;
@@ -1507,6 +1659,27 @@ export class RunController {
     if (this.world.stage < this.debugTargetStage) this.debugClear();
     else this.debugTargetStage = 0;
   }
+}
+
+/**
+ * A saved lightning strike, at a world with `balls`: the lightning ball and the balls it struck
+ * must all be there. The hold goes on where it was.
+ */
+function restoreStrike(saved: LightningSnapshot, balls: readonly Ball[]): Strike {
+  const find = (id: number): Ball | undefined => balls.find((ball) => ball.id === id);
+  const bolt = find(saved.id);
+  const targets = saved.targets.map(find);
+  const valid =
+    bolt?.kind === 'lightning' &&
+    targets.length > 0 &&
+    targets.every((ball) => ball?.kind === 'cat' || ball?.kind === 'boulder');
+  if (!bolt || !valid) throw new RangeError(`Invalid saved lightning strike ${saved.id}`);
+  return {
+    bolt,
+    targets: targets as Ball[],
+    ids: [...saved.targets],
+    elapsedSteps: Math.min(saved.elapsedSteps, STRIKE_STEPS - 1),
+  };
 }
 
 /** Sets an expansion's times from its elapsed steps. */

@@ -45,7 +45,10 @@ export interface GameStateSnapshot {
   readonly canDrop: boolean;
   /** The dropper holds a ready magnet (GAME_DESIGN §15.2). */
   readonly canTake: boolean;
-  /** What the dropper holds and what comes next: 'cat', 'magnet', 'boulder', 'hanabi' or 'joker'. */
+  /**
+   * What the dropper holds and what comes next: 'cat', 'magnet', 'boulder', 'hanabi', 'joker' or
+   * 'lightning'.
+   */
   readonly current: string | null;
   readonly next: string | null;
   /** The pick waiting for a choice (GAME_DESIGN §15.5), or null. */
@@ -70,6 +73,12 @@ export interface GameStateSnapshot {
     readonly from: number;
     readonly to: number;
     readonly phase: 'clear' | 'zoom' | 'reveal';
+  } | null;
+  /** A lightning strike holding time still (GAME_DESIGN §15.15): its balls and how far it is. */
+  readonly lightning: {
+    readonly id: number;
+    readonly targets: readonly number[];
+    readonly elapsedMs: number;
   } | null;
   readonly ticks: number;
   /** Device pixels per CSS pixel the canvas renders at (adaptive, TECH_SPEC §6). */
@@ -118,8 +127,8 @@ export interface GameHooks {
   take(id?: number): boolean;
   /** Chooses an option of the waiting pick (its first by default). */
   choose(id?: PickId): boolean;
-  /** Puts a magnet, a boulder, a hanabi, a joker or a golden cat in the dropper. */
-  give(kind: 'magnet' | 'boulder' | 'hanabi' | 'joker' | 'golden'): void;
+  /** Puts a magnet, a boulder, a hanabi, a joker, a lightning ball or a golden cat in the dropper. */
+  give(kind: 'magnet' | 'boulder' | 'hanabi' | 'joker' | 'lightning' | 'golden'): void;
   /** Puts a cat of `tier` (golden if asked) in the dropper; ignored if the stage can't hold it. */
   giveCat(tier: number, golden?: boolean): void;
   /** Sets a trial's, rule's (0 or 1) or blessing's level for this run. */
@@ -228,6 +237,13 @@ export function installDebugHooks(ctx: DebugContext): GameHooks {
         progress: run?.progress.fraction ?? 0,
         expansion: run?.expansion
           ? { from: run.expansion.from, to: run.expansion.to, phase: run.expansion.phase }
+          : null,
+        lightning: run?.lightning
+          ? {
+              id: run.lightning.id,
+              targets: [...run.lightning.targets],
+              elapsedMs: run.lightning.elapsedMs,
+            }
           : null,
         ticks: run?.ticks ?? 0,
         resolution: ctx.game.resolution,
@@ -519,6 +535,7 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
       action('Golden', () => hooks.give('golden')),
       action('Hanabi', () => hooks.give('hanabi')),
       action('Joker', () => hooks.give('joker')),
+      action('Lightning', () => hooks.give('lightning')),
       action('Picks', () => hooks.offerPicks()),
       action('Rule pick', () => hooks.offerPicks(true)),
     ),

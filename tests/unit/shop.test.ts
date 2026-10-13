@@ -16,7 +16,7 @@ describe('shop cards (GAME_DESIGN §2.2)', () => {
     expect(cards.map((c) => c.id)).toEqual([...UPGRADE_IDS]);
     expect(cards.map((c) => c.section)).toEqual([
       ...Array<string>(4).fill('upgrade'),
-      ...Array<string>(5).fill('blessing'),
+      ...Array<string>(6).fill('blessing'),
     ]);
     for (const card of cards) {
       expect(card.name).toBe(UPGRADES[card.id].name);
