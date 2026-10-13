@@ -37,11 +37,12 @@ must not change.
    clear, like the hanabi: an empty jar has nothing to strike.
 6. **Shop card at stage 8**, for 15K, 25K, 40K, 60K and 85K (225K in all; the Joker Cat opens at
    stage 5 for 10K first). It adds about an hour at the end of the 8-hour pacing model.
-7. **Look:** the jar darkens to a stormy indigo, a sky bolt lands on the ball, the chain is a tree
+7. **Look:** a sky bolt lands on the ball (v0.42.0–v0.42.1 also darkened the screen to a stormy
+   indigo; the owner had it taken out in v0.42.2), the chain is a tree
    from the ball to each next-nearest struck ball (edge to edge), each link 35 ms after the one
    before it, flickering between shapes, with a flash, a ring and crackles where each lands; yellow
    sparks as they pop; a zap, a crack and rolling thunder. The light is drawn with SCREEN
-   blending (Phaser's ADD clears the dark off the transparent canvas in squares).
+   blending (Phaser's ADD punches squares into anything see-through on the transparent canvas).
 
 ## 4. Built in v0.42.0
 

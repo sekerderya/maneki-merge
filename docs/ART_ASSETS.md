@@ -2124,7 +2124,7 @@ jar (or every boulder, if it touches a boulder first). Time stops for a moment w
 
 How the strike plays (the art below is made for it):
 
-1. The jar darkens to a stormy indigo for a moment, so the light reads on the bright garden.
+1. A white flash (until v0.42.2 the jar also darkened to a stormy indigo; the owner took it out).
 2. A **sky bolt** slams down from the top of the screen onto the lightning ball.
 3. **Chain bolts** jump from the ball to the cat it touched and on from cat to cat, each one to its
    nearest neighbours, reaching every struck cat within a tenth of a second. Every link swaps
@@ -2132,7 +2132,7 @@ How the strike plays (the art below is made for it):
 4. Where a bolt lands, an **impact flash** and a **shock ring** go off, and **electric crackles**
    cover the struck cat, swapping between four patterns.
 5. Then every struck cat pops at once in a **burst of sparks** with its "+coins", the ball bursts,
-   and the dark lifts.
+   and the ball is gone.
 
 Waiting in the jar, the lightning ball gives off a **small crackling arc** now and then. The shop
 card and the pick card show the ball itself in its gold medallion, like the hanabi's (§4.9), so
