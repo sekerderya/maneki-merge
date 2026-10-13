@@ -3,9 +3,10 @@
  * The art (config/jarArt.ts) is drawn once into textures, behind the cats and in front of them,
  * cut into pieces that only cover drawn parts (JAR_BACK_PIECES, JAR_FRONT_PIECES). They scale
  * with the jar while it grows: every stage has the same jar shape.
- * The dashed danger line across the opening and the post caps flash red in danger. The dashes and
- * the glass's shine strips are images, not Graphics: Phaser re-traces every Graphics path each
- * frame, and the strips' round ends alone are 1200 points (TECH_SPEC §13).
+ * The dashed danger line across the opening and the post caps flash red in danger. The dashed line
+ * and the glass's shine strips are images, not Graphics: Phaser re-traces every Graphics path each
+ * frame, and the strips' round ends alone are 1200 points (TECH_SPEC §13). The line is one image of
+ * a texture holding all its dashes (until v0.42.12 an image per dash: 21 for the renderer to draw).
  *
  * With the raster art (config/sceneSprites.ts) the pieces come from the owner's jar instead: its
  * inner layer (the glass's edge and the rail) behind the cats, its bamboo frame in front. The art's
@@ -53,12 +54,16 @@ const SHINE_KEY = 'jar-shine';
 const SHINE_PX_PER_UNIT = CAT_PX_PER_UNIT;
 /** Round each strip in its texture, so its anti-aliased edge isn't cut. */
 const SHINE_PAD_PX = 2;
-/** Phaser's plain white texture: the rim's dashes are tinted rectangles of it. */
-const WHITE_KEY = '__WHITE';
 /** The dashes start JAR_RIM_INSET in from each wall, JAR_RIM_DASH long with gaps as long. */
 const RIM_FROM = -JAR_WIDTH / 2 + JAR_RIM_INSET;
 const RIM_TO = JAR_WIDTH / 2 - JAR_RIM_INSET;
-const RIM_DASHES = Math.ceil((RIM_TO - RIM_FROM) / (2 * JAR_RIM_DASH));
+const RIM_LENGTH = RIM_TO - RIM_FROM;
+const RIM_DASHES = Math.ceil(RIM_LENGTH / (2 * JAR_RIM_DASH));
+/** The dashed line's texture: white dashes, tinted per use, stretched to the line's width. */
+const RIM_KEY = 'jar-rim';
+/** Like the cats': never upscaled on a phone or tablet. Each dash starts on a whole pixel. */
+const RIM_PX_PER_UNIT = CAT_PX_PER_UNIT;
+const RIM_TEXTURE_HEIGHT = 4;
 
 interface Piece {
   /** Its top-left corner in world units of the stage jar. */
@@ -80,7 +85,7 @@ export class JarView {
   private readonly caps: boolean;
   /** The glass behind the cats: a plain vector shape (the DOM draws it unless the jar grows). */
   private readonly glass: Phaser.GameObjects.Graphics;
-  private readonly dashes: Phaser.GameObjects.Image[] = [];
+  private readonly dashes: Phaser.GameObjects.Image;
 
   constructor(
     scene: Phaser.Scene,
@@ -100,11 +105,11 @@ export class JarView {
     } else {
       this.addVectorPieces(scene, backLayer, frontLayer);
     }
-    for (let i = 0; i < RIM_DASHES; i++) {
-      const dash = scene.add.image(0, 0, WHITE_KEY).setOrigin(0, 0.5);
-      frontLayer.add(dash);
-      this.dashes.push(dash);
-    }
+    if (this.textures.exists(RIM_KEY)) this.textures.remove(RIM_KEY);
+    this.textures.addCanvas(RIM_KEY, rimCanvas());
+    this.keys.push(RIM_KEY);
+    this.dashes = scene.add.image(0, 0, RIM_KEY).setOrigin(0, 0.5);
+    frontLayer.add(this.dashes);
     frontLayer.add(rim);
   }
 
@@ -246,16 +251,28 @@ export class JarView {
     const color = danger === null ? JAR_RIM_LINE : DANGER_RED;
     const alpha = danger ? 1 : danger === false ? 0.6 : JAR_RIM_LINE_ALPHA;
     const width = JAR_RIM_WIDTH * s * (danger === null ? 1 : 1.4);
-    this.dashes.forEach((dash, i) => {
-      const from = RIM_FROM + 2 * JAR_RIM_DASH * i;
-      const to = Math.min(from + JAR_RIM_DASH, RIM_TO);
-      dash
-        .setPosition(from * s, rimY)
-        .setDisplaySize((to - from) * s, width)
-        .setTint(color)
-        .setAlpha(alpha);
-    });
+    this.dashes
+      .setPosition(RIM_FROM * s, rimY)
+      .setDisplaySize(RIM_LENGTH * s, width)
+      .setTint(color)
+      .setAlpha(alpha);
   }
+}
+
+/** The dashed line's dashes, white, RIM_PX_PER_UNIT texture pixels per world unit across. */
+function rimCanvas(): HTMLCanvasElement {
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.ceil(RIM_LENGTH * RIM_PX_PER_UNIT);
+  canvas.height = RIM_TEXTURE_HEIGHT;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return canvas;
+  ctx.fillStyle = '#ffffff';
+  for (let i = 0; i < RIM_DASHES; i++) {
+    const from = 2 * JAR_RIM_DASH * i;
+    const to = Math.min(from + JAR_RIM_DASH, RIM_LENGTH);
+    ctx.fillRect(from * RIM_PX_PER_UNIT, 0, (to - from) * RIM_PX_PER_UNIT, RIM_TEXTURE_HEIGHT);
+  }
+  return canvas;
 }
 
 /** Where each shine strip sits in the shine texture, in texture pixels (padding included). */

@@ -84,6 +84,7 @@ import { CatSkin } from './skins/CatSkin';
 import { PlaceholderSkin } from './skins/PlaceholderSkin';
 import { SpecialSkin } from './skins/SpecialSkin';
 import { drawnX, drawnY } from './drawnPose';
+import { RING_PX_PER_UNIT, restoreRingTextures, ringTexture } from './ringTexture';
 
 /**
  * Which cat art the scene draws: the raster cats, the earlier vector cats (`?skin=vector`) or flat
@@ -141,7 +142,7 @@ export class GameScene extends Phaser.Scene {
   /** A lightning ball's strike and its waiting arcs (GAME_DESIGN §15.15). */
   private lightning!: LightningFx;
   private aimGuide!: AimGuide;
-  private selectRing!: Phaser.GameObjects.Graphics;
+  private selectRing!: Phaser.GameObjects.Image;
   private dropperGlow!: Phaser.GameObjects.Image;
   private dropperBody!: Phaser.GameObjects.Image;
   private dropperNumber!: Phaser.GameObjects.Image;
@@ -271,7 +272,7 @@ export class GameScene extends Phaser.Scene {
     this.lightning = new LightningFx(this, storm, this.sparks, bolts, (count) =>
       this.particles(count),
     );
-    this.selectRing = this.add.graphics();
+    this.selectRing = this.add.image(0, 0, '__WHITE').setTint(SELECT_RING).setVisible(false);
     fx.add(this.selectRing);
     this.countdown = this.add
       .text(0, 0, '', {
@@ -300,6 +301,7 @@ export class GameScene extends Phaser.Scene {
       this.curse.restore();
       this.dice.restore();
       this.lightning.restore();
+      restoreRingTextures(this.textures);
     });
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.detach());
@@ -726,7 +728,7 @@ export class GameScene extends Phaser.Scene {
    * leaves the paw, or a stage clear starts.
    */
   private renderSelection(run: RunController): void {
-    const g = this.selectRing.clear();
+    this.selectRing.setVisible(false);
     const id = this.selectedId;
     if (id === null) return;
     const ball = this.findBall(run, id);
@@ -739,10 +741,18 @@ export class GameScene extends Phaser.Scene {
     const phase = (this.nowMs % SELECT_RING_PERIOD_MS) / SELECT_RING_PERIOD_MS;
     const alpha = 0.7 + 0.3 * Math.sin(phase * 2 * Math.PI);
     const ring = ball.radius + SELECT_RING_GAP;
-    g.lineStyle(SELECT_RING_WIDTH, SELECT_RING, alpha);
+    // The ring texture of the ball's full size (a ring image, not Graphics: TECH_SPEC §13); while
+    // a merged ball still grows, the image shrinks with it.
+    const full = ball.targetRadius + SELECT_RING_GAP;
+    const key = ringTexture(this.textures, full, SELECT_RING_WIDTH);
+    if (this.selectRing.texture.key !== key) this.selectRing.setTexture(key);
     const x = drawnX(ball, this.drawAlpha);
     const y = drawnY(ball, this.drawAlpha);
-    g.strokeCircle(x, y, ring);
+    this.selectRing
+      .setPosition(x, y)
+      .setScale(ring / full / RING_PX_PER_UNIT)
+      .setAlpha(alpha)
+      .setVisible(true);
     if (run.state !== 'playing') {
       this.reportPrompt(null);
       return;
@@ -789,7 +799,7 @@ export class GameScene extends Phaser.Scene {
   private clearSelection(): void {
     this.selectedId = null;
     this.selecting = false;
-    this.selectRing?.clear();
+    this.selectRing?.setVisible(false);
     this.reportPrompt(null);
   }
 

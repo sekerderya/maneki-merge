@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { sizeRadius } from '../../src/config/tiers';
+import { AIM_DOT_SPACING, CAT_PX_PER_UNIT, JAR_RIM_DASH } from '../../src/config/view';
 import { landingY } from '../../src/game/aim';
 import { jarGeometry } from '../../src/physics/geometry';
 import { RunController } from '../../src/run/RunController';
@@ -48,5 +49,18 @@ describe('aim guide landing point', () => {
     }
     // First contact is detected on the step after the overlap, so allow one step of fall.
     expect(Math.abs(landedAt - predicted)).toBeLessThan(15);
+  });
+});
+
+describe('aim guide and rim textures (TECH_SPEC §13)', () => {
+  it('puts every dot of the column and every dash of the rim on whole texture pixels', () => {
+    // The dots are one column texture and the rim's dashes one strip: each dot and each dash
+    // starts where the first one does on the pixel grid, so they all look alike.
+    expect(Number.isInteger(AIM_DOT_SPACING * CAT_PX_PER_UNIT)).toBe(true);
+    expect(Number.isInteger(JAR_RIM_DASH * CAT_PX_PER_UNIT)).toBe(true);
+  });
+
+  it('keeps one ring texture per size: radii are whole world units', () => {
+    for (let size = 1; size <= 10; size++) expect(Number.isInteger(sizeRadius(size))).toBe(true);
   });
 });
