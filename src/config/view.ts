@@ -345,9 +345,8 @@ export const HANABI_BLAST_SPARKS = 36;
  * A lightning strike (GAME_DESIGN §15.15), drawn while the run holds time still
  * (LIGHTNING_HOLD_MS). Times are ms from the strike; sizes are world units (the jar is 600 wide).
  *
- * - The jar darkens to `veilAlpha` over `veilInMs` (less with reduced motion) and clears over
- *   `veilOutMs` once the struck balls pop; a white flash of `flashAlpha` fades over `flashMs` as
- *   the sky bolt lands (none with reduced motion).
+ * - A white flash of `flashAlpha` fades over `flashMs` as the sky bolt lands (none with reduced
+ *   motion). (v0.42.0–v0.42.1 also darkened the screen while it held; the owner took it out.)
  * - The sky bolt shows for `skyMs`, `skyWidth` wide.
  * - The chain's links reach each struck ball `linkDelayMs` per link from the ball; each link's
  *   zigzag band is `bandShare` of its length, between `bandMin` and `bandMax`. Every
@@ -361,10 +360,6 @@ export const HANABI_BLAST_SPARKS = 36;
  * - A waiting lightning ball gives off a small arc every `arcEveryMs`, for `arcMs`.
  */
 export const LIGHTNING_FX = {
-  veilAlpha: 0.55,
-  reducedVeilAlpha: 0.35,
-  veilInMs: 70,
-  veilOutMs: 320,
   flashAlpha: 0.3,
   flashMs: 140,
   skyMs: 280,

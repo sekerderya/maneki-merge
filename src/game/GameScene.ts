@@ -218,7 +218,7 @@ export class GameScene extends Phaser.Scene {
     const numbers = layer();
     const jarFront = layer();
     const dropper = layer();
-    // A lightning strike darkens everything under it; the payouts and sparks stay on top.
+    // A lightning strike lights up over the balls; the payouts and sparks stay on top.
     const storm = layer();
     const fx = layer();
 

@@ -110,10 +110,9 @@ export const JOKER_STAR = '#f2b83b';
 export const LIGHTNING_BALL = '#4a3a86';
 export const LIGHTNING_BOLT = '#ffe14d';
 /**
- * A lightning strike: the stormy dark over the jar, and the colours of the code-drawn bolts and
- * crackles until the owner's art comes (white core, yellow glow, a violet haze).
+ * A lightning strike: the colours of the code-drawn bolts and crackles (`?skin=vector`): a white
+ * core, a yellow glow, a violet haze.
  */
-export const LIGHTNING_VEIL = 0x1b1446;
 export const LIGHTNING_CORE = '#ffffff';
 export const LIGHTNING_GLOW = '#ffe14d';
 export const LIGHTNING_HAZE = 'rgba(176, 140, 255, 0.55)';

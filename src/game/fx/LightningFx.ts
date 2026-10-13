@@ -1,20 +1,20 @@
 /**
  * A lightning strike (GAME_DESIGN §15.15), drawn from the run's strike (RunController.lightning)
- * while it holds time still: the jar darkens, a bolt comes down from the sky onto the lightning
+ * while it holds time still: a white flash, a bolt comes down from the sky onto the lightning
  * ball, and bolts chain from it to every struck ball, each link reaching its ball a moment after the
  * one before (strikeChain) and flickering between shapes; where a link lands a flash and a ring go
  * off, and crackles cover the ball. When the struck balls pop (`discharge`), sparks fly from each
- * (and the art's burst of sparks grows and fades there) and the dark lifts. A waiting lightning
- * ball gives off a small arc now and then.
+ * (and the art's burst of sparks grows and fades there). A waiting lightning ball gives off a small
+ * arc now and then. (v0.42.0–v0.42.1 also darkened the screen; the owner took it out.)
  *
  * Everything follows the strike's own clock (its elapsed time), so a pause freezes it. With reduced
- * motion the dark is lighter, there is no white flash and nothing flickers. The textures are the
- * owner's art once it comes, else the stand-ins of lightningFrames.ts; all of them are light,
- * drawn with SCREEN: Phaser's ADD multiplies what is under it by its own alpha, which clears the
- * dark off a transparent canvas in squares. Pooled images, no allocations per frame once warm.
+ * motion there is no white flash and nothing flickers. The textures are the owner's art, else the
+ * stand-ins of lightningFrames.ts; all of them are light, drawn with SCREEN: Phaser's ADD
+ * multiplies what is under it by its own alpha, which punches squares into anything see-through
+ * on the transparent canvas. Pooled images, no allocations per frame once warm.
  */
 import type Phaser from 'phaser';
-import { LIGHTNING_SPARKS, LIGHTNING_VEIL } from '../../config/skin';
+import { LIGHTNING_SPARKS } from '../../config/skin';
 import { LIGHTNING_FX } from '../../config/view';
 import type { BallView } from '../../physics/balls';
 import { strikeChain } from '../../physics/lightning';
@@ -44,14 +44,12 @@ interface Strike {
 }
 
 export class LightningFx {
-  private readonly veil: Phaser.GameObjects.Image;
   private readonly flash: Phaser.GameObjects.Image;
   private readonly pool: Phaser.GameObjects.Image[] = [];
   private used = 0;
   private strike: Strike | null = null;
-  /** When the dark started to lift (the struck balls popped), or −Infinity. */
-  private liftMs = -Infinity;
-  private liftFrom = 0;
+  /** When the struck balls popped, or −Infinity. */
+  private poppedMs = -Infinity;
   /** Where the struck balls popped, for the art's burst of sparks (real time). */
   private readonly bursts: { x: number; y: number; radius: number }[] = [];
 
@@ -73,18 +71,13 @@ export class LightningFx {
       }
       scene.textures.addCanvas(WHITE_KEY, canvas);
     }
-    this.veil = scene.add
-      .image(0, 0, WHITE_KEY)
-      .setOrigin(0)
-      .setTint(LIGHTNING_VEIL)
-      .setVisible(false);
     this.flash = scene.add.image(0, 0, WHITE_KEY).setOrigin(0).setVisible(false);
-    layer.add([this.veil, this.flash]);
+    layer.add(this.flash);
   }
 
   /**
    * Draws the strike `view` (null: none) over `balls` in the camera's `rect`, at `nowMs` (real
-   * time, for the lifting dark and the waiting balls' arcs).
+   * time, for the bursts of sparks and the waiting balls' arcs).
    */
   update(
     nowMs: number,
@@ -95,36 +88,28 @@ export class LightningFx {
     alpha: number,
   ): void {
     this.used = 0;
-    let dark = 0;
     let flash = 0;
     if (view) {
       const strike = this.begin(view, balls);
       const t = view.elapsedMs;
-      const max = reduced ? LIGHTNING_FX.reducedVeilAlpha : LIGHTNING_FX.veilAlpha;
-      dark = max * Math.min(1, t / LIGHTNING_FX.veilInMs);
-      this.liftFrom = dark;
       if (!reduced) flash = LIGHTNING_FX.flashAlpha * Math.max(0, 1 - t / LIGHTNING_FX.flashMs);
       this.drawStrike(strike, t, view.holdMs, rect, reduced);
     } else {
       this.strike = null;
-      const lift = (nowMs - this.liftMs) / LIGHTNING_FX.veilOutMs;
-      if (lift < 1) dark = this.liftFrom * (1 - Math.max(0, lift));
       this.drawArcs(nowMs, balls, alpha);
       this.drawBursts(nowMs, reduced);
     }
-    this.cover(this.veil, rect, dark);
     this.cover(this.flash, rect, flash);
     for (let i = this.used; i < this.pool.length; i++)
       (this.pool[i] as Phaser.GameObjects.Image).setVisible(false);
   }
 
-  /** The struck balls popped at these points: sparks fly from each, and the dark lifts. */
+  /** The struck balls popped at these points: sparks fly from each. */
   discharge(nowMs: number, points: readonly { x: number; y: number; radius: number }[]): void {
-    this.liftMs = nowMs;
+    this.poppedMs = nowMs;
     const count = this.particles(LIGHTNING_FX.popSparks);
     this.bursts.length = 0;
     for (const { x, y, radius } of points) {
-      // Plain sparks: the ADD ones clear the dark in squares while it lifts.
       this.sparks.mergeBurst(x, y, count, LIGHTNING_SPARKS);
       this.bursts.push({ x, y, radius });
     }
@@ -137,9 +122,8 @@ export class LightningFx {
 
   clear(): void {
     this.strike = null;
-    this.liftMs = -Infinity;
+    this.poppedMs = -Infinity;
     this.bursts.length = 0;
-    this.veil.setVisible(false);
     this.flash.setVisible(false);
     for (const image of this.pool) image.setVisible(false);
   }
@@ -263,7 +247,7 @@ export class LightningFx {
   /** The art's burst of sparks where each struck ball popped: it grows and fades. */
   private drawBursts(nowMs: number, reduced: boolean): void {
     const sparks = this.frames.sparks;
-    const age = nowMs - this.liftMs;
+    const age = nowMs - this.poppedMs;
     if (!sparks || this.bursts.length === 0 || age >= LIGHTNING_FX.burstMs) return;
     const k = Math.max(0, age) / LIGHTNING_FX.burstMs;
     const grow = reduced
