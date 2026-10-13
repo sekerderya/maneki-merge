@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.42.14] - 2026-10-13
+
+### Fixed
+
+- **The game stays full screen when the phone's bars are swiped in** (the owner's report): in the installed app on Android, showing the status or navigation bar shrank the whole game (the menu, the jar) and it grew back when they went. The app now keeps its full height while they show, and the bars just cover its edges for those few seconds; the overlays and the stage doors keep it too. A split screen still resizes the game, and a browser tab behaves as before.
+- **"Updating…" no longer stays on the menu after the loading screen updated** (the owner's report): the loading screen switched to the new version before the PWA plugin was listening for the switch, so the app never reloaded into it and the badge stayed. The app now listens for the switch itself and reloads on the loading screen. The version that installs this fix still updates with the old code: if the badge shows once more, closing and opening the app finishes it.
+
 ## [0.42.13] - 2026-10-13
 
 ### Changed
