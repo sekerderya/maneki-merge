@@ -94,15 +94,16 @@ for (const [width, height] of [
     await page.setViewportSize({ width, height });
     await page.goto('./');
     await page.getByTestId('settings').click();
-    const card = page.locator('.settings-card');
+    const card = page.getByTestId('settings-panel').locator('.settings-card');
     await card.evaluate((node) => Promise.all(node.getAnimations().map((a) => a.finished)));
     const issues = await page.evaluate(() => {
       const found: string[] = [];
-      const box = document.querySelector('.settings-card')!.getBoundingClientRect();
+      const panel = document.querySelector('[data-testid="settings-panel"]')!;
+      const box = panel.querySelector('.settings-card')!.getBoundingClientRect();
       if (box.top < 0 || box.bottom > window.innerHeight || box.right > window.innerWidth) {
         found.push('card off screen');
       }
-      for (const row of document.querySelectorAll<HTMLElement>('.settings-row')) {
+      for (const row of panel.querySelectorAll<HTMLElement>('.settings-row')) {
         if (row.hidden) continue;
         const r = row.getBoundingClientRect();
         if (r.height < 48) found.push(`${row.dataset['testid']} short`);

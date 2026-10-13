@@ -5,6 +5,7 @@ import { anyAffordable } from './core/upgrades';
 import type { ClipId } from './config/clips';
 import type { Scheduler } from './core/profile';
 import { RunSaveStore } from './core/runSave';
+import { ScenesSwitch } from './core/scenesSwitch';
 import { SaveStore } from './core/save';
 import type { SaveData } from './core/save';
 import { parseUrlFlags } from './core/urlFlags';
@@ -34,6 +35,7 @@ import { CUTOUT_RECHECK_MS, UPDATE_LAUNCH_APPLY_MS } from './config/platform';
 import { setIconSkin } from './ui/catIcon';
 import { byId } from './ui/dom';
 import { createGameOverOverlay } from './ui/overlays/gameOverOverlay';
+import { createScenesPanel } from './ui/panels/scenesPanel';
 import { createSettingsPanel } from './ui/panels/settingsPanel';
 import { createShopPanel } from './ui/panels/shopPanel';
 import { createPauseOverlay } from './ui/overlays/pauseOverlay';
@@ -116,6 +118,9 @@ async function boot(): Promise<void> {
   };
   const profile = new Profile(profileStore, loaded.data, { scheduler: windowScheduler });
   if (storage.persistent) void requestPersistentStorage();
+  // The menu's Scenes button (GAME_DESIGN §2.6): `?scenes=1` or 7 taps on the version turn it on.
+  const scenesSwitch = new ScenesSwitch(storage.adapter);
+  if (flags.scenes !== null) scenesSwitch.set(flags.scenes);
 
   // Sound and haptics (GAME_DESIGN §12): audio unlocks on the first tap (iOS needs a gesture).
   const audio = new AudioEngine();
@@ -138,7 +143,7 @@ async function boot(): Promise<void> {
   // A waiting update installs itself only while the menu is up with no panel over it.
   const syncUpdateGate = (): void => {
     const onMenu = (screens?.screen ?? 'menu') === 'menu';
-    gate.setMenuActive(onMenu && !shop.visible && !settingsPanel.visible);
+    gate.setMenuActive(onMenu && !shop.visible && !settingsPanel.visible && !scenes.visible);
   };
 
   const installContext = detectInstallContext(readInstallEnvironment());
@@ -157,9 +162,11 @@ async function boot(): Promise<void> {
       onSettings: () => openSettings(),
       onApplyUpdate: () => void gate.apply(),
       onInstall: () => void installPrompt.prompt(),
+      onScenes: () => openScenes(),
     },
     skin === 'art',
   );
+  menu.setScenesVisible(scenesSwitch.on);
 
   menu.setInstallHint(installHintFor(installContext, installPrompt.available));
   onUpdateReady = (ready) => menu.setUpdateReady(ready);
@@ -247,6 +254,11 @@ async function boot(): Promise<void> {
         session.replayHints();
         clipButtons.refresh();
       },
+      onToggleScenes: () => {
+        const on = scenesSwitch.toggle();
+        menu.setScenesVisible(on);
+        return on;
+      },
       onClose: () => closeSettings(),
     },
     skin === 'art',
@@ -267,6 +279,38 @@ async function boot(): Promise<void> {
     if (settingsLayer !== null) back.release(settingsLayer);
     settingsLayer = null;
     settingsPanel.hide();
+    syncUpdateGate();
+  };
+
+  // The Scenes panel (GAME_DESIGN §2.6) over the menu, with its own back layer: a tap on a scene
+  // plays it.
+  let scenesLayer: number | null = null;
+  const scenes = createScenesPanel(
+    byId('overlays'),
+    {
+      onStart: (scene) => {
+        closeScenes();
+        screens?.showGame();
+        session.startScenario(scene);
+      },
+      onClose: () => closeScenes(),
+    },
+    skin === 'art',
+  );
+  const openScenes = (): void => {
+    if (scenes.visible) return;
+    scenes.show();
+    syncUpdateGate();
+    scenesLayer = back.push(() => {
+      scenesLayer = null;
+      scenes.hide();
+      syncUpdateGate();
+    });
+  };
+  const closeScenes = (): void => {
+    if (scenesLayer !== null) back.release(scenesLayer);
+    scenesLayer = null;
+    scenes.hide();
     syncUpdateGate();
   };
 
@@ -294,6 +338,7 @@ async function boot(): Promise<void> {
         session.setSetting('haptics', !session.settings.haptics);
         haptics.play('tick');
       },
+      onRestart: () => session.playAgain(),
       onQuit: () => screens?.showMenu(),
     },
     skin === 'art',
@@ -301,7 +346,7 @@ async function boot(): Promise<void> {
   const gameOver = createGameOverOverlay(
     overlays,
     {
-      onPlayAgain: () => session.startRun(),
+      onPlayAgain: () => session.playAgain(),
       onMenu: () => screens?.showMenu(),
     },
     skin === 'art',
@@ -368,7 +413,9 @@ async function boot(): Promise<void> {
       closeClip();
       // End (and save) the run first: back on the menu, a waiting update reloads the app soon.
       if (screen === 'menu') session.endRun();
-      gate.setMenuActive(screen === 'menu' && !shop.visible && !settingsPanel.visible);
+      gate.setMenuActive(
+        screen === 'menu' && !shop.visible && !settingsPanel.visible && !scenes.visible,
+      );
     },
     () => session.onBack(),
   );

@@ -1,0 +1,132 @@
+/*
+ * The Scenes panel (GAME_DESIGN §2.6): the Settings card (settings.css, panel-art.css) with a
+ * list that scrolls under its header, and the menu's Scenes button that opens it.
+ */
+.scenes-card {
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.scenes-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Rows keep their height: the list scrolls instead of squeezing them. */
+.scenes-row {
+  flex-shrink: 0;
+  gap: 10px;
+}
+
+.scenes-icon {
+  overflow: hidden;
+}
+
+.scenes-icon img {
+  display: block;
+  pointer-events: none;
+}
+
+.scenes-icon-art {
+  width: 100%;
+  height: 100%;
+}
+
+/* The group's name, small over the scene's. */
+.scenes-group {
+  color: var(--color-muted);
+  font-size: 0.7rem;
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.scenes-stage {
+  flex: none;
+  padding: 2px 8px;
+  border: 2px solid var(--color-ink);
+  border-radius: var(--radius-pill);
+  background: var(--color-card);
+  font-size: 0.75rem;
+  font-weight: var(--weight-bold);
+  white-space: nowrap;
+}
+
+/* The art skin: shorter rows than Settings (there are many), the ball in a gold-rimmed medallion. */
+.scenes-overlay.is-art .settings-row {
+  gap: calc(18 * var(--u));
+  min-height: calc(150 * var(--u));
+  padding: calc(14 * var(--u)) 0;
+}
+
+.scenes-overlay.is-art .settings-icon {
+  width: calc(104 * var(--u));
+  height: calc(104 * var(--u));
+  background: #fff6e7;
+}
+
+.scenes-overlay.is-art .scenes-icon-ball {
+  filter: drop-shadow(0 0 calc(1.5 * var(--u)) #4e2416);
+}
+
+.scenes-overlay.is-art .scenes-icon.is-golden .scenes-icon-ball {
+  filter: drop-shadow(0 0 calc(1.5 * var(--u)) #4e2416) drop-shadow(0 0 calc(8 * var(--u)) #ffc93c);
+}
+
+.scenes-overlay.is-art .settings-label {
+  font-size: calc(36 * var(--u));
+}
+
+.scenes-overlay.is-art .settings-sub {
+  font-size: calc(27 * var(--u));
+}
+
+.scenes-overlay.is-art .scenes-group {
+  color: #9a5a2e;
+  font-size: calc(22 * var(--u));
+}
+
+.scenes-overlay.is-art .scenes-stage {
+  padding: calc(4 * var(--u)) calc(14 * var(--u));
+  border: calc(4 * var(--u)) solid #4e2416;
+  background: linear-gradient(#ffd866, #f2b83b);
+  color: #4e2416;
+  font-size: calc(24 * var(--u));
+}
+
+.scenes-overlay.is-art .settings-version {
+  font-size: calc(24 * var(--u));
+}
+
+/* The menu's Scenes button, left of UPGRADES on the deck: the cream UPGRADES pill, small. */
+.menu-art-scenes {
+  --pill: calc(76 * var(--u));
+  --box: max(var(--pill), 40px);
+  position: absolute;
+  left: calc(14 * var(--u));
+  top: calc(1246 * var(--u) - (var(--box) - var(--pill)) / 2);
+  width: calc(180 * var(--u));
+  height: var(--box);
+  padding: 0 0 calc(6 * var(--u));
+  border: 0 solid transparent;
+  border-image: var(--menu-upgrades-art) 0 var(--menu-upgrades-slice) fill / 0
+    calc(var(--box) * var(--menu-upgrades-cap)) stretch;
+  background: none;
+  color: #4e2416;
+  font-size: max(calc(32 * var(--u)), 13px);
+  font-weight: var(--weight-bold);
+  line-height: 1;
+  transition: transform 70ms ease-out;
+}
+
+.menu-art-scenes:active {
+  transform: translateY(calc(3 * var(--u))) scale(0.97);
+}
+
+.reduce-motion .scenes-card {
+  animation: none;
+}

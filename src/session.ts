@@ -19,6 +19,7 @@ import {
 } from './config/view';
 import { stageJar } from './config/stages';
 import type { PickId, PickKind } from './config/picks';
+import type { ScenarioDef } from './config/scenarios';
 import type { UpgradeId } from './config/upgrades';
 import { jarCoinMultiplier } from './core/economy';
 import { EventBus } from './core/events';
@@ -32,6 +33,7 @@ import type { RunSave } from './core/runSave';
 import { comboBonus } from './core/upgrades';
 import type { GameView } from './game';
 import { resumeProfileRun, startProfileRun } from './run/profileRun';
+import { startScenarioRun } from './run/scenario';
 import type { RunController } from './run/RunController';
 import type { BannerView } from './ui/banners/banner';
 import type { HintView } from './ui/banners/hint';
@@ -79,6 +81,9 @@ export interface SessionParts {
   readonly onProfileChange: () => void;
 }
 
+/** No new records (a scene's Game Over). */
+const NO_RECORDS = { score: false, stage: false, highestTier: false } as const;
+
 /** A rule's hint pill (GAME_DESIGN §15.11, §15.13). */
 const RULE_HINTS: Partial<Record<PickId, string>> = {
   hubris: 'Hubris: three small cats merge at once and skip a size',
@@ -101,6 +106,11 @@ export class GameSession {
   private doorsTimer = 0;
   /** The records as they were when the current run started, for the Game Over badges. */
   private recordsBefore: Records;
+  /**
+   * The scene being played (GAME_DESIGN §2.6), or null for a real run. A scene's run is a sandbox:
+   * nothing it earns reaches the profile, it is never saved, and it shows no first-run hints.
+   */
+  private scenario: ScenarioDef | null = null;
 
   constructor(private readonly parts: SessionParts) {
     this.recordsBefore = parts.profile.records;
@@ -123,6 +133,11 @@ export class GameSession {
 
   get settings(): Settings {
     return this.parts.profile.settings;
+  }
+
+  /** The scene being played, or null. */
+  get scene(): ScenarioDef | null {
+    return this.scenario;
   }
 
   /** Debug: coins from outside play. */
@@ -210,6 +225,8 @@ export class GameSession {
   /** Starts a new run (PLAY, Play Again). */
   startRun(): void {
     this.reset();
+    this.scenario = null;
+    this.parts.pause.setRestartVisible(false);
     const events = new EventBus<GameEvents>();
     this.recordsBefore = this.parts.profile.records;
     const run = startProfileRun(this.parts.profile, {
@@ -222,11 +239,33 @@ export class GameSession {
   }
 
   /**
+   * Plays a scene (GAME_DESIGN §2.6): its jar set up and settled, at its stage. The run is a
+   * sandbox: no wallet, records, stats or saved run, so it changes nothing in the player's profile.
+   */
+  startScenario(def: ScenarioDef): void {
+    this.reset();
+    this.scenario = def;
+    this.parts.pause.setRestartVisible(true);
+    const events = new EventBus<GameEvents>();
+    this.recordsBefore = this.parts.profile.records;
+    const run = startScenarioRun(def, { events, gravityScale: this.parts.gravityScale ?? 1 });
+    this.play(run, events);
+  }
+
+  /** Game Over's Play Again and the pause's Restart scene: the same scene again, or a new run. */
+  playAgain(): void {
+    if (this.scenario) this.startScenario(this.scenario);
+    else this.startRun();
+  }
+
+  /**
    * Continues the run the app was closed in (GAME_DESIGN §11), paused where it stopped, with a
    * waiting pick under the pause. Returns false (and forgets it) when this version can't.
    */
   continueRun(saved: RunSave): boolean {
     this.reset();
+    this.scenario = null;
+    this.parts.pause.setRestartVisible(false);
     const events = new EventBus<GameEvents>();
     let run: RunController;
     try {
@@ -429,6 +468,13 @@ export class GameSession {
     });
     events.on('gameOver', (e) => this.onGameOver(e));
 
+    // A scene shows no first-run hints: its clips shouldn't have them.
+    this.hintTimer = 0;
+    if (this.scenario) {
+      game.show(run);
+      return;
+    }
+
     // First-run hints (GAME_DESIGN §2.3), remembered in the save.
     if (!profile.hintSeen('aim')) hint.show('Drag to aim, release to drop');
     events.on('catDropped', () => {
@@ -469,15 +515,14 @@ export class GameSession {
         if (this.current === run) hint.hide();
       }, RULE_HINT_MS);
     });
-    this.hintTimer = 0;
 
     game.show(run);
   }
 
-  /** Saves the run in progress, or forgets it once it is over. */
+  /** Saves the run in progress, or forgets it once it is over. A scene is never saved. */
   private saveRun(): void {
     const run = this.current;
-    if (!run) return;
+    if (!run || this.scenario) return;
     const snapshot = run.snapshot();
     if (snapshot) this.parts.runSave.save({ run: snapshot, recordsBefore: this.recordsBefore });
     else this.parts.runSave.clear();
@@ -511,6 +556,7 @@ export class GameSession {
     this.parts.coins.clear();
     this.parts.game.sleep();
     this.current = null;
+    this.scenario = null;
     // Quitting ends the run: it doesn't come back on the next launch.
     this.parts.runSave.clear();
     this.save();
@@ -542,7 +588,8 @@ export class GameSession {
     this.parts.doors.reset();
     this.parts.game.setCovered(false);
     this.parts.runSave.clear();
-    const records = newRecords(this.recordsBefore, e);
+    // A scene's numbers are made up: they never set a record.
+    const records = this.scenario ? NO_RECORDS : newRecords(this.recordsBefore, e);
     this.parts.gameOver.show({
       score: e.score,
       bestScore: this.parts.profile.records.bestScore,

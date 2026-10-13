@@ -29,6 +29,8 @@ export interface DebugContext {
 export interface GameStateSnapshot {
   readonly screen: ScreenId;
   readonly runState: string | null;
+  /** The scene being played (GAME_DESIGN §2.6), or null for a real run. */
+  readonly scene: string | null;
   readonly score: number;
   readonly runCoins: number;
   /** The persistent wallet (GAME_DESIGN §11). */
@@ -211,6 +213,7 @@ export function installDebugHooks(ctx: DebugContext): GameHooks {
       return {
         screen: ctx.screen(),
         runState: run?.state ?? null,
+        scene: session.scene?.id ?? null,
         score: run?.score ?? 0,
         runCoins: run?.coins ?? 0,
         wallet: session.profile.coins,

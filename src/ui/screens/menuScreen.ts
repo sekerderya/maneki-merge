@@ -18,6 +18,8 @@ export interface MenuActions {
   onSettings(): void;
   onApplyUpdate(): void;
   onInstall(): void;
+  /** The Scenes button (GAME_DESIGN §2.6): the scenes for the owner's clips. */
+  onScenes(): void;
 }
 
 export interface MenuView {
@@ -27,6 +29,8 @@ export interface MenuView {
   setInstallHint(hint: InstallHint): void;
   /** The dot on UPGRADES: at least one upgrade is affordable. */
   setUpgradesAffordable(affordable: boolean): void;
+  /** The Scenes button shows only on a device that turned it on (GAME_DESIGN §2.6). */
+  setScenesVisible(visible: boolean): void;
 }
 
 /**
@@ -88,6 +92,7 @@ interface MenuControls {
   readonly update: HTMLButtonElement;
   readonly iosHint: HTMLElement;
   readonly install: HTMLButtonElement;
+  readonly scenes: HTMLButtonElement;
 }
 
 /**
@@ -100,7 +105,7 @@ export function createMenuScreen(root: HTMLElement, actions: MenuActions, art = 
   root.classList.toggle('is-art', art);
   const controls = art ? artLayout(root, actions) : vectorLayout(root, actions);
   const { coinValue, bestScoreValue, bestStageValue, upgrades, upgradesDot } = controls;
-  const { bottom, update, iosHint, install } = controls;
+  const { bottom, update, iosHint, install, scenes } = controls;
 
   const syncBottom = (): void => {
     bottom.hidden = update.hidden && iosHint.hidden && install.hidden;
@@ -126,6 +131,9 @@ export function createMenuScreen(root: HTMLElement, actions: MenuActions, art = 
       iosHint.hidden = hint !== 'ios-share';
       install.hidden = hint !== 'install-button';
       syncBottom();
+    },
+    setScenesVisible(visible) {
+      scenes.hidden = !visible;
     },
     setUpgradesAffordable(affordable) {
       upgradesDot.hidden = !affordable;
@@ -167,6 +175,15 @@ function upgradesButton(
   upgradesDot.hidden = true;
   upgrades.append(upgradesDot);
   return { upgrades, upgradesDot };
+}
+
+/** The Scenes button, hidden until the device turns it on. */
+function scenesButton(actions: MenuActions, className: string): HTMLButtonElement {
+  const scenes = button(className, 'Scenes');
+  scenes.dataset['testid'] = 'scenes';
+  scenes.hidden = true;
+  scenes.addEventListener('click', actions.onScenes);
+  return scenes;
 }
 
 function recordValue(testid: string): HTMLElement {
@@ -213,7 +230,8 @@ function vectorLayout(root: HTMLElement, actions: MenuActions): MenuControls {
   coins.dataset['testid'] = 'coin-balance';
   const coinValue = el('span', 'coin-value', '0');
   coins.append(coinIcon(), coinValue);
-  top.append(settings, coins);
+  const scenes = scenesButton(actions, 'btn btn-ghost btn-small menu-scenes');
+  top.append(settings, scenes, coins);
 
   const title = el('h1', 'menu-title', APP_NAME);
 
@@ -266,7 +284,7 @@ function vectorLayout(root: HTMLElement, actions: MenuActions): MenuControls {
   const foot = footer(actions);
   lower.append(records, actionsRow, foot.bottom);
   root.append(top, title, hero, lower);
-  return { coinValue, bestScoreValue, bestStageValue, upgrades, upgradesDot, ...foot };
+  return { coinValue, bestScoreValue, bestStageValue, upgrades, upgradesDot, scenes, ...foot };
 }
 
 function menuArtPath(sprite: MenuSprite): string {
@@ -376,7 +394,10 @@ function artLayout(root: HTMLElement, actions: MenuActions): MenuControls {
   coins.append(coinIcon('menu-coins-coin'), coinValue);
   const foot = footer(actions);
   top.append(settings, foot.bottom, coins);
+  // Left of UPGRADES, on the deck: the menu's cream pill, small (the owner's tool, not the player's).
+  const scenes = scenesButton(actions, 'menu-art-scenes');
+  stage.append(scenes);
 
   root.append(background, stage, top);
-  return { coinValue, bestScoreValue, bestStageValue, upgrades, upgradesDot, ...foot };
+  return { coinValue, bestScoreValue, bestStageValue, upgrades, upgradesDot, scenes, ...foot };
 }

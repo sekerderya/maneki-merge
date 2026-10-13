@@ -6,6 +6,8 @@ export interface PauseActions {
   onResume(): void;
   onToggleSound(): void;
   onToggleHaptics(): void;
+  /** A scene only (GAME_DESIGN §2.6): the same scene again, for another take. */
+  onRestart(): void;
   onQuit(): void;
 }
 
@@ -15,12 +17,15 @@ export interface PauseView {
   hide(): void;
   setSoundOn(on: boolean): void;
   setHapticsOn(on: boolean): void;
+  /** Restart shows only while a scene is played. */
+  setRestartVisible(visible: boolean): void;
 }
 
 /**
- * Pause overlay (GAME_DESIGN §2.3): Resume, Sound, Haptics, Quit to Menu. With `art` (the art skin)
- * it is the owner's approved mockup (docs/ART_ASSETS.md §4.14) built from the Upgrades and menu
- * pieces (panel-art.css); otherwise the code-drawn card of v0.14.
+ * Pause overlay (GAME_DESIGN §2.3): Resume, Sound, Haptics, Quit to Menu, and Restart scene while
+ * a scene is played (§2.6). With `art` (the art skin) it is the owner's approved mockup
+ * (docs/ART_ASSETS.md §4.14) built from the Upgrades and menu pieces (panel-art.css); otherwise
+ * the code-drawn card of v0.14.
  */
 export function createPauseOverlay(
   root: HTMLElement,
@@ -51,11 +56,16 @@ export function createPauseOverlay(
   haptics.addEventListener('click', actions.onToggleHaptics);
   toggles.append(sound, haptics);
 
+  const restart = button('btn btn-ghost', 'Restart scene');
+  restart.dataset['testid'] = 'restart-scene';
+  restart.hidden = true;
+  restart.addEventListener('click', actions.onRestart);
+
   const quit = button('btn btn-ghost', 'Quit to Menu');
   quit.dataset['testid'] = 'quit';
   quit.addEventListener('click', actions.onQuit);
 
-  panel.append(resume, toggles, quit);
+  panel.append(resume, toggles, restart, quit);
   overlay.append(panel);
   root.append(overlay);
 
@@ -81,6 +91,9 @@ export function createPauseOverlay(
     },
     setHapticsOn(on) {
       setToggle(haptics, on, on ? ICON_VIBRATE : ICON_VIBRATE_OFF);
+    },
+    setRestartVisible(visible) {
+      restart.hidden = !visible;
     },
   };
 }

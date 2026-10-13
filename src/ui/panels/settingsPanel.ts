@@ -1,4 +1,9 @@
-import { PRIVACY_POLICY_PATH } from '../../config/app';
+import {
+  PRIVACY_POLICY_PATH,
+  SCENES_SWITCH_NOTE_MS,
+  SCENES_SWITCH_TAP_WINDOW_MS,
+  SCENES_SWITCH_TAPS,
+} from '../../config/app';
 import { SHOP_ART, SHOP_SPRITE_DIR } from '../../config/shopSprites';
 import { formatVersionLabel } from '../../core/version';
 import { button, el } from '../dom';
@@ -20,6 +25,11 @@ export interface SettingsActions {
   onToggle(key: SettingKey): void;
   /** "How to play": the first-run hints show again in the next run. */
   onReplayTips(): void;
+  /**
+   * Seven quick taps on the version flip the menu's Scenes button (GAME_DESIGN §2.6); returns
+   * whether it is now on.
+   */
+  onToggleScenes(): boolean;
   onClose(): void;
 }
 
@@ -117,8 +127,25 @@ export function createSettingsPanel(
   list.append(tips);
 
   const footer = el('p', 'settings-version');
-  const version = el('span', '', formatVersionLabel(__APP_VERSION__, __BUILD_HASH__));
+  const versionLabel = formatVersionLabel(__APP_VERSION__, __BUILD_HASH__);
+  const version = el('span', '', versionLabel);
   version.dataset['testid'] = 'version';
+  let taps = 0;
+  let tapTimer = 0;
+  let noteTimer = 0;
+  version.addEventListener('click', () => {
+    taps++;
+    window.clearTimeout(tapTimer);
+    tapTimer = window.setTimeout(() => (taps = 0), SCENES_SWITCH_TAP_WINDOW_MS);
+    if (taps < SCENES_SWITCH_TAPS) return;
+    taps = 0;
+    version.textContent = actions.onToggleScenes() ? 'Scenes on' : 'Scenes off';
+    window.clearTimeout(noteTimer);
+    noteTimer = window.setTimeout(
+      () => (version.textContent = versionLabel),
+      SCENES_SWITCH_NOTE_MS,
+    );
+  });
   // A new tab, so the menu stays as it is (Google Play wants the policy reachable in the app).
   const privacy = el('a', 'settings-privacy', 'Privacy policy');
   privacy.href = `${import.meta.env.BASE_URL}${PRIVACY_POLICY_PATH}`;
