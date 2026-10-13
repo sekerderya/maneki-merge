@@ -389,7 +389,7 @@ Play Console are docs/PLAY_STORE.md.
   `/maneki-merge/`, `fullScopeUrl` the game's path (so only links into `/maneki-merge/` open the
   app), display `fullscreen` (immersive), portrait, every bar and the splash `#fcefdf`, no
   notification delegation, no permissions, the site-settings shortcut, Custom Tabs as the fallback,
-  minSdk 23, compile and target SDK 36, `androidbrowserhelper` 2.7.4, AGP 8.9.1, Gradle 8.11.1,
+  minSdk 24 (Android 7.0, what `androidbrowserhelper` needs), compile and target SDK 36, `androidbrowserhelper` 2.7.4, AGP 8.9.1, Gradle 8.11.1,
   versionCode 1 / versionName 1.0.0 (the wrapper's version, apart from the game's). The launcher
   icon is the maskable icon (adaptive), the splash and `store_icon.png` (Play's 512 icon) the 512
   icon, all fetched from the live site at generation time.
