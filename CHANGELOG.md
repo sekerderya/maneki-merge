@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.42.12] - 2026-10-13
+
+### Changed
+
+- **Lighter frames in play, nothing on screen changed** (TECH_SPEC §13, the owner's request for optimisations that lose nothing). A profile of play on an emulated slow phone found the aim guide at about a third of the frame's work. Its dots are now one cropped image of a column texture instead of an image each (33–53), its ghost and the magnet's selection ring are images of ring textures instead of Graphics circles that Phaser re-traced every frame, and the rim's 21 dashes are one image. Measured on production builds (CPU throttled 6×, Android emulation): frame work median 5.5 → 4.1 ms, 90th percentile 11.2 → 8.1 ms. Same-state snapshots differ only at the rings' and dashes' anti-aliased edges.
+- **No multisampling with the raster art**: every edge the game draws is inside a padded texture, so 4× MSAA smoothed nothing (the cats, the jar and the paw match pixel for pixel without it). About 58 MB less GPU memory on a 390 × 844 screen at 2.5×. The vector and placeholder skins keep it.
+- **Phaser's own sound manager is off**: it opened a second AudioContext at boot that ran silently from the first tap on; the game's audio engine plays every sound as before.
+- The reduce-motion check keeps the phone's answer instead of asking the browser several times a frame.
+
 ## [0.42.11] - 2026-10-13
 
 ### Added
