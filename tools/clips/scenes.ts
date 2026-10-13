@@ -195,6 +195,27 @@ export const SCENES: readonly ClipScene[] = [
       await scene.advance(2600);
     },
   },
+  {
+    // Three 3s apart on the floor, other sizes between them: the lightning lands on the middle 3,
+    // chains to the other two, and all three pop.
+    id: 'lightning',
+    seed: 15,
+    async setup(scene) {
+      await scene.play();
+      await scene.place(3, atWall(-1, 3));
+      await scene.place(2, -130);
+      await scene.place(3, -20);
+      await scene.place(4, 110);
+      await scene.place(3, atWall(1, 3));
+      await scene.advance(1500);
+      await scene.game((g) => g.give('lightning'));
+    },
+    async play(scene) {
+      await scene.advance(500);
+      await scene.dragDrop(-20, { ms: 450, then: () => give(scene, 1) });
+      await scene.advance(2400);
+    },
+  },
   ...([1, -1] as const).map((direction): ClipScene => ({
     id: direction === 1 ? 'windRight' : 'windLeft',
     seed: 16,

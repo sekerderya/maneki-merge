@@ -33,8 +33,7 @@ describe('how-it-works clips (docs/plans/batch-21.md)', () => {
       goldenCats: 'golden',
       hanabi: 'hanabi',
       joker: 'joker',
-      // Recorded once the owner's art is in (docs/ART_ASSETS.md §4.16).
-      lightning: null,
+      lightning: 'lightning',
       hubris: 'hubris',
       echo: 'echo',
       copycat: 'copycat',
@@ -52,7 +51,7 @@ describe('how-it-works clips (docs/plans/batch-21.md)', () => {
       moreMagnets: 'magnet',
       hanabi: 'hanabi',
       joker: 'joker',
-      lightning: null,
+      lightning: 'lightning',
     });
     // Every clip opens from some card.
     const used = new Set<ClipId | null>([...Object.values(picks), ...Object.values(shop)]);

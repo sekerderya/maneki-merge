@@ -14,6 +14,7 @@ export const CLIP_IDS = [
   'golden',
   'hanabi',
   'joker',
+  'lightning',
   'windRight',
   'windLeft',
   'heavyDrop',
@@ -40,6 +41,8 @@ export const CLIP_CAPTIONS: Readonly<Record<ClipId, string>> = {
   golden: 'A golden cat merges two sizes up: two 3s make a 5.',
   hanabi: 'It goes off a second after it lands: small cats pop into coins, big ones get a push.',
   joker: 'The joker merges with the first cat it touches and makes it one size bigger.',
+  lightning:
+    'It strikes the first cat it touches and every cat of that size: they all pop into coins.',
   windRight: 'The wind pushes falling cats sideways, more at every level. Landed cats stay put.',
   windLeft: 'The wind pushes falling cats sideways, more at every level. Landed cats stay put.',
   heavyDrop: 'Cats shoot out of the paw, fall faster and knock aside the cat they land on.',
@@ -70,6 +73,7 @@ export function pickClip(id: PickId, windLeft = false): ClipId | null {
       return 'golden';
     case 'hanabi':
     case 'joker':
+    case 'lightning':
     case 'heavyDrop':
     case 'porcelain':
     case 'hubris':
@@ -83,9 +87,7 @@ export function pickClip(id: PickId, windLeft = false): ClipId | null {
     case 'quickCurse':
     case 'moreCurses':
       return 'curse';
-    // The lightning ball's clip is recorded once its art is in (docs/ART_ASSETS.md §4.16).
     case 'bigDrops':
-    case 'lightning':
       return null;
   }
 }
