@@ -74,7 +74,10 @@ The meta bot (`npm run sim -- --meta 150 --seeds 12 --extra-saves 1 --goal 8`): 
 cleared after a median 68 minutes, so the card opens about an hour in. Until a profile buys a level,
 its chance is 0 and no blessing pick offers it: every earlier run plays exactly as before.
 
-## 6. Still to do: the owner's art
+## 6. The owner's art (done in v0.42.1)
+
+All five came on 2026-10-13 and went in as below; the notes on what differs from the prompts are in
+ART_ASSETS §4.16.
 
 1. The owner generates the five images of ART_ASSETS §4.16: `specials/lightning`, `fx/bolts`,
    `fx/skybolts`, `fx/zap`, `fx/shock`. Check them against §2 and the §4.16 checks.

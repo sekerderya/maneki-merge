@@ -364,12 +364,12 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
   - [x] `npm run sim -- --aim smart`: a bot that plays more like a person; `--meta`: players from a fresh profile who buy as they go
   - [x] v0.39.1: Game Over without the biggest cat and the cards a run opened; magnets only with their blessing
   - [x] v0.40.0: Heavy Drop is a rule at its last level; More Magnets open from the start at 1,000
-- [ ] Batch 23 (v0.42.0), the Lightning blessing (GAME_DESIGN §15.15; plan: docs/plans/batch-23.md; art: docs/ART_ASSETS.md §4.16). **Status:** the rules and a stand-in look are in v0.42.0; the owner's art and the clip come next:
+- [x] Batch 23 (v0.42.0), the Lightning blessing (GAME_DESIGN §15.15; plan: docs/plans/batch-23.md; art: docs/ART_ASSETS.md §4.16). **Status:** done: the rules and a stand-in look in v0.42.0, the owner's art and the clip in v0.42.1:
   - [x] the lightning ball: the first cat it touches is struck with every cat of its size (or every boulder), time stands still for 0.45 s, then they pop into coins
   - [x] a sixth blessing card, open from stage 8 (15K–85K), so the early game plays as before; +1.5% per level, measured against Hanabi with the bot
   - [x] chain lightning: the jar darkens, a sky bolt, a tree of flickering bolts to every struck cat, flashes, rings and crackles, thunder (code-drawn stand-ins)
-  - [ ] the owner's phase 15 art: the ball and four effect sheets on black (bolts, sky bolts, impact pieces, crackles), and their build step
-  - [ ] the Lightning clip on its cards
+  - [x] the owner's phase 15 art: the ball and four effect sheets on black (bolts, sky bolts, impact pieces, crackles), and their build step (v0.42.1)
+  - [x] the Lightning clip on its cards (v0.42.1)
 
 ## M13: Final art integration
 

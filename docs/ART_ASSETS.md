@@ -2308,6 +2308,15 @@ each bolt's two ends, so the game can stretch it between two cats. Until they ar
 shows a plain stand-in (a flat circle and thin code-drawn lines); the clip for the cards is
 recorded once the art is in.
 
+**Arrived (2026-10-13, v0.42.1):** all five, from the first generation, in through `npm run art`
+(`tools/buildSpecials.ts` for the ball, `tools/buildLightning.ts` for the sheets), and the
+Lightning clip is recorded. Two of them differ from the prompt: the chain bolts came as a square
+sheet whose rows are pairs of nearly the same bolt (three shapes, not six; the game also mirrors
+them, so the links still change shape as they flicker), and each crackle pattern has its circle
+drawn as a glowing ring, which lies at the struck cat's edge like an electric sphere round it. Both
+are kept; regenerate only if the owner wants more shapes or no ring. With `?skin=vector` or
+`placeholder` the game keeps the code-drawn stand-ins.
+
 ## 5. Icon kit (every new icon)
 
 > Read this before writing a prompt for any new icon: an upgrade, a trial or blessing card, a
