@@ -190,8 +190,8 @@
   /* Both ends are the image's right end; the number sits between the torii and the well's end. */
   --body-left: calc(var(--menu-record-body-right) * var(--u));
   --body-right: var(--body-left);
-  --torii-left: calc(16 * var(--u));
-  --torii-width: calc(54 * var(--u));
+  --torii-left: calc(12 * var(--u));
+  --torii-width: calc(66 * var(--u));
   --value-left: calc(var(--torii-left) + var(--torii-width) + 4 * var(--u));
   --value-right: calc(var(--menu-record-well-end) * var(--u));
 }
@@ -227,10 +227,12 @@
   border-image-repeat: stretch;
 }
 
+/* The owner's torii (v0.42.9, docs/ART_ASSETS.md §4.5), centred on the well's height. */
 .menu-stage .menu-record-torii {
   left: var(--torii-left);
-  top: calc((var(--menu-record-well-top) - 1) * var(--u));
+  top: calc((var(--menu-record-well-top) + var(--menu-record-well-height) / 2) * var(--u));
   width: var(--torii-width);
+  translate: 0 -50%;
 }
 
 /* The title: the HUD's "SCORE:" (game.css), scaled to the card. */

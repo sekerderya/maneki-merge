@@ -731,6 +731,9 @@ Only the gate: no ground, no steps, no lanterns, no petals, no sparkles, no circ
 behind it. The gate centred, filling about 80% of the canvas. Square 1:1.
 ```
 
+**Done (2026-10-13, v0.42.9):** `menu/torii.jpg` is in the game, on the BEST STAGE card (66 mockup
+px wide, centred on the well's height) and on the shop's locked cards.
+
 ### 4.6 Phase 5: app icon
 
 ```text

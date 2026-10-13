@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.42.9] - 2026-10-13
+
+### Changed
+
+- **The owner's new torii** (`art-source/menu/torii.jpg`, docs/ART_ASSETS.md §4.5): a chunky red gate drawn like the score card's paw replaces the icons sheet's thin one, on the BEST STAGE card (a little bigger, 66 mockup px, centred on the well's height) and on the shop's locked cards.
+
 ## [0.42.8] - 2026-10-13
 
 ### Changed
