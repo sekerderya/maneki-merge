@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.42.8] - 2026-10-13
+
+### Changed
+
+- **The menu's record numbers are centred between the icon and the well's right end** (the owner's call): BEST SCORE's between the paw and the well's end, BEST STAGE's between the torii and the well's end, so they look centred in what is left of the well. The titles stay centred on the cards.
+
+### Added
+
+- A prompt for a chunky torii for the BEST STAGE card (docs/ART_ASSETS.md §4.5, `art-source/menu/torii.png`); `npm run art` uses it instead of the icons sheet's torii once it exists (menu and the shop's locked cards).
+
 ## [0.42.7] - 2026-10-13
 
 ### Changed

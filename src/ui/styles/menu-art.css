@@ -146,9 +146,10 @@
 
 /*
  * The record cards (v0.42.5): the in-game score card's art (ui/hud/scoreCard.ts) at mockup scale,
- * the paw on the left, the plain middle stretched a little so "BEST SCORE:" fits. The title and
- * the number are centred on the card's body (v0.42.7). BEST STAGE has no paw: its left end is the
- * image's right end mirrored, and the torii sits in the well's left end.
+ * the paw on the left, the plain middle stretched a little so "BEST SCORE:" fits. The title is
+ * centred on the card's body (v0.42.7), the number between the paw (or the torii) and the well's
+ * right end (v0.42.8). BEST STAGE has no paw: its left end is the image's right end mirrored, and
+ * the torii sits in the well's left end.
  */
 .menu-record {
   position: absolute;
@@ -170,7 +171,9 @@
   /* The body's edges, from the padding box (inside the slices). */
   --body-left: calc((var(--menu-record-body-left) - var(--menu-record-slice-left)) * var(--u));
   --body-right: calc((var(--menu-record-body-right) - var(--menu-record-slice-right)) * var(--u));
-  --value-inset: calc(var(--menu-record-value-inset) * var(--u));
+  /* The number's box, from the padding box: the well beside the paw's arm. */
+  --value-left: calc(var(--menu-record-value-left) * var(--u));
+  --value-right: calc(var(--menu-record-value-right) * var(--u));
 }
 
 .menu-record:first-child {
@@ -184,10 +187,13 @@
 .menu-record.is-stage {
   border-width: 0;
   border-image-source: none;
-  /* Both ends are the image's right end; the number clears the torii. */
+  /* Both ends are the image's right end; the number sits between the torii and the well's end. */
   --body-left: calc(var(--menu-record-body-right) * var(--u));
   --body-right: var(--body-left);
-  --value-inset: calc(70 * var(--u));
+  --torii-left: calc(16 * var(--u));
+  --torii-width: calc(54 * var(--u));
+  --value-left: calc(var(--torii-left) + var(--torii-width) + 4 * var(--u));
+  --value-right: calc(var(--menu-record-well-end) * var(--u));
 }
 
 /* The left end: the image's right end, mirrored. */
@@ -222,9 +228,9 @@
 }
 
 .menu-stage .menu-record-torii {
-  left: calc(16 * var(--u));
+  left: var(--torii-left);
   top: calc((var(--menu-record-well-top) - 1) * var(--u));
-  width: calc(54 * var(--u));
+  width: var(--torii-width);
 }
 
 /* The title: the HUD's "SCORE:" (game.css), scaled to the card. */
@@ -254,8 +260,8 @@
 .menu-screen.is-art .record-value {
   position: absolute;
   top: calc(var(--menu-record-well-top) * var(--u));
-  left: calc(var(--body-left) + var(--value-inset));
-  right: calc(var(--body-right) + var(--value-inset));
+  left: var(--value-left);
+  right: var(--value-right);
   display: flex;
   align-items: center;
   justify-content: center;

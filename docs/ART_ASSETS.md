@@ -81,6 +81,7 @@ narrower than their canvas: Claude crops the empty space.
 | 9b  | 4 menu     | `menu/buttons.png`                        | Sheet: blank PLAY, UPGRADES, record card, gear, coin pill           | 3:2, 1536×1024    |
 | 9c  | 4 menu     | `menu/menu-icons.png`                     | Sheet: torii, paw badge, arrow, coin, sparkles, petals              | 1:1, 1024×1024    |
 | 9d  | 4 menu     | `menu/record-card.png`                    | One empty record card with its sunken well                          | 3:2, 1536×1024    |
+| 9e  | 4 menu     | `menu/torii.png`                          | Chunky torii for the BEST STAGE card (v0.42.8)                      | 1:1, 1024×1024    |
 | 10  | 4 menu     | `menu/ui-kit.png`                         | Sheet: PLAY, secondary button, panel, card, close, gear             | 3:2, 1536×1024    |
 | 11  | 4 menu     | `menu/upgrade-icons.png`                  | Sheet: 5 upgrade icons                                              | 3:2, 1536×1024    |
 | 12  | 4 menu     | `menu/settings-icons.png`                 | Sheet: sound, haptics, reduce motion, how to play                   | 1:1, 1024×1024    |
@@ -697,6 +698,37 @@ phone vibrating; 3. a snail (reduce motion); 4. a question mark in a speech bubb
 A blank horizontal ribbon banner for a mobile game: a red ribbon with gold edges and folded ends,
 a few sakura petals at its ends, no text, in the style of the reference image. Plain flat white
 background. Landscape 3:2, the ribbon as wide as the canvas.
+```
+
+**Torii for the BEST STAGE card** (`menu/torii.png`, v0.42.8): the menu's record cards are the
+HUD's score card (v0.42.5); BEST STAGE has no paw, so the torii sits in the well's left end where
+the paw sits on BEST SCORE. The sheet's torii is thin and flat there. This one is a card ornament
+like the paw, not a §5 medallion. Attach `public/assets/hud/score-card.webp` and
+`art-source/menu/mockup.jpg`. The pipeline uses it instead of the sheet's torii, in the menu and
+on the shop's locked cards.
+
+```text
+Style: match the attached score card and its white cat paw exactly. Polished casual mobile-game
+art, cute chibi kawaii illustration, thick warm dark-brown outlines (never black) of even weight,
+soft pastel cel shading with gentle gradients and one small glossy highlight, light from the upper
+left, clean crisp vector-like edges, readable at 32 px.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow
+under the icon. No text, no letters, no numbers, no kanji, no watermark, no signature.
+
+One small icon for the mobile game "Maneki Merge": a cute, chunky red Japanese torii gate, seen
+straight from the front, perfectly symmetric. In the game it sits inside the caramel well of the
+attached card, beside the "BEST STAGE" number, the way the white cat paw sits on the score card, so
+draw it with the same outline weight, shading and warmth as that paw.
+The gate is stocky and toy-like, about as wide as it is tall, with soft rounded corners and no
+thin parts:
+- a thick top beam that curves gently upward at both ends, capped in dark chocolate brown;
+- a second straight crossbeam a little below it, in glossy vermilion red;
+- a small blank plaque between the two beams;
+- two thick round pillars, as thick as the beams, slightly splayed, in glossy vermilion red with a
+  lighter red highlight on their left side;
+- small dark chocolate-brown feet at the bottom of each pillar.
+Only the gate: no ground, no steps, no lanterns, no petals, no sparkles, no circle or badge
+behind it. The gate centred, filling about 80% of the canvas. Square 1:1.
 ```
 
 ### 4.6 Phase 5: app icon

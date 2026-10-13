@@ -12,7 +12,8 @@
  *   edge, so its right cap is the left one mirrored. The gear button is cropped.
  * - Record card: a nine-slice frame with the well painted out, and the well as its own strip.
  * - Icons: the torii, arrow and two sparkles, each cropped (the sheet's petals, coin and
- *   pink gear are unused: every coin is the HUD's).
+ *   pink gear are unused: every coin is the HUD's). The torii comes from its own image,
+ *   `torii.*`, once the owner has made one (v0.42.8, docs/ART_ASSETS.md §4.5).
  * Everything outside a piece's dark outline (the sheet's soft drop shadows, stray light pixels) is
  * cleared; the game draws its own shadows.
  */
@@ -140,7 +141,10 @@ export async function buildMenu(): Promise<void> {
     if (!found) throw new Error(`No icon in cell ${col},${row}`);
     return save(isolate(icons, found, MARGIN), file);
   };
-  const torii = await icon(0, 1, 'torii.webp');
+  const toriiSource = await findSource(SOURCE_DIR, 'torii').catch(() => undefined);
+  const torii = toriiSource
+    ? await save(fitCrop(await cutOut(toriiSource)), 'torii.webp')
+    : await icon(0, 1, 'torii.webp');
   const sparkle = await icon(2, 1, 'sparkle.webp', 0);
   const sparkleSmall = await icon(2, 1, 'sparkle-small.webp', 1);
   // The arrow's largest piece (a stray underline under it is dropped).

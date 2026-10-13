@@ -307,15 +307,17 @@ function setMenuArtProperties(root: HTMLElement): void {
   set('--menu-record-art-width', card.minWidth);
   set('--menu-record-slice-left', card.sliceLeft);
   set('--menu-record-slice-right', card.sliceRight);
-  // The title and the number are centred on the card's body (the paw sticks out of its left).
+  // The title is centred on the card's body (the paw sticks out of its left).
   set('--menu-record-body-left', art.cardLeft * s);
   set('--menu-record-body-right', (art.width - art.cardRight) * s);
   set('--menu-record-label-top', card.labelTop);
   set('--menu-record-label-height', card.labelHeight);
   set('--menu-record-well-top', card.wellTop);
   set('--menu-record-well-height', card.wellHeight);
-  // The number keeps as far from both body edges as the well's left end beside the paw's arm.
-  set('--menu-record-value-inset', (art.wellLeft - art.cardLeft) * s + SCORE_WELL_PADDING);
+  // The number is centred between the paw's arm (or the torii) and the well's right end.
+  set('--menu-record-value-left', card.scoreMarginLeft);
+  set('--menu-record-value-right', card.scoreMarginRight);
+  set('--menu-record-well-end', (art.width - art.wellRight) * s + SCORE_WELL_PADDING);
 }
 
 /**
