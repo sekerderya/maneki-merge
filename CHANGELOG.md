@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.42.3] - 2026-10-13
+
+### Changed
+
+- **No white flash over the screen** when a lightning ball strikes (the owner's call, to try): only the bolts, the flashes and rings on the struck cats, the crackles and the sparks remain. The Lightning clip is recorded again.
+
 ## [0.42.2] - 2026-10-13
 
 ### Changed
