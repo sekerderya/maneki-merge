@@ -1,11 +1,12 @@
 import { APP_NAME } from '../../config/app';
-import { HUD_BADGE_ART, HUD_SPRITE_DIR } from '../../config/hudSprites';
+import { HUD_SCORE_CARD_ART, HUD_SPRITE_DIR } from '../../config/hudSprites';
 import { MENU_ART, MENU_SPRITE_DIR } from '../../config/menuSprites';
 import type { MenuSprite, MenuStripSprite } from '../../config/menuSprites';
 import { formatNumber } from '../../core/format';
 import { paintHeroCat } from '../catIcon';
 import { coinIcon } from '../coinIcon';
 import { button, el } from '../dom';
+import { scoreCardLayout } from '../hud/scoreCard';
 import { ICON_ARROW_UP, ICON_GEAR, ICON_PAW, ICON_SHARE } from '../icons';
 
 /** What the install area shows (GAME_DESIGN §2.1). */
@@ -66,6 +67,9 @@ const BUSH = `<svg class="menu-bush" viewBox="0 -90 90 90" aria-hidden="true" fo
 <circle cx="16" cy="-30" r="10" fill="#f2afbf"/>
 <ellipse cx="62" cy="-62" rx="4.5" ry="2.6" fill="#f2a7b8" transform="rotate(60 62 -62)"/>
 </svg>`;
+
+/** The record cards are drawn this many mockup pixels tall (menu-art.css). */
+const RECORD_CARD_HEIGHT = 127;
 
 /** The pieces every menu layout has; the view updates them. */
 interface MenuControls {
@@ -280,17 +284,30 @@ function setMenuArtProperties(root: HTMLElement): void {
     ['play', MENU_ART.play],
     ['upgrades', MENU_ART.upgrades],
     ['coins', MENU_ART.coinsPill],
-    ['well', MENU_ART.well],
   ];
   for (const [name, sprite] of strips) {
     set(`--menu-${name}-art`, `url("${menuArtPath(sprite)}")`);
     set(`--menu-${name}-slice`, sprite.cap);
     set(`--menu-${name}-cap`, sprite.cap / sprite.height);
   }
-  const { card } = MENU_ART;
-  set('--menu-card-art', `url("${menuArtPath(card)}")`);
-  set('--menu-card-slice', card.slice);
-  set('--menu-card-cap', card.slice / card.height);
+  // The record cards are the in-game score card (v0.43, ui/hud/scoreCard.ts), in mockup pixels.
+  const art = HUD_SCORE_CARD_ART;
+  const card = scoreCardLayout(art, RECORD_CARD_HEIGHT);
+  const s = RECORD_CARD_HEIGHT / art.height;
+  set('--menu-record-art', `url("${import.meta.env.BASE_URL}${HUD_SPRITE_DIR}${art.file}")`);
+  set('--menu-record-slice', `0 ${art.sliceRight} 0 ${art.sliceLeft} fill`);
+  set('--menu-record-height', card.height);
+  set('--menu-record-slice-left', card.sliceLeft);
+  set('--menu-record-slice-right', card.sliceRight);
+  // The title over the well, clear of the paw ("BEST SCORE:" is longer than "SCORE:").
+  set('--menu-record-label-top', card.labelTop);
+  set('--menu-record-label-height', card.labelHeight);
+  set('--menu-record-label-left', art.wellLeft * s);
+  set('--menu-record-label-right', (art.width - art.wellRight) * s);
+  set('--menu-record-well-top', card.wellTop);
+  set('--menu-record-well-height', card.wellHeight);
+  set('--menu-record-margin-left', card.scoreMarginLeft);
+  set('--menu-record-margin-right', card.scoreMarginRight);
 }
 
 /**
@@ -318,21 +335,15 @@ function artLayout(root: HTMLElement, actions: MenuActions): MenuControls {
 
   const records = el('div', 'menu-art-records');
   records.dataset['testid'] = 'records';
-  const card = (label: string, value: HTMLElement, icon: HTMLImageElement): HTMLElement => {
-    const node = el('p', 'menu-card');
-    node.append(el('span', 'menu-card-label', label), el('span', 'menu-card-well'), icon, value);
+  // Both cards are the in-game score card: the paw, the title over the well, the number in it.
+  const card = (label: string, value: HTMLElement): HTMLElement => {
+    const node = el('p', 'menu-record');
+    node.append(el('span', 'menu-record-label', label), value);
     return node;
   };
   const bestScoreValue = recordValue('best-score');
   const bestStageValue = recordValue('best-stage');
-  const badge = el('img', 'menu-card-icon is-badge');
-  badge.src = `${import.meta.env.BASE_URL}${HUD_SPRITE_DIR}${HUD_BADGE_ART.file}`;
-  badge.alt = '';
-  badge.draggable = false;
-  records.append(
-    card('Best score', bestScoreValue, badge),
-    card('Best stage', bestStageValue, menuImage(MENU_ART.torii, 'menu-card-icon is-torii')),
-  );
+  records.append(card('Best score', bestScoreValue), card('Best stage', bestStageValue));
 
   const play = playButton(actions, 'menu-play');
   const { upgrades, upgradesDot } = upgradesButton(actions, 'menu-upgrades');

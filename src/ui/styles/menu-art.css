@@ -144,66 +144,93 @@
   width: 100%;
 }
 
-/* The record cards: the frame (nine-slice), the title, the well (three-slice), an icon, a number. */
-.menu-card {
+/*
+ * The record cards (v0.43): the in-game score card's art (ui/hud/scoreCard.ts) at mockup scale,
+ * the paw on the left, the plain middle stretched a little so "BEST SCORE:" fits over the well,
+ * the number in the well.
+ */
+.menu-record {
   position: absolute;
   top: calc(934 * var(--u));
-  width: calc(242 * var(--u));
-  height: calc(127 * var(--u));
+  display: flex;
+  align-items: flex-start;
+  box-sizing: border-box;
+  width: calc(310 * var(--u));
+  height: calc(var(--menu-record-height) * var(--u));
   margin: 0;
-  border: 0 solid transparent;
-  border-image: var(--menu-card-art) var(--menu-card-slice) fill /
-    calc(127 * var(--u) * var(--menu-card-cap)) stretch;
+  border-style: solid;
+  border-color: transparent;
+  border-width: 0 calc(var(--menu-record-slice-right) * var(--u)) 0
+    calc(var(--menu-record-slice-left) * var(--u));
+  border-image-source: var(--menu-record-art);
+  border-image-slice: var(--menu-record-slice);
+  border-image-repeat: stretch;
+  filter: drop-shadow(0 calc(4 * var(--u)) calc(4 * var(--u)) rgba(122, 78, 46, 0.2));
 }
 
-.menu-card:first-child {
-  left: calc(130 * var(--u));
+.menu-record:first-child {
+  left: calc(66 * var(--u));
 }
 
-.menu-card:last-child {
-  left: calc(396 * var(--u));
+.menu-record:last-child {
+  left: calc(392 * var(--u));
 }
 
-.menu-card-label {
+/* The title: the HUD's "SCORE:" (game.css), scaled to the card. */
+.menu-record-label {
   position: absolute;
-  left: 0;
-  right: 0;
-  top: calc(13 * var(--u));
-  color: #5b3324;
-  font-size: calc(31 * var(--u));
+  top: calc(var(--menu-record-label-top) * var(--u));
+  left: calc((var(--menu-record-label-left) - var(--menu-record-slice-left)) * var(--u));
+  right: calc((var(--menu-record-label-right) - var(--menu-record-slice-right)) * var(--u));
+  height: calc(var(--menu-record-label-height) * var(--u));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #7f3d2a;
+  font-size: calc(30 * var(--u));
   font-weight: var(--weight-bold);
+  letter-spacing: 0.04em;
   line-height: 1;
-  letter-spacing: 0.02em;
-  text-align: center;
   text-transform: uppercase;
   white-space: nowrap;
 }
 
-.menu-card-well {
-  position: absolute;
-  left: calc(22 * var(--u));
-  top: calc(50 * var(--u));
-  width: calc(200 * var(--u));
-  height: calc(55 * var(--u));
-  border: 0 solid transparent;
-  border-image: var(--menu-well-art) 0 var(--menu-well-slice) fill / 0
-    calc(55 * var(--u) * var(--menu-well-cap)) stretch;
+.menu-record-label::after {
+  content: ':';
 }
 
-.menu-stage .menu-card-icon.is-badge {
-  left: calc(20 * var(--u));
-  top: calc(48 * var(--u));
-  width: calc(60 * var(--u));
+/* The numbers: white with a thin dark-brown edge, like the HUD's score; long ones shrink (--chars). */
+.menu-screen.is-art .record-value {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: calc(var(--menu-record-well-height) * var(--u));
+  margin: calc(var(--menu-record-well-top) * var(--u))
+    calc(var(--menu-record-margin-right) * var(--u)) 0
+    calc(var(--menu-record-margin-left) * var(--u));
+  color: #fff;
+  font-size: calc(var(--u) * min(42, 380 / var(--chars, 6)));
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+  --edge: calc(2.9 * var(--u));
+  --edge-corner: calc(1.9 * var(--u));
+  text-shadow:
+    var(--edge) 0 0 #5c2c18,
+    calc(-1 * var(--edge)) 0 0 #5c2c18,
+    0 var(--edge) 0 #5c2c18,
+    0 calc(-1 * var(--edge)) 0 #5c2c18,
+    var(--edge-corner) var(--edge-corner) 0 #5c2c18,
+    calc(-1 * var(--edge-corner)) var(--edge-corner) 0 #5c2c18,
+    var(--edge-corner) calc(-1 * var(--edge-corner)) 0 #5c2c18,
+    calc(-1 * var(--edge-corner)) calc(-1 * var(--edge-corner)) 0 #5c2c18,
+    0 calc(4.8 * var(--u)) 0 #5c2c18;
 }
 
-.menu-stage .menu-card-icon.is-torii {
-  left: calc(20 * var(--u));
-  top: calc(50 * var(--u));
-  width: calc(64 * var(--u));
-}
-
-/* White numbers with a dark-brown edge, like the mockup's. */
-.menu-screen.is-art .record-value,
+/* The coins: white with a dark-brown edge, like the mockup's. */
 .menu-screen.is-art .coin-value {
   color: #fff;
   font-weight: var(--weight-bold);
@@ -213,19 +240,6 @@
   -webkit-text-stroke: calc(6 * var(--u)) #4e2416;
   paint-order: stroke fill;
   text-shadow: 0 calc(3 * var(--u)) 0 #4e2416;
-}
-
-/* The number centred in the well beside the icon; long numbers shrink to fit (--chars). */
-.menu-screen.is-art .record-value {
-  position: absolute;
-  left: calc(82 * var(--u));
-  right: calc(20 * var(--u));
-  top: calc(50 * var(--u));
-  height: calc(55 * var(--u));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(var(--u) * min(44, 260 / var(--chars, 6)));
 }
 
 /* PLAY and UPGRADES: three-slice pills that sink a little when pressed. */

@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.42.5] - 2026-10-13
+
+### Changed
+
+- **The menu's record cards are the in-game score card** (the owner's call): BEST SCORE and BEST STAGE both use the HUD's paw card, with "BEST SCORE:" / "BEST STAGE:" over the caramel well and the number in white with a brown edge, like the score in a run. The card is stretched a little so the longer title fits beside the paw; long numbers still shrink to fit. The paw badge and the torii no longer show on the menu (the torii stays on the shop's locked cards).
+
 ## [0.42.4] - 2026-10-13
 
 ### Changed
