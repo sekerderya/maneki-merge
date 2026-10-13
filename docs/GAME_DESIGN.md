@@ -30,6 +30,7 @@ The owner's mockup (v0.20, `art-source/menu/mockup.jpg`, §13.1), top to bottom:
 - **PLAY**: a big glossy coral pill, the only coral thing on the screen.
 - **UPGRADES**: a cream pill with an up arrow, below PLAY. Shows a red dot when any upgrade is affordable and opens the shop panel.
 - Install hint, shown only when the game runs in a browser tab. On iOS: "Tap Share, then Add to Home Screen". On Android Chrome: an "Install" button. It and the update badge sit small in the top bar, between the gear and the coins.
+- **Scenes** (v0.44, §2.6): hidden from players; on a device that turned it on, a small cream pill under the gear opens the scenes for the owner's clips.
 - An "Updating…" badge while a new version installs. Most updates now install on the loading screen (§2.0); one found later installs itself and restarts the app after a second on the menu with no panel open; one that arrives during a run waits for the menu. Tapping the badge retries a stalled update.
 - The version and build hash live in the settings panel.
 
@@ -70,7 +71,7 @@ Layout: everything sits where it is in the mockup, on a stage of the mockup's si
   - **Haptics**: vibration; the row only shows where the browser can vibrate (Android).
   - **Reduce motion**: no camera shake, about a third of the particles, one flying coin per payout, and no decorative animations; banners fade instead of popping. The phone's own reduced-motion setting does the same whatever this switch says.
 - **How to play**: the first-run hints show again in the next run, and every clip button gets its new dot back (§2.5).
-- The version and build hash, small, at the bottom, and beside them a **Privacy policy** link (v0.43: Google Play wants the policy reachable in the app) that opens `privacy.html` in a new tab, so the menu stays as it is.
+- The version and build hash, small, at the bottom, and beside them a **Privacy policy** link (v0.43: Google Play wants the policy reachable in the app) that opens `privacy.html` in a new tab, so the menu stays as it is. Seven quick taps on the version turn the menu's Scenes button on or off (v0.44, §2.6).
 - Closing: the close button, a tap on the dimmed menu, or the back button. There is no music yet, so there is no music switch.
 - Look (v0.37, the owner's approved mockup `art-source/ui/settings-mockup.jpg`): the same layout, in the Upgrades screen's pieces: the Upgrades card as the panel (the version in its tan strip), the title in the Upgrades title's cream lettering, the Upgrades close button, each icon in a gold-rimmed cream medallion, a switch gold like the Buy button when ON and a sunken tan track when OFF. With `?skin=vector` it keeps the code-drawn card of v0.14.
 
@@ -103,6 +104,41 @@ A card whose effect can't be guessed from its line has a small round **clip butt
 
 Lucky Paw, Big Catch and Big Drops have no clip.
 
+### 2.6 Scenes (v0.44)
+
+> The owner's request (2026-10-14): a clip of the game's most fun moments, to send to publishers. The scenes set each moment up; the owner plays it.
+
+A hidden part of the main menu for making clips: runs set up for one big moment each. Nothing plays by itself: the jar is set up and settled, the right ball waits in the paw, and the player drops one or two balls to set the moment off.
+
+- **Turning it on:** the menu's **Scenes** button (a small cream pill under the gear) shows only on a device that turned it on: `?scenes=1` in the address (`?scenes=0` turns it off), or seven quick taps on the version in Settings (§2.4), which then reads "Scenes on" (or "Scenes off") for 2 s. The device remembers it under its own key, outside the save (`maneki-merge:scenes`). Players never see it.
+- **The panel:** the Settings card titled "Scenes", one row per scene: the group's ball in a medallion (Lucky Save: Second Chance's icon), the group, the scene's name, what to do, and its stage; the list scrolls. A tap plays the scene; the close button, a tap outside and the back button close the panel.
+- **A scene's run:** it starts at the scene's stage (its garden and its cats), with every shop card at its top level (two Lucky Saves, the top coin bonus, every blessing open for the picks), the scene's rule on, the HUD's score and coins as if a run had come this far, and the jar's cats and balls already settled (2.5 s of play under the plain rules, run at once before it shows). From there it is an ordinary run: merges, stage clears with the shrine growing, picks, Lucky Saves, game over. The Dice scenes script their dice: the rolls the moment needs, then the dice roll again.
+- **A sandbox:** nothing a scene earns reaches the wallet, the records or the stats; it is never saved (closing the app ends it), shows no first-run hints, and its Game Over shows no new-record badge. Game Over's Play Again and the pause's **Restart scene** (only in a scene) set the same scene up again for another take; Quit to Menu leaves it.
+- The jars were tuned headless; a test plays each scene's moment from several drop points and checks that its jar holds still until the first drop (`tests/physics/scenarios.test.ts`).
+
+| Group      | Scene             | Stage | What to do                                               | What happens                                                                        |
+| ---------- | ----------------- | ----: | -------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Lightning  | Boulder storm     |     5 | the lightning on any boulder of a jar full of them       | every boulder breaks, the top 8 falls on the other: the last cat, the shrine grows  |
+| Lightning  | Full house        |     8 | the lightning on the 3 at the top right of a full jar    | six 3s pop and the jar caves in: six merges in a row, up to an 8                    |
+| Hanabi     | Firework shelf    |    10 | the hanabi into the gap on the right                     | the blast clears the shelf under the top 8: it falls on the other, the shrine grows |
+| Hanabi     | Crowd pleaser     |     3 | the hanabi into a jar crowded with small cats            | six to nine small cats pop into coins                                               |
+| Joker Cat  | Wild finish       |    15 | the joker on the 8                                       | the last cat, the shrine grows                                                      |
+| Joker Cat  | Joker chain       |    12 | the joker on the 4 at the top of a staircase             | 5, 6, 7 and 8 in a chain; the boulder beside it breaks                              |
+| Golden Cat | Golden staircase  |    20 | the golden 3 on the 3                                    | it skips to a 5 and the chain runs to the last cat; the shrine grows                |
+| Golden Cat | Double gold       |     6 | the golden 4 on the 4, then the golden 3 on the 3        | a 6, 7 and 8 in a chain, then a 5                                                   |
+| Magnet     | Magnet match      |     4 | take the 8 on the right and drop it on the other 8       | the last cat                                                                        |
+| Magnet     | Magnet chain      |     7 | take the 4 on the right and drop it on the staircase's 4 | 5, 6, 7 and 8 in a chain                                                            |
+| Lucky Save | Brim full         |     9 | a 4 anywhere on the brim-full jar                        | the countdown, then a Lucky Save                                                    |
+| Lucky Save | Saved and cleared |    13 | a 4 anywhere                                             | a Lucky Save, then 7, 8 and the last cat                                            |
+| Hubris     | Three and three   |    11 | the 3 into the gap between two 3s                        | three 3s make a 5, three 5s a 7, then the 8 and the last cat                        |
+| Hubris     | Hubris cascade    |    14 | the 2 between the two 2s on the right                    | three 2s make a 4, three 4s a 6, then 7 and 8                                       |
+| Heavy Drop | Fireball chain    |    17 | the fireball 4 on the staircase's 4                      | the chain runs to the last cat                                                      |
+| Heavy Drop | Knockout          |    16 | the fireball on an 8's outer edge, by the wall           | it knocks that 8 into the other: the last cat                                       |
+| Dice       | Lucky roll        |    18 | the 4 on the 4                                           | a lucky roll skips the 5 and the chain runs to the last cat                         |
+| Dice       | Fizzle, then luck |    19 | the 4 on the 4, twice                                    | a fizzle, then a lucky roll and a chain up to an 8                                  |
+
+The narrowest targets: Three and three wants the 3 right in the gap (its aim ghost between the two 3s), Knockout the outer edge of an 8, by the wall. The others work from most drops over their target.
+
 ### 2.3 Game
 
 - The screen the owner chose in v0.14 (the "Sakura garden" design): the whole screen is the scene, and the HUD floats over its top.
@@ -110,7 +146,7 @@ Lucky Paw, Big Catch and Big Drops have no clip.
 - The dropper: a calico cat's paw floats over the jar (v0.25, with the raster art: its arm fades out a little above the wrist; from v0.22 to v0.24 it reached out from under a noren curtain; with `?skin=vector` it reaches down from the top of the screen) and holds the current cat by the head, just above the jar's top rail (v0.21.1; until then the cat hung in front of the rail). It follows the aim, stays where it is while the next cat comes, lifts a little when it lets go, and is hidden while the jar grows. A dotted aim guide shows where the cat will fall, with a faint ghost of the cat where it lands.
 - HUD over the top of the scene. At the top in the middle, the stage in words ("STAGE 2"), dark brown with a cream edge, no card (v0.25). On the left, a narrow cream score card with "SCORE:" and the score in a sunken well, level with the coins card (their middles on one line, v0.26; until v0.24 it sat at the top, level with the pause button). (The stage card of v0.14–v0.17, with a progress bar and the stage's last cat, is gone; the banners still announce stage clears and the new goal.) On the right, a pink pause button, a "COINS:" card with the coins earned this run, which runs off the right edge, and under it the next cat in a round glass bubble with a small "NEXT" tag on its rim (v0.14.1). Only the pause button takes touches; everywhere else a touch aims.
 - Overlays:
-  - **Pause**: Resume, Sound, Haptics, Quit to Menu. Sound and Haptics are gold when on, cream with a crossed-out icon when off.
+  - **Pause**: Resume, Sound, Haptics, Quit to Menu; in a scene (§2.6) also Restart scene. Sound and Haptics are gold when on, cream with a crossed-out icon when off.
   - **Game Over**: score, best score, stage reached, coins earned this run, new-record badges (best score, best stage), Play Again, Menu. v0.39.1 (the owner's call) took out the biggest cat made this run (with its "New" chip for the biggest cat ever) and the shop cards the run opened ("New in the shop: …", v0.36).
   - Look (v0.37, the owner's approved mockups `art-source/ui/pause-mockup.jpg`, `gameover-mockup.jpg`): the v0.14 layout in the Upgrades screen's and the menu's pieces: the Upgrades card as the panel, the title (and Game Over's score) in the Upgrades title's cream lettering with a dark-brown edge, Resume and Play Again as the menu's coral PLAY pill, the quiet buttons as the cream UPGRADES pill, the HUD's coin (the menu's paw coin until v0.42.4). With `?skin=vector` the code-drawn cards of v0.14.
 - Short banners: Combo, Jackpot, Stage clear! (every stage clear), The shrine grows! (as the jar grows, every 5 stages, v0.33; with the new jar's coin multiplier under it, "Coins ×2", since v0.36; from v0.29.4 to v0.32 no banner, and until v0.29.4 it replaced "Stage clear!" at a clear that grew the jar), Lucky Save!. (Until v0.29.5 the reveal of a new stage showed "New cats unlocked!" with the next goal; the owner removed it.)

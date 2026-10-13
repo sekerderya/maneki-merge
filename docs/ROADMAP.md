@@ -400,6 +400,7 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
 - [ ] Version 1.0.0, `CHANGELOG.md`, tag `v1.0.0`, and a GitHub Release with notes
 - [ ] README: screenshots/GIF, install and update instructions for iOS and Android, known limitations
 - [x] Google Play app (v0.43; the owner's call on 2026-10-13: a Trusted Web Activity of the live site instead of the Capacitor wrapper planned here): `android/`, `android.yml` building the signed bundle, `npm run android:key`, the asset links at `sekerderya.github.io`, the privacy policy (in Settings too), the store texts and screenshots (docs/PLAY_STORE.md, TECH_SPEC §16)
+- [x] Scenes for the owner's clips to publishers (v0.44, GAME_DESIGN §2.6): a hidden menu panel of 18 set-up moments, two per special ball, Lucky Save, Hubris, Heavy Drop and Dice
 - [ ] Owner: the upload key, the Play Console app, Play's fingerprint in the asset links, the feature graphic (ART_ASSETS §4.18), the closed test (12 testers, 14 days) and the production release (docs/PLAY_STORE.md §2–§5)
 
 ### Release QA checklist
