@@ -31,7 +31,51 @@ class FakeBrowser implements HistoryLike, PopStateTarget {
   }
 }
 
+/** A browser whose `back()` lands later, like a real one: `land()` delivers it. */
+class SlowBrowser extends FakeBrowser {
+  private queued = 0;
+
+  override back(): void {
+    this.queued++;
+  }
+
+  land(): void {
+    for (; this.queued > 0; this.queued--) super.back();
+  }
+}
+
 describe('BackStack', () => {
+  it('pushes a layer opened while its own back is on the way only once that back has landed', () => {
+    const browser = new SlowBrowser();
+    const stack = new BackStack(browser, browser);
+    const panel = stack.push(vi.fn());
+    expect(browser.entries).toBe(2);
+    // A Scenes row: the panel closes and the game opens in the same tap.
+    stack.release(panel);
+    const onGameBack = vi.fn();
+    stack.push(onGameBack);
+    expect(browser.entries).toBe(2);
+    browser.land();
+    expect(browser.entries).toBe(2);
+    expect(stack.depth).toBe(1);
+    // Back leaves the game, not the app.
+    browser.pressBack();
+    browser.land();
+    expect(onGameBack).toHaveBeenCalledOnce();
+    expect(browser.entries).toBe(1);
+  });
+
+  it('drops a layer released before its entry was pushed', () => {
+    const browser = new SlowBrowser();
+    const stack = new BackStack(browser, browser);
+    stack.release(stack.push(vi.fn()));
+    const late = stack.push(vi.fn());
+    stack.release(late);
+    browser.land();
+    expect(browser.entries).toBe(1);
+    expect(stack.depth).toBe(0);
+  });
+
   it('runs the topmost handler when back is pressed', () => {
     const browser = new FakeBrowser();
     const stack = new BackStack(browser, browser);

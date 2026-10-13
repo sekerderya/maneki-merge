@@ -25,6 +25,12 @@ export class BackStack {
   private nextToken = 1;
   /** `history.back()` calls we made ourselves; their popstate events must not run handlers. */
   private ignoredPops = 0;
+  /**
+   * Layers opened while one of our `history.back()` calls was still on its way (it lands
+   * asynchronously): their entries are pushed once it has landed, or a push made first would be
+   * the entry it takes away (a Scenes row closes the panel and opens the game at once).
+   */
+  private pendingPushes: number[] = [];
 
   constructor(
     private readonly history: HistoryLike,
@@ -42,7 +48,8 @@ export class BackStack {
   push(onBack: BackHandler): number {
     const token = this.nextToken++;
     this.handlers.push({ token, onBack });
-    this.history.pushState({ manekiLayer: token }, '');
+    if (this.ignoredPops > 0) this.pendingPushes.push(token);
+    else this.history.pushState({ manekiLayer: token }, '');
     return token;
   }
 
@@ -54,6 +61,12 @@ export class BackStack {
     const top = this.handlers[this.handlers.length - 1];
     if (!top || top.token !== token) return;
     this.handlers.pop();
+    // A layer whose entry isn't pushed yet has nothing to take back.
+    const pending = this.pendingPushes.indexOf(token);
+    if (pending >= 0) {
+      this.pendingPushes.splice(pending, 1);
+      return;
+    }
     this.ignoredPops++;
     this.history.back();
   }
@@ -65,6 +78,10 @@ export class BackStack {
   private readonly onPopState = (): void => {
     if (this.ignoredPops > 0) {
       this.ignoredPops--;
+      if (this.ignoredPops === 0) {
+        for (const token of this.pendingPushes) this.history.pushState({ manekiLayer: token }, '');
+        this.pendingPushes = [];
+      }
       return;
     }
     this.handlers.pop()?.onBack();
