@@ -25,7 +25,8 @@ export type SoundName =
   | 'echo'
   | 'curse'
   | 'grind'
-  | 'clack';
+  | 'clack'
+  | 'thunder';
 
 /** Everything goes through one master gain and a limiter, so stacked sounds never clip. */
 export const MASTER_VOLUME = 0.8;
@@ -81,6 +82,8 @@ export const SOUNDS: Readonly<Record<SoundName, SoundSpec>> = {
   curse: { volume: 0.3, durationMs: 900, minIntervalMs: 300, maxVoices: 1 },
   grind: { volume: 0.42, durationMs: 450, minIntervalMs: 200, maxVoices: 1 },
   clack: { volume: 0.3, durationMs: 160, minIntervalMs: 60, maxVoices: 2 },
+  // Batch 23 (GAME_DESIGN §15.15): a lightning ball strikes.
+  thunder: { volume: 0.5, durationMs: 1100, minIntervalMs: 300, maxVoices: 1 },
 };
 
 /**

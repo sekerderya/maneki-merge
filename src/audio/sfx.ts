@@ -236,6 +236,38 @@ export const RECIPES: Readonly<Record<SoundName, Recipe>> = {
       tone(v, { from: 320, delay, decay: 0.04, gain: 0.5 });
     }
   },
+  // A lightning ball strikes (GAME_DESIGN §15.15): an electric zap and a sharp, stuttering crack,
+  // then thunder rolling away.
+  thunder(v) {
+    tone(v, { type: 'sawtooth', from: 2200, to: 320, glide: 0.14, decay: 0.16, gain: 0.35 });
+    for (const [delay, gain] of [
+      [0, 1],
+      [0.035, 0.7],
+      [0.08, 0.5],
+    ] as const) {
+      noise(v, { filter: 'highpass', from: 2400, delay, attack: 0.001, decay: 0.07, gain });
+    }
+    noise(v, {
+      filter: 'lowpass',
+      from: 520,
+      to: 110,
+      q: 1.5,
+      delay: 0.05,
+      attack: 0.06,
+      decay: 0.95,
+      gain: 1,
+    });
+    tone(v, {
+      type: 'triangle',
+      from: 72,
+      to: 38,
+      glide: 0.8,
+      delay: 0.04,
+      attack: 0.03,
+      decay: 0.85,
+      gain: 0.7,
+    });
+  },
   // Two rising notes and a ching.
   purchase(v) {
     const hz = 659.25;

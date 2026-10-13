@@ -48,8 +48,11 @@ export class PopFx {
     private readonly fx: MergeFx,
   ) {}
 
-  /** Pops a batch of cats that left the run in the same tick. */
-  popAll(nowMs: number, requests: readonly PopRequest[]): void {
+  /**
+   * Pops a batch of cats that left the run in the same tick, staggered from the top down, or all
+   * at once without `stagger` (a lightning strike's).
+   */
+  popAll(nowMs: number, requests: readonly PopRequest[], stagger = true): void {
     // The top of the jar first (y grows downward).
     const topDown = [...requests].sort((a, b) => a.y - b.y);
     topDown.forEach((r, i) => {
@@ -61,7 +64,7 @@ export class PopFx {
       item.x = r.x;
       item.y = r.y;
       item.coins = r.coins;
-      item.startMs = nowMs + popDelay(i, topDown.length);
+      item.startMs = nowMs + (stagger ? popDelay(i, topDown.length) : 0);
       item.started = false;
       item.bodyScale = sprite?.body.scaleX ?? 1;
       item.numberScale = sprite?.number.scaleX ?? 1;

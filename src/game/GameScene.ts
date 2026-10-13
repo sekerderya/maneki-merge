@@ -66,6 +66,8 @@ import { CurseFx } from './fx/CurseFx';
 import { DiceFx } from './fx/DiceFx';
 import { KintsugiFx } from './fx/KintsugiFx';
 import { LastCatFx } from './fx/LastCatFx';
+import { LightningFx } from './fx/LightningFx';
+import { lightningStandIns } from './fx/lightningFrames';
 import { MergeFx } from './fx/MergeFx';
 import type { PayoutKind } from './fx/MergeFx';
 import { PopFx } from './fx/PopFx';
@@ -135,6 +137,8 @@ export class GameScene extends Phaser.Scene {
   private curse!: CurseFx;
   /** Dice's die over a lucky or fizzled merge (GAME_DESIGN §15.14). */
   private dice!: DiceFx;
+  /** A lightning ball's strike and its waiting arcs (GAME_DESIGN §15.15). */
+  private lightning!: LightningFx;
   private aimGuide!: AimGuide;
   private selectRing!: Phaser.GameObjects.Graphics;
   private dropperGlow!: Phaser.GameObjects.Image;
@@ -168,6 +172,8 @@ export class GameScene extends Phaser.Scene {
   private readonly point = new Phaser.Math.Vector2();
   /** Balls popped during this frame's ticks; they pop on screen together, staggered. */
   private readonly popped: PopRequest[] = [];
+  /** Balls a lightning strike popped during this frame's ticks: they pop at once. */
+  private readonly struck: PopRequest[] = [];
   private readonly shake = new Shake();
   private readonly shakeOffset = { x: 0, y: 0 };
   /** When the danger countdown last reached a new second (it pulses). */
@@ -211,6 +217,8 @@ export class GameScene extends Phaser.Scene {
     const numbers = layer();
     const jarFront = layer();
     const dropper = layer();
+    // A lightning strike darkens everything under it; the payouts and sparks stay on top.
+    const storm = layer();
     const fx = layer();
 
     const art = this.skinId === 'art' ? this.art : null;
@@ -253,6 +261,13 @@ export class GameScene extends Phaser.Scene {
     this.kintsugi = new KintsugiFx(this, fx, this.skin);
     this.curse = new CurseFx(this, numbers, fx, this.balls, art?.fx.stones ?? null);
     this.dice = new DiceFx(this, fx, art?.fx.dice ?? null);
+    this.lightning = new LightningFx(
+      this,
+      storm,
+      this.sparks,
+      lightningStandIns(this.textures),
+      (count) => this.particles(count),
+    );
     this.selectRing = this.add.graphics();
     fx.add(this.selectRing);
     this.countdown = this.add
@@ -371,7 +386,8 @@ export class GameScene extends Phaser.Scene {
     on('catPopped', (e) => {
       const { x, y } = e.at;
       const radius = run.radiusOf(e.tier);
-      this.popped.push({ id: e.id, tier: e.tier, radius, x, y, coins: e.coins });
+      const list = e.reason === 'lightning' ? this.struck : this.popped;
+      list.push({ id: e.id, tier: e.tier, radius, x, y, coins: e.coins });
     });
     // Boulders (GAME_DESIGN §15.3): a band knocked off throws steel sparks; a crumbling boulder
     // pops like a cat, without a payout, in a shower of stone chips.
@@ -380,7 +396,8 @@ export class GameScene extends Phaser.Scene {
     });
     on('boulderBroken', (e) => {
       const { x, y } = e.at;
-      this.popped.push({ id: e.id, tier: e.tier, radius: run.radiusOf(e.tier), x, y, coins: null });
+      const list = e.reason === 'lightning' ? this.struck : this.popped;
+      list.push({ id: e.id, tier: e.tier, radius: run.radiusOf(e.tier), x, y, coins: null });
       this.sparks.mergeBurst(x, y, this.particles(BOULDER_BREAK_CHIPS), BOULDER_CHIPS);
     });
     // A hanabi goes off (GAME_DESIGN §15.6): a burst of sparks and a shake; the cats it pops
@@ -390,6 +407,16 @@ export class GameScene extends Phaser.Scene {
       this.sparks.mergeBurst(x, y, this.particles(HANABI_BLAST_SPARKS), HANABI_SPARKS);
       this.sparks.burst(x, y, this.particles(BURST_SPARKS.golden));
       this.addShake(SHAKE.hanabi, SHAKE.hanabiMs);
+    });
+    // A lightning ball strikes (GAME_DESIGN §15.15): a jolt; LightningFx draws the strike from the
+    // run's hold. When it ends, every struck ball pops at once in sparks, and so does the ball.
+    on('lightningStruck', () => {
+      this.addShake(SHAKE.lightning, SHAKE.lightningMs);
+    });
+    on('lightningDischarged', (e) => {
+      this.lightning.discharge(this.nowMs, this.struck);
+      const { x, y } = e.at;
+      this.struck.push({ id: e.id, tier: e.tier, radius: run.radiusOf(e.tier), x, y, coins: null });
     });
     // Heavy Drop's fireball lands (GAME_DESIGN §15.9): fire sparks under it and a small shake.
     on('heavyLanded', (e) => {
@@ -525,6 +552,7 @@ export class GameScene extends Phaser.Scene {
     this.unsubscribe = [];
     this.run = null;
     this.popped.length = 0;
+    this.struck.length = 0;
     this.preparing = 0;
     this.shake.clear();
     this.countdownPulseMs = -Infinity;
@@ -539,6 +567,7 @@ export class GameScene extends Phaser.Scene {
     this.kintsugi?.clear();
     this.curse?.clear();
     this.dice?.clear();
+    this.lightning?.clear();
     this.lastCat?.clear();
   }
 
@@ -550,6 +579,10 @@ export class GameScene extends Phaser.Scene {
     if (this.popped.length > 0) {
       this.pops.popAll(this.nowMs, this.popped);
       this.popped.length = 0;
+    }
+    if (this.struck.length > 0) {
+      this.pops.popAll(this.nowMs, this.struck, false);
+      this.struck.length = 0;
     }
     // Physics is paused during the zoom, so drawing the next stage's textures costs no frames.
     if (this.preparing && this.skin.prepare(this.preparing, SKIN_PREPARE_BUDGET_MS)) {
@@ -585,11 +618,30 @@ export class GameScene extends Phaser.Scene {
     this.kintsugi.update(this.nowMs, run.balls, alpha);
     this.curse.update(this.nowMs, run.curse, run.balls, this.fit.zoom, reducedMotion(), alpha);
     this.dice.update(this.nowMs);
+    const viewW = cam.width / this.fit.zoom;
+    const viewH = cam.height / this.fit.zoom;
+    // A little more than the view, so a shake never shows its edge.
+    this.lightning.update(
+      this.nowMs,
+      run.lightning,
+      run.balls,
+      {
+        left: this.fit.centerX - viewW * 0.6,
+        top: this.fit.centerY - viewH * 0.6,
+        width: viewW * 1.2,
+        height: viewH * 1.2,
+      },
+      reducedMotion(),
+      alpha,
+    );
     this.pops.update(this.nowMs);
     this.fx.update(this.nowMs);
   }
 
-  /** The texture of the dropper's ball: a cat, a boulder, a hanabi, a joker or the magnet. */
+  /**
+   * The texture of the dropper's ball: a cat, a boulder, a hanabi, a joker, a lightning ball or the
+   * magnet.
+   */
   private dropFrame(item: Drop, stage: number): SkinFrame {
     if (item.kind === 'magnet') return this.special.magnet();
     if (item.kind === 'cat') return this.skin.body(item.tier);
@@ -621,7 +673,9 @@ export class GameScene extends Phaser.Scene {
       else this.paw.show(x, y, top - AIM_DOT_SPACING);
     }
 
-    const show = run.state === 'playing' && (run.canDrop || run.canTake);
+    // A lightning strike holds time still: a ball already in the paw stays there.
+    const held = run.lightning !== null && run.cooldownRemainingMs === 0;
+    const show = run.state === 'playing' && (run.canDrop || run.canTake || held);
     this.dropperBody.setVisible(show);
     this.dropperGlow.setVisible(show && item.golden);
     if (!show) {

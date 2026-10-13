@@ -46,6 +46,11 @@ export function connectRunFeedback(events: EventBus<GameEvents>, out: FeedbackOu
       out.play('boom');
       out.vibrate('jackpot');
     }),
+    // A lightning ball strikes (GAME_DESIGN §15.15): thunder; its cats pop with coins after it.
+    events.on('lightningStruck', () => {
+      out.play('thunder');
+      out.vibrate('jackpot');
+    }),
     events.on('boulderBroken', () => {
       out.play('crunch');
       out.vibrate('tick');

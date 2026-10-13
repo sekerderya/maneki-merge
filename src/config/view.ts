@@ -302,6 +302,9 @@ export const SHAKE = {
   jackpotMs: 450,
   hanabi: 8,
   hanabiMs: 260,
+  /** A lightning strike (GAME_DESIGN §15.15). */
+  lightning: 7,
+  lightningMs: 240,
   /** Heavy Drop's fireball landing (GAME_DESIGN §15.9). */
   heavy: 6,
   heavyMs: 220,
@@ -338,6 +341,49 @@ export const HANABI_FUSE_FLICKER_MS = 180;
 export const HANABI_FUSE_ALPHA = { min: 0.35, max: 1 } as const;
 /** A hanabi's blast: a burst of this many sparks. */
 export const HANABI_BLAST_SPARKS = 36;
+/**
+ * A lightning strike (GAME_DESIGN §15.15), drawn while the run holds time still
+ * (LIGHTNING_HOLD_MS). Times are ms from the strike; sizes are world units (the jar is 600 wide).
+ *
+ * - The jar darkens to `veilAlpha` over `veilInMs` (less with reduced motion) and clears over
+ *   `veilOutMs` once the struck balls pop; a white flash of `flashAlpha` fades over `flashMs` as
+ *   the sky bolt lands (none with reduced motion).
+ * - The sky bolt shows for `skyMs`, `skyWidth` wide.
+ * - The chain's links reach each struck ball `linkDelayMs` per link from the ball; each link's
+ *   zigzag band is `bandShare` of its length, between `bandMin` and `bandMax`. Every
+ *   `flickerMs` each link, the sky bolt and each crackle take another shape (none with reduced
+ *   motion), and they fade over the hold's last `fadeMs`.
+ * - Where a link lands, a flash grows to `impactScale` of the ball's radius and fades over
+ *   `impactMs`, and a ring grows from `ringFrom` to `ringTo` radii over `ringMs`. The crackles
+ *   cover `crackleRadius` of the ball.
+ * - When they pop, `popSparks` sparks fly from each.
+ * - A waiting lightning ball gives off a small arc every `arcEveryMs`, for `arcMs`.
+ */
+export const LIGHTNING_FX = {
+  veilAlpha: 0.55,
+  reducedVeilAlpha: 0.35,
+  veilInMs: 70,
+  veilOutMs: 320,
+  flashAlpha: 0.3,
+  flashMs: 140,
+  skyMs: 280,
+  skyWidth: 150,
+  linkDelayMs: 35,
+  bandShare: 0.22,
+  bandMin: 34,
+  bandMax: 110,
+  flickerMs: 45,
+  fadeMs: 110,
+  impactScale: 1.9,
+  impactMs: 240,
+  ringFrom: 0.6,
+  ringTo: 1.8,
+  ringMs: 320,
+  crackleRadius: 0.95,
+  popSparks: 10,
+  arcEveryMs: 900,
+  arcMs: 140,
+} as const;
 /** Particles when a boulder loses a band or crumbles. */
 export const BOULDER_HIT_SPARKS = 7;
 export const BOULDER_BREAK_CHIPS = 16;
