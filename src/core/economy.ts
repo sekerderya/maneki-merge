@@ -202,6 +202,12 @@ export class RunEconomy {
     this.scoreTotal = score;
   }
 
+  /** The scenes (GAME_DESIGN §2.6): sets the coins earned this run directly. */
+  setCoins(coins: number): void {
+    if (!Number.isInteger(coins) || coins < 0) throw new RangeError(`Invalid coins: ${coins}`);
+    this.coinsTotal = coins;
+  }
+
   /** The run's bookkeeping, for a saved run. */
   snapshot(): EconomySnapshot {
     return {

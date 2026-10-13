@@ -172,6 +172,11 @@ export class DropQueue {
     this.dropper = drop;
   }
 
+  /** Puts `drop` in NEXT instead of its ball (the scenes, GAME_DESIGN §2.6). */
+  replaceNext(drop: Drop): void {
+    this.upcoming = drop;
+  }
+
   /** New odds for the items rolled from now on; the two queued items stay as they are. */
   setOdds(odds: DropOdds): void {
     this.odds = odds;

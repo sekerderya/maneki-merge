@@ -27,6 +27,11 @@ export interface UrlFlags {
    * of between the last two (TECH_SPEC §5), to compare the two on a phone. True by default.
    */
   readonly interpolate: boolean;
+  /**
+   * `?scenes=1` turns the menu's Scenes button on (GAME_DESIGN §2.6) and `?scenes=0` off; the
+   * device remembers it. Null when absent or malformed.
+   */
+  readonly scenes: boolean | null;
 }
 
 const MAX_SEED = 0xffffffff;
@@ -41,6 +46,7 @@ export function parseUrlFlags(search: string): UrlFlags {
     resolution: parseResolution(params.get('res')),
     gravity: parseGravity(params.get('gravity')),
     interpolate: !parseOff(params.get('interp')),
+    scenes: parseSwitch(params.get('scenes')),
   };
 }
 
@@ -54,6 +60,13 @@ function parseOff(value: string | null): boolean {
   if (value === null) return false;
   const normalized = value.trim().toLowerCase();
   return normalized === '0' || normalized === 'false';
+}
+
+/** `1`/`true` (or a bare flag) is on, `0`/`false` off; anything else, or absent, null. */
+function parseSwitch(value: string | null): boolean | null {
+  if (value === null) return null;
+  if (parseBoolean(value)) return true;
+  return parseOff(value) ? false : null;
 }
 
 function parseSeed(value: string | null): number | null {

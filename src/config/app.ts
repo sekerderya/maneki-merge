@@ -23,6 +23,17 @@ export const SAVE_BACKUP_LIMIT = 3;
 /** The run in progress (GAME_DESIGN §11), apart from the profile so a broken one is just dropped. */
 export const RUN_SAVE_KEY = `${STORAGE_PREFIX}run`;
 
+/**
+ * Whether this device shows the menu's Scenes button (GAME_DESIGN §2.6): `1` when on. Apart from
+ * the save, since it is a tool for making clips, not part of the player's profile.
+ */
+export const SCENES_KEY = `${STORAGE_PREFIX}scenes`;
+/** Taps on the version in Settings, each within the window of the last, that flip it. */
+export const SCENES_SWITCH_TAPS = 7;
+export const SCENES_SWITCH_TAP_WINDOW_MS = 1500;
+/** How long the version shows "Scenes on" or "Scenes off" after the flip. */
+export const SCENES_SWITCH_NOTE_MS = 2000;
+
 /** First-run hints (GAME_DESIGN §2.3); the save remembers which ones were seen. */
 export const HINT_IDS = ['aim', 'merge', 'magnet', 'curse'] as const;
 export type HintId = (typeof HINT_IDS)[number];

@@ -55,7 +55,7 @@ import {
   SPAWN_START_RADIUS_SHARE,
   WIND_ACCEL_PER_LEVEL,
 } from '../config/picks';
-import type { DiceRoll, PickId, PickKind, WindDirection } from '../config/picks';
+import type { DiceRoll, ForcedDice, PickId, PickKind, WindDirection } from '../config/picks';
 import { catRadius, clearGrowsJar, stageHoldsTier, stageInfo } from '../config/stages';
 import { sizeRadius } from '../config/tiers';
 import {
@@ -117,6 +117,8 @@ export interface RunOptions {
   readonly instantExpansion?: boolean;
   /** Gravity as a multiple of GRAVITY_BASE (`?gravity=`, trying fall speeds); 1 by default. */
   readonly gravityScale?: number;
+  /** The stage the run starts at, with an empty jar (the scenes, GAME_DESIGN §2.6); 1 by default. */
+  readonly stage?: number;
 }
 
 /** A curse on a cat (GAME_DESIGN §15.12): the cat's id and what its bell shows. */
@@ -287,14 +289,13 @@ export class RunController {
   private curseDue = CURSE_FIRST_DROP;
   /** A lightning strike holding time still, or null. */
   private strike: Strike | null = null;
-  /** Debug only: what the next die shows. */
-  private forcedDice: 'lucky' | 'fizzle' | 'normal' | null = null;
+  /** Debug and the scenes: what the next dice show, first one first. */
+  private forcedDice: ForcedDice[] = [];
   /** Dice: one draw per merge that may roll (MergeRules.dice). */
   private readonly rollDice = (): DiceRoll => {
     const roll = diceRoll(this.diceRng);
-    const forced = this.forcedDice;
+    const forced = this.forcedDice.shift();
     if (!forced) return roll;
-    this.forcedDice = null;
     return forced === 'normal' ? null : forced;
   };
 
@@ -311,7 +312,10 @@ export class RunController {
     this.bankCoins = options.bank ?? (() => {});
     this.instant = options.instantExpansion ?? false;
     this.savesLeft = this.stats.luckySaves;
-    this.world = new PhysicsWorld({ gravityScale: options.gravityScale ?? 1 });
+    this.world = new PhysicsWorld({
+      gravityScale: options.gravityScale ?? 1,
+      ...(options.stage === undefined ? {} : { stage: options.stage }),
+    });
     this.rng = new Rng(options.seed);
     this.specialRng = new Rng((Math.trunc(options.seed) ^ SPECIAL_SEED_SALT) >>> 0);
     this.pickRng = new Rng((Math.trunc(options.seed) ^ PICK_SEED_SALT) >>> 0);
@@ -722,8 +726,27 @@ export class RunController {
   }
 
   /** Debug: the next merge that rolls (Dice) shows this. */
-  forceDice(roll: 'lucky' | 'fizzle' | 'normal'): void {
-    this.forcedDice = roll;
+  forceDice(roll: ForcedDice): void {
+    this.forcedDice = [roll];
+  }
+
+  /** The scenes: the next merges that roll (Dice) show these, in order; then the dice roll again. */
+  scriptDice(rolls: readonly ForcedDice[]): void {
+    this.forcedDice = [...rolls];
+  }
+
+  /**
+   * The scenes (GAME_DESIGN §2.6): puts `current` in the dropper and `next` in NEXT instead of
+   * their balls. Ignored when the stage can't hold a tier or the run is over.
+   */
+  setDrops(current: Drop, next: Drop): void {
+    const stage = this.world.stage;
+    if (this.runState === 'over' || !stageHoldsTier(stage, current.tier)) return;
+    if (!stageHoldsTier(stage, next.tier)) return;
+    this.queue.replaceCurrent(current);
+    this.queue.replaceNext(next);
+    this.dropAnnounced = false;
+    this.announceDropIfReady();
   }
 
   /**
@@ -762,6 +785,12 @@ export class RunController {
   setScore(score: number): void {
     this.economy.setScore(score);
     this.events.emit('scoreChanged', { score });
+  }
+
+  /** The scenes: sets the coins earned this run (what the HUD shows; nothing is banked). */
+  setRunCoins(coins: number): void {
+    this.economy.setCoins(coins);
+    this.events.emit('runCoinsChanged', { coins });
   }
 
   /**

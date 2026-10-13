@@ -190,6 +190,8 @@ export const DICE_LUCKY_CHANCE = 1 / 6;
 export const DICE_FIZZLE_CHANCE = 1 / 6;
 /** What a merge's die showed; null when it didn't roll or rolled a normal merge. */
 export type DiceRoll = 'lucky' | 'fizzle' | null;
+/** What a die shows when the debug tools or a scene decide it (GAME_DESIGN §2.6). */
+export type ForcedDice = 'lucky' | 'fizzle' | 'normal';
 
 export const TRIAL_IDS = [
   'moreBoulders',

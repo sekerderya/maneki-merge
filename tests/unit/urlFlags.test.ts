@@ -11,10 +11,11 @@ describe('parseUrlFlags', () => {
       resolution: null,
       gravity: null,
       interpolate: true,
+      scenes: null,
     });
   });
 
-  it('reads all six flags, with or without the leading ?', () => {
+  it('reads all seven flags, with or without the leading ?', () => {
     const expected = {
       debug: true,
       seed: 42,
@@ -22,8 +23,9 @@ describe('parseUrlFlags', () => {
       resolution: 1.5,
       gravity: 1.2,
       interpolate: false,
+      scenes: true,
     };
-    const query = 'debug=1&seed=42&skin=placeholder&res=1.5&gravity=1.2&interp=0';
+    const query = 'debug=1&seed=42&skin=placeholder&res=1.5&gravity=1.2&interp=0&scenes=1';
     expect(parseUrlFlags(`?${query}`)).toEqual(expected);
     expect(parseUrlFlags(query)).toEqual(expected);
   });
@@ -65,6 +67,18 @@ describe('parseUrlFlags', () => {
     expect(parseUrlFlags(search).skin).toBe(skin);
   });
 
+  it.each([
+    ['?scenes=1', true],
+    ['?scenes', true],
+    ['?scenes=true', true],
+    ['?scenes=0', false],
+    ['?scenes=false', false],
+    ['?scenes=maybe', null],
+    ['', null],
+  ])('parses %s as scenes=%s', (search, scenes) => {
+    expect(parseUrlFlags(search).scenes).toBe(scenes);
+  });
+
   it('ignores unrelated parameters', () => {
     expect(parseUrlFlags('?utm_source=x&debug=1')).toEqual({
       debug: true,
@@ -73,6 +87,7 @@ describe('parseUrlFlags', () => {
       resolution: null,
       gravity: null,
       interpolate: true,
+      scenes: null,
     });
   });
 
