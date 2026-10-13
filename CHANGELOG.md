@@ -2,6 +2,22 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.42.0] - 2026-10-13
+
+### Added
+
+- **Lightning, a new blessing** (GAME_DESIGN §15.15, the owner's idea). A lightning ball strikes the first cat it touches and, with it, every cat of that size in the jar; if it touches a boulder first, every boulder goes. Time stands still for 0.45 s while the lightning chains through them, then they all pop into coins at once (their value, no score, no combo; boulders pay nothing). Landing on nothing to strike, it waits: the first cat that touches it later sets it off. A sixth card in the blessing picks (+1.5% per level, up to 7.5%).
+- **The strike's look:** the jar darkens to a stormy indigo, a bolt comes down from the sky onto the ball, and bolts chain from it to every struck cat, each to its nearest neighbour, flickering, with a flash, a ring and crackles where each lands; yellow sparks as they pop; a waiting ball gives off small arcs. Thunder (a zap, a crack and a rumble), a jolt and the strong haptic pattern. Lighter, with no flash and no flicker, with reduced motion.
+- **The Lightning shop card** opens at stage 8, for 15K, 25K, 40K, 60K and 85K, so the early game plays exactly as before (the owner's call): until a profile buys a level, no run sees a lightning ball or its card.
+- Art prompts for its look in docs/ART_ASSETS.md §4.16: the ball and four effect sheets on black (six chain bolts, three sky bolts, impact pieces, crackles). Until they come, the game draws stand-ins: a violet ball with a yellow bolt, code-drawn glowing bolts, a bolt glyph on the cards.
+- Debug: "Lightning" puts a lightning ball in the paw; `state()` has the strike. The balance bot aims lightning balls (`npm run sim`).
+
+### Decided for the owner (Batch 23, docs/plans/batch-23.md)
+
+- Struck cats pop into their value like a hanabi's pops; time stands still during the strike (a hit-stop), so the bolts link still cats; it waits on the floor; no lightning ball in a stage's first 20 drops; size 2.
+- +1.5% per level, rarer than Hanabi and Joker Cat (+2.25%): the bot measured a level of it as worth about a level of Hanabi (three stages, 30 seeds: Lightning 5 cleared 22 and lost 7, Hanabi 5 cleared 23 and lost 7, none cleared 5 and lost 25).
+- The card adds 225K to the shop (~1.25M in all): about an hour more at the end of the 8-hour pacing model. The meta bot reaches stage 8 after a median 68 minutes.
+
 ## [0.41.1] - 2026-10-13
 
 ### Fixed
