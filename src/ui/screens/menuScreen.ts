@@ -71,6 +71,12 @@ const BUSH = `<svg class="menu-bush" viewBox="0 -90 90 90" aria-hidden="true" fo
 /** The record cards are drawn this many mockup pixels tall (menu-art.css). */
 const RECORD_CARD_HEIGHT = 127;
 
+/**
+ * The score card image's first column past the tip of the paw's arm (which reaches a few columns
+ * into the plain middle): BEST STAGE, which has no paw, stretches the middle from here.
+ */
+const SCORE_CARD_PLAIN_LEFT = 360;
+
 /** The pieces every menu layout has; the view updates them. */
 interface MenuControls {
   readonly coinValue: HTMLElement;
@@ -296,7 +302,9 @@ function setMenuArtProperties(root: HTMLElement): void {
   const s = RECORD_CARD_HEIGHT / art.height;
   set('--menu-record-art', `url("${import.meta.env.BASE_URL}${HUD_SPRITE_DIR}${art.file}")`);
   set('--menu-record-slice', `0 ${art.sliceRight} 0 ${art.sliceLeft} fill`);
+  set('--menu-record-plain-slice', `0 ${art.sliceRight} 0 ${SCORE_CARD_PLAIN_LEFT} fill`);
   set('--menu-record-height', card.height);
+  set('--menu-record-art-width', card.minWidth);
   set('--menu-record-slice-left', card.sliceLeft);
   set('--menu-record-slice-right', card.sliceRight);
   // The title over the well, clear of the paw ("BEST SCORE:" is longer than "SCORE:").
@@ -335,15 +343,21 @@ function artLayout(root: HTMLElement, actions: MenuActions): MenuControls {
 
   const records = el('div', 'menu-art-records');
   records.dataset['testid'] = 'records';
-  // Both cards are the in-game score card: the paw, the title over the well, the number in it.
-  const card = (label: string, value: HTMLElement): HTMLElement => {
-    const node = el('p', 'menu-record');
-    node.append(el('span', 'menu-record-label', label), value);
+  // The in-game score card: the paw, the title over the well, the number in it. BEST STAGE has
+  // the torii in the well instead of the paw (menu-art.css).
+  const card = (label: string, value: HTMLElement, icon?: HTMLImageElement): HTMLElement => {
+    const node = el('p', icon ? 'menu-record is-stage' : 'menu-record');
+    node.append(el('span', 'menu-record-label', label));
+    if (icon) node.append(icon);
+    node.append(value);
     return node;
   };
   const bestScoreValue = recordValue('best-score');
   const bestStageValue = recordValue('best-stage');
-  records.append(card('Best score', bestScoreValue), card('Best stage', bestStageValue));
+  records.append(
+    card('Best score', bestScoreValue),
+    card('Best stage', bestStageValue, menuImage(MENU_ART.torii, 'menu-record-torii')),
+  );
 
   const play = playButton(actions, 'menu-play');
   const { upgrades, upgradesDot } = upgradesButton(actions, 'menu-upgrades');

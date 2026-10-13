@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.42.6] - 2026-10-13
+
+### Changed
+
+- **The menu's record cards are a little narrower** (284 mockup px instead of 310).
+- **BEST STAGE has no paw again, but the torii** (the owner's call): its card's left side is the score card's round right end, mirrored, and the small red torii sits in the well's left end beside the number. BEST SCORE keeps the paw.
+
 ## [0.42.5] - 2026-10-13
 
 ### Changed
