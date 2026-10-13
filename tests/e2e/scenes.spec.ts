@@ -45,6 +45,31 @@ test('the Scenes button is off until ?scenes=1 or seven taps on the version turn
   expect(errors).toEqual([]);
 });
 
+test('the scene list scrolls under a finger', async ({ page, context, browserName }) => {
+  // Real touch events go through CDP, which only Chromium has.
+  test.skip(browserName !== 'chromium', 'CDP touch events');
+  await page.goto('./?scenes=1');
+  await page.getByTestId('scenes').click();
+  const list = page.getByTestId('scenes-panel').locator('.scenes-list');
+  await expect(list).toBeVisible();
+  const box = await list.boundingBox();
+  if (!box) throw new Error('No scene list');
+  const cdp = await context.newCDPSession(page);
+  const x = box.x + box.width / 2;
+  const from = box.y + box.height * 0.8;
+  const touch = (type: 'touchStart' | 'touchMove' | 'touchEnd', y = 0): Promise<unknown> =>
+    cdp.send('Input.dispatchTouchEvent', {
+      type,
+      touchPoints: type === 'touchEnd' ? [] : [{ x, y }],
+    });
+  // A 300 px swipe up: every touchmove outside a scrollable element is cancelled
+  // (platform/viewport.ts), so the list must be one.
+  await touch('touchStart', from);
+  for (let i = 1; i <= 10; i++) await touch('touchMove', from - i * 30);
+  await touch('touchEnd');
+  await expect.poll(() => list.evaluate((node) => node.scrollTop)).toBeGreaterThan(100);
+});
+
 test('a scene opens on its set-up jar, plays as a sandbox and restarts for another take', async ({
   page,
 }) => {

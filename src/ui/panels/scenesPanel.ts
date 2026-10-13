@@ -72,6 +72,8 @@ export function createScenesPanel(
   header.append(el('h2', 'settings-title', 'Scenes'), close);
 
   const list = el('div', 'settings-list scenes-list');
+  // Touch scrolling is blocked everywhere else (platform/viewport.ts).
+  list.dataset['scrollable'] = '';
   for (const scene of SCENARIOS) {
     const row = button('settings-row scenes-row', '');
     row.dataset['testid'] = `scene-${scene.id}`;
