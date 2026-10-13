@@ -20,6 +20,24 @@ export const UPDATE_CHECK_INTERVAL_MS = 60 * 60 * 1000;
 export const UPDATE_APPLY_DELAY_MS = 1000;
 
 /**
+ * The loading screen (TECH_SPEC §9) asks the server for a new version and waits at most this long
+ * for the answer (it runs beside the art's loading, so usually it adds nothing).
+ */
+export const UPDATE_LAUNCH_CHECK_MS = 3000;
+/** How long the loading screen lets a new version found at launch install ("Updating…"). */
+export const UPDATE_LAUNCH_INSTALL_MS = 20_000;
+/**
+ * How long the loading screen waits for an installed version to take over and reload the app;
+ * past this the game opens and the menu applies it as before.
+ */
+export const UPDATE_LAUNCH_APPLY_MS = 5000;
+
+/** The loading screen fades out over this long once the game is ready. */
+export const LOADING_FADE_MS = 300;
+/** Every image is loaded and decoded on the loading screen; one that takes longer is skipped. */
+export const PRELOAD_TIMEOUT_MS = 10_000;
+
+/**
  * Haptics (Android only, GAME_DESIGN §12): vibration patterns in milliseconds (on, off, on, …).
  * A light tick per merge, at most one every HAPTIC_TICK_INTERVAL_MS; a stronger pattern for
  * Jackpots, expansions and Lucky Saves.

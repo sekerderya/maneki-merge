@@ -9,10 +9,11 @@ import { SaveStore } from './core/save';
 import type { SaveData } from './core/save';
 import { parseUrlFlags } from './core/urlFlags';
 import { installDebugHooks } from './debug';
-import { createGame, loadArt } from './game';
+import { createGame, loadArt, preloadImages } from './game';
 import type { SceneSkin } from './game/GameScene';
 import {
   BackStack,
+  controlledByServiceWorker,
   detectInstallContext,
   Haptics,
   InstallPrompt,
@@ -28,6 +29,7 @@ import {
   watchPhoneLandscape,
 } from './platform';
 import { GameSession } from './session';
+import { UPDATE_LAUNCH_APPLY_MS } from './config/platform';
 import { setIconSkin } from './ui/catIcon';
 import { byId } from './ui/dom';
 import { createGameOverOverlay } from './ui/overlays/gameOverOverlay';
@@ -40,22 +42,54 @@ import { createClipButtons } from './ui/clipButtons';
 import { createDoors } from './ui/fx/doors';
 import { createRotateOverlay } from './ui/overlays/rotateOverlay';
 import { ScreenManager } from './ui/screenManager';
+import { loadingScreen } from './ui/loadingScreen';
 import { createGameScreen } from './ui/screens/gameScreen';
 import { createMenuScreen } from './ui/screens/menuScreen';
 import type { InstallHint } from './ui/screens/menuScreen';
-import type { InstallContext } from './platform';
+import type { InstallContext, ServiceWorkerControls } from './platform';
 
-/** Boot order (TECH_SPEC §3): fonts and cat art → save → UI → Phaser → service worker. */
+/**
+ * Boot order (TECH_SPEC §3): the loading screen (fonts, every image, a new version's install) →
+ * save → UI → Phaser → service worker (on a first visit) → the loading screen fades out.
+ */
 async function boot(): Promise<void> {
   setupViewport();
+  const loading = loadingScreen();
   const flags = parseUrlFlags(window.location.search);
   let skin: SceneSkin = flags.skin ?? 'art';
 
-  // The raster art loads with the fonts; if it can't, the game falls back to the vector art.
-  const [, art] = await Promise.all([
-    loadFonts(),
-    skin === 'art' ? loadArt(import.meta.env.BASE_URL).catch(() => null) : null,
+  // Updates (TECH_SPEC §9) go through the gate. On a launch after the first visit the service
+  // worker registers now, so a new version installs and reloads the app on the loading screen; a
+  // first visit registers it last, so its precaching doesn't slow the loading down.
+  let onUpdateReady = (_ready: boolean): void => {};
+  const gate = new UpdateGate({
+    activate: () => sw?.activate(),
+    reload: () => window.location.reload(),
+    schedule: (run, delayMs) => window.setTimeout(run, delayMs),
+    onReadyChange: (ready) => onUpdateReady(ready),
+  });
+  let sw: ServiceWorkerControls | null = controlledByServiceWorker()
+    ? registerServiceWorker(gate)
+    : null;
+  const update = sw?.launchUpdate(() => loading.setStatus('updating')) ?? false;
+
+  // Every image loads with the fonts and the update check; if the cats' art can't, the game falls
+  // back to the vector art.
+  const base = import.meta.env.BASE_URL;
+  const images = skin === 'art' ? preloadImages(base, (share) => loading.setProgress(share)) : null;
+  const [, art, updateWaiting] = await Promise.all([
+    loadFonts().then(() => loading.fontsReady()),
+    skin === 'art' ? loadArt(base).catch(() => null) : null,
+    update,
+    images,
   ]);
+  loading.setProgress(1);
+  if (updateWaiting) {
+    // The gate activates it and reloads; if that stalls, the game opens and the menu retries.
+    loading.setStatus('updating');
+    gate.markReady();
+    await new Promise((resolve) => window.setTimeout(resolve, UPDATE_LAUNCH_APPLY_MS));
+  }
   if (skin === 'art' && !art) skin = 'vector';
   setIconSkin(skin);
 
@@ -99,12 +133,6 @@ async function boot(): Promise<void> {
   const back = new BackStack(window.history, window);
   let screens: ScreenManager | null = null;
 
-  const gate = new UpdateGate({
-    activate: () => sw.activate(),
-    reload: () => window.location.reload(),
-    schedule: (run, delayMs) => window.setTimeout(run, delayMs),
-    onReadyChange: (ready) => menu.setUpdateReady(ready),
-  });
   // A waiting update installs itself only while the menu is up with no panel over it.
   const syncUpdateGate = (): void => {
     const onMenu = (screens?.screen ?? 'menu') === 'menu';
@@ -132,6 +160,8 @@ async function boot(): Promise<void> {
   );
 
   menu.setInstallHint(installHintFor(installContext, installPrompt.available));
+  onUpdateReady = (ready) => menu.setUpdateReady(ready);
+  menu.setUpdateReady(gate.isReady);
 
   // How-it-works clips (GAME_DESIGN §2.5): a button on the shop and pick cards opens a
   // popup over them, with its own back layer. Opening a clip takes its buttons' new dot away.
@@ -366,6 +396,10 @@ async function boot(): Promise<void> {
     onVisible: () => audio.resume(),
   });
 
+  sw ??= registerServiceWorker(gate);
+  gate.finishLaunch();
+  loading.hide();
+
   if (flags.debug) {
     installDebugHooks({
       flags,
@@ -376,8 +410,6 @@ async function boot(): Promise<void> {
       simulateUpdateReady: () => gate.markReady(),
     });
   }
-
-  const sw = registerServiceWorker(gate);
 }
 
 const windowScheduler: Scheduler = {

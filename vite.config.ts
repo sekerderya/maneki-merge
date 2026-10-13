@@ -1,5 +1,5 @@
 import { execSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { VitePWA } from 'vite-plugin-pwa';
 import { defineConfig } from 'vitest/config';
 import {
@@ -27,6 +27,17 @@ function buildHash(): string {
   }
 }
 
+/** Every image the game shows, relative to public/: the loading screen loads them all. */
+function preloadImages(): string[] {
+  const dirs = ['assets', 'clips'];
+  return dirs.flatMap((dir) =>
+    readdirSync(new URL(`./public/${dir}/`, import.meta.url), { recursive: true, encoding: 'utf8' })
+      .map((file) => `${dir}/${file.replaceAll('\\', '/')}`)
+      .filter((file) => /\.(webp|png|jpe?g)$/.test(file))
+      .sort(),
+  );
+}
+
 // GitHub Pages serves the app from /<repo-name>/. Override with BASE_PATH if needed.
 const base = process.env['BASE_PATH'] ?? '/maneki-merge/';
 
@@ -35,6 +46,7 @@ export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
     __BUILD_HASH__: JSON.stringify(buildHash()),
+    __PRELOAD_IMAGES__: JSON.stringify(preloadImages()),
   },
   build: {
     target: 'es2022',

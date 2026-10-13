@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.42.10] - 2026-10-13
+
+### Added
+
+- **A loading screen** (GAME_DESIGN §2.0, the owner's request): every launch opens on the menu's garden, the logo and the golden cat with a gold bar and "Loading…", drawn by `index.html` before any script arrives, and fades out over the menu once everything is in. Its bar is CSS until the owner's art comes (prompts in docs/ART_ASSETS.md §4.17).
+- **Updates install on the loading screen** (TECH_SPEC §9): on a launch after the first visit the app asks for a new version beside the loading; one it finds installs ("Updating…") and the app restarts into it before the menu shows, so the player no longer waits for an update on the menu. Limits: 3 s for the check, 20 s for the install, 5 s for the restart; past them the menu applies the update as before.
+- A new prompt for the app icon (docs/ART_ASSETS.md §4.6): the golden cat from the chest up, full bleed, with the phones' crop in mind.
+
+### Fixed
+
+- **The coins, the Upgrades screen and other art no longer pop in late**: the loading screen loads and decodes every image the game shows (all of `public/assets/` and the clips' posters) and keeps them, so they come from the browser's memory cache at once. Until now the coin, the score card, the NEXT bubble, the pause button and the jars' backgrounds weren't waited for, and the Upgrades screen's decoded pieces were dropped after boot.
+
 ## [0.42.9] - 2026-10-13
 
 ### Changed

@@ -19,6 +19,9 @@ export interface UpdateGateDeps {
  * delay → `activate` → the new worker takes control → `onControllerChanged` → reload. A version
  * that arrives during a run waits until the player is back on the menu. If another window of the
  * app activates the update first, this window reloads the next time its menu is idle.
+ *
+ * At launch (the loading screen, until `finishLaunch`) nothing is running yet: a version that is
+ * waiting, or finishes installing before the loading screen ends, is applied at once.
  */
 export class UpdateGate {
   private ready = false;
@@ -30,11 +33,19 @@ export class UpdateGate {
   /** Bumped whenever the menu stops being idle, so a scheduled apply from before is dropped. */
   private idleEpoch = 0;
   private scheduled = false;
+  /** Boot is still on the loading screen: no run, no history traversal, nothing to wait for. */
+  private launching = true;
 
   constructor(private readonly deps: UpdateGateDeps) {}
 
   get isReady(): boolean {
     return this.ready;
+  }
+
+  /** Boot is done: from now on an update waits for an idle menu. */
+  finishLaunch(): void {
+    this.launching = false;
+    this.scheduleApply();
   }
 
   /** The main menu is the visible screen with no panel over it (or it isn't). */
@@ -67,6 +78,10 @@ export class UpdateGate {
 
   private scheduleApply(): void {
     if (!this.menuIdle || !this.ready || this.scheduled) return;
+    if (this.launching) {
+      void this.tryApply();
+      return;
+    }
     this.scheduled = true;
     const epoch = this.idleEpoch;
     this.deps.schedule(() => {

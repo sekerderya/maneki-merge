@@ -15,7 +15,7 @@ import type { ArtImages } from './artImages';
 import type { PayoutKind } from './fx/MergeFx';
 import { ResolutionGovernor, resolutionLevels } from './resolutionGovernor';
 
-export { loadArt } from './artImages';
+export { loadArt, preloadImages } from './artImages';
 export type { ArtImages } from './artImages';
 
 export interface GameView {

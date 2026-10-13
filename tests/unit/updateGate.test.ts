@@ -2,7 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { UPDATE_APPLY_DELAY_MS } from '../../src/config/platform';
 import { UpdateGate } from '../../src/platform/updateGate';
 
-function setup() {
+/** A gate past the loading screen, unless `launching`. */
+function setup({ launching = false } = {}) {
   const timers: (() => void)[] = [];
   const deps = {
     activate: vi.fn(),
@@ -17,7 +18,9 @@ function setup() {
   const elapse = (): void => {
     for (const run of timers.splice(0)) run();
   };
-  return { gate: new UpdateGate(deps), deps, elapse };
+  const gate = new UpdateGate(deps);
+  if (!launching) gate.finishLaunch();
+  return { gate, deps, elapse };
 }
 
 describe('UpdateGate', () => {
@@ -150,5 +153,46 @@ describe('UpdateGate', () => {
     gate.markReady();
     elapse();
     expect(deps.reload).toHaveBeenCalledOnce();
+  });
+
+  describe('on the loading screen', () => {
+    it('activates a waiting version at once and reloads when it takes control', () => {
+      const { gate, deps } = setup({ launching: true });
+      gate.markReady();
+      expect(deps.onReadyChange).toHaveBeenCalledExactlyOnceWith(true);
+      expect(deps.activate).toHaveBeenCalledOnce();
+      gate.onControllerChanged();
+      expect(deps.reload).toHaveBeenCalledOnce();
+      expect(deps.schedule).not.toHaveBeenCalled();
+    });
+
+    it('reloads at once when another window already activated the update', () => {
+      const { gate, deps } = setup({ launching: true });
+      gate.onControllerChanged();
+      expect(deps.activate).not.toHaveBeenCalled();
+      expect(deps.reload).toHaveBeenCalledOnce();
+    });
+
+    it('waits for an idle menu again once boot is done', () => {
+      const { gate, deps, elapse } = setup({ launching: true });
+      gate.finishLaunch();
+      gate.setMenuActive(false);
+      gate.markReady();
+      elapse();
+      expect(deps.activate).not.toHaveBeenCalled();
+      gate.setMenuActive(true);
+      elapse();
+      expect(deps.activate).toHaveBeenCalledOnce();
+    });
+
+    it('falls back to the idle-menu delay when boot ends with an update still activating', () => {
+      const { gate, deps, elapse } = setup({ launching: true });
+      gate.markReady();
+      gate.finishLaunch();
+      gate.onControllerChanged();
+      expect(deps.reload).not.toHaveBeenCalled();
+      elapse();
+      expect(deps.reload).toHaveBeenCalledOnce();
+    });
   });
 });

@@ -3,7 +3,9 @@
  * special balls and the effects (Heavy Drop's flames, Porcelain's cracks and seams, the dice).
  * Boot loads and decodes them with the fonts (main.ts), before the game is created, with the
  * main menu's, the stage doors' and the Upgrades screen's images; the backgrounds are DOM images.
+ * The loading screen (`preloadImages`) loads every other image too, so nothing pops in later.
  */
+import { PRELOAD_TIMEOUT_MS } from '../config/platform';
 import { CAT_ART_LOAD_TIMEOUT_MS, CAT_SPRITE_DIR, CAT_SPRITES } from '../config/catSprites';
 import { DOOR_ART, DOOR_SPRITE_DIR } from '../config/doorSprites';
 import { FX_ART, FX_SPRITE_DIR } from '../config/fxSprites';
@@ -52,11 +54,43 @@ export interface SpecialImages {
   readonly boulders: readonly HTMLImageElement[];
 }
 
-async function image(url: string): Promise<HTMLImageElement> {
-  const img = new Image();
-  img.src = url;
-  await img.decode();
-  return img;
+/**
+ * Every image loaded so far, by URL, kept for the app's lifetime: held images stay in the
+ * browser's memory cache, so an `<img>` or a CSS background with the same URL shows at once
+ * instead of asking the service worker again and popping in (the coins, the Upgrades screen).
+ */
+const loaded = new Map<string, Promise<HTMLImageElement>>();
+
+function image(url: string): Promise<HTMLImageElement> {
+  let loading = loaded.get(url);
+  if (!loading) {
+    const img = new Image();
+    img.src = url;
+    loading = img.decode().then(() => img);
+    loaded.set(url, loading);
+  }
+  return loading;
+}
+
+/**
+ * Loads and decodes every image the game shows (`__PRELOAD_IMAGES__`, listed by vite.config.ts:
+ * all of public/assets and the clips' posters), calling `onProgress` with the share done (0–1).
+ * An image that fails or takes longer than PRELOAD_TIMEOUT_MS is skipped (the DOM loads it later).
+ * `loadArt` then finds its images here.
+ */
+export async function preloadImages(
+  baseUrl: string,
+  onProgress: (done: number) => void,
+): Promise<void> {
+  const files = __PRELOAD_IMAGES__;
+  let settled = 0;
+  const loads = files.map((file) =>
+    image(`${baseUrl}${file}`)
+      .catch(() => undefined)
+      .finally(() => onProgress(++settled / files.length)),
+  );
+  const timeout = new Promise<void>((resolve) => window.setTimeout(resolve, PRELOAD_TIMEOUT_MS));
+  await Promise.race([Promise.all(loads), timeout]);
 }
 
 /**

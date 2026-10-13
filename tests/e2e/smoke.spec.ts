@@ -23,6 +23,22 @@ test('boots into the menu with a clean console', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
+test('the loading screen fills its bar and fades out over the menu', async ({ page }) => {
+  // Slow images keep the loading screen up long enough to see it.
+  await page.route(/\/(assets|clips)\/.*\.webp$/, async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    await route.continue();
+  });
+  await page.goto('./', { waitUntil: 'commit' });
+
+  const loading = page.getByRole('progressbar', { name: 'Loading' });
+  await expect(loading).toBeVisible();
+  await expect(loading.locator('.loading-label')).toHaveText('Loading…');
+  await expect(loading).toHaveAttribute('aria-valuenow', '100');
+  await expect(loading).toHaveCount(0);
+  await expect(page.getByTestId('play')).toBeVisible();
+});
+
 test('serves a valid web app manifest', async ({ request }) => {
   const response = await request.get('manifest.webmanifest');
   expect(response.ok()).toBe(true);
