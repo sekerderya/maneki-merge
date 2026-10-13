@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.42.4] - 2026-10-13
+
+### Changed
+
+- **One coin everywhere** (the owner's call): every coin is now the HUD's gold coin: the menu's balance (it had a paw coin), the Upgrades screen's balance and prices, the Jackpot banner, the coins flying to the counter (they were the code-drawn mon coin) and Game Over, in every skin. The menu's paw coin sprite and the mon coin icon are removed.
+- **The Upgrades screen's coins pill sits inside the header**, under the title and the close button, so it no longer covers the top of the first card (the header is 16 mockup px taller).
+- **No "+N% score" pill under the combo** (the owner's call): the combo still adds its score bonus; only the Combo Charm's "+N% coins" shows under "Combo ×N".
+
 ## [0.42.3] - 2026-10-13
 
 ### Changed
