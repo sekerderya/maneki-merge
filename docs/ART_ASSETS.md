@@ -2124,7 +2124,8 @@ jar (or every boulder, if it touches a boulder first). Time stops for a moment w
 
 How the strike plays (the art below is made for it):
 
-1. A white flash (until v0.42.2 the jar also darkened to a stormy indigo; the owner took it out).
+1. (Until v0.42.2 the jar darkened to a stormy indigo, and until v0.42.3 the screen flashed white;
+   the owner took both out.)
 2. A **sky bolt** slams down from the top of the screen onto the lightning ball.
 3. **Chain bolts** jump from the ball to the cat it touched and on from cat to cat, each one to its
    nearest neighbours, reaching every struck cat within a tenth of a second. Every link swaps
