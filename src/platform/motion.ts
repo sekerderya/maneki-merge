@@ -4,6 +4,8 @@
  * `reduce-motion` class on <html> so CSS stops its decorative animations. Read live.
  */
 let query: MediaQueryList | null | undefined;
+/** The query's answer, kept by its change event: the scene asks several times a frame. */
+let prefers = false;
 let setting = false;
 
 function systemPrefers(): boolean {
@@ -12,9 +14,13 @@ function systemPrefers(): boolean {
       typeof window.matchMedia === 'function'
         ? window.matchMedia('(prefers-reduced-motion: reduce)')
         : null;
-    query?.addEventListener('change', applyClass);
+    prefers = query?.matches ?? false;
+    query?.addEventListener('change', (event) => {
+      prefers = event.matches;
+      applyClass();
+    });
   }
-  return query?.matches ?? false;
+  return prefers;
 }
 
 export function reducedMotion(): boolean {
