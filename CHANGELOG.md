@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.42.15] - 2026-10-13
+
+### Fixed
+
+- **No black band at the top when the app opens** (the owner's report): on Android the installed app opened with a black band the camera cutout's height at the top, as if the status bar were showing, until the bars were swiped in and out once; with v0.42.14 the game then kept that shorter height. Chrome decides whether the app may use the cutout when the page tells it `viewport-fit=cover`, and ignores that while the app is still starting. Once the app is up and the band is there, the page now tells Chrome again (TECH_SPEC §7), so the game should fill the screen from the start. Only on Android in full screen, only while the band is there.
+
 ## [0.42.14] - 2026-10-13
 
 ### Fixed
