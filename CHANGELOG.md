@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.42.1] - 2026-10-13
+
+### Added
+
+- **The Lightning blessing in the owner's art** (docs/ART_ASSETS.md §4.16): the lightning ball (a little storm with a yellow bolt) in the jar, the paw, NEXT, the pick card and the shop card; the strike's chain bolts, sky bolts, impact flash, shock ring, crackles over the struck cats, the waiting ball's arcs, and a burst of sparks where each struck cat pops.
+- `tools/buildLightning.ts` (part of `npm run art`): turns the sheets of light on black into transparent sprites, splits them and measures each bolt's two ends, so a bolt stretches between any two cats.
+- **The Lightning clip** on its shop and pick cards: the ball lands on a 3 and chains to the other two, and all three pop.
+
 ## [0.42.0] - 2026-10-13
 
 ### Added
