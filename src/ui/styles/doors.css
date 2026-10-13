@@ -3,7 +3,8 @@
  * the pause overlay. doors.ts sets each door's fold; this places the art.
  */
 .doors {
-  position: fixed;
+  /* The app's box, like the overlays (overlays.css). */
+  position: absolute;
   inset: 0;
   z-index: 140;
   overflow: hidden;

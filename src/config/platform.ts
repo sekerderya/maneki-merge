@@ -1,5 +1,12 @@
 /** Platform and shell tunables (no game rules here). */
 
+/**
+ * In the installed app, the viewport getting at most this much shorter (CSS px) is Android's
+ * system bars swiped in over the game: the app keeps its full height meanwhile (platform/appHeight.ts).
+ * The status and navigation bars together are about 100 px; a split screen takes far more.
+ */
+export const TRANSIENT_BARS_MAX_PX = 200;
+
 /** How long boot waits for the bundled font before rendering anyway. */
 export const FONT_LOAD_TIMEOUT_MS = 1500;
 

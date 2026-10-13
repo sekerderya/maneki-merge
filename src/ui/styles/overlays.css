@@ -1,6 +1,7 @@
-/* Full-screen overlays above both screens. */
+/* Full-screen overlays above both screens: the app's box (#app), which keeps its full height while
+   Android's system bars are swiped in (platform/appHeight.ts), not the shrinking viewport. */
 .overlay {
-  position: fixed;
+  position: absolute;
   inset: 0;
   z-index: 100;
   display: flex;

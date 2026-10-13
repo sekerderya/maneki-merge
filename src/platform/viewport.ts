@@ -1,15 +1,23 @@
+import { TRANSIENT_BARS_MAX_PX } from '../config/platform';
+import { AppHeight } from './appHeight';
+import { readInstallEnvironment } from './installContext';
+
 /**
  * Mobile viewport hardening (TECH_SPEC §10):
  * - `--app-height` tracks the visible height (fallback for browsers without `dvh`, and the
- *   iOS toolbar/keyboard dance), and the page is kept scrolled to the top.
+ *   iOS toolbar/keyboard dance), and the page is kept scrolled to the top. In the installed app
+ *   it keeps the full height while Android's system bars are swiped in (platform/appHeight.ts).
  * - No pinch zoom (iOS ignores `user-scalable=no`), no double-tap zoom, no long-press menu.
  * - No rubber-band scrolling, except inside elements marked `data-scrollable`.
  */
 export function setupViewport(): void {
   const root = document.documentElement;
+  const installed = readInstallEnvironment().standalone;
+  const appHeight = new AppHeight(TRANSIENT_BARS_MAX_PX);
 
   const syncHeight = (): void => {
-    const height = window.visualViewport?.height ?? window.innerHeight;
+    const visible = window.visualViewport?.height ?? window.innerHeight;
+    const height = appHeight.update(window.innerWidth, visible, installed);
     root.style.setProperty('--app-height', `${Math.round(height)}px`);
     if (window.scrollY !== 0 || window.scrollX !== 0) window.scrollTo(0, 0);
   };
