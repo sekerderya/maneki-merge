@@ -1,14 +1,15 @@
 /**
  * A lightning strike (GAME_DESIGN §15.15), drawn from the run's strike (RunController.lightning)
- * while it holds time still: a white flash, a bolt comes down from the sky onto the lightning
+ * while it holds time still: a bolt comes down from the sky onto the lightning
  * ball, and bolts chain from it to every struck ball, each link reaching its ball a moment after the
  * one before (strikeChain) and flickering between shapes; where a link lands a flash and a ring go
  * off, and crackles cover the ball. When the struck balls pop (`discharge`), sparks fly from each
  * (and the art's burst of sparks grows and fades there). A waiting lightning ball gives off a small
- * arc now and then. (v0.42.0–v0.42.1 also darkened the screen; the owner took it out.)
+ * arc now and then. (v0.42.0–v0.42.1 also darkened the screen and v0.42.0–v0.42.2 flashed it
+ * white as the strike began; the owner took both out.)
  *
  * Everything follows the strike's own clock (its elapsed time), so a pause freezes it. With reduced
- * motion there is no white flash and nothing flickers. The textures are the owner's art, else the
+ * motion nothing flickers. The textures are the owner's art, else the
  * stand-ins of lightningFrames.ts; all of them are light, drawn with SCREEN: Phaser's ADD
  * multiplies what is under it by its own alpha, which punches squares into anything see-through
  * on the transparent canvas. Pooled images, no allocations per frame once warm.
@@ -24,8 +25,6 @@ import { refreshFrames } from './lightningFrames';
 import type { BoltFrame, LightningFrames, RoundFrame } from './lightningFrames';
 import type { SparkFx } from './SparkFx';
 import { drawnX, drawnY } from '../drawnPose';
-
-const WHITE_KEY = 'fx-storm-white';
 
 /** The world rectangle the camera shows. */
 export interface ViewRect {
@@ -44,7 +43,6 @@ interface Strike {
 }
 
 export class LightningFx {
-  private readonly flash: Phaser.GameObjects.Image;
   private readonly pool: Phaser.GameObjects.Image[] = [];
   private used = 0;
   private strike: Strike | null = null;
@@ -60,20 +58,7 @@ export class LightningFx {
     private readonly frames: LightningFrames,
     /** Scales particle counts (fewer with reduced motion). */
     private readonly particles: (count: number) => number,
-  ) {
-    if (!scene.textures.exists(WHITE_KEY)) {
-      const canvas = document.createElement('canvas');
-      canvas.width = canvas.height = 4;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, 4, 4);
-      }
-      scene.textures.addCanvas(WHITE_KEY, canvas);
-    }
-    this.flash = scene.add.image(0, 0, WHITE_KEY).setOrigin(0).setVisible(false);
-    layer.add(this.flash);
-  }
+  ) {}
 
   /**
    * Draws the strike `view` (null: none) over `balls` in the camera's `rect`, at `nowMs` (real
@@ -88,18 +73,15 @@ export class LightningFx {
     alpha: number,
   ): void {
     this.used = 0;
-    let flash = 0;
     if (view) {
       const strike = this.begin(view, balls);
       const t = view.elapsedMs;
-      if (!reduced) flash = LIGHTNING_FX.flashAlpha * Math.max(0, 1 - t / LIGHTNING_FX.flashMs);
       this.drawStrike(strike, t, view.holdMs, rect, reduced);
     } else {
       this.strike = null;
       this.drawArcs(nowMs, balls, alpha);
       this.drawBursts(nowMs, reduced);
     }
-    this.cover(this.flash, rect, flash);
     for (let i = this.used; i < this.pool.length; i++)
       (this.pool[i] as Phaser.GameObjects.Image).setVisible(false);
   }
@@ -124,7 +106,6 @@ export class LightningFx {
     this.strike = null;
     this.poppedMs = -Infinity;
     this.bursts.length = 0;
-    this.flash.setVisible(false);
     for (const image of this.pool) image.setVisible(false);
   }
 
@@ -291,16 +272,6 @@ export class LightningFx {
       .setPosition(x0, y0)
       .setRotation(turn)
       .setScale(upright ? bandScale : lengthScale, upright ? lengthScale : bandScale)
-      .setAlpha(alpha);
-  }
-
-  /** Stretches a plain image over the camera's view, or hides it at no alpha. */
-  private cover(image: Phaser.GameObjects.Image, rect: ViewRect, alpha: number): void {
-    image.setVisible(alpha > 0.001);
-    if (alpha <= 0.001) return;
-    image
-      .setPosition(rect.left, rect.top)
-      .setScale(rect.width / image.width, rect.height / image.height)
       .setAlpha(alpha);
   }
 
