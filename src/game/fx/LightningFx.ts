@@ -4,7 +4,8 @@
  * ball, and bolts chain from it to every struck ball, each link reaching its ball a moment after the
  * one before (strikeChain) and flickering between shapes; where a link lands a flash and a ring go
  * off, and crackles cover the ball. When the struck balls pop (`discharge`), sparks fly from each
- * and the dark lifts. A waiting lightning ball gives off a small arc now and then.
+ * (and the art's burst of sparks grows and fades there) and the dark lifts. A waiting lightning
+ * ball gives off a small arc now and then.
  *
  * Everything follows the strike's own clock (its elapsed time), so a pause freezes it. With reduced
  * motion the dark is lighter, there is no white flash and nothing flickers. The textures are the
@@ -19,6 +20,7 @@ import type { BallView } from '../../physics/balls';
 import { strikeChain } from '../../physics/lightning';
 import type { StrikeLink } from '../../physics/lightning';
 import type { LightningView } from '../../run/RunController';
+import { refreshFrames } from './lightningFrames';
 import type { BoltFrame, LightningFrames, RoundFrame } from './lightningFrames';
 import type { SparkFx } from './SparkFx';
 import { drawnX, drawnY } from '../drawnPose';
@@ -50,6 +52,8 @@ export class LightningFx {
   /** When the dark started to lift (the struck balls popped), or −Infinity. */
   private liftMs = -Infinity;
   private liftFrom = 0;
+  /** Where the struck balls popped, for the art's burst of sparks (real time). */
+  private readonly bursts: { x: number; y: number; radius: number }[] = [];
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -106,6 +110,7 @@ export class LightningFx {
       const lift = (nowMs - this.liftMs) / LIGHTNING_FX.veilOutMs;
       if (lift < 1) dark = this.liftFrom * (1 - Math.max(0, lift));
       this.drawArcs(nowMs, balls, alpha);
+      this.drawBursts(nowMs, reduced);
     }
     this.cover(this.veil, rect, dark);
     this.cover(this.flash, rect, flash);
@@ -114,16 +119,26 @@ export class LightningFx {
   }
 
   /** The struck balls popped at these points: sparks fly from each, and the dark lifts. */
-  discharge(nowMs: number, points: readonly { x: number; y: number }[]): void {
+  discharge(nowMs: number, points: readonly { x: number; y: number; radius: number }[]): void {
     this.liftMs = nowMs;
     const count = this.particles(LIGHTNING_FX.popSparks);
-    // Plain sparks: the ADD ones clear the dark in squares while it lifts.
-    for (const { x, y } of points) this.sparks.mergeBurst(x, y, count, LIGHTNING_SPARKS);
+    this.bursts.length = 0;
+    for (const { x, y, radius } of points) {
+      // Plain sparks: the ADD ones clear the dark in squares while it lifts.
+      this.sparks.mergeBurst(x, y, count, LIGHTNING_SPARKS);
+      this.bursts.push({ x, y, radius });
+    }
+  }
+
+  /** Uploads the textures again after the WebGL context comes back. */
+  restore(): void {
+    refreshFrames(this.scene.textures, this.frames);
   }
 
   clear(): void {
     this.strike = null;
     this.liftMs = -Infinity;
+    this.bursts.length = 0;
     this.veil.setVisible(false);
     this.flash.setVisible(false);
     for (const image of this.pool) image.setVisible(false);
@@ -241,13 +256,32 @@ export class LightningFx {
       const fromY = y + Math.sin(angle) * r * 0.8;
       const toX = x + Math.cos(angle + 0.55) * r * 1.6;
       const toY = y + Math.sin(angle + 0.55) * r * 1.6;
-      this.stretch(arc, fromX, fromY, toX, toY, r * 0.45, 1 - age / fx.arcMs);
+      this.stretch(arc, fromX, fromY, toX, toY, null, 1 - age / fx.arcMs);
+    }
+  }
+
+  /** The art's burst of sparks where each struck ball popped: it grows and fades. */
+  private drawBursts(nowMs: number, reduced: boolean): void {
+    const sparks = this.frames.sparks;
+    const age = nowMs - this.liftMs;
+    if (!sparks || this.bursts.length === 0 || age >= LIGHTNING_FX.burstMs) return;
+    const k = Math.max(0, age) / LIGHTNING_FX.burstMs;
+    const grow = reduced
+      ? 1
+      : LIGHTNING_FX.burstFrom + (1 - LIGHTNING_FX.burstFrom) * (1 - (1 - k) ** 2);
+    for (const { x, y, radius } of this.bursts) {
+      this.image(sparks.key)
+        .setPosition(x, y)
+        .setRotation(0)
+        .setScale((LIGHTNING_FX.burstScale * radius * grow) / sparks.radius)
+        .setAlpha(1 - k);
     }
   }
 
   /**
    * A bolt frame stretched from (x0, y0) to (x1, y1): its `a` end on the first point, its `b` end
-   * on the second, its zigzag `band` world units across (negative: mirrored).
+   * on the second, its zigzag `band` world units across (negative: mirrored; null: scaled evenly,
+   * keeping its shape, as for a curved arc).
    */
   private stretch(
     frame: BoltFrame,
@@ -255,7 +289,7 @@ export class LightningFx {
     y0: number,
     x1: number,
     y1: number,
-    band: number,
+    band: number | null,
     alpha: number,
   ): void {
     const image = this.image(frame.key);
@@ -267,7 +301,7 @@ export class LightningFx {
     const upright = Math.abs(ty) > Math.abs(tx);
     const turn = Math.atan2(y1 - y0, x1 - x0) - Math.atan2(ty, tx);
     const lengthScale = length / along;
-    const bandScale = band / frame.band;
+    const bandScale = band === null ? lengthScale : band / frame.band;
     image
       .setOrigin(frame.ax / image.width, frame.ay / image.height)
       .setPosition(x0, y0)

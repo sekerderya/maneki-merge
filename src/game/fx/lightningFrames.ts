@@ -3,14 +3,16 @@
  * a shock ring, small arcs and the crackles laid over a struck ball. Each bolt knows its two ends
  * in texture pixels, so the strike can stretch it between two balls.
  *
- * Until the owner's art comes (docs/ART_ASSETS.md §4.16) they are stand-ins drawn here on canvases:
- * jagged lines in the art's colours (a white core, a yellow glow, a violet haze), shaped by a
- * seeded generator so every launch draws the same ones. They are drawn with light (SCREEN), like the
- * art will be.
+ * With the art skin they are the owner's sheets (docs/ART_ASSETS.md §4.16, config/lightningSprites.ts,
+ * `lightningArtFrames`). Otherwise, or until the art is in, they are stand-ins drawn here on
+ * canvases: jagged lines in the art's colours (a white core, a yellow glow, a violet haze), shaped
+ * by a seeded generator so every launch draws the same ones. Both are drawn with light (SCREEN).
  */
 import type Phaser from 'phaser';
+import type { LightningBoltSprite, LightningSprites } from '../../config/lightningSprites';
 import { LIGHTNING_CORE, LIGHTNING_GLOW, LIGHTNING_HAZE } from '../../config/skin';
 import { Rng } from '../../core/rng';
+import { imageCanvas } from '../artImages';
 import { context } from '../skins/canvas';
 
 /** A bolt texture and its two ends: `a` (where it starts) and `b` (where it lands), in pixels. */
@@ -41,6 +43,67 @@ export interface LightningFrames {
   readonly arcs: readonly BoltFrame[];
   /** The crackles over a struck ball. */
   readonly shocks: readonly RoundFrame[];
+  /** A burst of sparks where a struck ball pops (the art's; the stand-ins use particles only). */
+  readonly sparks: RoundFrame | null;
+}
+
+/**
+ * The owner's sheets as frames: `images` are their sprites in the order of `lightningSprites`
+ * (config/lightningSprites.ts), each made a canvas texture so it comes back after a context loss.
+ */
+export function lightningArtFrames(
+  textures: Phaser.Textures.TextureManager,
+  art: LightningSprites,
+  images: readonly HTMLImageElement[],
+): LightningFrames {
+  let next = 0;
+  const texture = (file: string): string => {
+    const key = `fx-${file}`;
+    const image = images[next++];
+    if (!image) throw new Error(`Lightning art not loaded: ${file}`);
+    if (!textures.exists(key)) textures.addCanvas(key, imageCanvas(image));
+    return key;
+  };
+  const bolt = (s: LightningBoltSprite): BoltFrame => ({
+    key: texture(s.file),
+    ax: s.ax,
+    ay: s.ay,
+    bx: s.bx,
+    by: s.by,
+    band: s.band,
+  });
+  const round = (s: { file: string; radius: number }): RoundFrame => ({
+    key: texture(s.file),
+    radius: s.radius,
+  });
+  // The order of lightningSprites: bolts, sky, flash, ring, sparks, arcs, shocks.
+  const bolts = art.bolts.map(bolt);
+  const sky = art.sky.map(bolt);
+  const flash = round(art.flash);
+  const ring = round(art.ring);
+  const sparks = round(art.sparks);
+  const arcs = art.arcs.map(bolt);
+  const shocks = art.shocks.map(round);
+  return { bolts, sky, flash, ring, sparks, arcs, shocks };
+}
+
+/** Uploads every frame's canvas again (after the WebGL context comes back). */
+export function refreshFrames(
+  textures: Phaser.Textures.TextureManager,
+  frames: LightningFrames,
+): void {
+  const keys = [
+    ...frames.bolts,
+    ...frames.sky,
+    frames.flash,
+    frames.ring,
+    ...frames.arcs,
+    ...frames.shocks,
+    ...(frames.sparks ? [frames.sparks] : []),
+  ].map((frame) => frame.key);
+  for (const key of keys) {
+    if (textures.exists(key)) (textures.get(key) as Phaser.Textures.CanvasTexture).refresh();
+  }
 }
 
 const BOLT_W = 512;
@@ -120,6 +183,7 @@ export function lightningStandIns(textures: Phaser.Textures.TextureManager): Lig
     shocks,
     flash: { key: add('fx-flash-stand-in', flash()), radius: ROUND_PX },
     ring: { key: add('fx-ring-stand-in', ring()), radius: ROUND_PX - PAD },
+    sparks: null,
   };
 }
 

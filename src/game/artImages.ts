@@ -11,6 +11,7 @@ import { HUD_BADGE_ART, HUD_SPRITE_DIR } from '../config/hudSprites';
 import { ICON_SPRITE_DIR, iconSprites } from '../config/iconSprites';
 import { MENU_SPRITE_DIR, menuSprites } from '../config/menuSprites';
 import { PICK_SPRITE_DIR, pickPictures } from '../config/pickSprites';
+import { LIGHTNING_SPRITE_DIR, lightningSprites } from '../config/lightningSprites';
 import { JAR_ART, PAW_ART, SCENE_SPRITE_DIR } from '../config/sceneSprites';
 import { SHOP_ART, SHOP_SPRITE_DIR } from '../config/shopSprites';
 import { SPECIAL_ART, SPECIAL_SPRITE_DIR } from '../config/specialSprites';
@@ -33,6 +34,11 @@ export interface FxImages {
   /** Dice's lucky and unlucky die, the cursed cat's stone patterns (Batch 19). */
   readonly dice: readonly HTMLImageElement[];
   readonly stones: readonly HTMLImageElement[];
+  /**
+   * The Lightning blessing's sheets (config/lightningSprites.ts, in the order of
+   * `lightningSprites`), empty until they are in.
+   */
+  readonly lightning: readonly HTMLImageElement[];
 }
 
 /** The special balls' images (config/specialSprites.ts). */
@@ -83,7 +89,17 @@ export function loadArt(baseUrl: string): Promise<ArtImages> {
     fxList(FX_ART.seams),
     fxList(FX_ART.dice),
     fxList(FX_ART.stones),
-  ]).then(([flames, cracks, seams, dice, stones]) => ({ flames, cracks, seams, dice, stones }));
+    Promise.all(
+      lightningSprites().map(({ file }) => image(`${baseUrl}${LIGHTNING_SPRITE_DIR}${file}`)),
+    ),
+  ]).then(([flames, cracks, seams, dice, stones, lightning]) => ({
+    flames,
+    cracks,
+    seams,
+    dice,
+    stones,
+    lightning,
+  }));
   const loads = Promise.all([
     Promise.all(CAT_SPRITES.map(({ file }) => image(`${baseUrl}${CAT_SPRITE_DIR}${file}`))),
     scene(JAR_ART.back),

@@ -356,7 +356,8 @@ export const HANABI_BLAST_SPARKS = 36;
  * - Where a link lands, a flash grows to `impactScale` of the ball's radius and fades over
  *   `impactMs`, and a ring grows from `ringFrom` to `ringTo` radii over `ringMs`. The crackles
  *   cover `crackleRadius` of the ball.
- * - When they pop, `popSparks` sparks fly from each.
+ * - When they pop, `popSparks` sparks fly from each, and the art's burst of sparks grows from
+ *   `burstFrom` to `burstScale` of the ball's radius and fades over `burstMs`.
  * - A waiting lightning ball gives off a small arc every `arcEveryMs`, for `arcMs`.
  */
 export const LIGHTNING_FX = {
@@ -381,6 +382,9 @@ export const LIGHTNING_FX = {
   ringMs: 320,
   crackleRadius: 0.95,
   popSparks: 10,
+  burstScale: 1.7,
+  burstFrom: 0.5,
+  burstMs: 320,
   arcEveryMs: 900,
   arcMs: 140,
 } as const;

@@ -23,7 +23,12 @@ export const SPECIAL_SPRITE_DATA: SpecialSprites = {
     radius: 382.78,
     color: '#cba5f0',
   },
-  lightning: null,
+  lightning: {
+    file: 'lightning.webp',
+    side: 794,
+    radius: 392.71,
+    color: '#44407d',
+  },
   boulders: [
     {
       file: 'boulder-0.webp',

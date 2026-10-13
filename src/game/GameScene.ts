@@ -67,7 +67,8 @@ import { DiceFx } from './fx/DiceFx';
 import { KintsugiFx } from './fx/KintsugiFx';
 import { LastCatFx } from './fx/LastCatFx';
 import { LightningFx } from './fx/LightningFx';
-import { lightningStandIns } from './fx/lightningFrames';
+import { lightningArtFrames, lightningStandIns } from './fx/lightningFrames';
+import { LIGHTNING_ART } from '../config/lightningSprites';
 import { MergeFx } from './fx/MergeFx';
 import type { PayoutKind } from './fx/MergeFx';
 import { PopFx } from './fx/PopFx';
@@ -261,12 +262,14 @@ export class GameScene extends Phaser.Scene {
     this.kintsugi = new KintsugiFx(this, fx, this.skin);
     this.curse = new CurseFx(this, numbers, fx, this.balls, art?.fx.stones ?? null);
     this.dice = new DiceFx(this, fx, art?.fx.dice ?? null);
-    this.lightning = new LightningFx(
-      this,
-      storm,
-      this.sparks,
-      lightningStandIns(this.textures),
-      (count) => this.particles(count),
+    // The owner's lightning with the art skin, once it is in; else the stand-ins.
+    const lightningImages = art?.fx.lightning ?? [];
+    const bolts =
+      LIGHTNING_ART && lightningImages.length > 0
+        ? lightningArtFrames(this.textures, LIGHTNING_ART, lightningImages)
+        : lightningStandIns(this.textures);
+    this.lightning = new LightningFx(this, storm, this.sparks, bolts, (count) =>
+      this.particles(count),
     );
     this.selectRing = this.add.graphics();
     fx.add(this.selectRing);
@@ -296,6 +299,7 @@ export class GameScene extends Phaser.Scene {
       this.fall.restore();
       this.curse.restore();
       this.dice.restore();
+      this.lightning.restore();
     });
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.detach());
