@@ -23,6 +23,8 @@ The game is an offline web app (PWA), so no app store is needed. After the first
 2. Tap **Install app** on the game's menu, or open Chrome's ⋮ menu → **Install app** (or **Add to Home screen**).
 3. Start the game from the **Maneki** icon in the app drawer.
 
+The same game is coming to **Google Play** as an app ([docs/PLAY_STORE.md](docs/PLAY_STORE.md)).
+
 **Updates:** when a new version is ready, the main menu shows "Update ready — tap to restart". Tap it to update. A run is never interrupted.
 
 ## Development

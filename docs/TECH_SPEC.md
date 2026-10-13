@@ -2,11 +2,11 @@
 
 ## 1. Platforms and distribution
 
-| Target       | How players install it                                                                                                  | Notes                                                                                                                                                                                                    |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| iOS / iPadOS | Safari (or any iOS browser) → Share → **Add to Home Screen**. It opens full screen from its own icon and works offline. | No App Store, Apple developer account, Mac, or re-signing every 7 days. Home-screen web apps keep their storage. No Vibration API. Orientation lock isn't honoured, so a rotate overlay is used instead. |
-| Android      | Chrome → **Install app**, which puts a WebAPK in the app drawer. An APK via Capacitor is optional (M14).                | Vibration works, and so does the manifest's orientation lock.                                                                                                                                            |
-| Desktop      | Any modern browser                                                                                                      | For development and testing.                                                                                                                                                                             |
+| Target       | How players install it                                                                                                                             | Notes                                                                                                                                                                                                    |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| iOS / iPadOS | Safari (or any iOS browser) → Share → **Add to Home Screen**. It opens full screen from its own icon and works offline.                            | No App Store, Apple developer account, Mac, or re-signing every 7 days. Home-screen web apps keep their storage. No Vibration API. Orientation lock isn't honoured, so a rotate overlay is used instead. |
+| Android      | Chrome → **Install app**, which puts a WebAPK in the app drawer; or the **Google Play** app (v0.43, §16), a Trusted Web Activity of the same site. | Vibration works, and so does the manifest's orientation lock.                                                                                                                                            |
+| Desktop      | Any modern browser                                                                                                                                 | For development and testing.                                                                                                                                                                             |
 
 Why a PWA: the owner builds on Windows and won't publish to the App Store. Native iOS builds need macOS and Xcode, and apps sideloaded with a free Apple ID expire after 7 days. A PWA installs on both platforms from one URL, updates itself, and runs fully offline.
 
@@ -29,7 +29,7 @@ Hosting: GitHub Pages from the public repo `sekerderya/maneki-merge`. It's free 
 | Lint and format         | ESLint (flat config, typescript-eslint) + Prettier                     |                                                                                                      |
 | CI/CD                   | GitHub Actions → GitHub Pages                                          |                                                                                                      |
 | Art pipeline (M13)      | `sharp` + a small MIT texture packer                                   |                                                                                                      |
-| Optional (M14)          | Capacitor → Android APK                                                |                                                                                                      |
+| Google Play app (v0.43) | Trusted Web Activity: Bubblewrap's project, `androidbrowserhelper`     | `android/`, built by `android.yml` (§16). Not Capacitor (the owner's call, 2026-10-13).              |
 
 ## 3. Architecture
 
@@ -309,7 +309,7 @@ Data flow: pointer input (game) → `RunController.drop(x)` → PhysicsWorld ste
   - Shop (`shop.spec.ts`): buying with debug coins (the nine cards and the Blessings heading, prices, the Big Catch and Golden Cats values, a locked Combo Charm opening at stage 3, MAX, a disabled price with "Need N more", the count-down, the save written at once, purchases surviving a reload), the back button closing the shop, a v6 save starting over with its settings, and the menu and shop fitting 375×667, 390×844 and 430×932 without overlap.
   - Coins survive a reload in the middle of a run (inside the write throttle), backgrounding writes the save, settings/records/stats/hints persist, Game Over badges, a Lucky Save, combo (with its score bonus) and Jackpot banners (`economy.spec.ts`).
   - Audio and juice (`juice.spec.ts`, Chromium only: Playwright's WebKit has no reliable Web Audio): no AudioContext before a tap, running after PLAY, suspended and back with the sound toggle; 12 simultaneous merges plus a Jackpot and an expansion rendered offline through the real mixer (`renderPeak`) peak below 1, and the same burst in the running game keeps the console clean.
-  - Settings (`settings.spec.ts`): switches persist across a reload, Reduce motion sets the `reduce-motion` class, "How to play" brings the first hint back, there is no music row, the back button closes the panel, and the card fits 375×667 and 430×932 with rows at least 48 px tall.
+  - Settings (`settings.spec.ts`): switches persist across a reload, Reduce motion sets the `reduce-motion` class, "How to play" brings the first hint back, there is no music row, the privacy link points at the policy in a new tab and the policy is served (v0.43), the back button closes the panel, and the card fits 375×667 and 430×932 with rows at least 48 px tall.
   - Clips (`clips.spec.ts`, v0.38): six shop cards have a clip button; one opens the popup with its title, caption, poster and the clip as a blob URL (Playwright's browsers can't all play H.264, so nothing checks that it plays), its new dot goes and stays gone after a reload; the popup closes by its button, a tap outside and the back button (the shop stays open); a pick card's button opens its clip without selecting the card, back closes it without pausing, and the card still selects; "How to play" brings the dots back; the popup fits 375×667 and 430×932.
   - Offline reload: load, wait for the service worker, go offline, reload, start a run. This one runs in the Chromium project.
 - **URL flags:** `?debug=1`, `?seed=<n>`, `?skin=placeholder|vector`, `?res=<n>` (a fixed canvas resolution, §6), `?gravity=<n>` (the runs' gravity times n, 0.5–2, §5), `?interp=0` (balls drawn at the latest step, §5), parsed by `core/urlFlags.ts` (unit-tested).
@@ -322,10 +322,10 @@ Data flow: pointer input (game) → `RunController.drop(x)` → PhysicsWorld ste
 
 - Development happens directly on `main` (no side branches or PRs), so `deploy.yml`'s checks are the gate before every deploy. While the game is in development nobody else plays it, so the E2E suite does not gate the deploy (owner's decision, v0.23.1+): it reports failures afterwards.
 - `ci.yml` runs on PRs and on pushes to branches other than main (kept for the rare case one is used): `npm ci` → typecheck → lint → format check → unit tests with coverage → build → Playwright (`npx playwright install --with-deps chromium webkit`).
-- `deploy.yml` runs on pushes to `main`, except pushes that only touch `docs/`, Markdown files, `art-source/` or `.claude/` (nothing the site is built from). The `build` job runs typecheck → lint → format check → unit tests with coverage → a build with the Pages base → `actions/upload-pages-artifact`. `deploy` (`actions/deploy-pages`) follows it.
+- `deploy.yml` runs on pushes to `main`, except pushes that only touch `docs/`, Markdown files, `art-source/`, `.claude/` or `android/` (nothing the site is built from). The `build` job runs typecheck → lint → format check → unit tests with coverage → a build with the Pages base → `actions/upload-pages-artifact`. `deploy` (`actions/deploy-pages`) follows it.
 - `e2e.yml` runs on the same pushes, beside the deploy: Playwright as four parallel jobs (each device profile in two `--shard`s, each installing only its own browser). A newer push cancels a running one. A failure marks the run red (GitHub notifies) and uploads the Playwright report; it does not undo the deploy. The Pages source is GitHub Actions; `workflow_dispatch` deploys by hand.
 - Versioning: the `package.json` version (0.x during development, 1.0.0 at release) plus the short commit hash, injected at build time and shown on the menu. Tag `vX.Y.Z` after each milestone merge.
-- Optional `android.yml` (M14): on tags, run Capacitor sync and a Gradle release build signed with a keystore from repo secrets, and attach the APK to the GitHub Release.
+- `android.yml` (v0.43, §16) builds the Google Play app on pushes to `main` that touch `android/` (or the workflow) and by hand: a Gradle release build of the bundle and the APK, signed with the upload key from the repository secrets, uploaded as the run's artifact. `deploy.yml` and `e2e.yml` skip pushes that only touch `android/`.
 
 ## 13. Performance budgets
 
@@ -372,3 +372,61 @@ Data flow: pointer input (game) → `RunController.drop(x)` → PhysicsWorld ste
 - Read the matching skill in `node_modules/phaser/skills/` before writing Phaser code: `game-setup-and-config`, `scale-and-responsive`, `scenes`, `cameras`, `tweens`, `particles`, `render-textures`, `graphics-and-shapes`, `text-and-bitmaptext`, `sprites-and-images`, `input-keyboard-mouse-touch`, `v4-new-features`.
 - Phaser 3 examples from memory may be wrong for v4, because the renderer, FX, mask and tint APIs changed. When in doubt, check the skill or `changelog/v4/` in the package.
 - Don't use Phaser's Matter plugin for gameplay physics.
+
+## 16. Google Play app (v0.43)
+
+The owner's call (2026-10-13): the Play app is a **Trusted Web Activity** (TWA) of the live site,
+not the Capacitor wrapper M14 first planned. Chrome runs the site full screen inside the app, so
+it behaves like the installed web app the owner tests on the phone, shares Chrome's storage for
+the origin (the saves carry over), and gets game updates through the service worker (§9) without
+a Play release. The costs: the first launch needs a connection (as a first visit does), and on a
+phone whose browser can't host a TWA it opens as a Custom Tab with a URL bar. The owner's steps in
+Play Console are docs/PLAY_STORE.md.
+
+- **`android/`** is the Gradle project that Bubblewrap (`@bubblewrap/core` 1.27.0,
+  `TwaGenerator.createTwaProject`) generated from `android/twa-manifest.json`: package
+  `io.github.sekerderya.manekimerge` (permanent on Play), host `sekerderya.github.io`, start
+  `/maneki-merge/`, `fullScopeUrl` the game's path (so only links into `/maneki-merge/` open the
+  app), display `fullscreen` (immersive), portrait, every bar and the splash `#fcefdf`, no
+  notification delegation, no permissions, the site-settings shortcut, Custom Tabs as the fallback,
+  minSdk 23, compile and target SDK 36, `androidbrowserhelper` 2.7.4, AGP 8.9.1, Gradle 8.11.1,
+  versionCode 1 / versionName 1.0.0 (the wrapper's version, apart from the game's). The launcher
+  icon is the maskable icon (adaptive), the splash and `store_icon.png` (Play's 512 icon) the 512
+  icon, all fetched from the live site at generation time.
+- **One change by hand:** `LauncherActivity.getDisplayMode()` returns immersive mode with
+  `LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES`. Bubblewrap's "immersive" keeps the default cutout
+  mode, which leaves a black band the camera cutout's height at the top of a full-screen app (the
+  installed web app's v0.42.15 problem, §7). Whether Chrome then lays the game into the cutout can
+  only be seen on a phone.
+- **Regenerating** (a new Bubblewrap, a new icon or name): run `TwaGenerator.createTwaProject` on
+  `android/twa-manifest.json` into an empty folder, copy it over `android/`, and put the
+  LauncherActivity change back. A yearly target-SDK bump (Google's deadline is 31 August) can
+  instead edit `compileSdkVersion` / `targetSdkVersion` in `android/app/build.gradle` (and AGP
+  and Gradle if the new SDK needs them). Every Play upload needs a higher versionCode: raise it in
+  `app/build.gradle` and `twa-manifest.json` together. Prettier skips the generated `android/app/`.
+- **Digital Asset Links.** Chrome opens the app full screen only when
+  `https://sekerderya.github.io/.well-known/assetlinks.json` names the app's package and the
+  SHA-256 of a key it is signed with. The file has to be at the domain's root, so it lives in the
+  owner's user-site repository `sekerderya/sekerderya.github.io` (Pages from `main`, with
+  `.nojekyll` so the `.well-known` folder is served; the project sites under it are unaffected).
+  It lists Play's app signing key (installs from Play) and the upload key (the APK installed
+  directly). The app's side is `assetStatements` in `app/src/main/res/values/strings.xml`.
+- **The upload key**: `npm run android:key` (`tools/android/createUploadKey.ts`) runs `keytool`
+  (JAVA_HOME, the PATH or the usual Windows Java folders) for an RSA 2048 key, alias `upload`,
+  PKCS12, valid 30 years, under `~/maneki-merge-upload-key/` with a random password beside it,
+  never in the repository (`.gitignore` also ignores `*.p12`, `*.jks`, `*.keystore`). It stores
+  the keystore (base64) and the password as the repository secrets
+  `ANDROID_UPLOAD_KEYSTORE_BASE64` and `ANDROID_UPLOAD_KEYSTORE_PASSWORD` with `gh secret set`,
+  and prints the fingerprint. It refuses to overwrite an existing key.
+- **The build** (`.github/workflows/android.yml`): Ubuntu, Temurin 17, `./gradlew bundleRelease
+assembleRelease`, `aapt2 dump badging` (the package, the SDK levels and the label in the log),
+  then `jarsigner` signs the bundle and `zipalign` + `apksigner` the APK with the upload key, the
+  job summary shows the key's fingerprint, and the artifact `maneki-merge-android`
+  (`maneki-merge.aab`, `maneki-merge.apk`) is kept 30 days. Signing happens after Gradle, so the
+  generated `build.gradle` has no signing config. Without the secrets it keeps the unsigned
+  outputs and warns.
+- **In the app** the page should match an app display mode (`standalone`, or `fullscreen` in
+  immersive mode; not checked on a phone yet), so the install hints don't show
+  (`platform/installContext.ts`); the back button, vibration and the update flow work as in the
+  installed web app. The privacy policy Google Play asks for, in the app and on the listing, is
+  `public/privacy.html` (precached), linked from Settings (GAME_DESIGN §2.4).

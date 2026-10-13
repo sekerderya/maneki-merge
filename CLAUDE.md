@@ -18,6 +18,7 @@ Guidance for Claude Code in this repository. Read it at the start of every sessi
 | `docs/ROADMAP.md`     | Milestones with scope, acceptance criteria and status                |
 | `docs/PROMPTS.md`     | Prompts the owner pastes. Not instructions for you unless pasted.    |
 | `docs/ART_ASSETS.md`  | The owner's AI art: phases, prompts, the icon kit (§5) for new icons |
+| `docs/PLAY_STORE.md`  | The Google Play app: upload key, Play Console answers, store texts   |
 
 If code and docs disagree, the docs win unless the owner says otherwise. When a decision or number changes, update the doc in the same commit.
 
@@ -41,6 +42,7 @@ TypeScript (strict) · Vite · Phaser 4 (rendering only) · matter-js (standalon
 | `npm run test` / `npm run test:e2e` | Vitest / Playwright                                                                                  |
 | `npm run test:perf`                 | Physics step benchmark (150 cats, at most 2 ms per step), run alone without coverage                 |
 | `npm run sim`                       | Headless balance simulation (from M10)                                                               |
+| `npm run android:key`               | Once, by the owner: the Google Play upload key and its repository secrets (docs/PLAY_STORE.md §2)    |
 
 ## Architecture rules
 
@@ -68,7 +70,7 @@ TypeScript (strict) · Vite · Phaser 4 (rendering only) · matter-js (standalon
 4. **Test.** Add or update tests for every rule you touch. Headless layers need unit tests.
 5. **Verify.** `npm run check` and `npm run build` must pass. For anything visible, run the app and open it in the browser at a 390×844 portrait viewport (also 375×667). Actually play or click through the change, take screenshots, and confirm the console is clean. Don't run the full `npm run test:e2e` locally (it freezes the owner's PC); run only the specs your change touches, e.g. `npx playwright test tests/e2e/shop.spec.ts --project=pixel-chromium --workers=1`. The E2E workflow runs the whole suite on every push to `main`. Review your full diff before pushing.
 6. **Document.** Tick the milestone checkboxes and update its status in `docs/ROADMAP.md`. Add a `CHANGELOG.md` entry. Bump the version in `package.json` (minor for milestones, patch for fixes). Update `GAME_DESIGN.md` / `TECH_SPEC.md` if anything changed.
-7. **Ship.** Commit directly to `main` and push. Save milestone screenshots in `docs/screenshots/mNN/`. Pushing to `main` deploys automatically; the Deploy workflow runs typecheck, lint, format and unit tests first. The E2E workflow runs beside it and does not block the deploy (owner's call while the game is in development). Check both and fix any failure with a new commit on `main`. Pushes that only touch `docs/`, Markdown files, `art-source/` or `.claude/` run neither workflow. Then tag `vX.Y.Z` and push the tag.
+7. **Ship.** Commit directly to `main` and push. Save milestone screenshots in `docs/screenshots/mNN/`. Pushing to `main` deploys automatically; the Deploy workflow runs typecheck, lint, format and unit tests first. The E2E workflow runs beside it and does not block the deploy (owner's call while the game is in development). Check both and fix any failure with a new commit on `main`. Pushes that only touch `docs/`, Markdown files, `art-source/`, `.claude/` or `android/` run neither workflow; `android/` runs the Android workflow (TECH_SPEC §16) instead. Then tag `vX.Y.Z` and push the tag.
 8. **Report** in Turkish: what changed, screenshots, test notes, what to test on the phone and how, known issues, and the next milestone.
 
 ## Debug and test hooks

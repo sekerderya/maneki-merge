@@ -18,7 +18,7 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
 | M11 | QA, performance and hardening       | high               | –         | not started |
 | M12 | Owner playtest and polish loop      | per issue          | –         | in progress |
 | M13 | Final art integration               | high               | yes       | in progress |
-| M14 | Release v1.0                        | medium (APK: high) | –         | not started |
+| M14 | Release v1.0                        | medium (APK: high) | –         | in progress |
 
 ## Phone test checklist (owner, after every milestone)
 
@@ -399,7 +399,8 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
 - [ ] The release QA checklist below passes on both phones
 - [ ] Version 1.0.0, `CHANGELOG.md`, tag `v1.0.0`, and a GitHub Release with notes
 - [ ] README: screenshots/GIF, install and update instructions for iOS and Android, known limitations
-- [ ] Optional: a Capacitor Android wrapper + `android.yml` that builds a signed APK on tags and attaches it to the Release (same save format, native haptics)
+- [x] Google Play app (v0.43; the owner's call on 2026-10-13: a Trusted Web Activity of the live site instead of the Capacitor wrapper planned here): `android/`, `android.yml` building the signed bundle, `npm run android:key`, the asset links at `sekerderya.github.io`, the privacy policy (in Settings too), the store texts and screenshots (docs/PLAY_STORE.md, TECH_SPEC §16)
+- [ ] Owner: the upload key, the Play Console app, Play's fingerprint in the asset links, the feature graphic (ART_ASSETS §4.18), the closed test (12 testers, 14 days) and the production release (docs/PLAY_STORE.md §2–§5)
 
 ### Release QA checklist
 

@@ -114,6 +114,7 @@ narrower than their canvas: Claude crops the empty space.
 | 37  | 15 bolt    | `fx/shock.png`                            | Sheet on black: four electric crackle patterns over a struck cat    | 1:1, 1024×1024    |
 | 38  | 16 loading | `loading/bar.jpg`                         | The loading bar: the score card, long, with an empty well (§4.17)   | 3:2, 1536×1024    |
 | 39  | 16 loading | `loading/bar-full.jpg`                    | The same bar, an edit with the well full of gold                    | 3:2, 1536×1024    |
+| 40  | 17 Play    | `store/feature-graphic.png`               | Google Play's feature graphic: the logo and the cats, wide (§4.18)  | 3:2, 1536×1024    |
 
 How the pieces go into the game:
 
@@ -2433,6 +2434,39 @@ well, generate it again (it has to match the first pixel for pixel outside the w
 `tools/buildLoading.ts` (`npm run art`): `public/assets/loading/bar.webp` and `fill.webp`, data in
 `src/config/loadingSpriteData.ts`; both strips' caps sit on the same columns, so the full gold lies
 exactly on the well.
+
+### 4.18 Phase 17: the Google Play feature graphic
+
+The wide banner at the top of the game's Google Play page (docs/PLAY_STORE.md §5). Play wants it
+at exactly 1024×500 (JPG or PNG, no transparency), and shows it cropped and scaled in places, so
+what matters sits in the middle. The image tools make 3:2, so generate 1536×1024: Claude cuts the
+middle band (1536×750, the top and bottom 137 px go) and scales it to 1024×500, and nothing else.
+Attach the menu mockup ([art-source/menu/mockup.jpg](../art-source/menu/mockup.jpg)), the hero
+([art-source/menu/hero.jpg](../art-source/menu/hero.jpg)), the logo
+([art-source/menu/logo.jpg](../art-source/menu/logo.jpg)) and the lineup sheet
+([art-source/style/lineup.webp](../art-source/style/lineup.webp)). Save it as
+`art-source/store/feature-graphic.png`. If the logo's letters come out wrong, generate it again
+(a fresh chat, or the tool's region edit on the letters); the logo is the only text allowed.
+
+```text
+Style: match the attached images exactly (the game's main menu, its golden lucky cat, its logo and
+its cat lineup). Polished casual mobile-game art, cute chibi kawaii illustration, thick warm
+dark-brown outlines (never black) of even weight, soft pastel cel shading with gentle gradients and
+one small glossy highlight, light from the upper left, warm cream and sakura-pink palette, clean
+crisp vector-like edges. No watermark, no signature, and no text except the attached logo.
+
+The Google Play banner for the mobile game "Maneki Merge": a wide view of the shrine garden from
+the attached menu (cream sky with soft clouds, sakura branches, a red torii on one side, stone
+lanterns, warm wooden floor). On the left half, the attached "Maneki Merge" logo exactly as it is
+(the same rounded coral-pink letters with the dark-brown outline and the gold bell), big and easy
+to read. On the right half, the golden maneki-neko from the attached hero picture on its pink
+cushion, waving with its raised paw, and around it a happy tumble of the round lucky cats from the
+attached lineup sheet in several sizes and colours, every one with its raised paw, red collar and
+gold bell, with a few gold koban coins and sparkles bursting between two of them as if they just
+merged. Everything important sits inside the middle band of the picture, between 15% and 85% of its
+height, and away from the left and right edges: the top and bottom are cut off and the edges get
+covered. Bright, cheerful, readable as a small thumbnail. Wide landscape, ratio 3:2.
+```
 
 ## 5. Icon kit (every new icon)
 
