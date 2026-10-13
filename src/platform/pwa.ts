@@ -28,6 +28,15 @@ export function controlledByServiceWorker(): boolean {
  * server.
  */
 export function registerServiceWorker(gate: UpdateGate): ServiceWorkerControls {
+  // A new version took control of this page (our `activate`, or another window's): the gate
+  // reloads into it. The plugin's `onNeedReload` alone isn't enough: it only starts listening once
+  // workbox reports the version waiting, 200 ms after it installed, and the loading screen
+  // activates a version as soon as it has installed. On a phone the switch beat those 200 ms, the
+  // reload never came and "Updating…" stayed on the menu (v0.42.14). A page that no worker
+  // controlled has nothing stale to reload.
+  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.addEventListener('controllerchange', () => gate.onControllerChanged());
+  }
   let registered: (registration: ServiceWorkerRegistration | undefined) => void = () => {};
   const registration = new Promise<ServiceWorkerRegistration | undefined>((resolve) => {
     registered = resolve;
