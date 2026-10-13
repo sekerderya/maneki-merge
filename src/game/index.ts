@@ -104,7 +104,18 @@ export function createGame(
     autoFocus: false,
     scale: { mode: Phaser.Scale.NONE, width: 1, height: 1 },
     input: { activePointers: 1, keyboard: false, gamepad: false },
-    render: { antialias: true, powerPreference: 'high-performance' },
+    // The game's own audio engine plays every sound (audio/index.ts); Phaser's sound manager would
+    // only open a second AudioContext that runs, silent, from the first tap on.
+    audio: { noAudio: true },
+    render: {
+      // Smooth (linear) texture filtering.
+      antialias: true,
+      // No multisampling with the raster art: every edge it draws is inside a texture, padded
+      // with transparent pixels, so 4× MSAA smoothed nothing and cost a canvas-sized buffer per
+      // sample (TECH_SPEC §13). The vector and placeholder skins still draw Graphics edges.
+      antialiasGL: skin !== 'art',
+      powerPreference: 'high-performance',
+    },
     scene: new GameScene(skin, art, interpolate),
     callbacks: {
       postBoot: (booted) => {
