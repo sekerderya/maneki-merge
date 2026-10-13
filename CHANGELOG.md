@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.42.2] - 2026-10-13
+
+### Changed
+
+- **No more darkening during a lightning strike** (the owner's call): the screen stays as it is; the white flash, the bolts, the crackles and the sparks remain. The Lightning clip is recorded again without it.
+
 ## [0.42.1] - 2026-10-13
 
 ### Added
