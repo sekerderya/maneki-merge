@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.44.1] - 2026-10-14
+
+### Fixed
+
+- **The Scenes list scrolls on a phone** (the owner's report): a finger couldn't scroll it, because the game blocks touch scrolling everywhere but in lists marked scrollable, and this one wasn't (a mouse wheel scrolled it, so it slipped through). A test now swipes it with real touch events.
+
 ## [0.44.0] - 2026-10-14
 
 ### Added
