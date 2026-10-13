@@ -14,4 +14,5 @@ export { UpdateGate } from './updateGate';
 export { openStorage, requestPersistentStorage } from './storage';
 export type { OpenedStorage } from './storage';
 export { setupViewport } from './viewport';
+export { cutoutBandLikely, watchDisplayCutout } from './displayCutout';
 export { watchLifecycle } from './visibility';

@@ -25,11 +25,12 @@ import {
   setReduceMotion,
   setupViewport,
   UpdateGate,
+  watchDisplayCutout,
   watchLifecycle,
   watchPhoneLandscape,
 } from './platform';
 import { GameSession } from './session';
-import { UPDATE_LAUNCH_APPLY_MS } from './config/platform';
+import { CUTOUT_RECHECK_MS, UPDATE_LAUNCH_APPLY_MS } from './config/platform';
 import { setIconSkin } from './ui/catIcon';
 import { byId } from './ui/dom';
 import { createGameOverOverlay } from './ui/overlays/gameOverOverlay';
@@ -54,6 +55,7 @@ import type { InstallContext, ServiceWorkerControls } from './platform';
  */
 async function boot(): Promise<void> {
   setupViewport();
+  const recheckCutout = watchDisplayCutout();
   const loading = loadingScreen();
   const flags = parseUrlFlags(window.location.search);
   let skin: SceneSkin = flags.skin ?? 'art';
@@ -399,6 +401,9 @@ async function boot(): Promise<void> {
   sw ??= registerServiceWorker(gate);
   gate.finishLaunch();
   loading.hide();
+  // Chrome may have kept the app out of the camera cutout while it launched (platform/displayCutout.ts).
+  recheckCutout();
+  window.setTimeout(recheckCutout, CUTOUT_RECHECK_MS);
 
   if (flags.debug) {
     installDebugHooks({

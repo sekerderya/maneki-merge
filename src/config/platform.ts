@@ -7,6 +7,16 @@
  */
 export const TRANSIENT_BARS_MAX_PX = 200;
 
+/**
+ * The camera cutout at launch (platform/displayCutout.ts): the installed app being more than this
+ * (CSS px) shorter than the screen in display-mode fullscreen means Chrome kept it out of the
+ * cutout. It then reports its viewport-fit again, at most this many times per launch, once more
+ * this long after boot.
+ */
+export const CUTOUT_BAND_MIN_PX = 8;
+export const CUTOUT_NUDGE_ATTEMPTS = 3;
+export const CUTOUT_RECHECK_MS = 2000;
+
 /** How long boot waits for the bundled font before rendering anyway. */
 export const FONT_LOAD_TIMEOUT_MS = 1500;
 
