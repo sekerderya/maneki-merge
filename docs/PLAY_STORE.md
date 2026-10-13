@@ -6,7 +6,7 @@ side (the Android project, the workflow, the asset links) is TECH_SPEC §16.
 ## 1. How the Play app works
 
 - The Play app is a **Trusted Web Activity** (TWA, the owner's call on 2026-10-13, instead of the
-  Capacitor wrapper M14 first planned): a small Android app (about 1 MB) that opens the live game,
+  Capacitor wrapper M14 first planned): a small Android app (a 3 MB APK; Play delivers less to each phone) that opens the live game,
   https://sekerderya.github.io/maneki-merge/, in the phone's Chrome, full screen, with no browser
   bar. It is the same game as the installed web app, running the same way.
 - Package name: **`io.github.sekerderya.manekimerge`**. It can never change once the app is on
