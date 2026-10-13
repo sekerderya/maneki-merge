@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.44.0] - 2026-10-14
+
+### Added
+
+- **Scenes for the owner's publisher clips** (the owner's request; GAME_DESIGN §2.6). A hidden Scenes panel on the main menu plays 18 runs, each set up for one of the game's big moments: two for each special ball (lightning, hanabi, joker, golden cat, magnet), two for Lucky Save and two each for the Hubris, Heavy Drop and Dice rules. The jar is set up and settled at the scene's stage, the right ball waits in the paw, and the player drops one or two balls to set the moment off: a lightning bolt breaking every boulder so the 8s meet, a full jar caving in after six 3s pop, a Lucky Save that sets off a chain to the last cat, two Hubris threes in a row, a fireball knocking an 8 into the other, a lucky die. Four of them end in the shrine growing. Nothing plays by itself.
+  - The button shows only on a device that turned it on: `?scenes=1` in the address, or seven quick taps on the version in Settings (`?scenes=0` or seven more taps hide it).
+  - A scene is a sandbox: its coins, records and stats never reach the profile, it is never saved, and it shows no first-run hints. Game Over's Play Again and the pause's new **Restart scene** set it up again for another take.
+  - Every scene was tuned headless; a test plays its moment from several drop points and checks its jar holds still until the first drop.
+
+### Fixed
+
+- Opening the game from a panel in the same tap (a Scenes row) no longer leaves the back button one step off: the game's history entry waits for the panel's to go, so Quit to Menu no longer left the app.
+
 ## [0.43.0] - 2026-10-13
 
 ### Added
