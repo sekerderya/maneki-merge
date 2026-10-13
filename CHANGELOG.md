@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.42.11] - 2026-10-13
+
+### Added
+
+- **The owner's app icon** (`art-source/app-icon.jpg`, docs/ART_ASSETS.md §4.6): the golden lucky cat from the chest up, waving, on cream with a pink glow. `npm run icons` (now `tools/buildAppIcon.ts`, also part of `npm run art`) makes the 64/192/512, Apple 180 and maskable 512 icons and the favicon from it; the maskable one shrinks the picture to 86% and copies its edges outwards, so the raised paw stays inside Android's safe circle. The code-drawn `public/icon.svg`, `pwa-assets.config.ts` and the `@vite-pwa/assets-generator` dependency are gone.
+- **The owner's loading bar** (`art-source/loading/bar.jpg`, `bar-full.jpg`, §4.17): the score card made long, with the paw on its left end; its well fills with gold from the paw to the right as the game loads, in place of the CSS bar. `tools/buildLoading.ts` cuts the empty bar and takes the gold from where the two pictures differ.
+
 ## [0.42.10] - 2026-10-13
 
 ### Added

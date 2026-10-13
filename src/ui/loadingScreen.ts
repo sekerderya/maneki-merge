@@ -1,3 +1,4 @@
+import { LOADING_BAR_ART, LOADING_FILL_ART, LOADING_SPRITE_DIR } from '../config/loadingSprites';
 import { LOADING_FADE_MS } from '../config/platform';
 import { reducedMotion } from '../platform';
 
@@ -27,6 +28,8 @@ export interface LoadingScreen {
 export function loadingScreen(): LoadingScreen {
   const root = document.getElementById('loading');
   const label = root?.querySelector('.loading-label');
+  const bar = root?.querySelector<HTMLElement>('.loading-bar');
+  if (bar) setBarArt(bar);
   let shown = 0;
   let status: LoadingStatus = 'loading';
   let fonts = false;
@@ -56,4 +59,23 @@ export function loadingScreen(): LoadingScreen {
       window.setTimeout(() => root.remove(), fade);
     },
   };
+}
+
+/** The bar's art and three-slice caps (index.html lays them out in source pixels). */
+function setBarArt(bar: HTMLElement): void {
+  const set = (name: string, value: string | number): void =>
+    bar.style.setProperty(name, String(value));
+  const url = (file: string): string =>
+    `url("${import.meta.env.BASE_URL}${LOADING_SPRITE_DIR}${file}")`;
+  set('--bar-art', url(LOADING_BAR_ART.file));
+  set('--bar-h', LOADING_BAR_ART.height);
+  set('--bar-left', LOADING_BAR_ART.left);
+  set('--bar-right', LOADING_BAR_ART.right);
+  set('--fill-art', url(LOADING_FILL_ART.file));
+  set('--fill-x', LOADING_FILL_ART.x);
+  set('--fill-y', LOADING_FILL_ART.y);
+  set('--fill-h', LOADING_FILL_ART.height);
+  set('--fill-left', LOADING_FILL_ART.left);
+  set('--fill-right', LOADING_FILL_ART.right);
+  bar.classList.add('is-art');
 }

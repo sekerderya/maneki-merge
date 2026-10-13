@@ -22,7 +22,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 
     <link rel="icon" href="/favicon.ico" sizes="48x48" />
-    <link rel="icon" href="/icon.svg" sizes="any" type="image/svg+xml" />
+    <link rel="icon" href="/pwa-192x192.png" sizes="192x192" type="image/png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
     <!-- vite-plugin-pwa injects the manifest link. -->
 
@@ -33,7 +33,9 @@
       }
       /*
        * The loading screen (GAME_DESIGN §2.0, ui/loadingScreen.ts), styled here so it shows before
-       * the scripts arrive: the menu's garden, logo and golden cat, and a bar the boot fills.
+       * the scripts arrive: the menu's garden, logo and golden cat, and the owner's bar (the long
+       * score card), whose gold grows from the paw as the game loads. The script sets the bar's
+       * art and slices (in source pixels, scaled by --s) and --progress.
        */
       .loading {
         position: fixed;
@@ -84,31 +86,43 @@
         }
       }
       .loading-bar {
+        --s: calc(54px / var(--bar-h, 1));
         position: absolute;
         left: 50%;
         bottom: calc(env(safe-area-inset-bottom, 0px) + 15vh);
-        width: min(70vw, 320px);
-        height: 22px;
+        width: min(80vw, 340px);
+        height: 54px;
         translate: -50% 0;
         box-sizing: border-box;
-        border: 3px solid #4a2e25;
-        border-radius: 999px;
-        background: #fff8ee;
-        box-shadow: 0 3px 0 #4a2e25;
-        overflow: hidden;
+        border: 0 solid transparent;
+        border-image: var(--bar-art) 0 var(--bar-right) 0 var(--bar-left) fill / 0
+          calc(var(--bar-right) * var(--s)) 0 calc(var(--bar-left) * var(--s)) stretch;
+        visibility: hidden;
+      }
+      .loading-bar.is-art {
+        visibility: visible;
       }
       .loading-fill {
-        width: calc(var(--progress, 0) * 100%);
-        height: 100%;
-        border-radius: 999px;
-        background: linear-gradient(#ffe08a, #f2b83b 55%, #c98a1b);
+        position: absolute;
+        left: calc(var(--fill-x) * var(--s));
+        top: calc(var(--fill-y) * var(--s));
+        width: calc(
+          (var(--fill-left) + var(--fill-right)) * var(--s) + var(--progress, 0) *
+            (100% - (var(--bar-left) + var(--bar-right)) * var(--s))
+        );
+        height: calc(var(--fill-h) * var(--s));
+        box-sizing: border-box;
+        border: 0 solid transparent;
+        border-image: var(--fill-art) 0 var(--fill-right) 0 var(--fill-left) fill / 0
+          calc(var(--fill-right) * var(--s)) 0 calc(var(--fill-left) * var(--s)) stretch;
+        opacity: calc(var(--progress, 0) * 40);
         transition: width 200ms ease-out;
       }
       .loading-label {
         position: absolute;
         left: 0;
         right: 0;
-        bottom: calc(env(safe-area-inset-bottom, 0px) + 15vh - 44px);
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 15vh - 40px);
         margin: 0;
         text-align: center;
         font:

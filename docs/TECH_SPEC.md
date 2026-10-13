@@ -272,7 +272,7 @@ Data flow: pointer input (game) → `RunController.drop(x)` → PhysicsWorld ste
   - name "Maneki Merge", short_name "Maneki"
   - `display: "fullscreen"` (iOS falls back to standalone), `orientation: "portrait"`
   - theme and background colours (from `config/app.ts`, cream `#fcefdf`); icons 64/192/512 + maskable 512; `apple-touch-icon` 180
-  - icons are generated from `public/icon.svg` by `npm run icons` (`pwa-assets.config.ts`) and committed, so builds don't need `sharp`
+  - icons are generated from the owner's `art-source/app-icon.*` (docs/ART_ASSETS.md §4.6) by `npm run icons` (`tools/buildAppIcon.ts`, also run by `npm run art`) and committed, so builds don't need `sharp`: the 64/192/512 and Apple 180 icons are the picture resized; the maskable 512 shrinks it to 86% and copies its edge pixels outwards, so the raised paw stays inside the 40% safe circle (v0.42.11; until then a code-drawn `public/icon.svg`)
   - iOS meta tags with the `default` status bar (dark text; the light theme would hide white status-bar text)
 - Workbox `generateSW` precaches the whole build (JS, CSS, HTML, fonts, images, audio, and since v0.38 the how-it-works clips, `public/clips/*.mp4`, about 4 MB), with `navigateFallback` = `index.html`. There are no remote origins to cache.
 - A clip is played from a blob URL (`ui/overlays/clipPopup.ts` fetches it whole): iOS asks for a video in byte ranges, which the precached response the service worker serves doesn't answer, so a plain `<video src>` would fail offline on iPhones.

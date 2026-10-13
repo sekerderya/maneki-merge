@@ -5,7 +5,8 @@
  * the main menu by tools/buildMenu.ts, the stage doors by tools/buildDoors.ts, the special balls by
  * tools/buildSpecials.ts, the Upgrades screen by tools/buildShop.ts and the icon kit by
  * tools/buildIcons.ts, the pick cards' pictures by tools/buildPicks.ts, the effect sheets by
- * tools/buildFx.ts and the Lightning blessing's sheets of light by tools/buildLightning.ts. Cats,
+ * tools/buildFx.ts, the Lightning blessing's sheets of light by tools/buildLightning.ts and the
+ * loading screen's bar by tools/buildLoading.ts, the app icon by tools/buildAppIcon.ts. Cats,
  * special balls and icons go through tools/artBall.ts.
  *
  * For each `art-source/cats/size-NN.{png,jpg,jpeg,webp}` (NN = 01–09, one per look):
@@ -18,6 +19,7 @@
  */
 import { mkdir, writeFile } from 'node:fs/promises';
 import { buildBall } from './artBall.ts';
+import { buildAppIcon } from './buildAppIcon.ts';
 import { findSource } from './artImage.ts';
 import { buildClouds } from './buildClouds.ts';
 import { buildDoors } from './buildDoors.ts';
@@ -25,6 +27,7 @@ import { buildFx } from './buildFx.ts';
 import { buildHud } from './buildHud.ts';
 import { buildIcons } from './buildIcons.ts';
 import { buildLightning } from './buildLightning.ts';
+import { buildLoading } from './buildLoading.ts';
 import { buildMenu } from './buildMenu.ts';
 import { buildPicks } from './buildPicks.ts';
 import { buildScene } from './buildScene.ts';
@@ -65,6 +68,8 @@ async function main(): Promise<void> {
   await buildFx();
   await buildLightning();
   await buildClouds();
+  await buildLoading();
+  await buildAppIcon();
 }
 
 function dataModule(looks: readonly LookData[]): string {

@@ -59,7 +59,7 @@ export default defineConfig({
       strategies: 'generateSW',
       // The glob below already precaches the icons.
       includeManifestIcons: false,
-      // Icons come from `npm run icons` (pwa-assets.config.ts) and are committed in public/.
+      // Icons come from `npm run icons` (tools/buildAppIcon.ts) and are committed in public/.
       manifest: {
         id: base,
         name: APP_NAME,

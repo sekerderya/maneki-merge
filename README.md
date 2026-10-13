@@ -36,7 +36,7 @@ Requires Node.js 24 (see `.nvmrc`).
 | `npm run build` / `npm run preview` | Production build / serve the build                                             |
 | `npm run check`                     | Typecheck + lint + unit tests with the coverage gate                           |
 | `npm run test:e2e`                  | Playwright end-to-end tests (`npx playwright install chromium webkit` first)   |
-| `npm run icons`                     | Regenerate the PWA icons in `public/` from `public/icon.svg`                   |
+| `npm run icons`                     | Regenerate the PWA icons in `public/` from `art-source/app-icon.*`             |
 
 Project docs: [game design](docs/GAME_DESIGN.md) · [tech spec](docs/TECH_SPEC.md) · [roadmap](docs/ROADMAP.md).
 

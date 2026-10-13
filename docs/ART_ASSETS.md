@@ -86,7 +86,7 @@ narrower than their canvas: Claude crops the empty space.
 | 11  | 4 menu     | `menu/upgrade-icons.png`                  | Sheet: 5 upgrade icons                                              | 3:2, 1536×1024    |
 | 12  | 4 menu     | `menu/settings-icons.png`                 | Sheet: sound, haptics, reduce motion, how to play                   | 1:1, 1024×1024    |
 | 13  | 4 menu     | `menu/banner.png`                         | Blank ribbon banner for "The shrine grows!" etc.                    | 3:2, 1536×1024    |
-| 14  | 5 app      | `app-icon.png`                            | App icon: the golden cat from the chest up, full bleed (§4.6)       | 1:1, 1024×1024    |
+| 14  | 5 app      | `app-icon.jpg`                            | App icon: the golden cat from the chest up, full bleed (§4.6)       | 1:1, 1024×1024    |
 | 15  | 6 doors    | `doors/picture.png`                       | Stage-door picture, cut into four strips by the game                | 9:16              |
 | 16  | 6 doors    | `doors/panel.png`                         | One empty door frame, laid over each strip                          | 2:3, 1024×1536    |
 | 17  | 7 specials | `specials/magnet.png`                     | The magnet token (in the paw and NEXT)                              | 1:1, 1024×1024    |
@@ -112,8 +112,8 @@ narrower than their canvas: Claude crops the empty space.
 | 35  | 15 bolt    | `fx/skybolts.png`                         | Sheet on black: three bolts striking down from the sky              | 2:3, 1024×1536    |
 | 36  | 15 bolt    | `fx/zap.png`                              | Sheet on black: impact flash, shock ring, sparks, three small arcs  | 3:2, 1536×1024    |
 | 37  | 15 bolt    | `fx/shock.png`                            | Sheet on black: four electric crackle patterns over a struck cat    | 1:1, 1024×1024    |
-| 38  | 16 loading | `loading/bar.png`                         | The loading bar: the score card, long, with an empty well (§4.17)   | 3:2, 1536×1024    |
-| 39  | 16 loading | `loading/bar-full.png`                    | The same bar, an edit with the well full of gold                    | 3:2, 1536×1024    |
+| 38  | 16 loading | `loading/bar.jpg`                         | The loading bar: the score card, long, with an empty well (§4.17)   | 3:2, 1536×1024    |
+| 39  | 16 loading | `loading/bar-full.jpg`                    | The same bar, an edit with the well full of gold                    | 3:2, 1536×1024    |
 
 How the pieces go into the game:
 
@@ -738,13 +738,17 @@ px wide, centred on the well's height) and on the shop's locked cards.
 
 ### 4.6 Phase 5: app icon
 
-The icon on the phone's home screen, the install sheet and the browser tab (today a code-drawn
-cream cat in a gold coin, `public/icon.svg`). One full-bleed square, no white to cut: the phone
+The icon on the phone's home screen, the install sheet and the browser tab (until v0.42.11 a
+code-drawn cream cat in a gold coin, `public/icon.svg`). **Done (v0.42.11):**
+`art-source/app-icon.jpg`, the golden cat from the chest up; `npm run icons`
+(`tools/buildAppIcon.ts`) makes every size. One full-bleed square, no white to cut: the phone
 crops it, to a rounded square on iPhones and to a circle (or a squircle) on Android, so everything
 that matters sits in the centre 70%. Attach the menu's hero (`art-source/menu/hero.jpg`), the
 menu mockup (`art-source/menu/mockup.jpg`) and the lineup sheet (`art-source/style/lineup.webp`).
 Save it as `art-source/app-icon.png` (1:1, 1024×1024); Claude makes every size from it (the PWA
-icons 64/192/512, the maskable 512, Apple's 180 and the favicon).
+icons 64/192/512, the maskable 512, Apple's 180 and the favicon). The raised paw reaches a little
+past the maskable icon's safe circle, so the maskable one shrinks the picture to 86% and copies
+its edge pixels outwards (the cream, and the body straight down).
 
 ```text
 Style: match the attached images exactly (the game's golden lucky cat, its main menu and its cat
@@ -2379,7 +2383,8 @@ are kept; regenerate only if the owner wants more shapes or no ring. With `?skin
 ### 4.17 Phase 16: the loading screen (v0.42.10)
 
 The loading screen (GAME_DESIGN §2.0) is the menu's garden, the logo and the golden cat, with a
-bar near the bottom that fills while the game loads. Until this phase the bar is drawn in CSS.
+bar near the bottom that fills while the game loads. **Done (v0.42.11):**
+`art-source/loading/bar.jpg` and `bar-full.jpg`; until then the bar was drawn in CSS.
 The bar is the in-game score card (`art-source/hud/score-card.jpg`, the card the menu's record
 cards use) made long and thin: the paw on its left end, the caramel well running to its right
 end; as the game loads, the well fills with gold from the paw to the right. Two images, in this
@@ -2424,7 +2429,10 @@ no text. Same size, same framing, same ratio 3:2.
 a plain middle that stretches, the right end) and takes the gold from the difference between the
 two images, so it fills the well exactly; the loading screen then shows the gold growing from the
 paw to the right with the loading. If the second image moves or resizes anything outside the
-well, generate it again (it has to match the first pixel for pixel outside the well).
+well, generate it again (it has to match the first pixel for pixel outside the well). The tool is
+`tools/buildLoading.ts` (`npm run art`): `public/assets/loading/bar.webp` and `fill.webp`, data in
+`src/config/loadingSpriteData.ts`; both strips' caps sit on the same columns, so the full gold lies
+exactly on the well.
 
 ## 5. Icon kit (every new icon)
 
