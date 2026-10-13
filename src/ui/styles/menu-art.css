@@ -145,10 +145,10 @@
 }
 
 /*
- * The record cards (v0.43): the in-game score card's art (ui/hud/scoreCard.ts) at mockup scale,
- * the paw on the left, the plain middle stretched a little so "BEST SCORE:" fits over the well,
- * the number in the well. BEST STAGE has no paw: its left end is the image's right end mirrored,
- * and the torii sits in the well's left end like on the generated card before.
+ * The record cards (v0.42.5): the in-game score card's art (ui/hud/scoreCard.ts) at mockup scale,
+ * the paw on the left, the plain middle stretched a little so "BEST SCORE:" fits. The title and
+ * the number are centred on the card's body (v0.42.7). BEST STAGE has no paw: its left end is the
+ * image's right end mirrored, and the torii sits in the well's left end.
  */
 .menu-record {
   position: absolute;
@@ -167,6 +167,10 @@
   border-image-slice: var(--menu-record-slice);
   border-image-repeat: stretch;
   filter: drop-shadow(0 calc(4 * var(--u)) calc(4 * var(--u)) rgba(122, 78, 46, 0.2));
+  /* The body's edges, from the padding box (inside the slices). */
+  --body-left: calc((var(--menu-record-body-left) - var(--menu-record-slice-left)) * var(--u));
+  --body-right: calc((var(--menu-record-body-right) - var(--menu-record-slice-right)) * var(--u));
+  --value-inset: calc(var(--menu-record-value-inset) * var(--u));
 }
 
 .menu-record:first-child {
@@ -180,6 +184,10 @@
 .menu-record.is-stage {
   border-width: 0;
   border-image-source: none;
+  /* Both ends are the image's right end; the number clears the torii. */
+  --body-left: calc(var(--menu-record-body-right) * var(--u));
+  --body-right: var(--body-left);
+  --value-inset: calc(70 * var(--u));
 }
 
 /* The left end: the image's right end, mirrored. */
@@ -223,14 +231,14 @@
 .menu-record-label {
   position: absolute;
   top: calc(var(--menu-record-label-top) * var(--u));
-  left: calc((var(--menu-record-label-left) - var(--menu-record-slice-left)) * var(--u));
-  right: calc((var(--menu-record-label-right) - var(--menu-record-slice-right)) * var(--u));
+  left: var(--body-left);
+  right: var(--body-right);
   height: calc(var(--menu-record-label-height) * var(--u));
   display: flex;
   align-items: center;
   justify-content: center;
   color: #7f3d2a;
-  font-size: calc(29 * var(--u));
+  font-size: calc(27 * var(--u));
   font-weight: var(--weight-bold);
   letter-spacing: 0.04em;
   line-height: 1;
@@ -242,22 +250,16 @@
   content: ':';
 }
 
-.menu-record.is-stage .menu-record-label {
-  left: 0;
-  right: 0;
-}
-
 /* The numbers: white with a thin dark-brown edge, like the HUD's score; long ones shrink (--chars). */
 .menu-screen.is-art .record-value {
-  flex: 1 1 0;
-  min-width: 0;
+  position: absolute;
+  top: calc(var(--menu-record-well-top) * var(--u));
+  left: calc(var(--body-left) + var(--value-inset));
+  right: calc(var(--body-right) + var(--value-inset));
   display: flex;
   align-items: center;
   justify-content: center;
   height: calc(var(--menu-record-well-height) * var(--u));
-  margin: calc(var(--menu-record-well-top) * var(--u))
-    calc(var(--menu-record-margin-right) * var(--u)) 0
-    calc(var(--menu-record-margin-left) * var(--u));
   color: #fff;
   font-size: calc(var(--u) * min(42, 380 / var(--chars, 6)));
   font-weight: var(--weight-bold);
@@ -276,11 +278,6 @@
     var(--edge-corner) calc(-1 * var(--edge-corner)) 0 #5c2c18,
     calc(-1 * var(--edge-corner)) calc(-1 * var(--edge-corner)) 0 #5c2c18,
     0 calc(4.8 * var(--u)) 0 #5c2c18;
-}
-
-/* Beside the torii, clear of the well's right end. */
-.menu-record.is-stage .record-value {
-  margin: calc(var(--menu-record-well-top) * var(--u)) calc(12 * var(--u)) 0 calc(72 * var(--u));
 }
 
 /* The coins: white with a dark-brown edge, like the mockup's. */

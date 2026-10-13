@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.42.7] - 2026-10-13
+
+### Changed
+
+- **The menu's record titles and numbers are centred on their cards** (the owner's call): "BEST SCORE:" and its number sat over the well, right of the paw, and BEST STAGE's number right of the torii. The titles are a little smaller (27 mockup px instead of 29) so "BEST SCORE:" clears the paw.
+
 ## [0.42.6] - 2026-10-13
 
 ### Changed

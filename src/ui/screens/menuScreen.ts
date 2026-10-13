@@ -6,7 +6,7 @@ import { formatNumber } from '../../core/format';
 import { paintHeroCat } from '../catIcon';
 import { coinIcon } from '../coinIcon';
 import { button, el } from '../dom';
-import { scoreCardLayout } from '../hud/scoreCard';
+import { SCORE_WELL_PADDING, scoreCardLayout } from '../hud/scoreCard';
 import { ICON_ARROW_UP, ICON_GEAR, ICON_PAW, ICON_SHARE } from '../icons';
 
 /** What the install area shows (GAME_DESIGN §2.1). */
@@ -296,7 +296,7 @@ function setMenuArtProperties(root: HTMLElement): void {
     set(`--menu-${name}-slice`, sprite.cap);
     set(`--menu-${name}-cap`, sprite.cap / sprite.height);
   }
-  // The record cards are the in-game score card (v0.43, ui/hud/scoreCard.ts), in mockup pixels.
+  // The record cards are the in-game score card (v0.42.5, ui/hud/scoreCard.ts), in mockup pixels.
   const art = HUD_SCORE_CARD_ART;
   const card = scoreCardLayout(art, RECORD_CARD_HEIGHT);
   const s = RECORD_CARD_HEIGHT / art.height;
@@ -307,15 +307,15 @@ function setMenuArtProperties(root: HTMLElement): void {
   set('--menu-record-art-width', card.minWidth);
   set('--menu-record-slice-left', card.sliceLeft);
   set('--menu-record-slice-right', card.sliceRight);
-  // The title over the well, clear of the paw ("BEST SCORE:" is longer than "SCORE:").
+  // The title and the number are centred on the card's body (the paw sticks out of its left).
+  set('--menu-record-body-left', art.cardLeft * s);
+  set('--menu-record-body-right', (art.width - art.cardRight) * s);
   set('--menu-record-label-top', card.labelTop);
   set('--menu-record-label-height', card.labelHeight);
-  set('--menu-record-label-left', art.wellLeft * s);
-  set('--menu-record-label-right', (art.width - art.wellRight) * s);
   set('--menu-record-well-top', card.wellTop);
   set('--menu-record-well-height', card.wellHeight);
-  set('--menu-record-margin-left', card.scoreMarginLeft);
-  set('--menu-record-margin-right', card.scoreMarginRight);
+  // The number keeps as far from both body edges as the well's left end beside the paw's arm.
+  set('--menu-record-value-inset', (art.wellLeft - art.cardLeft) * s + SCORE_WELL_PADDING);
 }
 
 /**
