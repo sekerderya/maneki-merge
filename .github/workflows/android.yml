@@ -1,0 +1,85 @@
+name: Android
+
+# Builds the Google Play app: a Trusted Web Activity that opens the live site full screen
+# (TECH_SPEC §15, docs/PLAY_STORE.md). It runs when the Android project changes, or by hand. Game
+# updates don't need it: the app loads the site, so they ship through the Deploy workflow.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'android/**'
+      - '.github/workflows/android.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # Set by `npm run android:key`. Without it the outputs are unsigned (they still show the
+      # project builds) and can't be uploaded to Play.
+      HAS_UPLOAD_KEY: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 != '' }}
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+      - name: Build the bundle (for Play) and the APK (for a direct install)
+        run: ./gradlew --no-daemon bundleRelease assembleRelease
+      - name: Show the app's identity
+        run: |
+          BUILD_TOOLS="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
+          echo "BUILD_TOOLS=$BUILD_TOOLS" >> "$GITHUB_ENV"
+          "$BUILD_TOOLS/aapt2" dump badging app/build/outputs/apk/release/app-release-unsigned.apk \
+            | grep -E "^(package|sdkVersion|targetSdkVersion|application-label|launchable-activity)"
+      - name: Sign with the upload key
+        if: env.HAS_UPLOAD_KEY == 'true'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_PASSWORD }}
+        run: |
+          mkdir -p out
+          KEYSTORE="$RUNNER_TEMP/upload-key.p12"
+          echo "$KEYSTORE_BASE64" | base64 -d > "$KEYSTORE"
+          jarsigner -keystore "$KEYSTORE" -storetype PKCS12 -storepass:env KEYSTORE_PASSWORD \
+            -sigalg SHA256withRSA -digestalg SHA-256 \
+            -signedjar out/maneki-merge.aab app/build/outputs/bundle/release/app-release.aab upload
+          "$BUILD_TOOLS/zipalign" -p -f 4 app/build/outputs/apk/release/app-release-unsigned.apk \
+            "$RUNNER_TEMP/aligned.apk"
+          "$BUILD_TOOLS/apksigner" sign --ks "$KEYSTORE" --ks-pass env:KEYSTORE_PASSWORD \
+            --ks-key-alias upload --out out/maneki-merge.apk "$RUNNER_TEMP/aligned.apk"
+          "$BUILD_TOOLS/apksigner" verify out/maneki-merge.apk
+          FINGERPRINT=$(keytool -list -v -keystore "$KEYSTORE" -storetype PKCS12 \
+            -storepass:env KEYSTORE_PASSWORD -alias upload | grep -m1 'SHA256:' | sed 's/.*SHA256: *//')
+          rm "$KEYSTORE"
+          {
+            echo "### Signed with the upload key"
+            echo
+            echo "Upload key SHA-256: \`$FINGERPRINT\`"
+            echo
+            echo "\`maneki-merge.aab\` goes to Play; \`maneki-merge.apk\` installs directly on a phone."
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Keep the unsigned outputs
+        if: env.HAS_UPLOAD_KEY != 'true'
+        run: |
+          mkdir -p out
+          cp app/build/outputs/bundle/release/app-release.aab out/maneki-merge-unsigned.aab
+          cp app/build/outputs/apk/release/app-release-unsigned.apk out/maneki-merge-unsigned.apk
+          echo "::warning::No upload key in the repository secrets (run npm run android:key): the outputs are unsigned and can't go to Play."
+      - uses: actions/upload-artifact@v7
+        with:
+          name: maneki-merge-android
+          path: android/out/
+          retention-days: 30

@@ -12,3 +12,13 @@ Thumbs.db
 .env.*
 !.env.example
 .claude/settings.local.json
+
+# Android (android/): Gradle outputs, and never a signing key
+android/.gradle/
+android/build/
+android/app/build/
+android/out/
+android/local.properties
+*.p12
+*.jks
+*.keystore

@@ -5,3 +5,5 @@
 *.woff2 binary
 *.ogg binary
 *.mp3 binary
+*.jar binary
+*.bat text eol=crlf

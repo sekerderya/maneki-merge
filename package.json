@@ -24,7 +24,8 @@
     "icons": "node tools/buildAppIcon.ts",
     "art": "node tools/build-art.ts",
     "sim": "node tools/simulate.ts",
-    "clips": "node tools/record-clips.ts"
+    "clips": "node tools/record-clips.ts",
+    "android:key": "node tools/android/createUploadKey.ts"
   },
   "dependencies": {
     "@fontsource/fredoka": "^5.3.0",

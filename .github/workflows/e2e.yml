@@ -11,6 +11,7 @@ on:
       - '**.md'
       - 'art-source/**'
       - '.claude/**'
+      - 'android/**'
   workflow_dispatch:
 
 permissions:
