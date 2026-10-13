@@ -4,8 +4,9 @@ import { MENU_ART, MENU_SPRITE_DIR } from '../../config/menuSprites';
 import type { MenuSprite, MenuStripSprite } from '../../config/menuSprites';
 import { formatNumber } from '../../core/format';
 import { paintHeroCat } from '../catIcon';
+import { coinIcon } from '../coinIcon';
 import { button, el } from '../dom';
-import { ICON_ARROW_UP, ICON_COIN, ICON_GEAR, ICON_PAW, ICON_SHARE } from '../icons';
+import { ICON_ARROW_UP, ICON_GEAR, ICON_PAW, ICON_SHARE } from '../icons';
 
 /** What the install area shows (GAME_DESIGN §2.1). */
 export type InstallHint = 'none' | 'ios-share' | 'install-button';
@@ -200,9 +201,8 @@ function vectorLayout(root: HTMLElement, actions: MenuActions): MenuControls {
   const settings = settingsButton(actions, 'icon-btn menu-settings', ICON_GEAR);
   const coins = el('div', 'coin-balance');
   coins.dataset['testid'] = 'coin-balance';
-  coins.insertAdjacentHTML('beforeend', ICON_COIN);
   const coinValue = el('span', 'coin-value', '0');
-  coins.append(coinValue);
+  coins.append(coinIcon(), coinValue);
   top.append(settings, coins);
 
   const title = el('h1', 'menu-title', APP_NAME);
@@ -215,7 +215,7 @@ function vectorLayout(root: HTMLElement, actions: MenuActions): MenuControls {
   figure.append(el('span', 'hero-halo'));
   for (let i = 1; i <= 4; i++) {
     const coin = el('span', `hero-coin hero-coin-${i}`);
-    coin.insertAdjacentHTML('beforeend', ICON_COIN);
+    coin.append(coinIcon());
     figure.append(coin);
   }
   figure.insertAdjacentHTML('beforeend', CUSHION);
@@ -346,7 +346,7 @@ function artLayout(root: HTMLElement, actions: MenuActions): MenuControls {
   const coins = el('div', 'menu-coins');
   coins.dataset['testid'] = 'coin-balance';
   const coinValue = el('span', 'coin-value', '0');
-  coins.append(menuImage(MENU_ART.coin, 'menu-coins-coin'), coinValue);
+  coins.append(coinIcon('menu-coins-coin'), coinValue);
   const foot = footer(actions);
   top.append(settings, foot.bottom, coins);
 

@@ -9,10 +9,11 @@ import { formatNumber } from '../../core/format';
 import { shopCard } from '../../core/shop';
 import type { UpgradeLevels } from '../../core/upgrades';
 import type { ClipButtonFactory } from '../clipButtons';
+import { coinIcon } from '../coinIcon';
 import { button, el } from '../dom';
 import { pickArt } from '../pickArt';
 import { artImage, setUiArtProperties } from '../uiArt';
-import { ICON_CHECK, ICON_CLOSE, ICON_COIN, pickIcon, UPGRADE_ICONS } from '../icons';
+import { ICON_CHECK, ICON_CLOSE, pickIcon, UPGRADE_ICONS } from '../icons';
 
 export interface ShopActions {
   onBuy(id: UpgradeId): void;
@@ -81,8 +82,7 @@ export function createShopPanel(
   const title = el('h2', 'shop-title', 'Upgrades');
   const balance = el('div', 'coin-balance shop-balance');
   balance.dataset['testid'] = 'shop-balance';
-  if (art) balance.append(artImage(`${MENU_SPRITE_DIR}${MENU_ART.coin.file}`, 'shop-balance-coin'));
-  else balance.insertAdjacentHTML('beforeend', ICON_COIN);
+  balance.append(coinIcon('shop-balance-coin'));
   const balanceValue = el('span', 'coin-value', '0');
   balance.append(balanceValue);
   const close = button('icon-btn shop-close', '', art ? '' : ICON_CLOSE);
@@ -270,13 +270,7 @@ function paintCard(
     card.price.textContent = `Stage ${data.gate}`;
     card.buy.setAttribute('aria-label', `${data.name} opens at stage ${data.gate}`);
   } else {
-    if (card.art) {
-      if (!card.mark.querySelector('.shop-coin')) {
-        card.mark.replaceChildren(artImage(`${MENU_SPRITE_DIR}${MENU_ART.coin.file}`, 'shop-coin'));
-      }
-    } else {
-      card.mark.innerHTML = ICON_COIN;
-    }
+    if (!card.mark.querySelector('.shop-coin')) card.mark.replaceChildren(coinIcon('shop-coin'));
     card.price.textContent = formatNumber(data.price);
     card.buy.setAttribute('aria-label', `Buy ${data.name} level ${data.level + 1}`);
   }

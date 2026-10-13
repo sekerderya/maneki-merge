@@ -26,11 +26,12 @@
   background: none;
 }
 
-/* The title on its cream pill, the close button at the top right, the coins pill under them. */
+/* The title on its cream pill, the close button at the top right, the coins pill under them, inside
+   the header so it never covers the first card (v0.42.4; it hung 32 px over the list before). */
 .shop-overlay.is-art .shop-header {
   position: relative;
   flex: none;
-  height: calc(268 * var(--u));
+  height: calc(284 * var(--u));
   padding: 0;
   border: 0;
 }
@@ -79,7 +80,7 @@
   position: absolute;
   z-index: 1;
   right: calc(40 * var(--u));
-  top: calc(228 * var(--u));
+  top: calc(200 * var(--u));
   display: flex;
   align-items: center;
   gap: calc(12 * var(--u));
@@ -94,7 +95,7 @@
   box-shadow: none;
 }
 
-.shop-balance-coin {
+.shop-overlay.is-art .shop-balance-coin {
   width: calc(50 * var(--u));
   height: auto;
 }
@@ -279,7 +280,7 @@
   font-weight: var(--weight-bold);
 }
 
-.shop-coin {
+.shop-overlay.is-art .shop-coin {
   width: calc(34 * var(--u));
   height: auto;
 }

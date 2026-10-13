@@ -1,9 +1,8 @@
-import { MENU_ART, MENU_SPRITE_DIR } from '../../config/menuSprites';
 import { formatNumber } from '../../core/format';
 import type { NewRecords } from '../../core/profile';
+import { coinIcon } from '../coinIcon';
 import { button, el } from '../dom';
-import { ICON_COIN } from '../icons';
-import { artImage, setUiArtProperties } from '../uiArt';
+import { setUiArtProperties } from '../uiArt';
 
 export interface GameOverActions {
   onPlayAgain(): void;
@@ -30,7 +29,7 @@ export interface GameOverView {
  * and a badge for a new best score or best stage (v0.39.1, the owner's call: the biggest cat made
  * and the shop cards a run opened are gone).
  * With `art` (the art skin) it is the owner's approved mockup (docs/ART_ASSETS.md §4.14), built
- * from the Upgrades and menu pieces (panel-art.css), with the menu's coin.
+ * from the Upgrades and menu pieces (panel-art.css), with the HUD coin.
  */
 export function createGameOverOverlay(
   root: HTMLElement,
@@ -73,8 +72,7 @@ export function createGameOverOverlay(
   stageRow.replaceChildren(stageChip, stage);
   const coins = row('Coins earned', 'go-coins');
   coins.textContent = '';
-  if (art) coins.append(artImage(`${MENU_SPRITE_DIR}${MENU_ART.coin.file}`, 'go-coin'));
-  else coins.insertAdjacentHTML('beforeend', ICON_COIN);
+  coins.append(coinIcon('go-coin'));
   const coinValue = el('span', '', '0');
   coinValue.dataset['testid'] = 'go-coins-value';
   coins.append(coinValue);

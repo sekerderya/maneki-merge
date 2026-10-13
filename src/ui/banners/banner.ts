@@ -1,8 +1,8 @@
 import { BANNER_MS, COMBO_HEAT_LEVELS } from '../../config/view';
 import { formatNumber } from '../../core/format';
 import { catIcon } from '../catIcon';
+import { coinIcon } from '../coinIcon';
 import { el } from '../dom';
-import { ICON_COIN } from '../icons';
 
 export interface BannerOptions {
   /** Cat icons shown under the text. */
@@ -24,11 +24,11 @@ export interface BannerView {
   /** A big banner over the jar (GAME_DESIGN §2.3). It replaces the one showing. */
   show(text: string, options?: BannerOptions): void;
   /**
-   * "Combo ×N" (GAME_DESIGN §5) with its score bonus (0.3 → "+30% score") and the Combo Charm
-   * coin bonus when there is one ("+16% coins") under it. Each step pops it again; a count of 0
-   * fades it out. `y` as for banners.
+   * "Combo ×N" (GAME_DESIGN §5) with the Combo Charm coin bonus under it when there is one
+   * (0.16 → "+16% coins"); the score bonus is not shown (v0.42.4). Each step pops it again; a
+   * count of 0 fades it out. `y` as for banners.
    */
-  combo(count: number, scoreBonus?: number, coinBonus?: number, y?: number): void;
+  combo(count: number, coinBonus?: number, y?: number): void;
   /** Freezes banners where they are while the run is paused, so none ends unseen. */
   setPaused(paused: boolean): void;
   clear(): void;
@@ -49,13 +49,9 @@ export function createBanners(root: HTMLElement): BannerView {
   combo.dataset['testid'] = 'combo';
   combo.setAttribute('role', 'status');
   const comboText = el('span', 'combo-text');
-  const bonuses = el('span', 'combo-bonuses');
-  const scoreBonus = el('span', 'combo-bonus is-score');
-  scoreBonus.dataset['testid'] = 'combo-score';
   const coinBonus = el('span', 'combo-bonus');
   coinBonus.dataset['testid'] = 'combo-coins';
-  bonuses.append(scoreBonus, coinBonus);
-  combo.append(comboText, bonuses);
+  combo.append(comboText, coinBonus);
   combo.hidden = true;
   layer.append(combo);
   combo.addEventListener('animationend', () => {
@@ -87,8 +83,7 @@ export function createBanners(root: HTMLElement): BannerView {
       if (options.coins !== undefined) {
         const coins = el('p', 'banner-coins');
         coins.dataset['testid'] = 'banner-coins';
-        coins.insertAdjacentHTML('beforeend', ICON_COIN);
-        coins.append(el('span', '', `+${formatNumber(options.coins)}`));
+        coins.append(coinIcon(), el('span', '', `+${formatNumber(options.coins)}`));
         node.append(coins);
       }
       if (options.detail) node.append(el('p', 'banner-detail', options.detail));
@@ -100,7 +95,7 @@ export function createBanners(root: HTMLElement): BannerView {
       if (options.y !== undefined) node.style.top = `${Math.round(options.y)}px`;
       banner = mount(node, options.durationMs ?? BANNER_MS, banner);
     },
-    combo(count, scoreFraction = 0, coinFraction = 0, y) {
+    combo(count, coinFraction = 0, y) {
       if (count <= 0) {
         if (!combo.hidden) {
           combo.classList.remove('is-step');
@@ -111,17 +106,9 @@ export function createBanners(root: HTMLElement): BannerView {
       comboText.textContent = `Combo ×${count}`;
       // It heats up as the chain grows (GAME_DESIGN §12).
       combo.dataset['heat'] = String(COMBO_HEAT_LEVELS.filter((level) => count >= level).length);
-      const pill = (node: HTMLElement, fraction: number, what: string): boolean => {
-        const percent = Math.round(fraction * 100);
-        node.textContent = percent > 0 ? `+${percent}% ${what}` : '';
-        node.hidden = percent <= 0;
-        return percent > 0;
-      };
-      const anyBonus = [
-        pill(scoreBonus, scoreFraction, 'score'),
-        pill(coinBonus, coinFraction, 'coins'),
-      ].some(Boolean);
-      bonuses.hidden = !anyBonus;
+      const percent = Math.round(coinFraction * 100);
+      coinBonus.textContent = percent > 0 ? `+${percent}% coins` : '';
+      coinBonus.hidden = percent <= 0;
       if (y !== undefined) combo.style.top = `${Math.round(y)}px`;
       combo.hidden = false;
       combo.classList.remove('is-ending', 'is-step');

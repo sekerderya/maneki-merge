@@ -181,7 +181,7 @@ button:focus-visible {
   font-variant-numeric: tabular-nums;
 }
 
-.coin-balance svg {
+.coin-balance .coin-icon {
   width: 32px;
   height: 32px;
 }

@@ -26,14 +26,6 @@ export const NEXT_BUBBLE_SHINE = svg(
   '0 0 100 100',
 );
 
-/** A mon coin: gold with a square hole, outlined in ink. */
-export const ICON_COIN = svg(
-  '<circle cx="16" cy="16" r="13.5" fill="#f2b83b" stroke="#4a2e25" stroke-width="2.6"/>' +
-    '<circle cx="16" cy="16" r="9" fill="none" stroke="#c98a1b" stroke-width="1.5"/>' +
-    '<rect x="12.5" y="12.5" width="7" height="7" rx="1" fill="#fff8ee" stroke="#4a2e25" stroke-width="2"/>',
-  '0 0 32 32',
-);
-
 const stroke = (body: string, width = 2.2): string =>
   svg(
     `<g fill="none" stroke="currentColor" stroke-width="${width}" stroke-linecap="round" stroke-linejoin="round">${body}</g>`,

@@ -149,7 +149,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-.go-stats dd > svg {
+.go-stats dd > .coin-icon {
   width: 22px;
   height: 22px;
 }

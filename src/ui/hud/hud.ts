@@ -1,5 +1,4 @@
 import {
-  HUD_COIN_ART,
   HUD_NEXT_ART,
   HUD_PAUSE_ART,
   HUD_SCORE_CARD_ART,
@@ -10,7 +9,8 @@ import type { Drop } from '../../core/dropQueue';
 import { formatNumber } from '../../core/format';
 import { catIcon, paintDropIcon } from '../catIcon';
 import { button, el } from '../dom';
-import { ICON_COIN, ICON_PAUSE, NEXT_BUBBLE_BACK, NEXT_BUBBLE_SHINE } from '../icons';
+import { coinIcon } from '../coinIcon';
+import { ICON_PAUSE, NEXT_BUBBLE_BACK, NEXT_BUBBLE_SHINE } from '../icons';
 import { scoreCardLayout } from './scoreCard';
 
 export interface HudActions {
@@ -33,15 +33,6 @@ export interface HudView {
 
 function artPath(sprite: HudSprite): string {
   return `${import.meta.env.BASE_URL}${HUD_SPRITE_DIR}${sprite.file}`;
-}
-
-/** An `<img>` of a HUD sprite. */
-function artImage(sprite: HudSprite, className: string): HTMLImageElement {
-  const image = el('img', className);
-  image.src = artPath(sprite);
-  image.alt = '';
-  image.draggable = false;
-  return image;
 }
 
 /** The CSS `url()` of a HUD sprite. */
@@ -125,9 +116,8 @@ export function createHud(root: HTMLElement, actions: HudActions, art = false): 
   const coins = el('span', 'hud-coins');
   coins.dataset['testid'] = 'hud-coins';
   // Flying coins land on the coin before the number.
-  const coin = art ? artImage(HUD_COIN_ART, 'hud-coin') : null;
-  if (coin) coins.append(coin);
-  else coins.insertAdjacentHTML('beforeend', ICON_COIN);
+  const coin = coinIcon();
+  coins.append(coin);
   const coinValue = el('span', '', '0');
   coins.append(coinValue);
   coinsCard.append(el('span', 'hud-label', 'Coins'), coins);
@@ -165,6 +155,6 @@ export function createHud(root: HTMLElement, actions: HudActions, art = false): 
     pulseCoins() {
       restartAnimation(coinsCard, 'is-pulsing');
     },
-    coinTarget: coin ?? coins,
+    coinTarget: coin,
   };
 }

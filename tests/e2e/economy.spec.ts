@@ -251,8 +251,8 @@ test('combos and Jackpots show their banners', async ({ page }) => {
   await mergePair(page, 2, 0);
   await mergePair(page, 2, 200);
   await expect(page.getByTestId('combo')).toContainText('Combo ×');
-  // Every combo scores more (v0.36); coins only with Combo Charm.
-  await expect(page.getByTestId('combo-score')).toContainText('% score');
+  // Every combo scores more (v0.36), but only the Combo Charm's coins are shown (v0.42.4).
+  await expect(page.getByTestId('combo')).not.toContainText('% score');
   await expect(page.getByTestId('combo-coins')).toBeHidden();
   await expect(page.getByTestId('combo')).toBeHidden(WAIT);
 

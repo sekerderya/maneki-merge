@@ -14,7 +14,6 @@ export const MENU_SPRITE_DATA: MenuSprites = {
   coinsPill: { file: 'coins-pill.webp', width: 218, height: 175, cap: 105 },
   card: { file: 'card.webp', width: 964, height: 651, slice: 109 },
   well: { file: 'well.webp', width: 262, height: 211, cap: 127 },
-  coin: { file: 'coin.webp', width: 214, height: 225 },
   torii: { file: 'torii.webp', width: 273, height: 234 },
   arrow: { file: 'arrow.webp', width: 144, height: 160 },
   sparkle: { file: 'sparkle.webp', width: 151, height: 172 },

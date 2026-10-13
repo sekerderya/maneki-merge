@@ -13,7 +13,7 @@ import {
 } from '../../config/view';
 import { reducedMotion } from '../../platform/motion';
 import { el } from '../dom';
-import { ICON_COIN } from '../icons';
+import { coinIcon } from '../coinIcon';
 
 export interface CoinFlyView {
   /**
@@ -43,7 +43,7 @@ export function createCoinFly(
   const pool: Coin[] = [];
   for (let i = 0; i < COIN_FLY_POOL; i++) {
     const node = el('span', 'coin-fly-coin');
-    node.insertAdjacentHTML('beforeend', ICON_COIN);
+    node.append(coinIcon());
     node.hidden = true;
     layer.append(node);
     pool.push({ node, animation: null });

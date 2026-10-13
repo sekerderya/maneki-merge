@@ -20,7 +20,7 @@ import {
 import { stageJar } from './config/stages';
 import type { PickId, PickKind } from './config/picks';
 import type { UpgradeId } from './config/upgrades';
-import { comboScoreMultiplier, jarCoinMultiplier } from './core/economy';
+import { jarCoinMultiplier } from './core/economy';
 import { EventBus } from './core/events';
 import type { GameEvents } from './core/events';
 import { connectRunFeedback } from './feedback';
@@ -314,8 +314,8 @@ export class GameSession {
     };
     const bannerY = (): number | undefined => jarY(BANNER_JAR_OFFSET);
 
-    // Combo (GAME_DESIGN §5): "Combo ×N" from N = 2, with its score bonus, and the Combo Charm
-    // coin bonus when it has one.
+    // Combo (GAME_DESIGN §5): "Combo ×N" from N = 2, with the Combo Charm coin bonus when it has
+    // one (the score bonus is not shown, v0.42.4).
     events.on('comboChanged', (e) => {
       if (e.combo < COMBO_BANNER_MIN) {
         banners.combo(0);
@@ -323,7 +323,6 @@ export class GameSession {
       }
       banners.combo(
         e.combo,
-        comboScoreMultiplier(e.combo) - 1,
         comboBonus(run.stats.comboCharmLevel, e.combo),
         jarY(COMBO_JAR_OFFSET),
       );

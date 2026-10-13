@@ -35,7 +35,6 @@ export interface MenuSprites {
   /** A record card's frame, and the sunken well its number sits in. */
   readonly card: MenuFrameSprite;
   readonly well: MenuStripSprite;
-  readonly coin: MenuSprite;
   readonly torii: MenuSprite;
   readonly arrow: MenuSprite;
   readonly sparkle: MenuSprite;

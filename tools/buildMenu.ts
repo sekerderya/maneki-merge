@@ -11,8 +11,8 @@
  *   middle, right cap) that CSS stretches to any width; the coins pill is cut off by the sheet's
  *   edge, so its right cap is the left one mirrored. The gear button is cropped.
  * - Record card: a nine-slice frame with the well painted out, and the well as its own strip.
- * - Icons: the torii, coin, arrow and two sparkles, each cropped (the sheet's petals and pink gear
- *   are unused).
+ * - Icons: the torii, arrow and two sparkles, each cropped (the sheet's petals, coin and
+ *   pink gear are unused: every coin is the HUD's).
  * Everything outside a piece's dark outline (the sheet's soft drop shadows, stray light pixels) is
  * cleared; the game draws its own shadows.
  */
@@ -74,7 +74,6 @@ interface MenuData {
   coinsPill: StripSprite;
   card: FrameSprite;
   well: StripSprite;
-  coin: Sprite;
   torii: Sprite;
   arrow: Sprite;
   sparkle: Sprite;
@@ -141,7 +140,6 @@ export async function buildMenu(): Promise<void> {
     if (!found) throw new Error(`No icon in cell ${col},${row}`);
     return save(isolate(icons, found, MARGIN), file);
   };
-  const coin = await icon(2, 0, 'coin.webp');
   const torii = await icon(0, 1, 'torii.webp');
   const sparkle = await icon(2, 1, 'sparkle.webp', 0);
   const sparkleSmall = await icon(2, 1, 'sparkle-small.webp', 1);
@@ -158,7 +156,6 @@ export async function buildMenu(): Promise<void> {
     coinsPill,
     card,
     well,
-    coin,
     torii,
     arrow,
     sparkle,
