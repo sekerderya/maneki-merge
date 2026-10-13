@@ -2,17 +2,24 @@
  * The pick cards' pictures (docs/ART_ASSETS.md §4.9): drawings that are not a single ball, like the
  * heap of boulders for More Boulders, from `art-source/picks/<id>.*`, written to
  * `public/assets/picks/<id>.webp` with their sizes in `src/config/pickSpriteData.ts`. The white is
- * cut and the picture is cropped to what is drawn; the game fits it in the card's medallion.
+ * cut and the picture is cropped to what is drawn; the game fits it in the card's medallion, so it
+ * is scaled down to PICTURE_MAX_SIDE.
  */
 import { mkdir, readdir, writeFile } from 'node:fs/promises';
 import { join, parse } from 'node:path';
-import { crop, cutBackground, loadRgba, opaqueBox, saveWebp } from './artImage.ts';
+import { crop, cutBackground, fitWithin, loadRgba, opaqueBox, saveWebp } from './artImage.ts';
 
 const SOURCE_DIR = 'art-source/picks';
 const OUT_DIR = 'public/assets/picks';
 const DATA_FILE = 'src/config/pickSpriteData.ts';
 /** Transparent margin around a picture, px. */
 const MARGIN = 2;
+/**
+ * The longest side a picture keeps, px. The game draws it at most 67 CSS px across (0.72 of the
+ * card's 156-mockup-px medallion at the cards' widest, 520 px; v0.42.13, measured), and 3.5
+ * device pixels per CSS pixel is as sharp as any phone shows it.
+ */
+const PICTURE_MAX_SIDE = 240;
 
 interface Picture {
   file: string;
@@ -29,12 +36,15 @@ export async function buildPicks(): Promise<void> {
     const image = await loadRgba(join(SOURCE_DIR, file));
     cutBackground(image);
     const box = opaqueBox(image);
-    const picture = crop(image, {
-      x: box.x - MARGIN,
-      y: box.y - MARGIN,
-      w: box.w + 2 * MARGIN,
-      h: box.h + 2 * MARGIN,
-    });
+    const picture = await fitWithin(
+      crop(image, {
+        x: box.x - MARGIN,
+        y: box.y - MARGIN,
+        w: box.w + 2 * MARGIN,
+        h: box.h + 2 * MARGIN,
+      }),
+      PICTURE_MAX_SIDE,
+    );
     await saveWebp(picture, join(OUT_DIR, `${id}.webp`));
     pictures[id] = { file: `${id}.webp`, width: picture.width, height: picture.height };
   }

@@ -7,32 +7,32 @@ import type { CatSprite } from './catSprites';
 export const ICON_SPRITE_DATA: Readonly<Record<string, CatSprite>> = {
   bigCatch: {
     file: 'bigCatch.webp',
-    side: 912,
-    radius: 436.31,
+    side: 400,
+    radius: 191.36,
     color: '#edd9a7',
   },
   clip: {
     file: 'clip.webp',
-    side: 810,
-    radius: 401.71,
+    side: 120,
+    radius: 59.51,
     color: '#f6d87e',
   },
   comboCharm: {
     file: 'comboCharm.webp',
-    side: 476,
-    radius: 227.24,
+    side: 400,
+    radius: 190.95,
     color: '#f0d9ac',
   },
   luckyPaw: {
     file: 'luckyPaw.webp',
-    side: 460,
-    radius: 223.06,
+    side: 400,
+    radius: 193.96,
     color: '#eedaac',
   },
   secondChance: {
     file: 'secondChance.webp',
-    side: 774,
-    radius: 383.7,
+    side: 400,
+    radius: 198.29,
     color: '#f6db8a',
   },
 };

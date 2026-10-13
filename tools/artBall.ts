@@ -6,7 +6,17 @@
  * ball's physics radius.
  */
 import { join } from 'node:path';
-import { crop, cutBackground, kasa, loadRgba, median, pixel, round, saveWebp } from './artImage.ts';
+import {
+  crop,
+  cutBackground,
+  fitWithin,
+  kasa,
+  loadRgba,
+  median,
+  pixel,
+  round,
+  saveWebp,
+} from './artImage.ts';
 import type { Circle, Rgba } from './artImage.ts';
 
 /** Contour points above this fraction of the radius over the centre are ears, not body. */
@@ -23,22 +33,27 @@ export interface BallSprite {
   readonly color: string;
 }
 
-/** Cuts, fits and crops the ball in `source` (a path or an image) and writes `dir/file`. */
+/**
+ * Cuts, fits and crops the ball in `source` (a path or an image) and writes `dir/file`, scaled
+ * down to at most `maxSide` px when the game never shows it bigger (the icon kit's DOM icons).
+ */
 export async function buildBall(
   source: string | Rgba,
   dir: string,
   file: string,
+  maxSide = Infinity,
 ): Promise<BallSprite> {
   const image = typeof source === 'string' ? await loadRgba(source) : source;
   const depth = cutBackground(image);
   const circle = fitCircle(image, depth);
-  const sprite = cropAround(image, circle);
+  const full = cropAround(image, circle);
+  const sprite = await fitWithin(full, maxSide);
   await saveWebp(sprite, join(dir, file));
   const result: BallSprite = {
     file,
     side: sprite.width,
-    radius: round(circle.r),
-    color: ringColor(sprite, sprite.width / 2, circle.r),
+    radius: round((circle.r * sprite.width) / full.width),
+    color: ringColor(full, full.width / 2, circle.r),
   };
   console.log(
     `${typeof source === 'string' ? source : file}: circle r=${result.radius} ` +

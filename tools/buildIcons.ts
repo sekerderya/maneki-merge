@@ -6,7 +6,7 @@
  * - `art-source/ui/upgrade-icons.*`: the first sheet, a 2×2 grid of the upgrades' icons (§4.9). A
  *   quarter is used only when no single file has its id.
  * Each medallion goes through tools/artBall.ts like a ball: its circle is fitted and the sprite is
- * a square centred on it.
+ * a square centred on it, scaled down to the most the game shows of it (`maxSide`).
  */
 import { readdir, mkdir, writeFile } from 'node:fs/promises';
 import { join, parse } from 'node:path';
@@ -20,6 +20,17 @@ const OUT_DIR = 'public/assets/icons';
 const DATA_FILE = 'src/config/iconSpriteData.ts';
 /** The upgrade icon sheet's quarters: top left, top right, bottom left, bottom right. */
 const SHEET_IDS = ['luckyPaw', 'bigCatch', 'comboCharm', 'secondChance'] as const;
+/**
+ * The side an icon keeps, px: 3.5 device pixels per CSS pixel of the largest the game draws it
+ * (v0.42.13, measured): the shop's and the pick cards' icons at most 114 CSS px, the clip button's
+ * 34.
+ */
+const ICON_MAX_SIDE = 400;
+const CLIP_MAX_SIDE = 120;
+
+function maxSide(id: string): number {
+  return id === 'clip' ? CLIP_MAX_SIDE : ICON_MAX_SIDE;
+}
 
 export async function buildIcons(): Promise<void> {
   await mkdir(OUT_DIR, { recursive: true });
@@ -27,7 +38,7 @@ export async function buildIcons(): Promise<void> {
   const files = (await readdir(SOURCE_DIR)).filter((f) => /\.(png|jpe?g|webp)$/i.test(f)).sort();
   for (const file of files) {
     const id = parse(file).name;
-    icons[id] = await buildBall(join(SOURCE_DIR, file), OUT_DIR, `${id}.webp`);
+    icons[id] = await buildBall(join(SOURCE_DIR, file), OUT_DIR, `${id}.webp`, maxSide(id));
   }
 
   const sheet = await loadRgba(await findSource(SHEET_DIR, 'upgrade-icons'));
@@ -36,7 +47,7 @@ export async function buildIcons(): Promise<void> {
   for (const [i, id] of SHEET_IDS.entries()) {
     if (icons[id]) continue;
     const quarter = crop(sheet, { x: (i % 2) * w, y: Math.floor(i / 2) * h, w, h });
-    icons[id] = await buildBall(quarter, OUT_DIR, `${id}.webp`);
+    icons[id] = await buildBall(quarter, OUT_DIR, `${id}.webp`, maxSide(id));
   }
 
   await writeFile(DATA_FILE, dataModule(icons));

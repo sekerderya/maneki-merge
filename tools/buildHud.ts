@@ -13,6 +13,8 @@
  *   ("NEXT" sits on it).
  * - Pause button: cut and cropped, its dark-brown outline recoloured to the reference's rose
  *   brown.
+ * The bubble and the button are written at the most the HUD shows of them (BUBBLE_MAX_SIDE,
+ * PAUSE_MAX_SIDE); the bubble is measured at full size first.
  */
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -21,6 +23,7 @@ import {
   crop,
   cutBackground,
   findSource,
+  fitWithin,
   kasa,
   loadRgba,
   pixel,
@@ -67,6 +70,13 @@ interface ScoreCardData extends Sprite {
   wellRight: number;
 }
 
+/**
+ * The sides the NEXT bubble and the pause button keep, px: the HUD draws them 70 and 48 CSS px
+ * across, and 3.5 device pixels per CSS pixel is as sharp as any phone shows them (v0.42.13).
+ */
+const BUBBLE_MAX_SIDE = 248;
+const PAUSE_MAX_SIDE = 168;
+
 export async function buildHud(): Promise<void> {
   await mkdir(OUT_DIR, { recursive: true });
   const coins = await cutAndCrop(await findSource(SOURCE_DIR, 'coins'));
@@ -79,7 +89,8 @@ export async function buildHud(): Promise<void> {
   const badgeData: Sprite = { file: 'paw-badge.webp', width: badge.width, height: badge.height };
 
   const bubble = await cutAndCrop(await findSource(SOURCE_DIR, 'next-bubble'));
-  await saveWebp(bubble, join(OUT_DIR, 'next.webp'));
+  const bubbleShown = await fitWithin(bubble, BUBBLE_MAX_SIDE);
+  await saveWebp(bubbleShown, join(OUT_DIR, 'next.webp'));
   const box = opaqueRows(bubble);
   const r = bubble.width / 2;
   const cy = box.bottom - r;
@@ -93,8 +104,8 @@ export async function buildHud(): Promise<void> {
   while (tagBottom < bubble.height / 4 && ink(tagBottom)) tagBottom++;
   const bubbleData: BubbleData = {
     file: 'next.webp',
-    width: bubble.width,
-    height: bubble.height,
+    width: bubbleShown.width,
+    height: bubbleShown.height,
     cx: 0.5,
     cy: round(cy / bubble.height),
     r: round(r / bubble.width),
@@ -103,8 +114,13 @@ export async function buildHud(): Promise<void> {
 
   const pause = await cutAndCrop(await findSource(SOURCE_DIR, 'pause'));
   recolour(pause, PAUSE_OUTLINE, PAUSE_OUTLINE_TARGET);
-  await saveWebp(pause, join(OUT_DIR, 'pause.webp'));
-  const pauseData: Sprite = { file: 'pause.webp', width: pause.width, height: pause.height };
+  const pauseShown = await fitWithin(pause, PAUSE_MAX_SIDE);
+  await saveWebp(pauseShown, join(OUT_DIR, 'pause.webp'));
+  const pauseData: Sprite = {
+    file: 'pause.webp',
+    width: pauseShown.width,
+    height: pauseShown.height,
+  };
 
   const card = await cutAndCrop(await findSource(SOURCE_DIR, 'score-card'));
   await saveWebp(card, join(OUT_DIR, 'score-card.webp'));
@@ -113,7 +129,7 @@ export async function buildHud(): Promise<void> {
   await writeFile(DATA_FILE, dataModule(coinData, badgeData, bubbleData, pauseData, cardData));
   console.log(
     `HUD: coin ${coin.width}px, badge ${badge.width}px, ` +
-      `bubble ${bubble.width}×${bubble.height}, pause ${pause.width}×${pause.height}, ` +
+      `bubble ${bubbleShown.width}×${bubbleShown.height}, pause ${pauseShown.width}×${pauseShown.height}, ` +
       `score card ${card.width}×${card.height} (well ${cardData.wellLeft}–${cardData.wellRight} × ` +
       `${cardData.wellTop}–${cardData.wellBottom}, slices ${cardData.sliceLeft} | ` +
       `${cardData.sliceRight}); wrote ${DATA_FILE}`,

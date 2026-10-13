@@ -60,6 +60,32 @@ export async function saveWebp(image: Rgba, path: string, quality = 88): Promise
     .toFile(path);
 }
 
+/**
+ * `image` scaled down (never up) so that its longer side is at most `maxSide` px, with Lanczos
+ * filtering on premultiplied alpha. For DOM pictures the game shows far smaller than the owner
+ * drew them: every launch decodes every image, so extra pixels cost loading time and memory.
+ */
+export async function fitWithin(image: Rgba, maxSide: number): Promise<Rgba> {
+  const long = Math.max(image.width, image.height);
+  if (long <= maxSide) return image;
+  const k = maxSide / long;
+  const { data, info } = await sharp(
+    Buffer.from(image.data.buffer, image.data.byteOffset, image.data.length),
+    { raw: { width: image.width, height: image.height, channels: 4 } },
+  )
+    .resize(Math.max(1, Math.round(image.width * k)), Math.max(1, Math.round(image.height * k)), {
+      kernel: 'lanczos3',
+      fit: 'fill',
+    })
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  return {
+    data: new Uint8ClampedArray(data.buffer, data.byteOffset, data.length),
+    width: info.width,
+    height: info.height,
+  };
+}
+
 function minChannel(data: Uint8ClampedArray, i: number): number {
   return Math.min(data[4 * i] ?? 0, data[4 * i + 1] ?? 0, data[4 * i + 2] ?? 0);
 }

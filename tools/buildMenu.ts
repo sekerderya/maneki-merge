@@ -13,7 +13,8 @@
  * - Record card: a nine-slice frame with the well painted out, and the well as its own strip.
  * - Icons: the torii, arrow and two sparkles, each cropped (the sheet's petals, coin and
  *   pink gear are unused: every coin is the HUD's). The torii comes from its own image,
- *   `torii.*`, once the owner has made one (v0.42.8, docs/ART_ASSETS.md §4.5).
+ *   `torii.*`, once the owner has made one (v0.42.8, docs/ART_ASSETS.md §4.5), scaled down to
+ *   the most the game shows of it (TORII_MAX_SIDE).
  * Everything outside a piece's dark outline (the sheet's soft drop shadows, stray light pixels) is
  * cleared; the game draws its own shadows.
  */
@@ -26,6 +27,7 @@ import {
   crop,
   cutBackground,
   findSource,
+  fitWithin,
   isolate,
   loadRgba,
   median,
@@ -38,6 +40,12 @@ const SOURCE_DIR = 'art-source/menu';
 const OUT_DIR = 'public/assets/menu';
 const DATA_FILE = 'src/config/menuSpriteData.ts';
 const MARGIN = 2;
+/**
+ * The side the torii keeps, px: it is drawn at most 66 CSS px across (66 mockup px on the BEST
+ * STAGE card, the menu at full scale on a big tablet; 34 on the shop's locked cards), and 3.5
+ * device pixels per CSS pixel is as sharp as any screen shows it (v0.42.13).
+ */
+const TORII_MAX_SIDE = 232;
 /** The art's dark outlines: red channel below this. */
 const INK_MAX_RED = 120;
 /** Light pixels this far outside the outline keep some alpha (its anti-aliased edge). */
@@ -143,7 +151,7 @@ export async function buildMenu(): Promise<void> {
   };
   const toriiSource = await findSource(SOURCE_DIR, 'torii').catch(() => undefined);
   const torii = toriiSource
-    ? await save(fitCrop(await cutOut(toriiSource)), 'torii.webp')
+    ? await save(await fitWithin(fitCrop(await cutOut(toriiSource)), TORII_MAX_SIDE), 'torii.webp')
     : await icon(0, 1, 'torii.webp');
   const sparkle = await icon(2, 1, 'sparkle.webp', 0);
   const sparkleSmall = await icon(2, 1, 'sparkle-small.webp', 1);

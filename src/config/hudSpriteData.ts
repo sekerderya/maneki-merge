@@ -8,14 +8,14 @@ export const HUD_COIN_SPRITE: HudSprite = { file: 'coin.webp', width: 230, heigh
 export const HUD_BADGE_SPRITE: HudSprite = { file: 'paw-badge.webp', width: 294, height: 294 };
 export const HUD_NEXT_SPRITE: HudBubbleSprite = {
   file: 'next.webp',
-  width: 972,
-  height: 970,
+  width: 248,
+  height: 247,
   cx: 0.5,
   cy: 0.5,
   r: 0.5,
   tagY: 0.02,
 };
-export const HUD_PAUSE_SPRITE: HudSprite = { file: 'pause.webp', width: 746, height: 746 };
+export const HUD_PAUSE_SPRITE: HudSprite = { file: 'pause.webp', width: 168, height: 168 };
 export const HUD_SCORE_CARD_SPRITE: HudScoreCardSprite = {
   file: 'score-card.webp',
   width: 1119,
