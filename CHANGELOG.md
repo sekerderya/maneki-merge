@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.42.13] - 2026-10-13
+
+### Changed
+
+- **Smaller DOM pictures, nothing on screen changed** (TECH_SPEC §14, the owner's go-ahead on the optimisation review). The pick cards' pictures, the icon kit's icons, the NEXT bubble, the pause button and the torii were written at the owner's drawing size, up to 8 times bigger than any screen shows them, and every launch decodes them all. `npm run art` now writes each at 3.5 device pixels per CSS pixel of the largest the game draws it (measured on phones and a big tablet): 1044 KB → 340 KB to download and cache, 50 MB → 5 MB decoded. Side-by-side screenshots match. Nine-slice pieces keep their size.
+
 ## [0.42.12] - 2026-10-13
 
 ### Changed
