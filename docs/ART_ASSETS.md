@@ -106,6 +106,11 @@ narrower than their canvas: Claude crops the empty space.
 | 30  | 13 panels  | `ui/settings-mockup.png`                  | Settings panel, today's layout restyled, design reference (§4.14)   | 9:16              |
 | 31  | 13 panels  | `ui/pause-mockup.png`                     | Pause panel, today's layout restyled, design reference              | 9:16              |
 | 32  | 13 panels  | `ui/gameover-mockup.png`                  | Game Over panel, today's layout restyled, design reference          | 9:16              |
+| 33  | 15 bolt    | `specials/lightning.png`                  | The lightning ball, a little storm with a yellow bolt (§4.16)       | 1:1, 1024×1024    |
+| 34  | 15 bolt    | `fx/bolts.png`                            | Sheet on black: six chain bolts, end to end on their rows           | 3:2, 1536×1024    |
+| 35  | 15 bolt    | `fx/skybolts.png`                         | Sheet on black: three bolts striking down from the sky              | 2:3, 1024×1536    |
+| 36  | 15 bolt    | `fx/zap.png`                              | Sheet on black: impact flash, shock ring, sparks, three small arcs  | 3:2, 1536×1024    |
+| 37  | 15 bolt    | `fx/shock.png`                            | Sheet on black: four electric crackle patterns over a struck cat    | 1:1, 1024×1024    |
 
 How the pieces go into the game:
 
@@ -2109,6 +2114,199 @@ which draws it over the recorded taps and drags, and the clips are recorded agai
 **Arrived (2026-10-12):** `art-source/icons/clip.jpg` (through `npm run art` as
 `public/assets/icons/clip.webp`; it reads at 34 px) and `art-source/ui/tap-pointer.jpg` (the
 recorder cuts its white when it is built).
+
+### 4.16 Phase 15: the Lightning blessing (Batch 23)
+
+Batch 23 (`docs/plans/batch-23.md`, GAME_DESIGN §15.15) adds a sixth blessing ball: the
+**lightning ball**. The first cat it touches is struck, and with it every cat of that size in the
+jar (or every boulder, if it touches a boulder first). Time stops for a moment while the lightning
+**chains** from the ball to every struck cat at once, then they all pop into coins.
+
+How the strike plays (the art below is made for it):
+
+1. The jar darkens to a stormy indigo for a moment, so the light reads on the bright garden.
+2. A **sky bolt** slams down from the top of the screen onto the lightning ball.
+3. **Chain bolts** jump from the ball to the cat it touched and on from cat to cat, each one to its
+   nearest neighbours, reaching every struck cat within a tenth of a second. Every link swaps
+   between the six bolt shapes many times a second (some flipped), so the lightning crackles.
+4. Where a bolt lands, an **impact flash** and a **shock ring** go off, and **electric crackles**
+   cover the struck cat, swapping between four patterns.
+5. Then every struck cat pops at once in a **burst of sparks** with its "+coins", the ball bursts,
+   and the dark lifts.
+
+Waiting in the jar, the lightning ball gives off a **small crackling arc** now and then. The shop
+card and the pick card show the ball itself in its gold medallion, like the hanabi's (§4.9), so
+there is no card picture to make.
+
+Five images: the ball on white, like the other balls (§4.8), and four effect sheets on **black**.
+The effects are light, not objects: no outlines, and the game adds them with light (it turns the
+black into transparency), so the background must be pure black. One image per request, in a new
+chat each time. Save them under the names below (`.png`, `.jpg` or `.webp`).
+
+**1. The lightning ball** (`specials/lightning.png`). Attach the lineup sheet
+(`art-source/style/lineup.webp`), the game screenshot `docs/screenshots/v0.26.0/390-1-hud.png` and
+the hanabi (`art-source/specials/hanabi.jpg`), so it comes out as a sibling of the hanabi but
+clearly different:
+
+```text
+Style: match the attached images exactly (the game's cat lineup, a game screenshot and its
+firework ball). Polished casual mobile-game art, cute chibi kawaii illustration, thick warm
+dark-brown outlines (never black) of even weight, soft pastel cel shading with gentle gradients
+and one small glossy highlight, light from the upper left, clean crisp vector-like edges,
+readable at small sizes.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow
+under the object. No text, no letters, no numbers, no kanji, no watermark.
+
+A thunder ball for a Suika-style merge game, the same size and drawing style as the cats in the
+attached lineup and the attached firework ball: strictly front view, its outline a perfect
+circle, centred, filling about 80% of the canvas. The ball is a little storm rolled into a
+sphere: soft puffy storm-cloud swirls in deep indigo, violet and plum, with lighter lavender on
+the tops of the clouds, all inside the round outline. Across its front, big and bold, one bright
+lemon-yellow lightning bolt zigzags from the upper right to the lower left, with a white-hot line
+along its middle and its own dark-brown outline. Two or three tiny yellow spark stars twinkle in
+the clouds. It must look clearly different from the attached navy firework ball at a glance: no
+paper band, no fuse, no firework rays. Nothing sticks out of the circle. No glow and no sparks
+around it (the game adds them). Square 1:1.
+```
+
+If the storm reads too much like the hanabi at small size, try this one instead (Raijin's drum;
+same attachments, same style paragraph as above, then):
+
+```text
+A thunder drum ball for a Suika-style merge game, the same size and drawing style as the cats in
+the attached lineup: strictly front view, its outline a perfect circle, centred, filling about
+80% of the canvas. It is the small round taiko drum of Raijin, the Japanese thunder god, seen
+face-on: a cream drumhead with one big bold lemon-yellow lightning bolt zigzagging across it,
+white-hot along its middle and with its own dark-brown outline, ringed by a glossy deep-violet
+lacquer rim with a row of small round gold studs. Nothing sticks out of the circle. No glow and
+no sparks around it. Square 1:1.
+```
+
+**The effect sheets.** Every one starts with this block (it is inside each prompt below). Attach
+the game screenshot `docs/screenshots/v0.26.0/390-1-hud.png` and, once you have it, the lightning
+ball you chose, so the yellow matches:
+
+```text
+Style: a polished casual mobile-game visual effect for the cute pastel game in the attached
+screenshot: crisp, bright, clean shapes, readable at small sizes; glowing light with no outline.
+Plain flat solid pure black background (#000000) everywhere around the effects: no gradient, no
+stars, no clouds, no ground, no vignette, no texture, no frame. No text, no letters, no numbers,
+no kanji, no watermark, no signature.
+The colour of every effect: a thin white-hot core, a bright electric lemon-yellow glow round it,
+and a faint soft violet haze at the outer edge of the glow.
+```
+
+**2. Chain bolts** (`fx/bolts.png`, landscape 3:2). The links between the ball and the struck
+cats. The game stretches each bolt between two cats, so both of its ends must sit on its row's
+middle line:
+
+```text
+Style: a polished casual mobile-game visual effect for the cute pastel game in the attached
+screenshot: crisp, bright, clean shapes, readable at small sizes; glowing light with no outline.
+Plain flat solid pure black background (#000000) everywhere around the effects: no gradient, no
+stars, no clouds, no ground, no vignette, no texture, no frame. No text, no letters, no numbers,
+no kanji, no watermark, no signature.
+The colour of every effect: a thin white-hot core, a bright electric lemon-yellow glow round it,
+and a faint soft violet haze at the outer edge of the glow.
+
+A sheet of SIX separate horizontal lightning bolts for a chain-lightning effect, stacked one
+above the other in six evenly spaced rows, with plain black between the rows: no bolt touches
+another, and each bolt with its glow stays inside its own row. Every bolt runs from the far LEFT
+of its row to the far RIGHT (only a small black margin at each end), and both of its ends lie
+exactly on the row's middle line, so it can be stretched between two points. Each bolt is a
+jagged zigzag path of light with sharp angular kinks, never smooth curves, glowing evenly along
+its whole length, and each has a different shape:
+- rows 1 and 2: a few big, bold zigzags with a thick bright core;
+- rows 3 and 4: many small sharp kinks, a little thinner, nervous and crackling;
+- rows 5 and 6: a main path with two or three thin short forks that split off and fade out in
+  the air.
+Landscape 3:2.
+```
+
+**3. Sky bolts** (`fx/skybolts.png`, portrait 2:3). The bolt that comes down from the sky onto
+the lightning ball as it strikes; the game swaps between the three so it flickers:
+
+```text
+Style: a polished casual mobile-game visual effect for the cute pastel game in the attached
+screenshot: crisp, bright, clean shapes, readable at small sizes; glowing light with no outline.
+Plain flat solid pure black background (#000000) everywhere around the effects: no gradient, no
+stars, no clouds, no ground, no vignette, no texture, no frame. No text, no letters, no numbers,
+no kanji, no watermark, no signature.
+The colour of every effect: a thin white-hot core, a bright electric lemon-yellow glow round it,
+and a faint soft violet haze at the outer edge of the glow.
+
+A sheet of THREE separate lightning bolts striking straight down from the sky, side by side in
+three evenly spaced columns, with plain black between them: no bolt touches another. Each bolt
+starts at the very TOP edge of the image and comes down to near the BOTTOM, where it strikes: its
+lower tip lies on its column's middle line a little above the bottom edge, with a small bright
+round flash right at the tip. Each is a jagged zigzag path with sharp angular kinks and a thick
+white-hot core, and each has a different shape; two or three thin branches split off its upper
+half and fade out in the air. Portrait 2:3.
+```
+
+**4. Impact pieces** (`fx/zap.png`, landscape 3:2). What goes off where a bolt lands, the sparks
+of the pops, and the small arcs round a waiting lightning ball:
+
+```text
+Style: a polished casual mobile-game visual effect for the cute pastel game in the attached
+screenshot: crisp, bright, clean shapes, readable at small sizes; glowing light with no outline.
+Plain flat solid pure black background (#000000) everywhere around the effects: no gradient, no
+stars, no clouds, no ground, no vignette, no texture, no frame. No text, no letters, no numbers,
+no kanji, no watermark, no signature.
+The colour of every effect: a thin white-hot core, a bright electric lemon-yellow glow round it,
+and a faint soft violet haze at the outer edge of the glow.
+
+A sheet of six separate lightning-impact pieces in a 3×2 grid (three columns, two rows), each
+centred in its own cell with plain black all round it: nothing touches another piece or the edge
+of the image.
+- Top left: an impact flash, a bright starburst: a round white-hot centre with eight to ten
+  sharp spiky rays of uneven length.
+- Top middle: a shock ring, a thin, perfectly round ring of light with small jagged crackles
+  along it, plain black inside.
+- Top right: a burst of ten or so tiny sparks flying out from the centre, short bright streaks and
+  dots, the middle empty.
+- Bottom row: three small crackling electric arcs, each a short curved jagged spark about a third
+  as long as its cell is wide, with one or two tiny forks: the left one curving up, the middle one
+  wavy, the right one curving down.
+Landscape 3:2.
+```
+
+**5. Electric crackles** (`fx/shock.png`, square 1:1). Laid over a struck cat like Porcelain's
+cracks (§4.12), turned and swapped quickly so the cat crackles:
+
+```text
+Style: a polished casual mobile-game visual effect for the cute pastel game in the attached
+screenshot: crisp, bright, clean shapes, readable at small sizes; glowing light with no outline.
+Plain flat solid pure black background (#000000) everywhere around the effects: no gradient, no
+stars, no clouds, no ground, no vignette, no texture, no frame. No text, no letters, no numbers,
+no kanji, no watermark, no signature.
+The colour of every effect: a thin white-hot core, a bright electric lemon-yellow glow round it,
+and a faint soft violet haze at the outer edge of the glow.
+
+A sheet of four ELECTRIC CRACKLE patterns in a 2×2 grid, evenly spaced, with plain black between
+them. Each pattern fits inside an imaginary circle of the same size; the circle itself is NOT
+drawn. Only crackling lines of light: no ball, no cat, no fill, no background shape. Each pattern
+is a web of thin, branching, jagged electric arcs spread over the whole circle, as if a ball were
+crackling with electricity, its outermost arcs running close along the circle's edge on every
+side, with plenty of black between the arcs so whatever lies under them still shows. The four
+look clearly different from each other (different paths), so swapping them quickly makes the
+electricity flicker. Nothing touches the edge of its cell. Square 1:1.
+```
+
+Checks for these: the ball follows the general checklist (§2): a closed circular outline with
+nothing sticking out, no glow or sparks round it, clearly different from the hanabi at 48 px. The
+effect sheets: pure black everywhere around the pieces (no grey haze reaching the edges, no stars
+or clouds), no outlines, nothing touching another piece or the image's edge, every piece white at
+its core with a yellow glow and a faint violet edge; each chain bolt runs the full width of its
+row with both ends on the row's middle line; the sky bolts' tips are near the bottom; the crackle
+patterns are lines only.
+
+**Into the game.** Tell Claude when they are in `art-source/specials/` and `art-source/fx/`. The
+art pipeline (`npm run art`) cuts the ball's white like the other balls'; for the effect sheets it
+turns the black into transparency (the brighter, the more opaque), splits the pieces and measures
+each bolt's two ends, so the game can stretch it between two cats. Until they arrive the game
+shows a plain stand-in (a flat circle and thin code-drawn lines); the clip for the cards is
+recorded once the art is in.
 
 ## 5. Icon kit (every new icon)
 
