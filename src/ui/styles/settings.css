@@ -167,11 +167,21 @@
 }
 
 .settings-version {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5em;
   margin: 8px 0 0;
   color: var(--color-muted);
   font-size: 0.75rem;
   text-align: center;
   font-variant-numeric: tabular-nums;
+}
+
+.settings-privacy {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
 }
 
 .reduce-motion .settings-card {

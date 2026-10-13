@@ -1,3 +1,4 @@
+import { PRIVACY_POLICY_PATH } from '../../config/app';
 import { SHOP_ART, SHOP_SPRITE_DIR } from '../../config/shopSprites';
 import { formatVersionLabel } from '../../core/version';
 import { button, el } from '../dom';
@@ -115,10 +116,18 @@ export function createSettingsPanel(
   });
   list.append(tips);
 
-  const version = el('p', 'settings-version', formatVersionLabel(__APP_VERSION__, __BUILD_HASH__));
+  const footer = el('p', 'settings-version');
+  const version = el('span', '', formatVersionLabel(__APP_VERSION__, __BUILD_HASH__));
   version.dataset['testid'] = 'version';
+  // A new tab, so the menu stays as it is (Google Play wants the policy reachable in the app).
+  const privacy = el('a', 'settings-privacy', 'Privacy policy');
+  privacy.href = `${import.meta.env.BASE_URL}${PRIVACY_POLICY_PATH}`;
+  privacy.target = '_blank';
+  privacy.rel = 'noopener';
+  privacy.dataset['testid'] = 'privacy-link';
+  footer.append(version, el('span', '', '·'), privacy);
 
-  card.append(header, list, version);
+  card.append(header, list, footer);
   overlay.append(card);
   root.append(overlay);
 

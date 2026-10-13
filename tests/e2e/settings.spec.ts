@@ -38,6 +38,13 @@ test('settings: switches persist, reduce motion marks the page, tips come back',
   await expect(panel).toBeVisible();
   await expect(panel).not.toContainText('Music');
   await expect(page.getByTestId('version')).toBeVisible();
+  // Google Play wants the privacy policy reachable in the app: a new tab, the menu stays.
+  const privacy = page.getByTestId('privacy-link');
+  await expect(privacy).toHaveAttribute('href', /\/privacy\.html$/);
+  await expect(privacy).toHaveAttribute('target', '_blank');
+  const policy = await page.request.get((await privacy.getAttribute('href')) ?? '');
+  expect(policy.status()).toBe(200);
+  expect(await policy.text()).toContain('privacy policy');
 
   const sound = page.getByTestId('setting-sound');
   await expect(sound).toHaveAttribute('aria-checked', 'true');

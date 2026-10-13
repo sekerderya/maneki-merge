@@ -70,7 +70,7 @@ Layout: everything sits where it is in the mockup, on a stage of the mockup's si
   - **Haptics**: vibration; the row only shows where the browser can vibrate (Android).
   - **Reduce motion**: no camera shake, about a third of the particles, one flying coin per payout, and no decorative animations; banners fade instead of popping. The phone's own reduced-motion setting does the same whatever this switch says.
 - **How to play**: the first-run hints show again in the next run, and every clip button gets its new dot back (§2.5).
-- The version and build hash, small, at the bottom.
+- The version and build hash, small, at the bottom, and beside them a **Privacy policy** link (v0.43: Google Play wants the policy reachable in the app) that opens `privacy.html` in a new tab, so the menu stays as it is.
 - Closing: the close button, a tap on the dimmed menu, or the back button. There is no music yet, so there is no music switch.
 - Look (v0.37, the owner's approved mockup `art-source/ui/settings-mockup.jpg`): the same layout, in the Upgrades screen's pieces: the Upgrades card as the panel (the version in its tan strip), the title in the Upgrades title's cream lettering, the Upgrades close button, each icon in a gold-rimmed cream medallion, a switch gold like the Buy button when ON and a sunken tan track when OFF. With `?skin=vector` it keeps the code-drawn card of v0.14.
 

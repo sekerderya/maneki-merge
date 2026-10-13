@@ -4,6 +4,12 @@ export const APP_SHORT_NAME = 'Maneki';
 export const APP_DESCRIPTION =
   'Lucky-cat merge game with a growing jar. Offline PWA for iOS and Android.';
 
+/**
+ * The privacy policy (`public/privacy.html`, relative to the base URL): Settings links to it, and
+ * Google Play asks for it in the app and on the store listing (docs/PLAY_STORE.md).
+ */
+export const PRIVACY_POLICY_PATH = 'privacy.html';
+
 /** Prefix for every storage key; the github.io origin is shared with other Pages sites. */
 export const STORAGE_PREFIX = 'maneki-merge:';
 
