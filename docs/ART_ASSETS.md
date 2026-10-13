@@ -86,7 +86,7 @@ narrower than their canvas: Claude crops the empty space.
 | 11  | 4 menu     | `menu/upgrade-icons.png`                  | Sheet: 5 upgrade icons                                              | 3:2, 1536×1024    |
 | 12  | 4 menu     | `menu/settings-icons.png`                 | Sheet: sound, haptics, reduce motion, how to play                   | 1:1, 1024×1024    |
 | 13  | 4 menu     | `menu/banner.png`                         | Blank ribbon banner for "The shrine grows!" etc.                    | 3:2, 1536×1024    |
-| 14  | 5 app      | `app-icon.png`                            | App icon                                                            | 1:1, 1024×1024    |
+| 14  | 5 app      | `app-icon.png`                            | App icon: the golden cat from the chest up, full bleed (§4.6)       | 1:1, 1024×1024    |
 | 15  | 6 doors    | `doors/picture.png`                       | Stage-door picture, cut into four strips by the game                | 9:16              |
 | 16  | 6 doors    | `doors/panel.png`                         | One empty door frame, laid over each strip                          | 2:3, 1024×1536    |
 | 17  | 7 specials | `specials/magnet.png`                     | The magnet token (in the paw and NEXT)                              | 1:1, 1024×1024    |
@@ -112,6 +112,8 @@ narrower than their canvas: Claude crops the empty space.
 | 35  | 15 bolt    | `fx/skybolts.png`                         | Sheet on black: three bolts striking down from the sky              | 2:3, 1024×1536    |
 | 36  | 15 bolt    | `fx/zap.png`                              | Sheet on black: impact flash, shock ring, sparks, three small arcs  | 3:2, 1536×1024    |
 | 37  | 15 bolt    | `fx/shock.png`                            | Sheet on black: four electric crackle patterns over a struck cat    | 1:1, 1024×1024    |
+| 38  | 16 loading | `loading/bar.png`                         | The loading bar: the score card, long, with an empty well (§4.17)   | 3:2, 1536×1024    |
+| 39  | 16 loading | `loading/bar-full.png`                    | The same bar, an edit with the well full of gold                    | 3:2, 1536×1024    |
 
 How the pieces go into the game:
 
@@ -736,11 +738,32 @@ px wide, centred on the well's height) and on the shop's locked cards.
 
 ### 4.6 Phase 5: app icon
 
+The icon on the phone's home screen, the install sheet and the browser tab (today a code-drawn
+cream cat in a gold coin, `public/icon.svg`). One full-bleed square, no white to cut: the phone
+crops it, to a rounded square on iPhones and to a circle (or a squircle) on Android, so everything
+that matters sits in the centre 70%. Attach the menu's hero (`art-source/menu/hero.jpg`), the
+menu mockup (`art-source/menu/mockup.jpg`) and the lineup sheet (`art-source/style/lineup.webp`).
+Save it as `art-source/app-icon.png` (1:1, 1024×1024); Claude makes every size from it (the PWA
+icons 64/192/512, the maskable 512, Apple's 180 and the favicon).
+
 ```text
-A mobile app icon: the face and raised paw of cat number 9 (Kin, the golden maneki-neko) from the
-attached lineup sheet, big and centered, with its red collar and gold bell, on a soft cream and
-sakura-pink background filling the whole square. Keep everything important inside the centre 80%
-(the corners get rounded and cropped). No text. Square 1:1.
+Style: match the attached images exactly (the game's golden lucky cat, its main menu and its cat
+lineup). Polished casual mobile-game art, cute chibi kawaii illustration, thick warm dark-brown
+outlines (never black) of even weight, soft pastel cel shading with gentle gradients and one
+small glossy highlight, light from the upper left, clean crisp vector-like edges. No text, no
+letters, no numbers, no kanji, no watermark, no signature.
+
+The app icon for the mobile game "Maneki Merge": the golden maneki-neko from the attached menu
+picture, the very same cat (golden-yellow body with a few soft orange tabby stripes on its
+forehead, happy closed eyes, pink cheeks, a red collar with a gold bell), shown from the chest up,
+big and centred, looking straight at the viewer, its left paw (the viewer's right) raised beside
+its face with the palm and the pink paw pads facing the viewer. Behind it, filling the whole
+square edge to edge: a warm cream background (#fcefdf) with a soft sakura-pink glow round the cat
+and a few small pink cherry-blossom petals near the corners. The ears, the raised paw and the bell
+all sit inside the centre 70% of the square; nothing important near the edges or the corners
+(phones crop the icon to a circle or a rounded square). Bold, simple shapes that still read at
+48 px on a home screen. No border, no frame, no rounded corners, no transparent areas, no shadow
+round the edge. Square 1:1, 1024×1024.
 ```
 
 ### 4.7 Phase 6: stage doors
@@ -2352,6 +2375,56 @@ them, so the links still change shape as they flicker), and each crackle pattern
 drawn as a glowing ring, which lies at the struck cat's edge like an electric sphere round it. Both
 are kept; regenerate only if the owner wants more shapes or no ring. With `?skin=vector` or
 `placeholder` the game keeps the code-drawn stand-ins.
+
+### 4.17 Phase 16: the loading screen (v0.42.10)
+
+The loading screen (GAME_DESIGN §2.0) is the menu's garden, the logo and the golden cat, with a
+bar near the bottom that fills while the game loads. Until this phase the bar is drawn in CSS.
+The bar is the in-game score card (`art-source/hud/score-card.jpg`, the card the menu's record
+cards use) made long and thin: the paw on its left end, the caramel well running to its right
+end; as the game loads, the well fills with gold from the paw to the right. Two images, in this
+order, in one chat (the second is an edit of the first, so the gold fits the well exactly).
+Save them as `.png`, `.jpg` or `.webp`.
+
+**1. The empty bar** (`loading/bar.png`, 3:2, 1536×1024). Attach the score card
+(`art-source/hud/score-card.jpg`) and the menu mockup (`art-source/menu/mockup.jpg`):
+
+```text
+Style: match the attached images exactly (the game's score card and its main menu). Polished
+casual mobile-game art, cute chibi kawaii illustration, thick warm dark-brown outlines (never
+black) of even weight, soft pastel cel shading with gentle gradients and one small glossy
+highlight, light from the upper left, clean crisp vector-like edges.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow
+under the object. No text, no letters, no numbers, no kanji, no watermark, no signature.
+
+A loading bar for the mobile game "Maneki Merge": the attached score card, drawn the same way
+(the same cream card with its light top edge, the same thick dark-brown outline, the same white
+cat paw with pink pads on its left end, the same sunken caramel-brown well), but much longer and
+thinner: a straight horizontal pill about seven times as long as it is tall, centred, filling
+about 90% of the canvas's width. The paw sits on the bar's left end; the well starts right after
+the paw and runs almost to the bar's right end, where it ends in a round end like the card's.
+The well is empty and plain: no marks, no ticks, no stripes, no shine. The middle of the bar is
+the same all along (the game stretches it). Front view, flat, no perspective, perfectly
+horizontal. Nothing else in the picture. Ratio 3:2.
+```
+
+**2. The full bar** (`loading/bar-full.png`): in the same chat, attach the bar from step 1 and ask
+for an edit (with the tool's region edit, select the well only, if it has one):
+
+```text
+Edit the attached loading bar: keep everything exactly the same (the card, the outline, the paw,
+the shape and size and position of every part, the white background) and change only the inside
+of the caramel well: fill the whole well, from the paw to its round right end, with shiny gold,
+like a polished gold koban coin: warm golden yellow, a lighter glossy stripe along its top, a
+deeper amber gold along its bottom, smooth and even all along, no marks, no coins, no sparkles,
+no text. Same size, same framing, same ratio 3:2.
+```
+
+**Into the game.** Claude cuts the white, makes the empty bar a three-slice strip (the paw's end,
+a plain middle that stretches, the right end) and takes the gold from the difference between the
+two images, so it fills the well exactly; the loading screen then shows the gold growing from the
+paw to the right with the loading. If the second image moves or resizes anything outside the
+well, generate it again (it has to match the first pixel for pixel outside the well).
 
 ## 5. Icon kit (every new icon)
 
