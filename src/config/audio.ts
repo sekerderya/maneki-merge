@@ -33,19 +33,6 @@ export { DEFAULT_SOUND_SET, SOUND_SETS } from './soundSets';
 export type { SoundSetId } from './soundSets';
 
 /**
- * A short generated room reverb (decaying, low-passed noise) that the soft set sends a little of
- * every sound into; it rounds off the attacks. `send` is the share per set (0: no reverb).
- */
-export const REVERB = {
-  seconds: 1.1,
-  /** The impulse falls as (1 - t)^decayPower. */
-  decayPower: 3.5,
-  /** A one-pole low-pass on the impulse, so the tail is warm, not hissy. */
-  lowpassHz: 3200,
-  send: { soft: 0.22, classic: 0 },
-} as const;
-
-/**
  * Extra gain per sound in a set, on top of its `SOUNDS` volume (which was set for the classic
  * set). The soft set's were measured offline (v0.46: the loudest 50 ms, roughly A-weighted) to sit
  * about 1–2 dB under the classic sound, a little more for the busy merge chain's coin and combo;

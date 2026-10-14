@@ -2,8 +2,8 @@
  * The soft sound set (GAME_DESIGN §12, v0.46, the default): the owner found the classic set too
  * "ringing, like an Atari game". These are sine tones only (no square, saw or bright triangle
  * harmonics), with gentle attacks, a lower register, near-harmonic bell partials instead of
- * clanging ones, and noise kept below the hiss range. The engine sends a little of each into a
- * short room reverb (config REVERB), which rounds them off further.
+ * clanging ones, and noise kept below the hiss range. No reverb: v0.46.0 had a short room reverb
+ * under every sound, and the owner heard "a cave" (v0.46.1 removed it).
  */
 import { SOFT_MERGE_PITCH_SCALE } from '../config/audio';
 import type { SoundName } from '../config/audio';

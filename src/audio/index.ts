@@ -6,17 +6,10 @@
  * - Every sound goes through a per-sound gain, a master gain and a limiter, and is throttled per
  *   sound and globally (`VoiceThrottle`), so a burst of merges never clips.
  * - Sound off suspends the context; backgrounding suspends it and coming back resumes it.
- * - Two recipe sets (config SOUND_SETS): the soft set (default) also sends each voice into a short
- *   generated reverb; `?sfx=classic` and the debug sound board bring back the classic set.
+ * - Two recipe sets (config SOUND_SETS): the soft set (default) and the classic set, which
+ *   `?sfx=classic` and the debug sound board bring back.
  */
-import {
-  DEFAULT_SOUND_SET,
-  LIMITER,
-  MASTER_VOLUME,
-  REVERB,
-  SET_GAIN,
-  SOUNDS,
-} from '../config/audio';
+import { DEFAULT_SOUND_SET, LIMITER, MASTER_VOLUME, SET_GAIN, SOUNDS } from '../config/audio';
 import type { SoundName, SoundSetId } from '../config/audio';
 import { CLASSIC_RECIPES } from './sfx';
 import type { Recipe } from './sfx';
@@ -44,8 +37,6 @@ export class AudioEngine implements Sfx {
   private limiter: DynamicsCompressorNode | null = null;
   private meter: AnalyserNode | null = null;
   private meterData: Float32Array<ArrayBuffer> | null = null;
-  /** The shared reverb, built the first time a set with a reverb send plays. */
-  private reverb: ConvolverNode | null = null;
   private enabled = true;
   private hidden = false;
   private readonly throttle = new VoiceThrottle();
@@ -152,32 +143,12 @@ export class AudioEngine implements Sfx {
     const out = ctx.createGain();
     out.gain.value = SOUNDS[name].volume * (SET_GAIN[set][name] ?? 1);
     out.connect(master);
-    const nodes: AudioNode[] = [out];
     try {
-      const send = REVERB.send[set];
-      if (send > 0) {
-        const wet = ctx.createGain();
-        wet.gain.value = send;
-        out.connect(wet).connect(this.reverbIn(ctx, master));
-        nodes.push(wet);
-      }
       RECIPE_SETS[set][name]({ ctx, out, t: ctx.currentTime + 0.005, noise }, value);
     } catch {
       // A broken audio stack never breaks the game.
     }
-    window.setTimeout(() => {
-      for (const node of nodes) node.disconnect();
-    }, SOUNDS[name].durationMs + 500);
-  }
-
-  /** The reverb's input: a convolver on a generated impulse, into the master. */
-  private reverbIn(ctx: AudioContext, master: GainNode): ConvolverNode {
-    if (this.reverb) return this.reverb;
-    const reverb = ctx.createConvolver();
-    reverb.buffer = reverbImpulse(ctx);
-    reverb.connect(master);
-    this.reverb = reverb;
-    return reverb;
+    window.setTimeout(() => out.disconnect(), SOUNDS[name].durationMs + 500);
   }
 
   /**
@@ -219,35 +190,11 @@ export class AudioEngine implements Sfx {
     for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
 
     this.ctx = ctx;
-    this.reverb = null;
     this.limiter = limiter;
     this.master = master;
     this.noise = noise;
     this.throttle.reset();
   }
-}
-
-/**
- * The room reverb's impulse (config REVERB): stereo noise falling as (1 - t)^decayPower, through a
- * one-pole low-pass, normalised so the reverb is no louder than the sound sent into it.
- */
-function reverbImpulse(ctx: BaseAudioContext): AudioBuffer {
-  const length = Math.max(1, Math.round(ctx.sampleRate * REVERB.seconds));
-  const impulse = ctx.createBuffer(2, length, ctx.sampleRate);
-  const smooth = 1 - Math.exp((-2 * Math.PI * REVERB.lowpassHz) / ctx.sampleRate);
-  for (let channel = 0; channel < 2; channel++) {
-    const data = impulse.getChannelData(channel);
-    let y = 0;
-    let energy = 0;
-    for (let i = 0; i < length; i++) {
-      y += smooth * (Math.random() * 2 - 1 - y);
-      data[i] = y * (1 - i / length) ** REVERB.decayPower;
-      energy += (data[i] ?? 0) ** 2;
-    }
-    const scale = 1 / Math.sqrt(energy || 1);
-    for (let i = 0; i < length; i++) data[i] = (data[i] ?? 0) * scale;
-  }
-  return impulse;
 }
 
 /** Whether the page is handling a user gesture right now (unknown counts as no). */

@@ -3,7 +3,6 @@ import {
   COMBO_BASE_HZ,
   DEFAULT_SOUND_SET,
   MERGE_PITCH_TOP_HZ,
-  REVERB,
   SET_GAIN,
   SOUND_SETS,
   SOUNDS,
@@ -160,16 +159,13 @@ describe('sound sets (GAME_DESIGN §12)', () => {
     }
   });
 
-  it('keeps the set gains and the reverb sends in a sane range', () => {
+  it('keeps the set gains in a sane range', () => {
     expect(SOUND_SETS).toContain(DEFAULT_SOUND_SET);
     for (const set of SOUND_SETS) {
-      expect(REVERB.send[set]).toBeGreaterThanOrEqual(0);
-      expect(REVERB.send[set]).toBeLessThan(0.5);
       for (const gain of Object.values(SET_GAIN[set])) {
         expect(gain).toBeGreaterThan(0.2);
         expect(gain).toBeLessThanOrEqual(1.5);
       }
     }
-    expect(REVERB.send.classic).toBe(0);
   });
 });
