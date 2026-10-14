@@ -2563,7 +2563,34 @@ Everything flat and quiet; the strip should not catch the eye more than the scor
 Portrait 9:16, the same framing as the image you just made.
 ```
 
-**2. One cat to go** (`ui/goal-strip-mockup-2.png`, 9:16), in the same chat after 1b, nothing new
+**1c. No progress bar** (`ui/goal-strip-mockup.png` again), in the same chat after 1b, nothing new
+attached. The owner liked 1b's plain strip (2026-10-15) but wants no gold progress bar: the
+coloured cats alone show how far the stage has come. 1b also turned the NEXT cat and some cats in
+the jar into silhouettes by mistake; this edit puts them back.
+
+```text
+Style: exactly the same as the image you just made and the images attached before it. Polished
+casual mobile-game art, cute chibi kawaii illustration, thick warm dark-brown outlines (never
+black) of even weight, soft pastel cel shading, light from the upper left, clean crisp vector-like
+edges. Quiet and simple: no glow, no shine streaks, no sparkles, no glossy highlights. No
+watermark, no signature.
+
+Edit the image you just made. Keep the strip at the top exactly as plain as it is now, with these
+changes only:
+- Remove the progress bar completely: no gold fill and no sunken track. The small cats sit
+  directly on the flat cream card, evenly spaced between the torii with its number and the goal
+  circle at the right end.
+- All eight small cats 1 to 8 are there, in the lineup's order: cats 1 to 6 in full colour, cats 7
+  and 8 as flat light-tan silhouettes with no face.
+- The gold cat at the right end stays as it is: a flat light-tan silhouette in a plain cream circle
+  with a thin flat gold outline.
+Also put back everything outside the strip exactly as in the very first screenshot: the cat in the
+NEXT bubble and every cat in the jar are in full colour with their faces (none of them is a
+silhouette). Everything else stays in the same place and at the same size. Portrait 9:16, the same
+framing as the image you just made.
+```
+
+**2. One cat to go** (`ui/goal-strip-mockup-2.png`, 9:16), in the same chat after 1c, nothing new
 attached:
 
 ```text
@@ -2573,14 +2600,15 @@ shading, light from the upper left, clean crisp vector-like edges. Quiet and sim
 shine streaks, no sparkles, no glossy highlights. No watermark, no signature.
 
 Now the same screen a little later in the same stage. Keep everything exactly as in the image you
-just made, the strip's size, place and plain look too, and change only this: cats 1 to 8 are all
-in full colour, and the flat gold fill reaches the eighth cat and a little past it towards the
-gold cat. The gold cat at the right end is still a light-tan silhouette in its plain circle; only
-its thin gold outline is a little thicker. No glow, no sparkles, no other changes. Portrait 9:16.
+just made, the strip's size, place and plain look too, still with no progress bar, and change only
+this: cats 1 to 8 on the strip are all in full colour. The gold cat at the right end is still a
+light-tan silhouette in its plain circle; only its thin gold outline is a little thicker. No glow,
+no sparkles, no other changes. Portrait 9:16.
 ```
 
 Checks: nothing but the strip changed (lay it over image 1); the cats are in the lineup's order
-and look like it; the silhouettes have no faces; the number is the only text; the strip stays plain (no glow, shine or sparkles).
+and look like it; the silhouettes have no faces; the number is the only text; the strip stays plain (no glow, shine or sparkles) and has no
+progress bar (the owner's call, 2026-10-15).
 
 ## 5. Icon kit (every new icon)
 
