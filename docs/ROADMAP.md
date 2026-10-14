@@ -371,6 +371,7 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
   - [x] the owner's phase 15 art: the ball and four effect sheets on black (bolts, sky bolts, impact pieces, crackles), and their build step (v0.42.1)
   - [x] the Lightning clip on its cards (v0.42.1)
 - [x] The goal strip (v0.48.0, GAME_DESIGN §2.3; art: docs/ART_ASSETS.md §4.19), after the owner's playtest (the goal, the cats' order and the progress couldn't be seen): the stage number on a torii, the stage's nine cats in order with the goal in a gold ring, pale until the stage has had them. **Status:** done; the owner checks it on the phone, and may still send the goal slot's image
+- [x] The first clear's blessing and the boulders' card (v0.49.0, GAME_DESIGN §15.3, §15.5), the owner's request: stage 1's clear offers only a blessing, and as the doors open onto stage 2 a card with its own clip shows what a boulder is and how a merge beside it breaks it, once per profile, closed by Got it. **Status:** done; the owner checks it on the phone
 
 ## M13: Final art integration
 

@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.49.0] - 2026-10-15
+
+The first clear and the boulders' card (the owner's request; GAME_DESIGN §15.3, §15.5).
+
+### Changed
+
+- **Stage 1's clear offers only a blessing**, no trial: a new player's first jar ends with a gift. From stage 2's clear on, a trial (or a rule where the jar grows) and a blessing as before. The debug panel's Picks still opens a trial and a blessing.
+
+### Added
+
+- **The boulders' card**: boulders come from stage 2, so when the doors fold open after stage 1's blessing, a card shows over the empty jar before stage 2 starts: "Boulders" in the title lettering, a new clip (`boulderIntro`: a boulder dropped from the paw lands beside a 2, then a 2 dropped onto it merges right beside the boulder and breaks it), one line on what a boulder is and how it breaks, and a small **Got it** button (the coral PLAY pill). It shows once per profile ("How to play" brings it back, as does the tester reset), never in a scene. Only Got it or the back button closes it (it ignores taps for its first 0.4 s); time stays stopped under it, and the blessing applies as it closes.
+
 ## [0.48.0] - 2026-10-15
 
 The goal strip (the owner's playtest: the goal, the cats' order and the progress couldn't be seen; GAME_DESIGN §2.3).
