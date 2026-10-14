@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.46.1] - 2026-10-14
+
+### Fixed
+
+- **No more echo on the sounds** (the owner's report: every sound rang "as if in a cave"; GAME_DESIGN §12): the soft set's room reverb is gone, from the engine and the config. The sounds keep their own short natural decay; their loudness barely moved (the reverb only fed the tails), so the volumes stay as they were.
+
 ## [0.46.0] - 2026-10-14
 
 ### Changed
