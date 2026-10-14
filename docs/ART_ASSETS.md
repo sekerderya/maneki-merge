@@ -116,8 +116,7 @@ narrower than their canvas: Claude crops the empty space.
 | 39  | 16 loading | `loading/bar-full.jpg`                    | The same bar, an edit with the well full of gold                    | 3:2, 1536×1024    |
 | 40  | 17 Play    | `store/feature-graphic.png`               | Google Play's feature graphic: the logo and the cats, wide (§4.18)  | 3:2, 1536×1024    |
 | 41  | 18 goal    | `ui/goal-strip-mockup*.png`               | Play screen with the stage goal strip, two states (§4.19)           | 9:16              |
-| 42  | 18 goal    | `hud/goal-silhouette.png`                 | A cat not made yet: the white cat's outline, flat tan, no face      | 1:1, 1024×1024    |
-| 43  | 18 goal    | `hud/goal-slot.png`                       | The goal's round slot: cream disc, flat gold ring                   | 1:1, 1024×1024    |
+| 42  | 18 goal    | `hud/goal-slot.png`                       | The goal's round slot: cream disc, flat gold ring                   | 1:1, 1024×1024    |
 
 How the pieces go into the game:
 
@@ -2619,35 +2618,16 @@ progress bar. The game builds it from these pieces:
 - the card: CSS, the coins card's (cream, thin dark-brown outline, tan bottom edge), so the two
   cards side by side match exactly; no image;
 - the torii: the menu's torii (`art-source/menu/torii.jpg`), with the stage number as live text;
-- the coloured cats: the HUD's cat icons (`public/assets/cats/look-NN.webp`);
-- **new:** the silhouette of a cat not made yet (the gold cat's too, bigger) and the goal's round
-  slot, two images below. Save them as `.png`, `.jpg` or `.webp`.
+- the cats: the HUD's cat icons (`public/assets/cats/look-NN.webp`), all nine always in full
+  colour: no silhouettes (the owner's call, 2026-10-15; a generated tan silhouette was turned down
+  as soon as it came);
+- **new:** the goal's round slot, the image below. Save it as `.png`, `.jpg` or `.webp`.
 
-**3. The silhouette** (`hud/goal-silhouette.png`, 1:1). Attach the approved mockup
-([art-source/ui/goal-strip-mockup.webp](../art-source/ui/goal-strip-mockup.webp)) and the white cat
-([art-source/cats/size-01.jpg](../art-source/cats/size-01.jpg)):
-
-```text
-Style: match the attached images exactly (my mobile game's play screen and its white lucky cat).
-Clean crisp vector-like edges, thick warm dark-brown outline (never black) of even weight, flat
-colour. Quiet and simple: no shading, no glow, no shine, no highlight, no gradient.
-Plain flat solid white background (#FFFFFF), no texture, no checkerboard, no shadow under the
-object. No text, no letters, no numbers, no kanji, no watermark, no signature.
-
-Attached: (1) the play screen with the stage goal strip at the top; (2) the game's white lucky cat.
-Draw one game asset, big and razor sharp: the "not made yet" cat silhouette from the strip in
-image 1. Its shape is exactly the outline of the cat in image 2: the same round body and the same
-two ears, at the same size and in the same place on the canvas. Nothing inside it: no face, no
-eyes, no mouth, no paws, no collar, no bell, no belly, no stripes, no inner ear colour. The edge is
-a smooth circle with the two ears on top; the raised paw is not drawn. Fill: one flat light tan
-(#E3CFAF). Outline: the same warm dark-brown outline as the cat in image 2, even and closed all
-the way round. Centred, nothing cropped. Square 1:1.
-```
-
-**4. The goal slot** (`hud/goal-slot.png`, 1:1), in the same chat, the mockup still attached:
+**3. The goal slot** (`hud/goal-slot.png`, 1:1). Attach the approved mockup
+([art-source/ui/goal-strip-mockup.webp](../art-source/ui/goal-strip-mockup.webp)):
 
 ```text
-Style: the same as the image you just made and the attached play screen. Clean crisp vector-like
+Style: match the attached play screen exactly. Clean crisp vector-like
 edges, warm dark-brown outlines (never black) of even weight, flat colour. Quiet and simple: no
 shading, no glow, no shine, no highlight, no gradient, no sparkles.
 Plain flat solid white background (#FFFFFF), no texture, no checkerboard, no shadow under the
@@ -2660,8 +2640,7 @@ canvas, centred: a flat warm cream disc (#FBE7CC), with a flat gold ring round i
 a thinner one round its inside. The disc is empty: nothing in it. Square 1:1.
 ```
 
-Checks for these two: no face or details in the silhouette, its ears where the white cat's are;
-the slot a closed, perfect, empty circle; both flat, no shine; white background.
+Checks: a closed, perfect, empty circle; flat, no shine; white background.
 
 ## 5. Icon kit (every new icon)
 
