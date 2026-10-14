@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.46.0] - 2026-10-14
+
+### Changed
+
+- **Softer, sweeter sound effects** (the owner's request: the old ones were "ringing, like an Atari game"; GAME_DESIGN §12). A new soft set is now the default: every sound is built from sine tones (no square, saw or bright triangle tones), with gentler attacks and a lower register. Merges are rising water-drop bubbles, coins two little music-box notes, combos kalimba plucks, the chimes glass wind bells, the danger countdown a wooden knock, and a short room reverb rounds everything off. The tiny high "ching" partials are gone; offline, the share of energy above 2 kHz fell sharply (the coin from 75% to 36%, the porcelain shatter from 94% to 26%), and each sound's loudness was matched to sit 0–2 dB under the old one. Twelve merges, a Jackpot and an expansion at once still peak at about half of full scale.
+
+### Added
+
+- **A sound board for choosing sounds by ear** (`?debug=1` → DBG → **Sounds**): every sound in the game with an **Old** and a **New** button and when it plays (merges play sizes 2, 5 and 9; combos ×2 to ×7; the danger tick 3, 2, 1), and a switch for the set the game plays until the page reloads. `?sfx=classic` plays the old set for a whole session.
+
 ## [0.45.1] - 2026-10-14
 
 ### Changed
