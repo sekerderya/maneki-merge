@@ -18,24 +18,30 @@ function watchConsole(page: Page): string[] {
   return errors;
 }
 
-test('the Scenes button is off until ?scenes=1 or seven taps on the version turn it on', async ({
+test('the Scenes button is off until ?scenes=1 or the tester reset turn it on', async ({
   page,
 }) => {
   const errors = watchConsole(page);
-  await page.goto('./');
+  await page.goto('./?debug=1');
   await expect(page.getByTestId('play')).toBeVisible();
   await expect(page.getByTestId('scenes')).toBeHidden();
+  await page.evaluate(() => {
+    window.__game!.addCoins(500);
+    window.__game!.setBestStage(5);
+  });
 
-  // Seven quick taps on the version in Settings flip it, and the device remembers.
+  // Seven quick taps on the version in Settings start the save over with a million coins and
+  // turn the button on (GAME_DESIGN §2.4); the device remembers.
   await page.getByTestId('settings').click();
   const version = page.getByTestId('version');
   for (let i = 0; i < 7; i++) await version.click();
-  await expect(version).toHaveText('Scenes on');
-  await page.getByTestId('settings-close').click();
+  await page.waitForFunction(() => window.__game?.state().wallet === 1_000_000, null, WAIT);
   await expect(page.getByTestId('scenes')).toBeVisible();
+  expect(await page.evaluate(() => window.__game!.state().bestStage)).toBe(1);
   expect(await page.evaluate((key) => localStorage.getItem(key), SCENES_KEY)).toBe('1');
   await page.reload();
   await expect(page.getByTestId('scenes')).toBeVisible();
+  expect(await page.evaluate(() => window.__game!.state().wallet)).toBe(1_000_000);
 
   // ?scenes=0 turns it off again.
   await page.goto('./?scenes=0');

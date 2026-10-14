@@ -233,9 +233,13 @@ export class Profile {
     this.touch();
   }
 
-  /** Back to a fresh save (debug "Reset save"), written at once. */
-  reset(): void {
+  /**
+   * Back to a fresh save (debug "Reset save"), written at once; with `coins` in the wallet (the
+   * tester reset, GAME_DESIGN §2.4).
+   */
+  reset(coins = 0): void {
     this.state = defaultSave();
+    if (validAmount(coins)) this.state.wallet.coins = coins;
     this.dirty = true;
     this.flush();
   }

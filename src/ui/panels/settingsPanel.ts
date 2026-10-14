@@ -1,8 +1,7 @@
 import {
   PRIVACY_POLICY_PATH,
-  SCENES_SWITCH_NOTE_MS,
-  SCENES_SWITCH_TAP_WINDOW_MS,
-  SCENES_SWITCH_TAPS,
+  TESTER_RESET_TAP_WINDOW_MS,
+  TESTER_RESET_TAPS,
 } from '../../config/app';
 import { SHOP_ART, SHOP_SPRITE_DIR } from '../../config/shopSprites';
 import { formatVersionLabel } from '../../core/version';
@@ -26,10 +25,10 @@ export interface SettingsActions {
   /** "How to play": the first-run hints show again in the next run. */
   onReplayTips(): void;
   /**
-   * Seven quick taps on the version flip the menu's Scenes button (GAME_DESIGN §2.6); returns
-   * whether it is now on.
+   * Seven quick taps on the version: the tester reset (GAME_DESIGN §2.4), a fresh save with a
+   * million coins and the menu's Scenes button on (§2.6).
    */
-  onToggleScenes(): boolean;
+  onTesterReset(): void;
   onClose(): void;
 }
 
@@ -132,19 +131,13 @@ export function createSettingsPanel(
   version.dataset['testid'] = 'version';
   let taps = 0;
   let tapTimer = 0;
-  let noteTimer = 0;
   version.addEventListener('click', () => {
     taps++;
     window.clearTimeout(tapTimer);
-    tapTimer = window.setTimeout(() => (taps = 0), SCENES_SWITCH_TAP_WINDOW_MS);
-    if (taps < SCENES_SWITCH_TAPS) return;
+    tapTimer = window.setTimeout(() => (taps = 0), TESTER_RESET_TAP_WINDOW_MS);
+    if (taps < TESTER_RESET_TAPS) return;
     taps = 0;
-    version.textContent = actions.onToggleScenes() ? 'Scenes on' : 'Scenes off';
-    window.clearTimeout(noteTimer);
-    noteTimer = window.setTimeout(
-      () => (version.textContent = versionLabel),
-      SCENES_SWITCH_NOTE_MS,
-    );
+    actions.onTesterReset();
   });
   // A new tab, so the menu stays as it is (Google Play wants the policy reachable in the app).
   const privacy = el('a', 'settings-privacy', 'Privacy policy');

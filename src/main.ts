@@ -31,6 +31,7 @@ import {
   watchPhoneLandscape,
 } from './platform';
 import { GameSession } from './session';
+import { TESTER_RESET_COINS } from './config/app';
 import { CUTOUT_RECHECK_MS, UPDATE_LAUNCH_APPLY_MS } from './config/platform';
 import { setIconSkin } from './ui/catIcon';
 import { byId } from './ui/dom';
@@ -118,7 +119,7 @@ async function boot(): Promise<void> {
   };
   const profile = new Profile(profileStore, loaded.data, { scheduler: windowScheduler });
   if (storage.persistent) void requestPersistentStorage();
-  // The menu's Scenes button (GAME_DESIGN §2.6): `?scenes=1` or 7 taps on the version turn it on.
+  // The menu's Scenes button (GAME_DESIGN §2.6): `?scenes=1` or the tester reset (7 taps on the version) turn it on.
   const scenesSwitch = new ScenesSwitch(storage.adapter);
   if (flags.scenes !== null) scenesSwitch.set(flags.scenes);
 
@@ -254,10 +255,12 @@ async function boot(): Promise<void> {
         session.replayHints();
         clipButtons.refresh();
       },
-      onToggleScenes: () => {
-        const on = scenesSwitch.toggle();
-        menu.setScenesVisible(on);
-        return on;
+      onTesterReset: () => {
+        // The run ends first, so the page hide doesn't save it again (as the debug Reset save).
+        session.endRun();
+        session.profile.reset(TESTER_RESET_COINS);
+        scenesSwitch.set(true);
+        window.location.reload();
       },
       onClose: () => closeSettings(),
     },

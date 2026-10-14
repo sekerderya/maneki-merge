@@ -12,7 +12,7 @@ describe('ScenesSwitch (GAME_DESIGN §2.6)', () => {
     scenes.set(true);
     expect(storage.getItem(SCENES_KEY)).toBe('1');
     expect(new ScenesSwitch(storage).on).toBe(true);
-    expect(scenes.toggle()).toBe(false);
+    scenes.set(false);
     expect(storage.getItem(SCENES_KEY)).toBeNull();
     expect(new ScenesSwitch(storage).on).toBe(false);
   });
@@ -32,7 +32,7 @@ describe('ScenesSwitch (GAME_DESIGN §2.6)', () => {
     };
     const scenes = new ScenesSwitch(broken);
     expect(scenes.on).toBe(false);
-    expect(scenes.toggle()).toBe(true);
+    scenes.set(true);
     expect(scenes.on).toBe(true);
   });
 });

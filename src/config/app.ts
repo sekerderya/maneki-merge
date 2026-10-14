@@ -28,11 +28,13 @@ export const RUN_SAVE_KEY = `${STORAGE_PREFIX}run`;
  * the save, since it is a tool for making clips, not part of the player's profile.
  */
 export const SCENES_KEY = `${STORAGE_PREFIX}scenes`;
-/** Taps on the version in Settings, each within the window of the last, that flip it. */
-export const SCENES_SWITCH_TAPS = 7;
-export const SCENES_SWITCH_TAP_WINDOW_MS = 1500;
-/** How long the version shows "Scenes on" or "Scenes off" after the flip. */
-export const SCENES_SWITCH_NOTE_MS = 2000;
+/**
+ * The tester reset (GAME_DESIGN §2.4): this many taps on the version in Settings, each within the
+ * window of the last, start the save over with `TESTER_RESET_COINS` and turn the Scenes button on.
+ */
+export const TESTER_RESET_TAPS = 7;
+export const TESTER_RESET_TAP_WINDOW_MS = 1500;
+export const TESTER_RESET_COINS = 1_000_000;
 
 /** First-run hints (GAME_DESIGN §2.3); the save remembers which ones were seen. */
 export const HINT_IDS = ['aim', 'merge', 'magnet', 'curse'] as const;

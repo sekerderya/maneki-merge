@@ -248,6 +248,19 @@ describe('Profile: wallet, records and stats (GAME_DESIGN §5, §11)', () => {
     expect(store.last).toEqual(defaultSave());
     expect(scheduler.pendingTimers).toBe(0);
   });
+
+  it('resets with coins in the wallet for the tester reset (GAME_DESIGN §2.4)', () => {
+    const { profile, store } = setup();
+    profile.earn(50);
+    profile.setBestStage(4);
+    profile.reset(1_000_000);
+    expect(profile.coins).toBe(1_000_000);
+    expect(profile.records.bestStage).toBe(1);
+    expect(store.last).toEqual({
+      ...defaultSave(),
+      wallet: { ...defaultSave().wallet, coins: 1_000_000 },
+    });
+  });
 });
 
 describe('Profile: throttled writes (TECH_SPEC §8)', () => {

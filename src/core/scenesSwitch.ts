@@ -1,6 +1,6 @@
 /**
  * The Scenes button's switch (GAME_DESIGN §2.6): off by default, on for this device once the
- * owner turns it on (`?scenes=1`, or seven taps on the version in Settings). It lives under its own
+ * owner turns it on (`?scenes=1`, or the tester reset in Settings). It lives under its own
  * key, outside the save, and a storage that throws only means it isn't remembered.
  */
 import { SCENES_KEY } from '../config/app';
@@ -29,11 +29,5 @@ export class ScenesSwitch {
     } catch {
       // Not remembered; it still holds until the page closes.
     }
-  }
-
-  /** Flips it and returns the new state. */
-  toggle(): boolean {
-    this.set(!this.value);
-    return this.value;
   }
 }
