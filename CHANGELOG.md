@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.45.1] - 2026-10-14
+
+### Changed
+
+- **The tester reset opens every upgrade** (the owner's request; GAME_DESIGN §2.4): seven taps on the version now also start the save at best stage 20, past every card's stage gate (the highest is 8), so nothing in Upgrades waits for a stage.
+
 ## [0.45.0] - 2026-10-14
 
 ### Changed
