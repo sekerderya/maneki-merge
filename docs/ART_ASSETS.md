@@ -115,6 +115,7 @@ narrower than their canvas: Claude crops the empty space.
 | 38  | 16 loading | `loading/bar.jpg`                         | The loading bar: the score card, long, with an empty well (§4.17)   | 3:2, 1536×1024    |
 | 39  | 16 loading | `loading/bar-full.jpg`                    | The same bar, an edit with the well full of gold                    | 3:2, 1536×1024    |
 | 40  | 17 Play    | `store/feature-graphic.png`               | Google Play's feature graphic: the logo and the cats, wide (§4.18)  | 3:2, 1536×1024    |
+| 41  | 18 goal    | `ui/goal-strip-mockup*.png`               | Play screen with the stage goal strip, two states (§4.19)           | 9:16              |
 
 How the pieces go into the game:
 
@@ -2467,6 +2468,84 @@ merged. Everything important sits inside the middle band of the picture, between
 height, and away from the left and right edges: the top and bottom are cut off and the edges get
 covered. Bright, cheerful, readable as a small thumbnail. Wide landscape, ratio 3:2.
 ```
+
+### 4.19 Phase 18: the stage goal strip (prototype)
+
+Players don't see what a stage asks for or how close they are (2026-10-14 playtest: no goal cat,
+no evolution order, no progress bar). The owner chose a strip across the top of the play screen
+(option A): it replaces the words "STAGE N"; the torii with the stage number on its left end; the
+cats 1 to 8 in order on a gold-filling well; the gold cat, the goal, bigger in a gold ring on its
+right end. Cats made this stage are in colour, the rest are tan silhouettes. First a prototype:
+two mockups of the whole play screen, in this order, in one chat; the game's pieces come once the
+owner approves the look. The card is the loading bar (§4.17) without its paw.
+
+Attach to the first request, in this order:
+
+1. a screenshot of the play screen from the phone, a few stages in, with cats in the jar (or
+   [docs/screenshots/v0.36.0/combo-390.png](screenshots/v0.36.0/combo-390.png));
+2. the lineup sheet, [art-source/style/lineup.webp](../art-source/style/lineup.webp);
+3. the torii, [art-source/menu/torii.jpg](../art-source/menu/torii.jpg);
+4. the full loading bar, [art-source/loading/bar-full.jpg](../art-source/loading/bar-full.jpg).
+
+**1. In progress** (`ui/goal-strip-mockup.png`, 9:16):
+
+```text
+Style: match the attached images exactly (my mobile game's play screen, its nine lucky cats, its
+torii icon and its gold loading bar). Polished casual mobile-game art, cute chibi kawaii
+illustration, thick warm dark-brown outlines (never black) of even weight, soft pastel cel shading
+with gentle gradients and one small glossy highlight, light from the upper left, warm cream and
+sakura-pink palette, clean crisp vector-like edges, readable at phone size. No watermark, no
+signature.
+
+Attached: (1) a screenshot of the game's play screen; (2) the game's nine lucky cats, in order,
+read left to right and top to bottom: 1 white, 2 charcoal, 3 orange, 4 sky blue, 5 pink, 6 green,
+7 purple, 8 red, 9 gold; (3) the game's red torii icon; (4) the game's loading bar, a long cream
+card with a sunken well full of gold.
+
+Edit image 1: add a stage goal strip at the top of the screen. Change nothing else: the score
+card, the coins card, the pink pause button, the NEXT bubble, the paw, the jar, the cats in the jar
+and the garden stay exactly as they are, in the same place and at the same size. Only the words
+"STAGE N" at the top go away; the strip takes their place.
+
+The strip:
+- The card: the loading bar of image 4, drawn the same way (the same cream card, the same thick
+  dark-brown outline and light top edge, the same sunken caramel well), but without the paw. It
+  runs along the top of the screen, from the score card's left edge to just left of the pause
+  button, centred on the pause button's height and about as tall as it.
+- Left end: the torii of image 3, small, standing inside the card's left end, with the stage number
+  from image 1 in chunky cream letters with a thick dark-brown outline between its two pillars.
+  This number is the only text in the strip.
+- The well runs from the torii to the card's right end. Its gold fill reaches only up to the sixth
+  cat; to the right of it the well is empty caramel.
+- On the well, evenly spaced from left to right: the cats 1 to 8 of image 2, in order, all the same
+  small size, each drawn exactly as it is in image 2 (round body, raised paw, collar, gold bell)
+  with its thick dark-brown outline. Cats 1 to 6 are in full colour: they have been made this
+  stage. Cats 7 and 8 are flat silhouettes, their exact shapes filled with plain light tan
+  (#E3CFAF) inside the dark-brown outline, no face, no colours: not made yet.
+- Right end: cat 9, the gold cat, about 1.6 times as big as the others, in a round slot with a
+  thick glossy gold ring that overlaps the card's right end. It is still a light-tan silhouette
+  like cats 7 and 8, and a soft warm gold glow surrounds its ring: it is the stage's goal.
+No arrows, no labels, no other decorations. Portrait 9:16, the same framing as image 1.
+```
+
+**2. One cat to go** (`ui/goal-strip-mockup-2.png`, 9:16), in the same chat, nothing new attached:
+
+```text
+Style: exactly the same as the image you just made and the images attached before it. Polished
+casual mobile-game art, cute chibi kawaii illustration, thick warm dark-brown outlines (never
+black) of even weight, soft pastel cel shading with gentle gradients and one small glossy
+highlight, light from the upper left, clean crisp vector-like edges. No watermark, no signature.
+
+Now the same screen a little later in the same stage. Keep everything exactly as in the image you
+just made, the strip's size and place too, and change only the strip: cats 1 to 8 are all in full
+colour, and the gold in the well reaches the eighth cat and a little past it towards the gold cat.
+The gold cat at the right end is still a light-tan silhouette, but its gold ring shines brighter,
+with a few small four-pointed gold sparkles around it: one more red cat and the stage is clear.
+No other changes. Portrait 9:16.
+```
+
+Checks: nothing but the strip changed (lay it over image 1); the cats are in the lineup's order
+and look like it; the silhouettes have no faces; the number is the only text.
 
 ## 5. Icon kit (every new icon)
 
