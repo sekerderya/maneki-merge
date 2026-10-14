@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.45.0] - 2026-10-14
+
+### Changed
+
+- **Seven quick taps on the version in Settings are now the tester reset** (the owner's request; GAME_DESIGN §2.4): the save starts over at once with 1,000,000 coins in the wallet (records, upgrades, stats, settings, hints and the saved run go back to a fresh start), the menu's Scenes button turns on, and the app reloads. There is no confirmation. The taps no longer turn the Scenes button off; `?scenes=0` still does.
+
 ## [0.44.1] - 2026-10-14
 
 ### Fixed
