@@ -176,12 +176,7 @@ test('settings, records, stats and hints persist', async ({ page }) => {
     (key) => JSON.parse(localStorage.getItem(key) ?? '{}'),
     SAVE_KEY,
   );
-  expect(saved.data.settings).toEqual({
-    sound: false,
-    music: true,
-    haptics: false,
-    reduceMotion: false,
-  });
+  expect(saved.data.settings).toEqual({ sound: false, haptics: false, reduceMotion: false });
   expect(saved.data.stats.runsPlayed).toBe(1);
   expect(saved.data.records.highestTier).toBe(6);
   expect(saved.data.flags.hintsSeen.aim).toBe(true);

@@ -254,7 +254,7 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
   - [x] eleven lucky cats drawn in code (`CatSkin`), one look per size, numbers riding upright on their plates
   - [x] a bamboo and glass jar on a wooden floor, a shrine garden behind it, a cream theme with ink outlines
   - [x] main menu: settings on the left, coins on the right, the lucky cat on its cushion, a next-goal card, a round PLAY
-  - [x] settings panel: sound effects, haptics, reduce motion, how to play, version (no music row: there is no music; v0.47 added music and its row)
+  - [x] settings panel: sound effects, haptics, reduce motion, how to play, version (no music row: there is no music)
   - [x] HUD, shop (with "Need N more"), pause, Game Over, banners and toasts in the new style
 - [x] Batch 3 (v0.12.0), physics and balance (GAME_DESIGN §4–§10, TECH_SPEC §5):
   - [x] lighter, bouncier cats that push each other more easily (friction 0.1 / 0.3, restitution 0.25, gravity 0.9, mass ∝ r^1.4, inertia × 3)
@@ -385,7 +385,7 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
   - [x] title/logo (v0.20)
   - [x] jar, paw and background (v0.17)
   - [x] main menu from the owner's mockup (v0.20)
-  - [x] music if provided (+ music toggle) (v0.47: a koto loop, switches in Settings and Pause)
+  - music if provided (+ music toggle)
   - [x] HUD pieces (v0.19)
   - upgrade and settings icons, shop and settings panels, banner (docs/ART_ASSETS.md phase 4)
 - [ ] A screenshot of every tier at stage 1 and stage 5; a performance re-check (texture memory on iOS)

@@ -30,8 +30,7 @@ export interface SaveData {
     totalCoinsEarned: number;
     jackpots: number;
   };
-  /** `music` came in v0.47: an older save takes the default (on). */
-  settings: { sound: boolean; music: boolean; haptics: boolean; reduceMotion: boolean };
+  settings: { sound: boolean; haptics: boolean; reduceMotion: boolean };
   flags: {
     hintsSeen: Record<HintId, boolean>;
     /** The how-it-works clips opened at least once (v0.38): their buttons lose the new dot. */
@@ -56,7 +55,7 @@ export function defaultSave(): SaveData {
     upgrades,
     records: { bestScore: 0, bestStage: FIRST_STAGE, highestTier: 0 },
     stats: { runsPlayed: 0, totalMerges: 0, totalCoinsEarned: 0, jackpots: 0 },
-    settings: { sound: true, music: true, haptics: true, reduceMotion: false },
+    settings: { sound: true, haptics: true, reduceMotion: false },
     flags: { hintsSeen, clipsSeen },
   };
 }
@@ -324,7 +323,6 @@ export function sanitize(data: Record<string, unknown>): { data: SaveData; issue
 
   const settings = r.section(data, 'settings');
   out.settings.sound = r.bool(settings, 'settings.sound', out.settings.sound);
-  out.settings.music = r.bool(settings, 'settings.music', out.settings.music);
   out.settings.haptics = r.bool(settings, 'settings.haptics', out.settings.haptics);
   out.settings.reduceMotion = r.bool(settings, 'settings.reduceMotion', out.settings.reduceMotion);
 

@@ -182,8 +182,8 @@ export interface GameHooks {
    * and must be below its last cat.
    */
   mergeBurst(pairs?: number, tier?: number): void;
-  /** The audio context's state, the output's current peak (0–1; ≥ 1 clips), music playing. */
-  audio(): { readonly state: string; readonly peak: number; readonly music: boolean };
+  /** The audio context's state and the output's current peak (0–1; ≥ 1 clips). */
+  audio(): { readonly state: string; readonly peak: number };
   /**
    * Renders `merges` simultaneous merges (pops, chings and rising combo notes) offline through
    * the real mixer and returns the output peak (≥ 1 would clip).

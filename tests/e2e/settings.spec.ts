@@ -36,6 +36,7 @@ test('settings: switches persist, reduce motion marks the page, tips come back',
   await page.getByTestId('settings').click();
   const panel = page.getByTestId('settings-panel');
   await expect(panel).toBeVisible();
+  await expect(panel).not.toContainText('Music');
   await expect(page.getByTestId('version')).toBeVisible();
   // Google Play wants the privacy policy reachable in the app: a new tab, the menu stays.
   const privacy = page.getByTestId('privacy-link');
@@ -51,11 +52,6 @@ test('settings: switches persist, reduce motion marks the page, tips come back',
   await sound.click();
   await expect(sound).toHaveAttribute('aria-checked', 'false');
   await expect(sound).toContainText('OFF');
-
-  const music = page.getByTestId('setting-music');
-  await expect(music).toHaveAttribute('aria-checked', 'true');
-  await music.click();
-  await expect(music).toHaveAttribute('aria-checked', 'false');
 
   const motion = page.getByTestId('setting-reduceMotion');
   await expect(motion).toHaveAttribute('aria-checked', 'false');
@@ -74,12 +70,7 @@ test('settings: switches persist, reduce motion marks the page, tips come back',
   await page.reload();
   await expect(page.locator('html')).toHaveClass(/reduce-motion/);
   const data = await savedData(page);
-  expect(data['settings']).toEqual({
-    sound: false,
-    music: false,
-    haptics: true,
-    reduceMotion: true,
-  });
+  expect(data['settings']).toEqual({ sound: false, haptics: true, reduceMotion: true });
   const flags = data['flags'] as { hintsSeen: unknown; clipsSeen: Record<string, boolean> };
   expect(flags.hintsSeen).toEqual({ aim: false, merge: false, magnet: false, curse: false });
   // The clip buttons' dots come back too (v0.38).

@@ -101,21 +101,3 @@ export const COMBO_PITCH_MAX = 12;
 
 /** Danger tick pitch: higher as the countdown runs out (3, 2, 1). */
 export const DANGER_TICK_HZ = [1320, 1100, 940] as const;
-
-/**
- * Background music (GAME_DESIGN §12, v0.47): one koto loop, `art-source/music/` cut by the loop
- * points below (TECH_SPEC §10). The file plays its intro once, then repeats [loopStartS,
- * loopEndS); a second of the loop's start follows loopEndS, so a decoder's offset still loops
- * clean. The gain keeps its peaks under the limiter's threshold: the music alone is never
- * squeezed, and loud sound effects duck it a little.
- */
-export const MUSIC = {
-  file: 'assets/music/koto-garden.mp3',
-  /** The owner found 0.3 (v0.47.0) and 0.12 (v0.47.1) too loud; v0.47.2 is 17.5 dB under 0.3. */
-  volume: 0.04,
-  loopStartS: 12.187574,
-  loopEndS: 97.752789,
-  /** Fades when the music starts, and when it is switched off. */
-  fadeInS: 2.5,
-  fadeOutS: 0.5,
-} as const;
