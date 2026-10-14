@@ -39,7 +39,7 @@ export const TESTER_RESET_COINS = 1_000_000;
 export const TESTER_RESET_BEST_STAGE = 20;
 
 /** First-run hints (GAME_DESIGN §2.3); the save remembers which ones were seen. */
-export const HINT_IDS = ['aim', 'merge', 'magnet', 'curse'] as const;
+export const HINT_IDS = ['aim', 'merge', 'magnet', 'curse', 'boulders'] as const;
 export type HintId = (typeof HINT_IDS)[number];
 
 /** Browser chrome and splash colors (manifest, theme-color meta). Match --color-bg in CSS. */

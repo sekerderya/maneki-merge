@@ -35,12 +35,12 @@ async function startRun(page: Page, seed: number): Promise<void> {
 
 /**
  * Picks the first card of the trial, then of the blessing, through the panel (GAME_DESIGN §15.5),
- * in front of the shut doors (§7.1).
+ * in front of the shut doors (§7.1). Stage 1's clear has only the blessing.
  */
-async function chooseThroughPanel(page: Page): Promise<void> {
+async function chooseThroughPanel(page: Page, kinds = ['trial', 'blessing']): Promise<void> {
   const overlay = page.getByTestId('pick-overlay');
   await expect(page.getByTestId('doors')).toBeVisible(WAIT);
-  for (const kind of ['trial', 'blessing']) {
+  for (const kind of kinds) {
     await expect(overlay).toHaveAttribute('data-kind', kind, WAIT);
     await expect(overlay).toBeVisible();
     // The cards ignore taps for their first 0.4 s.
@@ -51,9 +51,9 @@ async function chooseThroughPanel(page: Page): Promise<void> {
   await expect(overlay).toBeHidden();
 }
 
-/** Takes the first option of both picks through the hooks. */
-async function choosePicks(page: Page, wait: { timeout: number }): Promise<void> {
-  for (let i = 0; i < 2; i++) {
+/** Takes the first option of the clear's `count` picks through the hooks. */
+async function choosePicks(page: Page, wait: { timeout: number }, count = 2): Promise<void> {
+  for (let i = 0; i < count; i++) {
     await expect.poll(async () => (await state(page)).runState, wait).toBe('choosing');
     await page.evaluate(() => window.__game?.choose());
   }
@@ -92,16 +92,24 @@ test('making the last cat (two 8s) clears stage 1 and moves on in the same jar',
   expect(clearing.expansion?.to).toBe(2);
   expect(clearing.runCoins).toBeGreaterThanOrEqual(41);
   expect(await page.evaluate(() => window.__game?.dropAt(0))).toBe(false);
-  // The last cat pops too, then the picks: a trial, then a blessing, before stage 2.
-  await chooseThroughPanel(page);
-  // The doors fold open first, then the blessing applies and stage 2 starts (GAME_DESIGN §7.1).
+  // The last cat pops too, then the pick: only a blessing at stage 1's clear (GAME_DESIGN §15.5).
+  await chooseThroughPanel(page, ['blessing']);
+  // The doors fold open onto the boulders' card (§15.3); the blessing waits for its button.
+  const intro = page.getByTestId('boulder-intro');
+  await expect(intro).toBeVisible(WAIT);
+  await expect(page.getByTestId('doors')).toBeHidden();
+  await expect(intro.getByTestId('boulder-intro-caption')).toContainText('boulder');
+  expect((await state(page)).runState).toBe('choosing');
+  await page.waitForTimeout(500);
+  await intro.getByTestId('boulder-intro-ok').click();
+  await expect(intro).toBeHidden();
+  // Then the blessing applies and stage 2 starts (GAME_DESIGN §7.1).
   await expect
     .poll(async () => {
       const levels = (await state(page)).pickLevels ?? {};
       return Object.values(levels).reduce((a, b) => a + b, 0);
     }, WAIT)
-    .toBe(2);
-  await expect(page.getByTestId('doors')).toBeHidden();
+    .toBe(1);
 
   // The reveal: stage 2 starts empty, with 18 as its last cat, and no banner announces it.
   await expect
@@ -200,7 +208,8 @@ test('with no upgrades, clearing stage 2 moves on into stage 3', async ({ page }
   const long = { timeout: 120_000 };
   for (const stage of [2, 3]) {
     await makeLastCat(page);
-    await choosePicks(page, long);
+    // Stage 1's clear has only the blessing.
+    await choosePicks(page, long, stage === 2 ? 1 : 2);
     await expect.poll(async () => (await state(page)).stage, long).toBe(stage);
     await expect.poll(async () => (await state(page)).runState, long).toBe('playing');
   }

@@ -119,7 +119,7 @@ test('the clip popup fits small and big phones', async ({ page }) => {
     await page.setViewportSize(size);
     await openShop(page);
     await page.getByTestId('clip-btn-luckySave').click();
-    const card = page.locator('.clip-card');
+    const card = page.getByTestId('clip-popup').locator('.clip-card');
     await expect(card).toBeVisible();
     // Measure once the card has popped in (it scales up from 0.86) and the font is in.
     await card.evaluate(async (node) => {

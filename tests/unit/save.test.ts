@@ -78,7 +78,13 @@ describe('defaultSave (GAME_DESIGN §11)', () => {
     expect(s.records).toEqual({ bestScore: 0, bestStage: 1, highestTier: 0 });
     expect(s.stats).toEqual({ runsPlayed: 0, totalMerges: 0, totalCoinsEarned: 0, jackpots: 0 });
     expect(s.settings).toEqual({ sound: true, haptics: true, reduceMotion: false });
-    expect(s.flags.hintsSeen).toEqual({ aim: false, merge: false, magnet: false, curse: false });
+    expect(s.flags.hintsSeen).toEqual({
+      aim: false,
+      merge: false,
+      magnet: false,
+      curse: false,
+      boulders: false,
+    });
     expect(Object.values(s.flags.clipsSeen).some(Boolean)).toBe(false);
   });
 
@@ -222,7 +228,13 @@ describe('sanitize', () => {
     expect(d.records).toEqual({ bestScore: 0, bestStage: 1, highestTier: 2 });
     expect(d.stats).toEqual(defaultSave().stats);
     expect(d.settings).toEqual({ sound: true, haptics: false, reduceMotion: false });
-    expect(d.flags.hintsSeen).toEqual({ aim: false, merge: true, magnet: false, curse: false });
+    expect(d.flags.hintsSeen).toEqual({
+      aim: false,
+      merge: true,
+      magnet: false,
+      curse: false,
+      boulders: false,
+    });
   });
 
   it('gives a save from before v0.11 the Reduce motion setting, off, without an issue', () => {

@@ -119,6 +119,31 @@ export const SCENES: readonly ClipScene[] = [
     },
   },
   {
+    // The card that brings boulders in at stage 2 (GAME_DESIGN §15.3): one drops from the paw like
+    // a cat, then a merge right beside it breaks it.
+    id: 'boulderIntro',
+    seed: 14,
+    async setup(scene) {
+      await scene.play();
+      // A 2 on the left, a 3 and a 1 on the right; a bare boulder in the paw.
+      await scene.place(2, -150);
+      await scene.place(3, 150);
+      await scene.place(1, atWall(1, 1));
+      await scene.advance(1500);
+      await scene.game((g) => g.give('boulder'));
+      await scene.advance(300);
+    },
+    async play(scene) {
+      await scene.advance(500);
+      // The boulder lands just right of the 2; the next 2 comes into the paw in the cooldown.
+      await scene.dragDrop(-150 + 2 * R[2] + 6, { ms: 650, then: () => give(scene, 2) });
+      await scene.advance(1300);
+      // The 2 onto the 2: they merge right beside the boulder, which breaks.
+      await scene.dragDrop(-150, { ms: 650 });
+      await scene.advance(2600);
+    },
+  },
+  {
     id: 'ironBands',
     seed: 12,
     async setup(scene) {

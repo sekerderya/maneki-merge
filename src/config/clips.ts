@@ -10,6 +10,7 @@ import type { UpgradeId } from './upgrades';
 export const CLIP_IDS = [
   'magnet',
   'boulder',
+  'boulderIntro',
   'ironBands',
   'golden',
   'hanabi',
@@ -37,6 +38,8 @@ export const CLIP_DIR = 'clips/';
 export const CLIP_CAPTIONS: Readonly<Record<ClipId, string>> = {
   magnet: 'Tap a cat, then Take: it goes back to the paw and you drop it again.',
   boulder: 'Boulders never merge. A merge right beside one breaks it.',
+  boulderIntro:
+    'Now and then the paw drops a boulder. It never merges: merge two cats right beside it to break it.',
   ironBands: 'Each band takes one more merge beside the boulder.',
   golden: 'A golden cat merges two sizes up: two 3s make a 5.',
   hanabi: 'It goes off a second after it lands: small cats pop into coins, big ones get a push.',
@@ -58,6 +61,9 @@ export const CLIP_CAPTIONS: Readonly<Record<ClipId, string>> = {
   luckySave:
     'When the jar overflows, a Lucky Save pops the cats over the line and the six smallest instead.',
 };
+
+/** The clip on the card that brings boulders in as stage 2 starts (GAME_DESIGN §15.3). */
+export const BOULDER_INTRO_CLIP: ClipId = 'boulderIntro';
 
 /** The clip a pick card opens; Wind's follows the run's wind. Null: the card has none. */
 export function pickClip(id: PickId, windLeft = false): ClipId | null {

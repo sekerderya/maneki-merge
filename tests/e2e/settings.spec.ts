@@ -72,7 +72,13 @@ test('settings: switches persist, reduce motion marks the page, tips come back',
   const data = await savedData(page);
   expect(data['settings']).toEqual({ sound: false, haptics: true, reduceMotion: true });
   const flags = data['flags'] as { hintsSeen: unknown; clipsSeen: Record<string, boolean> };
-  expect(flags.hintsSeen).toEqual({ aim: false, merge: false, magnet: false, curse: false });
+  expect(flags.hintsSeen).toEqual({
+    aim: false,
+    merge: false,
+    magnet: false,
+    curse: false,
+    boulders: false,
+  });
   // The clip buttons' dots come back too (v0.38).
   expect(Object.values(flags.clipsSeen).some(Boolean)).toBe(false);
   await page.getByTestId('settings').click();

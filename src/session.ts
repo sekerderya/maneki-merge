@@ -18,6 +18,7 @@ import {
   RULE_HINT_MS,
 } from './config/view';
 import { stageJar } from './config/stages';
+import { BOULDER_FIRST_STAGE } from './config/picks';
 import type { PickId, PickKind } from './config/picks';
 import type { ScenarioDef } from './config/scenarios';
 import type { UpgradeId } from './config/upgrades';
@@ -65,6 +66,8 @@ export interface SessionParts {
   readonly picks: PickView;
   /** The doors that shut over the game while the picks are made (GAME_DESIGN §7.1). */
   readonly doors: DoorsView;
+  /** The card that brings boulders in as the doors open onto stage 2 (GAME_DESIGN §15.3). */
+  readonly boulderIntro: { readonly visible: boolean; show(): void; hide(): void };
   /** The garden behind the jar: a new one each time the jar grows (GAME_DESIGN §7). */
   readonly scenery: {
     setJar(jar: number, grow: boolean): void;
@@ -184,7 +187,35 @@ export class GameSession {
     this.parts.picks.hide();
     this.heldPick = id;
     this.parts.game.setCovered(false);
-    this.parts.doors.open(() => this.releasePick(run));
+    const intro = this.boulderIntroDue(run);
+    this.parts.doors.open(() => (intro ? this.showBoulderIntro(run) : this.releasePick(run)));
+  }
+
+  /**
+   * The boulders' card comes once per profile (a first-run hint, GAME_DESIGN §15.3), as the doors
+   * open onto the first stage with boulders; never in a scene.
+   */
+  private boulderIntroDue(run: RunController): boolean {
+    return (
+      !this.scenario &&
+      run.expansion?.to === BOULDER_FIRST_STAGE &&
+      !this.parts.profile.hintSeen('boulders')
+    );
+  }
+
+  /** The boulders' card over the open doors; the pick (and time) waits for its button. */
+  private showBoulderIntro(run: RunController): void {
+    if (this.current !== run || this.heldPick === null) return;
+    this.parts.boulderIntro.show();
+  }
+
+  /** The boulders' card's button (or the back button): it is seen, and the next stage starts. */
+  closeBoulderIntro(): void {
+    const { boulderIntro, profile } = this.parts;
+    if (!boulderIntro.visible) return;
+    boulderIntro.hide();
+    profile.markHintSeen('boulders');
+    if (this.current) this.releasePick(this.current);
   }
 
   /** The held pick goes to the run once the doors are open and the run isn't paused. */
@@ -192,6 +223,7 @@ export class GameSession {
     const id = this.heldPick;
     if (id === null || this.current !== run) return;
     if (run.state !== 'choosing' || !this.parts.doors.isOpen) return;
+    if (this.parts.boulderIntro.visible) return;
     this.heldPick = null;
     run.choose(id);
   }
@@ -294,8 +326,9 @@ export class GameSession {
 
   /** Clears what the last run left on screen. */
   private reset(): void {
-    const { hint, banners, coins, pause, gameOver, picks, doors } = this.parts;
+    const { hint, banners, coins, pause, gameOver, picks, doors, boulderIntro } = this.parts;
     this.heldPick = null;
+    boulderIntro.hide();
     this.clearedAt = 0;
     window.clearTimeout(this.doorsTimer);
     doors.reset();
@@ -547,6 +580,7 @@ export class GameSession {
     this.parts.pause.hide();
     this.parts.gameOver.hide();
     this.parts.picks.hide();
+    this.parts.boulderIntro.hide();
     this.heldPick = null;
     this.clearedAt = 0;
     window.clearTimeout(this.doorsTimer);
@@ -564,9 +598,13 @@ export class GameSession {
     this.parts.onProfileChange();
   }
 
-  /** Back in the game: game → pause; pause or game over → menu. */
+  /** Back in the game: game → pause; pause or game over → menu; the boulders' card closes. */
   onBack(): GameBackResult {
     if (this.parts.pause.visible || this.parts.gameOver.visible || !this.current) return 'menu';
+    if (this.parts.boulderIntro.visible) {
+      this.closeBoulderIntro();
+      return 'stay';
+    }
     this.pauseRun();
     return 'stay';
   }
