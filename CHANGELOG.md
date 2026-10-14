@@ -2,6 +2,35 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.50.0] - 2026-10-15
+
+The teaching order (the owner's schedule; GAME_DESIGN §15.5): the first ten clears bring the hazards in one at a time, each shown on a card as a stage opens and offered as a trial only from that stage's clear, so a player is never asked to pick a trial about something they haven't been shown.
+
+### Changed
+
+- **The picks of the first ten clears** follow a table (`TEACHING_CLEARS` in `src/config/picks.ts`; `LATE_CLEARS_FROM` = 11 replaces `FIRST_TRIAL_CLEAR`): 1 blessing → Boulders card; 2 a boulder trial + blessing; 3 blessing → Cursed Bell card; 4 a boulder or curse trial + blessing; 5 rule + blessing; 6 blessing → Wind card; 7 a boulder, curse or wind trial + blessing; 8 blessing → Porcelain card; 9 any trial + blessing; 10 rule + blessing. From stage 11 the picks are as before. Follow-ups still need Cursed Bell; fewer than three open trials show fewer cards, none skips the pick. Before stage 10 a run now meets 4 trials instead of 8. The debug panel's Picks and Rule pick open the picks as after stage 10.
+- **The boulders' card** now holds time as stage 2 opens, like the new cards, instead of holding the blessing back; a run saved under it comes back to it (under the pause).
+
+### Added
+
+- **Cursed Bell, Wind and Porcelain cards** as stages 4, 7 and 9 open: the boulders' card's popup with the mechanic's clip (the Wind's blows the run's way), one line saying what it does and that a trial can bring it, and Got it.
+- **A card for each rule** the first time a profile takes it, as the next stage opens: its name, clip and line. Its hint pill shows only when no card does.
+- Every card shows once per profile (new first-run hints, no save version step: a v0.49 save sees each new card once); "How to play" and the tester reset bring them back; never in a scene or on a debug jump. Time is held from the moment the stage opens until the last card closes; only Got it (after 0.4 s) or the back button closes one.
+- **Lucky gift**: a clear whose blessing pick has nothing open (a fresh profile can take only two blessing levels in a run) has no pick; a "Lucky gift!" banner pays the cleared stage's last cat's pop value again (`LUCKY_GIFT_FACTOR` = 1) as run coins, which fly to the counter with the coin sound. It shows as the next stage opens; a card that comes with it waits 1.4 s.
+
+### Balance
+
+Measured with the meta bot before (v0.49.0) and after, 24 players each (bots compare versions, they don't predict people):
+
+|                                                               |      v0.49.0 |         v0.50.0 |
+| ------------------------------------------------------------- | -----------: | --------------: |
+| Stage 5 within 15 / 30 min, weak bot (`--meta 30 --seeds 24`) |  1 / 9 of 24 |     2 / 8 of 24 |
+| Stage 5 within 15 / 30 min, better player (`--extra-saves 1`) | 9 / 17 of 24 |    6 / 16 of 24 |
+| Maxed profile, stage reached (median of 60, `--upgrades max`) |            8 |               7 |
+| Every card bought (`--meta 720`, median)                      |      575 min | 576 min (+0.2%) |
+
+The gift keeps the pace well inside the 10% the owner allowed, so `LUCKY_GIFT_FACTOR` stays 1. No other number changed.
+
 ## [0.49.0] - 2026-10-15
 
 The first clear and the boulders' card (the owner's request; GAME_DESIGN §15.3, §15.5).
