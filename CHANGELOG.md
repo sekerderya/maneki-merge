@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.46.2] - 2026-10-14
+
+### Changed
+
+- **A merge is just the bubble now** (the owner's call; GAME_DESIGN §12): every merge used to play the coin's two high music-box notes right after the bubble; it no longer does (in both sound sets). The soft bubble also lost the tiny noise click on its start. The cats popped at a stage clear still ring the coin notes.
+
 ## [0.46.1] - 2026-10-14
 
 ### Fixed
