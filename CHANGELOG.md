@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.46.3] - 2026-10-14
+
+### Changed
+
+- **The sounds are back to v0.45.1's** (the owner's call): v0.46.0–v0.46.2 are reverted in full. The soft set, its reverb, the bubble-only merge, the debug Sounds board and `?sfx=` are gone; every sound plays as it did before, a merge rings the coin notes again, and the docs read as they did in v0.45.1.
+
 ## [0.46.2] - 2026-10-14
 
 ### Changed
