@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.47.1] - 2026-10-14
+
+### Changed
+
+- **Quieter music** (the owner's call: v0.47.0's was far too loud; GAME_DESIGN §12): its gain went from 0.3 to 0.12, 8 dB lower, so its peaks sit about 18–23 dB under a merge's.
+
 ## [0.47.0] - 2026-10-14
 
 ### Added
