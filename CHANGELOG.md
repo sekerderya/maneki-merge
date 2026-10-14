@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.47.3] - 2026-10-14
+
+### Removed
+
+- **The background music is gone** (the owner's call): v0.47.0–v0.47.2 are reverted in full. No music file, no Music switch in Settings or Pause (the Pause switches show "Sound" and "Haptics" again), sound effects off silences everything again, and the docs read as they did in v0.46.3. A save written by v0.47 keeps working: its music setting is simply dropped.
+
 ## [0.47.2] - 2026-10-14
 
 ### Changed
