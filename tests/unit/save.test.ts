@@ -39,7 +39,7 @@ const sampleSave = (): SaveData => {
   s.upgrades.comboCharm = 1;
   s.records = { bestScore: 5678, bestStage: 3, highestTier: 9 };
   s.stats = { runsPlayed: 4, totalMerges: 321, totalCoinsEarned: 2000, jackpots: 1 };
-  s.settings = { sound: false, haptics: true, reduceMotion: true };
+  s.settings = { sound: false, music: false, haptics: true, reduceMotion: true };
   s.flags.hintsSeen.aim = true;
   return s;
 };
@@ -77,7 +77,7 @@ describe('defaultSave (GAME_DESIGN §11)', () => {
     expect(s.upgrades.luckyPaw).toBe(0);
     expect(s.records).toEqual({ bestScore: 0, bestStage: 1, highestTier: 0 });
     expect(s.stats).toEqual({ runsPlayed: 0, totalMerges: 0, totalCoinsEarned: 0, jackpots: 0 });
-    expect(s.settings).toEqual({ sound: true, haptics: true, reduceMotion: false });
+    expect(s.settings).toEqual({ sound: true, music: true, haptics: true, reduceMotion: false });
     expect(s.flags.hintsSeen).toEqual({ aim: false, merge: false, magnet: false, curse: false });
     expect(Object.values(s.flags.clipsSeen).some(Boolean)).toBe(false);
   });
@@ -221,14 +221,22 @@ describe('sanitize', () => {
     expect(d.upgrades.secondChance).toBe(0);
     expect(d.records).toEqual({ bestScore: 0, bestStage: 1, highestTier: 2 });
     expect(d.stats).toEqual(defaultSave().stats);
-    expect(d.settings).toEqual({ sound: true, haptics: false, reduceMotion: false });
+    expect(d.settings).toEqual({ sound: true, music: true, haptics: false, reduceMotion: false });
     expect(d.flags.hintsSeen).toEqual({ aim: false, merge: true, magnet: false, curse: false });
   });
 
   it('gives a save from before v0.11 the Reduce motion setting, off, without an issue', () => {
     const result = sanitize({ settings: { sound: false, haptics: true } });
     expect(result.issues).toEqual([]);
-    expect(result.data.settings).toEqual({ sound: false, haptics: true, reduceMotion: false });
+    // A save from before v0.47 has no music setting: it takes the default (on), silently.
+    expect(result.data.settings).toEqual({
+      sound: false,
+      music: true,
+      haptics: true,
+      reduceMotion: false,
+    });
+    expect(sanitize({ settings: { music: false } }).data.settings.music).toBe(false);
+    expect(sanitize({ settings: { music: 1 } }).issues).toEqual(['settings.music']);
     const bad = sanitize({ settings: { reduceMotion: 'on' } });
     expect(bad.issues).toEqual(['settings.reduceMotion']);
     expect(bad.data.settings.reduceMotion).toBe(false);
@@ -499,7 +507,7 @@ describe('v6 → v7: every profile starts over, keeping its settings (v0.36)', (
     expect(result.issues).toEqual([]);
     expect(result.data).toEqual({
       ...defaultSave(),
-      settings: { sound: false, haptics: true, reduceMotion: true },
+      settings: { sound: false, music: true, haptics: true, reduceMotion: true },
     });
   });
 

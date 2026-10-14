@@ -1,10 +1,18 @@
 import { button, el } from '../dom';
-import { ICON_SOUND_OFF, ICON_SOUND_ON, ICON_VIBRATE, ICON_VIBRATE_OFF } from '../icons';
+import {
+  ICON_MUSIC_OFF,
+  ICON_MUSIC_ON,
+  ICON_SOUND_OFF,
+  ICON_SOUND_ON,
+  ICON_VIBRATE,
+  ICON_VIBRATE_OFF,
+} from '../icons';
 import { setUiArtProperties } from '../uiArt';
 
 export interface PauseActions {
   onResume(): void;
   onToggleSound(): void;
+  onToggleMusic(): void;
   onToggleHaptics(): void;
   /** A scene only (GAME_DESIGN §2.6): the same scene again, for another take. */
   onRestart(): void;
@@ -16,13 +24,14 @@ export interface PauseView {
   show(): void;
   hide(): void;
   setSoundOn(on: boolean): void;
+  setMusicOn(on: boolean): void;
   setHapticsOn(on: boolean): void;
   /** Restart shows only while a scene is played. */
   setRestartVisible(visible: boolean): void;
 }
 
 /**
- * Pause overlay (GAME_DESIGN §2.3): Resume, Sound, Haptics, Quit to Menu, and Restart scene while
+ * Pause overlay (GAME_DESIGN §2.3): Resume, Sound, Music, Haptics, Quit to Menu, and Restart scene while
  * a scene is played (§2.6). With `art` (the art skin) it is the owner's approved mockup
  * (docs/ART_ASSETS.md §4.14) built from the Upgrades and menu pieces (panel-art.css); otherwise
  * the code-drawn card of v0.14.
@@ -47,14 +56,20 @@ export function createPauseOverlay(
   resume.dataset['testid'] = 'resume';
   resume.addEventListener('click', actions.onResume);
 
+  // Three icon-only switches (v0.47: the music made a third, and three labels don't fit).
   const toggles = el('div', 'overlay-toggles');
-  const sound = button('btn btn-toggle', 'Sound');
-  sound.dataset['testid'] = 'pause-sound';
-  sound.addEventListener('click', actions.onToggleSound);
-  const haptics = button('btn btn-toggle', 'Haptics');
-  haptics.dataset['testid'] = 'pause-haptics';
-  haptics.addEventListener('click', actions.onToggleHaptics);
-  toggles.append(sound, haptics);
+  const toggle = (label: string, testid: string, onClick: () => void): HTMLButtonElement => {
+    const node = button('btn btn-toggle', '');
+    node.setAttribute('aria-label', label);
+    node.title = label;
+    node.dataset['testid'] = testid;
+    node.addEventListener('click', onClick);
+    return node;
+  };
+  const sound = toggle('Sound', 'pause-sound', actions.onToggleSound);
+  const music = toggle('Music', 'pause-music', actions.onToggleMusic);
+  const haptics = toggle('Haptics', 'pause-haptics', actions.onToggleHaptics);
+  toggles.append(sound, music, haptics);
 
   const restart = button('btn btn-ghost', 'Restart scene');
   restart.dataset['testid'] = 'restart-scene';
@@ -88,6 +103,9 @@ export function createPauseOverlay(
     },
     setSoundOn(on) {
       setToggle(sound, on, on ? ICON_SOUND_ON : ICON_SOUND_OFF);
+    },
+    setMusicOn(on) {
+      setToggle(music, on, on ? ICON_MUSIC_ON : ICON_MUSIC_OFF);
     },
     setHapticsOn(on) {
       setToggle(haptics, on, on ? ICON_VIBRATE : ICON_VIBRATE_OFF);

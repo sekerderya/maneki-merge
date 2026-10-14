@@ -21,7 +21,9 @@ function watchConsole(page: Page): string[] {
 const audio = (page: Page) => page.evaluate(() => window.__game!.audio());
 const balls = (page: Page) => page.evaluate(() => window.__game!.state().balls);
 
-test('audio unlocks on the first tap and follows the sound setting', async ({ page }) => {
+test('audio unlocks on the first tap and follows the sound and music settings', async ({
+  page,
+}) => {
   const errors = watchConsole(page);
   await page.goto('./?debug=1&seed=5');
   // Wait for boot without page.evaluate: Chromium counts an evaluate as a user gesture, and boot
@@ -32,12 +34,23 @@ test('audio unlocks on the first tap and follows the sound setting', async ({ pa
 
   await page.getByTestId('play').click();
   await expect.poll(async () => (await audio(page)).state, WAIT).toBe('running');
+  // The music loads and starts once audio runs (v0.47).
+  await expect.poll(async () => (await audio(page)).music, WAIT).toBe(true);
 
+  // Sound effects off: the music keeps the context running.
   await page.getByTestId('pause').click();
   await page.getByTestId('pause-sound').click();
+  await expect(page.getByTestId('pause-sound')).toHaveAttribute('aria-pressed', 'false');
+  expect(await audio(page)).toMatchObject({ state: 'running', music: true });
+  // Both off: the context sleeps.
+  await page.getByTestId('pause-music').click();
   await expect.poll(async () => (await audio(page)).state, WAIT).toBe('suspended');
+  expect((await audio(page)).music).toBe(false);
   await page.getByTestId('pause-sound').click();
   await expect.poll(async () => (await audio(page)).state, WAIT).toBe('running');
+  expect((await audio(page)).music).toBe(false);
+  await page.getByTestId('pause-music').click();
+  await expect.poll(async () => (await audio(page)).music, WAIT).toBe(true);
   expect(errors).toEqual([]);
 });
 

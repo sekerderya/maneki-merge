@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { COMBO_BASE_HZ, MERGE_PITCH_TOP_HZ, SOUNDS } from '../../src/config/audio';
+import { COMBO_BASE_HZ, LIMITER, MERGE_PITCH_TOP_HZ, MUSIC, SOUNDS } from '../../src/config/audio';
 import type { SoundName, SoundSpec } from '../../src/config/audio';
 import { comboPitch, dangerTickPitch, mergePitch, semitones } from '../../src/audio/pitch';
 import { VoiceThrottle } from '../../src/audio/throttle';
+import { MusicPlayer, musicPosition } from '../../src/audio/music';
 
 describe('sound pitches (GAME_DESIGN §12)', () => {
   it('pops lower for bigger cats', () => {
@@ -81,5 +82,120 @@ describe('VoiceThrottle', () => {
       expect(s.maxVoices).toBeGreaterThanOrEqual(1);
       expect(s.durationMs).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('background music (GAME_DESIGN §12)', () => {
+  const loop = { loopStartS: 10, loopEndS: 40 };
+
+  it('plays the intro once, then goes round the loop', () => {
+    expect(musicPosition(0, 5, loop)).toBe(5);
+    expect(musicPosition(0, 39, loop)).toBe(39);
+    expect(musicPosition(0, 40, loop)).toBe(10);
+    expect(musicPosition(0, 45, loop)).toBe(15);
+    expect(musicPosition(0, 40 + 30 * 7 + 2, loop)).toBeCloseTo(12, 9);
+    expect(musicPosition(25, 20, loop)).toBe(15);
+    expect(musicPosition(5, -1, loop)).toBe(5);
+  });
+
+  it('loops inside the file and stays under the limiter', () => {
+    expect(MUSIC.loopStartS).toBeGreaterThan(0);
+    expect(MUSIC.loopEndS - MUSIC.loopStartS).toBeGreaterThan(60);
+    // The file's peak is about -1.2 dBFS: with the gain the music alone never reaches the threshold.
+    expect(20 * Math.log10(MUSIC.volume) - 1.2).toBeLessThan(LIMITER.thresholdDb);
+    expect(MUSIC.file).toMatch(/^assets\/music\/.+\.mp3$/);
+  });
+
+  /** Just enough of an AudioContext for the player: a clock, gains and buffer sources. */
+  function fakeContext() {
+    const sources: { offset: number; stopAt: number | null; loopStart: number; loopEnd: number }[] =
+      [];
+    const ctx = {
+      currentTime: 0,
+      decoded: 0,
+      createGain: () => {
+        const param = {
+          value: 0,
+          setValueAtTime: (v: number) => void (param.value = v),
+          linearRampToValueAtTime: (v: number) => void (param.value = v),
+          cancelScheduledValues: () => undefined,
+        };
+        return { gain: param, connect: () => undefined, disconnect: () => undefined };
+      },
+      createBufferSource: () => {
+        const record = { offset: -1, stopAt: null as number | null, loopStart: 0, loopEnd: 0 };
+        sources.push(record);
+        const node = {
+          buffer: null,
+          loop: false,
+          onended: null,
+          set loopStart(v: number) {
+            record.loopStart = v;
+          },
+          set loopEnd(v: number) {
+            record.loopEnd = v;
+          },
+          connect: () => undefined,
+          start: (_t: number, offset: number) => void (record.offset = offset),
+          stop: (t: number) => void (record.stopAt = t),
+        };
+        return node;
+      },
+      decodeAudioData: async () => {
+        ctx.decoded++;
+        return {};
+      },
+    };
+    return { ctx, sources };
+  }
+  const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+  it('loads only once switched on, and goes on where it stopped', async () => {
+    const { ctx, sources } = fakeContext();
+    let loads = 0;
+    const player = new MusicPlayer('m.mp3', async () => {
+      loads++;
+      return new ArrayBuffer(8);
+    });
+    player.attach(ctx as unknown as AudioContext, {} as AudioNode);
+    await flush();
+    expect(loads).toBe(0);
+
+    player.setOn(true);
+    await flush();
+    expect(loads).toBe(1);
+    expect(player.playing).toBe(true);
+    expect(sources[0]).toMatchObject({ offset: 0, loopStart: MUSIC.loopStartS });
+    expect(sources[0]?.loopEnd).toBe(MUSIC.loopEndS);
+
+    ctx.currentTime = MUSIC.loopEndS + 3;
+    player.setOn(false);
+    expect(player.playing).toBe(false);
+    expect(sources[0]?.stopAt).toBeCloseTo(MUSIC.loopEndS + 3 + MUSIC.fadeOutS, 9);
+
+    player.setOn(true);
+    await flush();
+    expect(loads).toBe(1);
+    expect(ctx.decoded).toBe(1);
+    expect(sources[1]?.offset).toBeCloseTo(MUSIC.loopStartS + 3, 9);
+  });
+
+  it('stays silent when the file fails, and tries again next time', async () => {
+    const { ctx, sources } = fakeContext();
+    let fail = true;
+    const player = new MusicPlayer('m.mp3', async () => {
+      if (fail) throw new Error('offline');
+      return new ArrayBuffer(8);
+    });
+    player.setOn(true);
+    player.attach(ctx as unknown as AudioContext, {} as AudioNode);
+    await flush();
+    expect(player.playing).toBe(false);
+    player.setOn(false);
+    fail = false;
+    player.setOn(true);
+    await flush();
+    expect(player.playing).toBe(true);
+    expect(sources).toHaveLength(1);
   });
 });

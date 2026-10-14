@@ -5,10 +5,13 @@
  *   runs (iOS starts it suspended and suspends it again after an interruption such as a call).
  * - Every sound goes through a per-sound gain, a master gain and a limiter, and is throttled per
  *   sound and globally (`VoiceThrottle`), so a burst of merges never clips.
- * - Sound off suspends the context; backgrounding suspends it and coming back resumes it.
+ * - The music (`MusicPlayer`) plays on the same context into the limiter, past the master gain.
+ * - Sound and music both off suspends the context; backgrounding suspends it and coming back
+ *   resumes it.
  */
-import { LIMITER, MASTER_VOLUME, SOUNDS } from '../config/audio';
+import { LIMITER, MASTER_VOLUME, MUSIC, SOUNDS } from '../config/audio';
 import type { SoundName } from '../config/audio';
+import { MusicPlayer } from './music';
 import { RECIPES } from './sfx';
 import { VoiceThrottle } from './throttle';
 
@@ -28,9 +31,11 @@ export class AudioEngine implements Sfx {
   private limiter: DynamicsCompressorNode | null = null;
   private meter: AnalyserNode | null = null;
   private meterData: Float32Array<ArrayBuffer> | null = null;
-  private enabled = true;
+  private sfxOn = true;
+  private musicOn = false;
   private hidden = false;
   private readonly throttle = new VoiceThrottle();
+  private readonly music = new MusicPlayer(`${import.meta.env.BASE_URL}${MUSIC.file}`);
 
   constructor(private readonly create: () => AudioContext | null = defaultContext) {}
 
@@ -40,16 +45,33 @@ export class AudioEngine implements Sfx {
     for (const type of GESTURES) target.addEventListener(type, unlock, { capture: true });
   }
 
+  /** Sound effects or music on: the context should run. */
+  private get enabled(): boolean {
+    return this.sfxOn || this.musicOn;
+  }
+
   /**
-   * The sound setting. Turning it on from a tap also unlocks audio. Re-applying the same setting
-   * (boot, any profile change) doesn't, even when the browser still counts a recent gesture.
+   * The sound effects setting. Turning it on from a tap also unlocks audio. Re-applying the same
+   * setting (boot, any profile change) doesn't, even when the browser still counts a recent
+   * gesture.
    */
   setEnabled(on: boolean): void {
-    const turningOn = on && !this.enabled;
-    this.enabled = on;
-    // Only inside a tap (the sound toggle): a context made without one starts blocked and warns.
-    if (on && (this.ctx || (turningOn && userActive()))) this.unlock();
-    else void this.ctx?.suspend().catch(() => undefined);
+    this.apply(() => (this.sfxOn = on));
+  }
+
+  /** The music setting; like `setEnabled`, turning it on from a tap unlocks audio. */
+  setMusic(on: boolean): void {
+    this.apply(() => (this.musicOn = on));
+    this.music.setOn(on);
+  }
+
+  private apply(change: () => void): void {
+    const was = this.enabled;
+    change();
+    const on = this.enabled;
+    // Only inside a tap (a toggle): a context made without one starts blocked and warns.
+    if (on && (this.ctx || (!was && userActive()))) this.unlock();
+    else if (!on) void this.ctx?.suspend().catch(() => undefined);
   }
 
   get running(): boolean {
@@ -83,7 +105,7 @@ export class AudioEngine implements Sfx {
   }
 
   play(name: SoundName, value = 0): void {
-    if (!this.enabled || this.ctx?.state !== 'running') return;
+    if (!this.sfxOn || this.ctx?.state !== 'running') return;
     this.schedule(name, value);
   }
 
@@ -122,12 +144,13 @@ export class AudioEngine implements Sfx {
   }
 
   /**
-   * Debug only (`window.__game.audio()`): the context's state and the output's peak over the
-   * last ~46 ms. The meter taps the limiter output on first use.
+   * Debug only (`window.__game.audio()`): the context's state, the output's peak over the
+   * last ~46 ms and whether the music plays. The meter taps the limiter output on first use.
    */
-  debugMeter(): { state: string; peak: number } {
+  debugMeter(): { state: string; peak: number; music: boolean } {
     const ctx = this.ctx;
-    if (!ctx || !this.limiter) return { state: ctx?.state ?? 'none', peak: 0 };
+    const music = this.music.playing;
+    if (!ctx || !this.limiter) return { state: ctx?.state ?? 'none', peak: 0, music };
     if (!this.meter) {
       this.meter = ctx.createAnalyser();
       this.meter.fftSize = 2048;
@@ -138,7 +161,7 @@ export class AudioEngine implements Sfx {
     this.meter.getFloatTimeDomainData(data);
     let peak = 0;
     for (const sample of data) peak = Math.max(peak, Math.abs(sample));
-    return { state: ctx.state, peak };
+    return { state: ctx.state, peak, music };
   }
 
   private build(): void {
@@ -164,6 +187,8 @@ export class AudioEngine implements Sfx {
     this.master = master;
     this.noise = noise;
     this.throttle.reset();
+    // The offline peak render never switches the music on, so it stays silent there.
+    this.music.attach(ctx, limiter);
   }
 }
 

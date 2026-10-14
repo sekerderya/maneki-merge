@@ -126,6 +126,7 @@ async function boot(): Promise<void> {
   // Sound and haptics (GAME_DESIGN §12): audio unlocks on the first tap (iOS needs a gesture).
   const audio = new AudioEngine();
   audio.setEnabled(profile.settings.sound);
+  audio.setMusic(profile.settings.music);
   audio.listen();
   const haptics = Haptics.forNavigator();
   haptics.setEnabled(profile.settings.haptics);
@@ -337,6 +338,7 @@ async function boot(): Promise<void> {
     {
       onResume: () => session.resumeRun(),
       onToggleSound: () => toggleSound(),
+      onToggleMusic: () => session.setSetting('music', !session.settings.music),
       onToggleHaptics: () => {
         session.setSetting('haptics', !session.settings.haptics);
         haptics.play('tick');
@@ -377,10 +379,12 @@ async function boot(): Promise<void> {
     menu.setUpgradesAffordable(anyAffordable(profile.upgrades, profile.coins, bestStage));
     shop.update(profile.upgrades, profile.coins, bestStage);
     audio.setEnabled(settings.sound);
+    audio.setMusic(settings.music);
     haptics.setEnabled(settings.haptics);
     setReduceMotion(settings.reduceMotion);
     settingsPanel.setValues(settings);
     pause.setSoundOn(settings.sound);
+    pause.setMusicOn(settings.music);
     pause.setHapticsOn(settings.haptics);
   };
   const session = new GameSession({

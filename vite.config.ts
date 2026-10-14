@@ -88,7 +88,7 @@ export default defineConfig({
       },
       workbox: {
         // The how-it-works clips too (public/clips/, v0.38): the game is offline after one visit.
-        globPatterns: ['**/*.{js,css,html,svg,png,webp,ico,woff2,mp4}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,webp,ico,woff2,mp4,mp3}'],
         navigateFallback: 'index.html',
         cleanupOutdatedCaches: true,
         // Only Vite's own output is named by its content; the art gets revisions (v0.23.1).
