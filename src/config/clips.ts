@@ -62,9 +62,6 @@ export const CLIP_CAPTIONS: Readonly<Record<ClipId, string>> = {
     'When the jar overflows, a Lucky Save pops the cats over the line and the six smallest instead.',
 };
 
-/** The clip on the card that brings boulders in as stage 2 starts (GAME_DESIGN §15.3). */
-export const BOULDER_INTRO_CLIP: ClipId = 'boulderIntro';
-
 /** The clip a pick card opens; Wind's follows the run's wind. Null: the card has none. */
 export function pickClip(id: PickId, windLeft = false): ClipId | null {
   switch (id) {

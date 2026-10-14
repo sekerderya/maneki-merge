@@ -26,8 +26,8 @@ export interface ClipPopupOptions {
 
 export interface ClipPopupView {
   readonly visible: boolean;
-  /** Plays clip `id` under the card's name. */
-  show(id: ClipId, name: string): void;
+  /** Plays clip `id` under the card's name, with its caption or `caption`. */
+  show(id: ClipId, name: string, caption?: string): void;
   hide(): void;
 }
 
@@ -127,12 +127,12 @@ export function createClipPopup(
     get visible() {
       return !overlay.hidden;
     },
-    show(id, name) {
+    show(id, name, text) {
       current = id;
       title.textContent = name;
       overlay.setAttribute('aria-label', options ? name : `How ${name} works`);
       armedAt = performance.now() + PICK_ARM_MS;
-      caption.textContent = CLIP_CAPTIONS[id];
+      caption.textContent = text ?? CLIP_CAPTIONS[id];
       video.pause();
       video.removeAttribute('src');
       video.poster = `${base}${CLIP_DIR}${id}.webp`;

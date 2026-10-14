@@ -2,8 +2,8 @@ import './ui/styles/index.css';
 import { AudioEngine } from './audio';
 import { Profile } from './core/profile';
 import { anyAffordable } from './core/upgrades';
-import { BOULDER_INTRO_CLIP } from './config/clips';
 import type { ClipId } from './config/clips';
+import type { IntroCard } from './config/introCards';
 import type { Scheduler } from './core/profile';
 import { RunSaveStore } from './core/runSave';
 import { ScenesSwitch } from './core/scenesSwitch';
@@ -333,20 +333,20 @@ async function boot(): Promise<void> {
     skin === 'art',
     clipButtons.create,
   );
-  // The boulders' card as the doors open onto stage 2 (GAME_DESIGN §15.3): a clip popup with a
-  // button under it, over the picks and under the pause.
-  const boulderIntroPopup = createClipPopup(
+  // The cards that bring a hazard or a rule in as a stage opens (GAME_DESIGN §15.5): a clip popup
+  // with a button under it, over the picks and under the pause.
+  const introPopup = createClipPopup(
     overlays,
-    { onOpen: () => undefined, onClose: () => session.closeBoulderIntro() },
+    { onOpen: () => undefined, onClose: () => session.closeIntroCard() },
     skin === 'art',
-    { button: 'Got it', testId: 'boulder-intro' },
+    { button: 'Got it', testId: 'intro-card' },
   );
-  const boulderIntro = {
+  const introCard = {
     get visible() {
-      return boulderIntroPopup.visible;
+      return introPopup.visible;
     },
-    show: () => boulderIntroPopup.show(BOULDER_INTRO_CLIP, 'Boulders'),
-    hide: () => boulderIntroPopup.hide(),
+    show: (card: IntroCard) => introPopup.show(card.clip, card.title, card.line),
+    hide: () => introPopup.hide(),
   };
   const pause = createPauseOverlay(
     overlays,
@@ -411,7 +411,7 @@ async function boot(): Promise<void> {
     gameOver,
     picks,
     doors,
-    boulderIntro,
+    introCard,
     scenery: gameScreen,
     feedback: {
       play: (name, value) => audio.play(name, value),

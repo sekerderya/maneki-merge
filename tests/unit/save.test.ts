@@ -84,6 +84,14 @@ describe('defaultSave (GAME_DESIGN §11)', () => {
       magnet: false,
       curse: false,
       boulders: false,
+      cursedBell: false,
+      wind: false,
+      porcelain: false,
+      hubris: false,
+      echo: false,
+      copycat: false,
+      dice: false,
+      heavyDrop: false,
     });
     expect(Object.values(s.flags.clipsSeen).some(Boolean)).toBe(false);
   });
@@ -234,6 +242,14 @@ describe('sanitize', () => {
       magnet: false,
       curse: false,
       boulders: false,
+      cursedBell: false,
+      wind: false,
+      porcelain: false,
+      hubris: false,
+      echo: false,
+      copycat: false,
+      dice: false,
+      heavyDrop: false,
     });
   });
 

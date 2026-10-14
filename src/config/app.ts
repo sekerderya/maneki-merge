@@ -38,8 +38,25 @@ export const TESTER_RESET_TAP_WINDOW_MS = 1500;
 export const TESTER_RESET_COINS = 1_000_000;
 export const TESTER_RESET_BEST_STAGE = 20;
 
-/** First-run hints (GAME_DESIGN §2.3); the save remembers which ones were seen. */
-export const HINT_IDS = ['aim', 'merge', 'magnet', 'curse', 'boulders'] as const;
+/**
+ * First-run hints (GAME_DESIGN §2.3); the save remembers which ones were seen. From 'boulders' on,
+ * the cards that bring a hazard or a rule in (config/introCards.ts, GAME_DESIGN §15.5).
+ */
+export const HINT_IDS = [
+  'aim',
+  'merge',
+  'magnet',
+  'curse',
+  'boulders',
+  'cursedBell',
+  'wind',
+  'porcelain',
+  'hubris',
+  'echo',
+  'copycat',
+  'dice',
+  'heavyDrop',
+] as const;
 export type HintId = (typeof HINT_IDS)[number];
 
 /** Browser chrome and splash colors (manifest, theme-color meta). Match --color-bg in CSS. */

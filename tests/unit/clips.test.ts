@@ -1,12 +1,7 @@
 import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import {
-  BOULDER_INTRO_CLIP,
-  CLIP_CAPTIONS,
-  CLIP_IDS,
-  pickClip,
-  upgradeClip,
-} from '../../src/config/clips';
+import { CLIP_CAPTIONS, CLIP_IDS, pickClip, upgradeClip } from '../../src/config/clips';
+import { introCard } from '../../src/config/introCards';
 import type { ClipId } from '../../src/config/clips';
 import { PICK_IDS } from '../../src/config/picks';
 import { UPGRADE_IDS } from '../../src/config/upgrades';
@@ -62,7 +57,7 @@ describe('how-it-works clips (docs/plans/batch-21.md)', () => {
     // Every clip opens from some card, or plays on the boulders' card at stage 2.
     const used = new Set<ClipId | null>([...Object.values(picks), ...Object.values(shop)]);
     used.add(pickClip('wind', true));
-    used.add(BOULDER_INTRO_CLIP);
+    used.add(introCard('boulders').clip);
     for (const id of CLIP_IDS) expect(used.has(id), id).toBe(true);
   });
 });

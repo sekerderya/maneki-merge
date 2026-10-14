@@ -78,6 +78,14 @@ test('settings: switches persist, reduce motion marks the page, tips come back',
     magnet: false,
     curse: false,
     boulders: false,
+    cursedBell: false,
+    wind: false,
+    porcelain: false,
+    hubris: false,
+    echo: false,
+    copycat: false,
+    dice: false,
+    heavyDrop: false,
   });
   // The clip buttons' dots come back too (v0.38).
   expect(Object.values(flags.clipsSeen).some(Boolean)).toBe(false);

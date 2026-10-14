@@ -166,6 +166,10 @@ export const COIN_FLY_POOL = 24;
 export const JACKPOT_COIN_FLIGHTS = 8;
 /** A golden cat's merge (GAME_DESIGN §15.4) sends three coins. */
 export const GOLDEN_COIN_FLIGHTS = 3;
+/** A Lucky gift (GAME_DESIGN §15.5) sends a shower like a Jackpot's from its banner. */
+export const LUCKY_GIFT_COIN_FLIGHTS = 8;
+/** A card that comes with a Lucky gift waits this long, so the gift's banner and coins show first. */
+export const LUCKY_GIFT_CARD_DELAY_MS = 1400;
 /** A Jackpot's coins burst out to a ring this many CSS pixels wide before they fly. */
 export const COIN_SHOWER_SPREAD = 34;
 /** How high the flight arcs above the straight line, as a fraction of its length. */

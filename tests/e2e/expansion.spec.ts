@@ -51,6 +51,26 @@ async function chooseThroughPanel(page: Page, kinds = ['trial', 'blessing']): Pr
   await expect(overlay).toBeHidden();
 }
 
+/**
+ * A stage's card (GAME_DESIGN §15.5) as the stage opens: its title, the run held still under it,
+ * and Got it (which ignores taps for its first 0.4 s) lets time go on.
+ */
+async function closeCard(page: Page, title: string): Promise<void> {
+  const card = page.getByTestId('intro-card');
+  await expect(card).toBeVisible(WAIT);
+  await expect(card.locator('.clip-title')).toHaveText(title);
+  await expect(card.getByTestId('intro-card-video')).toHaveAttribute('src', /^blob:/, WAIT);
+  await expect.poll(async () => (await state(page)).runState).toBe('paused');
+  expect(await page.evaluate(() => window.__game?.dropAt(0))).toBe(false);
+  // A tap outside never closes it.
+  await page.mouse.click(5, 5);
+  await expect(card).toBeVisible();
+  await page.waitForTimeout(500);
+  await card.getByTestId('intro-card-ok').click();
+  await expect(card).toBeHidden();
+  await expect.poll(async () => (await state(page)).runState, WAIT).toBe('playing');
+}
+
 /** Takes the first option of the clear's `count` picks through the hooks. */
 async function choosePicks(page: Page, wait: { timeout: number }, count = 2): Promise<void> {
   for (let i = 0; i < count; i++) {
@@ -94,22 +114,21 @@ test('making the last cat (two 8s) clears stage 1 and moves on in the same jar',
   expect(await page.evaluate(() => window.__game?.dropAt(0))).toBe(false);
   // The last cat pops too, then the pick: only a blessing at stage 1's clear (GAME_DESIGN §15.5).
   await chooseThroughPanel(page, ['blessing']);
-  // The doors fold open onto the boulders' card (§15.3); the blessing waits for its button.
-  const intro = page.getByTestId('boulder-intro');
-  await expect(intro).toBeVisible(WAIT);
-  await expect(page.getByTestId('doors')).toBeHidden();
-  await expect(intro.getByTestId('boulder-intro-caption')).toContainText('boulder');
-  expect((await state(page)).runState).toBe('choosing');
-  await page.waitForTimeout(500);
-  await intro.getByTestId('boulder-intro-ok').click();
-  await expect(intro).toBeHidden();
-  // Then the blessing applies and stage 2 starts (GAME_DESIGN §7.1).
+  // The doors fold open, the blessing applies and stage 2 opens with the boulders' card (§15.3).
   await expect
     .poll(async () => {
       const levels = (await state(page)).pickLevels ?? {};
       return Object.values(levels).reduce((a, b) => a + b, 0);
     }, WAIT)
     .toBe(1);
+  await expect(page.getByTestId('doors')).toBeHidden(WAIT);
+  await expect(page.getByTestId('intro-card-caption')).toContainText('boulder', WAIT);
+  // A run saved under the card comes back to it, under the pause; Resume leaves it waiting.
+  await page.reload();
+  await expect(page.getByTestId('pause-overlay')).toBeVisible(WAIT);
+  await expect(page.getByTestId('intro-card')).toBeVisible();
+  await page.getByTestId('resume').click();
+  await closeCard(page, 'Boulders');
 
   // The reveal: stage 2 starts empty, with 18 as its last cat, and no banner announces it.
   await expect
@@ -200,6 +219,50 @@ test("Cursed Bell's follow-up trials are offered only once it is taken", async (
   expect(errors).toEqual([]);
 });
 
+test("stage 3's clear: a Lucky gift, then the Cursed Bell's card, each card once per profile", async ({
+  page,
+}) => {
+  test.setTimeout(300_000);
+  const errors = watchConsole(page);
+  await startRun(page, 6);
+  const long = { timeout: 120_000 };
+  // Stage 1: a blessing, then the boulders' card.
+  await makeLastCat(page);
+  await chooseThroughPanel(page, ['blessing']);
+  await closeCard(page, 'Boulders');
+  // Stage 2: a boulder trial and the profile's other blessing; no card.
+  await makeLastCat(page);
+  await chooseThroughPanel(page, ['trial', 'blessing']);
+  await expect.poll(async () => (await state(page)).stage, long).toBe(3);
+  await expect.poll(async () => (await state(page)).runState, long).toBe('playing');
+  await expect(page.getByTestId('intro-card')).toBeHidden();
+  // Stage 3: only a blessing, and a fresh profile has none left: a Lucky gift (GAME_DESIGN §15.5),
+  // with no doors, then the Cursed Bell's card as stage 4 opens.
+  const before = (await state(page)).runCoins;
+  await makeLastCat(page);
+  await expect(page.getByTestId('banner').filter({ hasText: 'Lucky gift!' })).toBeVisible(long);
+  await expect(page.getByTestId('pick-overlay')).toBeHidden();
+  await closeCard(page, 'Cursed Bell');
+  await expect(page.getByTestId('intro-card-caption')).toBeHidden();
+  const s = await state(page);
+  expect(s.stage).toBe(4);
+  // The gift is the last cat's pop value again (LUCKY_GIFT_FACTOR 1): the clear pays it twice.
+  expect(s.runCoins).toBeGreaterThan(before);
+
+  // A new run: the cards are seen, so stage 1's clear opens stage 2 without one.
+  await page.getByTestId('pause').click();
+  await page.getByTestId('quit').click();
+  await page.getByTestId('play').click();
+  await expect.poll(async () => (await state(page)).canDrop, WAIT).toBe(true);
+  await makeLastCat(page);
+  await chooseThroughPanel(page, ['blessing']);
+  await expect.poll(async () => (await state(page)).stage, long).toBe(2);
+  await expect.poll(async () => (await state(page)).runState, long).toBe('playing');
+  await page.waitForTimeout(500);
+  await expect(page.getByTestId('intro-card')).toBeHidden();
+  expect(errors).toEqual([]);
+});
+
 test('with no upgrades, clearing stage 2 moves on into stage 3', async ({ page }) => {
   test.setTimeout(300_000);
   const errors = watchConsole(page);
@@ -210,6 +273,8 @@ test('with no upgrades, clearing stage 2 moves on into stage 3', async ({ page }
     await makeLastCat(page);
     // Stage 1's clear has only the blessing.
     await choosePicks(page, long, stage === 2 ? 1 : 2);
+    // Stage 2 opens with the boulders' card (GAME_DESIGN §15.5).
+    if (stage === 2) await closeCard(page, 'Boulders');
     await expect.poll(async () => (await state(page)).stage, long).toBe(stage);
     await expect.poll(async () => (await state(page)).runState, long).toBe('playing');
   }
