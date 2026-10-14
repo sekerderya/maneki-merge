@@ -2,6 +2,17 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.47.0] - 2026-10-14
+
+### Added
+
+- **Background music** (the owner's request: a light koto or shamisen loop; GAME_DESIGN §12). Of the owner's four tracks, the calm koto one (track 3: about 115 BPM, koto plucks over soft pads and a soft bass) fits a long merge session best: tracks 1 and 2 are fast (about 167 BPM) and bass-heavy, track 4 is sparse and only loops every 35 s. It plays a 12 s intro once, then repeats an 85.6 s section the song itself repeats, so the jump back is seamless (the two sides correlate at 0.91 over 5 s; a 150 ms crossfade at the seam). It plays from the first tap on, on the menu and in runs, fades in over 2.5 s, and sits 10–15 dB under the sound effects. The file is 1.6 MB and precached, so it plays offline (TECH_SPEC §10).
+- **A Music switch** in Settings ("A gentle koto tune") and in Pause, on by default; an older save gets it on without a migration. Switching it off fades the music out; switching it back on goes on where it was. Sound effects off no longer silences the music.
+
+### Changed
+
+- **The Pause switches show their icon only** (a speaker, two notes, a phone): three labelled pills didn't fit side by side.
+
 ## [0.46.3] - 2026-10-14
 
 ### Changed

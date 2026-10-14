@@ -67,12 +67,13 @@ Layout: everything sits where it is in the mockup, on a stage of the mockup's si
 ### 2.4 Settings panel (over the main menu)
 
 - A card over the dimmed menu with a close button. Every switch is a whole row (icon, label, one line of help, and an ON/OFF switch that says its state in words too):
-  - **Sound effects**: all sounds on or off.
+  - **Sound effects**: all sound effects on or off.
+  - **Music** (v0.47): the background music (§12) on or off.
   - **Haptics**: vibration; the row only shows where the browser can vibrate (Android).
   - **Reduce motion**: no camera shake, about a third of the particles, one flying coin per payout, and no decorative animations; banners fade instead of popping. The phone's own reduced-motion setting does the same whatever this switch says.
 - **How to play**: the first-run hints show again in the next run, and every clip button gets its new dot back (§2.5).
 - The version and build hash, small, at the bottom, and beside them a **Privacy policy** link (v0.43: Google Play wants the policy reachable in the app) that opens `privacy.html` in a new tab, so the menu stays as it is. Seven quick taps on the version are the **tester reset** (v0.45, the owner's request): the save starts over at once (records, upgrades, stats, settings, hints and the saved run), with 1,000,000 coins in the wallet and the best stage at 20 (v0.45.1: past every upgrade's gate, so every card is open), the menu's Scenes button turns on (§2.6) and the app reloads. No confirmation. (In v0.44 the taps only turned the Scenes button on or off.)
-- Closing: the close button, a tap on the dimmed menu, or the back button. There is no music yet, so there is no music switch.
+- Closing: the close button, a tap on the dimmed menu, or the back button.
 - Look (v0.37, the owner's approved mockup `art-source/ui/settings-mockup.jpg`): the same layout, in the Upgrades screen's pieces: the Upgrades card as the panel (the version in its tan strip), the title in the Upgrades title's cream lettering, the Upgrades close button, each icon in a gold-rimmed cream medallion, a switch gold like the Buy button when ON and a sunken tan track when OFF. With `?skin=vector` it keeps the code-drawn card of v0.14.
 
 ### 2.5 How-it-works clips (v0.38)
@@ -146,7 +147,7 @@ The narrowest targets: Three and three wants the 3 right in the gap (its aim gho
 - The dropper: a calico cat's paw floats over the jar (v0.25, with the raster art: its arm fades out a little above the wrist; from v0.22 to v0.24 it reached out from under a noren curtain; with `?skin=vector` it reaches down from the top of the screen) and holds the current cat by the head, just above the jar's top rail (v0.21.1; until then the cat hung in front of the rail). It follows the aim, stays where it is while the next cat comes, lifts a little when it lets go, and is hidden while the jar grows. A dotted aim guide shows where the cat will fall, with a faint ghost of the cat where it lands.
 - HUD over the top of the scene. At the top in the middle, the stage in words ("STAGE 2"), dark brown with a cream edge, no card (v0.25). On the left, a narrow cream score card with "SCORE:" and the score in a sunken well, level with the coins card (their middles on one line, v0.26; until v0.24 it sat at the top, level with the pause button). (The stage card of v0.14–v0.17, with a progress bar and the stage's last cat, is gone; the banners still announce stage clears and the new goal.) On the right, a pink pause button, a "COINS:" card with the coins earned this run, which runs off the right edge, and under it the next cat in a round glass bubble with a small "NEXT" tag on its rim (v0.14.1). Only the pause button takes touches; everywhere else a touch aims.
 - Overlays:
-  - **Pause**: Resume, Sound, Haptics, Quit to Menu; in a scene (§2.6) also Restart scene. Sound and Haptics are gold when on, cream with a crossed-out icon when off.
+  - **Pause**: Resume, Sound, Music, Haptics, Quit to Menu; in a scene (§2.6) also Restart scene. Sound, Music and Haptics are gold when on, cream with a crossed-out icon when off. Since v0.47 they show their icon only (a speaker, two notes, a phone): three labels don't fit a 375 px phone side by side.
   - **Game Over**: score, best score, stage reached, coins earned this run, new-record badges (best score, best stage), Play Again, Menu. v0.39.1 (the owner's call) took out the biggest cat made this run (with its "New" chip for the biggest cat ever) and the shop cards the run opened ("New in the shop: …", v0.36).
   - Look (v0.37, the owner's approved mockups `art-source/ui/pause-mockup.jpg`, `gameover-mockup.jpg`): the v0.14 layout in the Upgrades screen's and the menu's pieces: the Upgrades card as the panel, the title (and Game Over's score) in the Upgrades title's cream lettering with a dark-brown edge, Resume and Play Again as the menu's coral PLAY pill, the quiet buttons as the cream UPGRADES pill, the HUD's coin (the menu's paw coin until v0.42.4). With `?skin=vector` the code-drawn cards of v0.14.
 - Short banners: Combo, Jackpot, Stage clear! (every stage clear), The shrine grows! (as the jar grows, every 5 stages, v0.33; with the new jar's coin multiplier under it, "Coins ×2", since v0.36; from v0.29.4 to v0.32 no banner, and until v0.29.4 it replaced "Stage clear!" at a clear that grew the jar), Lucky Save!. (Until v0.29.5 the reveal of a new stage showed "New cats unlocked!" with the next goal; the owner removed it.)
@@ -350,7 +351,7 @@ Everything is stored locally, with a version number:
 - wallet coins and the shop cards' levels (upgrades and blessing cards)
 - records: best score, best stage, highest tier ever made
 - stats: runs played, total merges, total coins earned, jackpots
-- settings: sound, haptics, reduce motion
+- settings: sound, music (v0.47, added without a version step: a save without it has the music on), haptics, reduce motion
 - flags: which first-run hints have been seen, and which how-it-works clips have been opened (§2.5; v0.38, added without a version step: a save without it has seen none)
 
 The run in progress is saved too (v0.27, the owner's call; until then closing the app ended it): the stage, every cat and boulder in the jar where it lies, the score and the run's coins, the dropper and NEXT, the trials, rules and blessings, the wind's direction, which cats are cracked (Porcelain), the cursed cat and its bell (§15.12) the Lucky Saves left, a stage clear's waiting pick or a growing jar. It is written whenever the wallet is (at most once a second while coins come in) and when the app goes to the background or closes. The next launch opens the game screen straight away, paused where the run stopped, with Resume (a waiting pick shows under the pause). Quit to Menu and game over end the run, and the next launch opens the menu. Cats that were still falling or rolling go on a little differently than they would have; a settled pile doesn't move. A saved run that a new version can't read is dropped (the profile is never lost).
@@ -387,7 +388,8 @@ If a save can't be read, or some of its fields are invalid, a copy is kept (TECH
 - Haptics (Android only, toggled in Pause and in Settings): a light tick per merge (at most one every 70 ms) and a stronger pattern for Jackpots, stage clears, expansions and Lucky Saves.
 - A small camera shake for merges into size 9 and above (stronger for bigger cats), for Jackpots, and a light one that grows with the combo from ×5. Reduce motion (the setting or `prefers-reduced-motion`): no shake and about a third of the particles.
 - Menu: the title floats, the lucky cat sways on its cushion, the coins bob, PLAY sends out a soft ring every few seconds, the UPGRADES dot nudges, and buttons sink into their ink edge when tapped.
-- Every button clicks; a purchase plays its own sound. Sound off (Settings or Pause) silences everything.
+- Every button clicks; a purchase plays its own sound. Sound off (Settings or Pause) silences every sound effect; the music has its own switch.
+- **Music** (v0.47, the owner's pick of tracks, Claude's choice among them): a calm koto loop (about 115 BPM, koto plucks over soft pads and a soft bass) plays from the first tap on, on the menu and in runs alike, paused or not, and fades in over 2.5 s. It plays a 12 s intro once, then repeats an 85.6 s section without a seam. It sits well under the sound effects (its peaks about 10–15 dB under a merge's), and loud sound effects duck it a little. Its switch (Settings and Pause, on by default) fades it out; switched on again, it goes on where it was. Backgrounding pauses it with the other sounds. With music and sound effects both off, the audio sleeps.
 
 ## 13. Art
 
@@ -437,7 +439,7 @@ The owner chose the scene in a design canvas (v0.14): a cream shrine garden, ink
 The owner generates the art phase by phase with the prompts in docs/ART_ASSETS.md and drops the files into `art-source/`: the cats are in (v0.16); the scene, the HUD kit, the menu art and the app icon follow. Images come on a plain white background; the tool cuts it out.
 
 - Cats roll like Suika fruit (v0.11).
-- Optional later: a music loop (OGG/MP3, licensed for use, with a music switch in Settings).
+- Music (v0.47): `art-source/music/koto-garden-source.mp3`, cut into a loop (§12, TECH_SPEC §10).
 
 ## 14. Balance targets (v0.36 and v0.39, the owner's)
 
