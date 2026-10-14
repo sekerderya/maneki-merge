@@ -65,12 +65,12 @@ export const SOFT_RECIPES: Readonly<Record<SoundName, Recipe>> = {
     tone(v, { from: 360, to: 220, glide: 0.08, attack: 0.006, decay: 0.12 });
     noise(v, { filter: 'lowpass', from: 600, attack: 0.004, decay: 0.04, gain: 0.15 });
   },
-  // A bubble pop, lower for bigger cats (value: the new cat's size).
+  // A bubble pop, lower for bigger cats (value: the new cat's size): just the bubble and a soft
+  // body under it (v0.46.2 dropped the little noise click on top, the owner's call).
   merge(v, size) {
     const hz = mergePitch(size) * SOFT_MERGE_PITCH_SCALE;
     bubble(v, hz);
     tone(v, { from: hz * 0.5, attack: 0.004, decay: 0.09, gain: 0.3 });
-    noise(v, { filter: 'lowpass', from: 1200, attack: 0.002, decay: 0.025, gain: 0.12 });
   },
   // Two little music-box notes.
   coin(v) {

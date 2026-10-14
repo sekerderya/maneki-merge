@@ -18,9 +18,9 @@ export function connectRunFeedback(events: EventBus<GameEvents>, out: FeedbackOu
   const offs = [
     events.on('catDropped', () => out.play('drop')),
     events.on('merged', (e) => {
-      // Lower for bigger cats: every stage sounds the same.
+      // Lower for bigger cats: every stage sounds the same. Only the bubble: since v0.46.2 a merge
+      // no longer rings the coin's high notes too (the owner's call); stage-clear pops still do.
       out.play('merge', e.newSize);
-      out.play('coin');
       // A golden cat's merge (it skips a tier), a joker's, a Hubris three, a lifted curse and a
       // lucky die ring a bell too; a fizzled die clacks.
       const bell = e.golden || e.joker || e.parts === 3 || e.curseLifted || e.dice === 'lucky';
