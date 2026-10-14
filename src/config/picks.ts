@@ -224,21 +224,52 @@ export type PickId = TrialId | BlessingId | RuleId;
  */
 export type PickKind = 'trial' | 'blessing' | 'rule';
 
-/**
- * The first stage whose clear offers a trial (GAME_DESIGN §15.5, v0.49): the earlier clears offer
- * only a blessing, so a new player's first jar ends with a gift.
- */
-export const FIRST_TRIAL_CLEAR = 2;
+/** The hazards the first stages bring in one at a time, each on a card (GAME_DESIGN §15.5). */
+export type HazardCardId = 'boulders' | 'cursedBell' | 'wind' | 'porcelain';
+
+/** What a stage's clear offers (GAME_DESIGN §15.5). */
+export interface ClearPicks {
+  /** The picks, in order. A rule pick with no rule left offers a trial instead (RunController). */
+  readonly picks: readonly PickKind[];
+  /** The trials its trial pick may offer (a follow-up still needs its pick); null: every trial. */
+  readonly trials: readonly TrialId[] | null;
+  /** The hazard's card, shown as the doors open onto the next stage. */
+  readonly card?: HazardCardId;
+}
+
+const BOULDER_TRIALS = ['moreBoulders', 'ironBands', 'bigBoulders'] as const;
+const CURSE_TRIALS = ['cursedBell', 'quickCurse', 'moreCurses'] as const;
+const BOULDER_CURSE_TRIALS = [...BOULDER_TRIALS, ...CURSE_TRIALS] as const;
+const BOULDER_CURSE_WIND_TRIALS = [...BOULDER_CURSE_TRIALS, 'wind'] as const;
 
 /**
- * The order of the picks at the clear of stage `cleared` (GAME_DESIGN §15.5): a trial, then a
- * blessing; at a clear that grows the jar (every JAR_GROWTH_STAGES stages) a rule takes the
- * trial's place. A rule pick with no rule left offers a trial instead (RunController). Before
- * FIRST_TRIAL_CLEAR there is only the blessing.
+ * The teaching order of the first clears (GAME_DESIGN §15.5, v0.50, the owner's schedule): each
+ * hazard is shown on a card as a stage opens, and becomes a trial only at that stage's clear, so a
+ * trial is never about something the player hasn't been shown. By the stage cleared.
  */
-export function pickOrder(grows: boolean, cleared: number): readonly PickKind[] {
-  if (cleared < FIRST_TRIAL_CLEAR) return ['blessing'];
-  return grows ? ['rule', 'blessing'] : ['trial', 'blessing'];
+export const TEACHING_CLEARS: Readonly<Record<number, ClearPicks>> = {
+  1: { picks: ['blessing'], trials: null, card: 'boulders' },
+  2: { picks: ['trial', 'blessing'], trials: BOULDER_TRIALS },
+  3: { picks: ['blessing'], trials: null, card: 'cursedBell' },
+  4: { picks: ['trial', 'blessing'], trials: BOULDER_CURSE_TRIALS },
+  5: { picks: ['rule', 'blessing'], trials: BOULDER_CURSE_TRIALS },
+  6: { picks: ['blessing'], trials: null, card: 'wind' },
+  7: { picks: ['trial', 'blessing'], trials: BOULDER_CURSE_WIND_TRIALS },
+  8: { picks: ['blessing'], trials: null, card: 'porcelain' },
+  9: { picks: ['trial', 'blessing'], trials: null },
+  10: { picks: ['rule', 'blessing'], trials: null },
+};
+
+/** From this stage's clear on, the picks are as before the teaching order (`clearPicks`). */
+export const LATE_CLEARS_FROM = 11;
+
+/**
+ * The picks at stage `cleared`'s clear (GAME_DESIGN §15.5): the teaching order's, then a trial
+ * and a blessing, with a rule in the trial's place at a clear that grows the jar.
+ */
+export function clearPicks(cleared: number, grows: boolean): ClearPicks {
+  const early = cleared < LATE_CLEARS_FROM ? TEACHING_CLEARS[cleared] : undefined;
+  return early ?? { picks: grows ? ['rule', 'blessing'] : ['trial', 'blessing'], trials: null };
 }
 
 export interface PickDef {

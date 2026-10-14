@@ -29,6 +29,7 @@ import {
   stepsFor,
 } from '../config/physics';
 import {
+  clearPicks,
   COPYCAT_MAX_SIZE,
   CURSE_DROPS,
   CURSE_FIRST_DROP,
@@ -38,18 +39,17 @@ import {
   CURSE_STONE_HITS,
   ECHO_MAX_SIZE,
   ECHO_MIN_SIZE,
-  FIRST_TRIAL_CLEAR,
   HANABI_REACH,
   HANABI_SIZE,
   HUBRIS_MAX_SIZE,
   HUBRIS_PAIR_WAIT_MS,
   HUBRIS_TOUCH_GRACE_MS,
   JOKER_SIZE,
+  LATE_CLEARS_FROM,
   LIGHTNING_HOLD_MS,
   LIGHTNING_SIZE,
   MAGNET_SIZE,
   PICK_IDS,
-  pickOrder,
   PICKS,
   PORCELAIN_CHANCE_PER_LEVEL,
   PORCELAIN_MATE_MS,
@@ -57,6 +57,7 @@ import {
   WIND_ACCEL_PER_LEVEL,
 } from '../config/picks';
 import type { DiceRoll, ForcedDice, PickId, PickKind, WindDirection } from '../config/picks';
+import { LUCKY_GIFT_FACTOR } from '../config/economy';
 import { catRadius, clearGrowsJar, stageHoldsTier, stageInfo } from '../config/stages';
 import { SIZE_COUNT, sizeRadius } from '../config/tiers';
 import {
@@ -70,11 +71,18 @@ import {
 } from '../config/timings';
 import type { Drop, DropOdds } from '../core/dropQueue';
 import { DropQueue } from '../core/dropQueue';
-import { RunEconomy } from '../core/economy';
+import { popCoins, RunEconomy } from '../core/economy';
 import { EventBus } from '../core/events';
 import type { GameEvents } from '../core/events';
 import { StateHasher } from '../core/hash';
-import { defaultPickLevels, diceRoll, drawOffer, dropOdds, heavyDropStrength } from '../core/picks';
+import {
+  defaultPickLevels,
+  diceRoll,
+  drawOffer,
+  dropOdds,
+  heavyDropStrength,
+  openOptions,
+} from '../core/picks';
 import type { PickLevels } from '../core/picks';
 import { nextStage, stageProgress } from '../core/progression';
 import type { StageProgress } from '../core/progression';
@@ -278,6 +286,8 @@ export class RunController {
   /** The pick waiting for `choose`, and the kinds still to come at this clear. */
   private offer: PickOffer | null = null;
   private pickQueue: PickKind[] = [];
+  /** The trials this clear's trial pick may offer (null: every trial; GAME_DESIGN §15.5). */
+  private trialPool: readonly PickId[] | null = null;
   /** Which way the wind blows this run, whether or not Wind is ever picked. */
   private wind: WindDirection;
   /** Echo: a merge has echoed since the last drop (only one does per drop). */
@@ -515,6 +525,16 @@ export class RunController {
   }
 
   /** The running expansion sequence, or null. */
+  /** Balls dropped in this stage so far (0 as a stage opens). */
+  get stageDrops(): number {
+    return this.queue.dropsThisStage;
+  }
+
+  /** True while a debug jump clears stage after stage (GAME_DESIGN §15.1: it skips the picks). */
+  get debugJumping(): boolean {
+    return this.debugTargetStage > 0;
+  }
+
   get expansion(): ExpansionView | null {
     return this.expansionState;
   }
@@ -793,7 +813,7 @@ export class RunController {
    */
   offerPicks(grows = false): void {
     if (this.runState !== 'playing') return;
-    this.beginPicks(grows, FIRST_TRIAL_CLEAR);
+    this.beginPicks(grows, LATE_CLEARS_FROM);
   }
 
   /** Sets the run score (it only counts for records). */
@@ -996,6 +1016,9 @@ export class RunController {
       throw new RangeError('Only an expansion or its pick has a timeline');
     }
     this.expansionState = saved.expansion && restoreExpansion(saved.expansion, stage);
+    // A pick still to come at this clear draws from its trials.
+    const e = this.expansionState;
+    this.trialPool = e ? clearPicks(e.from, e.grows).trials : null;
 
     this.shownCombo = this.economy.comboAt(this.world.timeMs);
     this.dangerShown = this.danger.active;
@@ -1564,33 +1587,45 @@ export class RunController {
    * option is maxed (nothing to pick).
    */
   private beginPicks(grows: boolean, cleared: number): boolean {
-    this.pickQueue = [...pickOrder(grows, cleared)];
+    const plan = clearPicks(cleared, grows);
+    this.pickQueue = [...plan.picks];
+    this.trialPool = plan.trials;
     return this.offerNextPick();
+  }
+
+  /** The options a pick of `kind` may offer now, the trials from this clear's pool. */
+  private openNow(kind: PickKind): PickId[] {
+    const { bigCatchTilt, blessingCaps } = this.stats;
+    return openOptions(kind, this.levels, bigCatchTilt, blessingCaps, this.trialPool);
+  }
+
+  /**
+   * True when another pick with cards follows the waiting one at this clear (a blessing with
+   * nothing open is a Lucky gift instead, a trial or rule with nothing open is skipped).
+   */
+  get pickFollows(): boolean {
+    return this.pickQueue.some(
+      (kind) =>
+        this.openNow(kind).length > 0 || (kind === 'rule' && this.openNow('trial').length > 0),
+    );
   }
 
   /**
    * Offers the next pick that has options; the run waits in `choosing`. A rule pick with no rule
-   * left offers a trial instead. False when none is left.
+   * left offers a trial instead. A blessing pick with nothing open is a Lucky gift. False when no
+   * pick is left.
    */
   private offerNextPick(): boolean {
+    const { bigCatchTilt, blessingCaps } = this.stats;
+    const draw = (kind: PickKind): PickId[] =>
+      drawOffer(kind, this.levels, bigCatchTilt, this.pickRng, blessingCaps, this.trialPool);
     for (let kind = this.pickQueue.shift(); kind; kind = this.pickQueue.shift()) {
-      let options = drawOffer(
-        kind,
-        this.levels,
-        this.stats.bigCatchTilt,
-        this.pickRng,
-        this.stats.blessingCaps,
-      );
+      let options = draw(kind);
       if (options.length === 0 && kind === 'rule') {
         kind = 'trial';
-        options = drawOffer(
-          kind,
-          this.levels,
-          this.stats.bigCatchTilt,
-          this.pickRng,
-          this.stats.blessingCaps,
-        );
+        options = draw(kind);
       }
+      if (options.length === 0 && kind === 'blessing') this.luckyGift();
       if (options.length === 0) continue;
       this.offer = { kind, options };
       this.runState = 'choosing';
@@ -1600,6 +1635,19 @@ export class RunController {
     }
     this.offer = null;
     return false;
+  }
+
+  /**
+   * A blessing pick with nothing open (GAME_DESIGN §15.5): the cleared stage's last cat pays again,
+   * times LUCKY_GIFT_FACTOR, as run coins.
+   */
+  private luckyGift(): void {
+    const cleared = this.expansionState?.from ?? this.world.stage;
+    const lastCat = popCoins(stageInfo(cleared).lastTier, this.stats.coinMultiplier);
+    const coins = this.economy.bonus(lastCat * LUCKY_GIFT_FACTOR);
+    this.bankCoins(coins);
+    this.events.emit('luckyGift', { stage: cleared, coins });
+    this.events.emit('runCoinsChanged', { coins: this.economy.coins });
   }
 
   /**

@@ -1,14 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import {
   BLESSING_IDS,
-  FIRST_TRIAL_CLEAR,
+  clearPicks,
+  LATE_CLEARS_FROM,
   PICK_IDS,
   pickIds,
-  pickOrder,
   PICKS,
   RULE_IDS,
+  TEACHING_CLEARS,
   TRIAL_IDS,
 } from '../../src/config/picks';
+import { clearGrowsJar } from '../../src/config/stages';
 import type { PickId } from '../../src/config/picks';
 import { dropWeights } from '../../src/core/dropQueue';
 import {
@@ -16,6 +18,7 @@ import {
   defaultPickLevels,
   drawOffer,
   dropOdds,
+  openOptions,
   isPickId,
   pickCard,
   pickMaxed,
@@ -65,15 +68,92 @@ describe('the trials, rules and blessings (GAME_DESIGN §15.5)', () => {
     expect(pickIds('rule')).toEqual(RULE_IDS);
   });
 
-  it('offers a trial then a blessing, and a rule instead of the trial when the jar grows', () => {
-    expect(pickOrder(false, 2)).toEqual(['trial', 'blessing']);
-    expect(pickOrder(true, 5)).toEqual(['rule', 'blessing']);
-    expect(pickOrder(false, 9)).toEqual(['trial', 'blessing']);
+  it('teaches one hazard at a time through stage 10 (GAME_DESIGN §15.5)', () => {
+    const boulders = ['moreBoulders', 'ironBands', 'bigBoulders'];
+    const curses = ['cursedBell', 'quickCurse', 'moreCurses'];
+    const table = Array.from({ length: 12 }, (_, i) => {
+      const { picks, trials, card } = clearPicks(i + 1, clearGrowsJar(i + 1));
+      return [i + 1, picks.join(' + '), trials && [...trials].sort(), card ?? null];
+    });
+    expect(table).toEqual([
+      [1, 'blessing', null, 'boulders'],
+      [2, 'trial + blessing', [...boulders].sort(), null],
+      [3, 'blessing', null, 'cursedBell'],
+      [4, 'trial + blessing', [...boulders, ...curses].sort(), null],
+      [5, 'rule + blessing', [...boulders, ...curses].sort(), null],
+      [6, 'blessing', null, 'wind'],
+      [7, 'trial + blessing', [...boulders, ...curses, 'wind'].sort(), null],
+      [8, 'blessing', null, 'porcelain'],
+      [9, 'trial + blessing', null, null],
+      [10, 'rule + blessing', null, null],
+      [11, 'trial + blessing', null, null],
+      [12, 'trial + blessing', null, null],
+    ]);
+    // The table covers every clear before LATE_CLEARS_FROM; its rule picks are where the jar grows.
+    expect(LATE_CLEARS_FROM).toBe(11);
+    for (let stage = 1; stage < LATE_CLEARS_FROM; stage++) {
+      const row = TEACHING_CLEARS[stage];
+      expect(row, `stage ${stage}`).toBeDefined();
+      expect(row!.picks.includes('rule')).toBe(clearGrowsJar(stage));
+      // A trial is only about a hazard a card has shown: every hazard's card comes earlier.
+      for (const id of row!.trials ?? []) expect(PICKS[id].kind).toBe('trial');
+    }
+    expect(Object.keys(TEACHING_CLEARS)).toHaveLength(LATE_CLEARS_FROM - 1);
   });
 
-  it("offers only a blessing at stage 1's clear", () => {
-    expect(FIRST_TRIAL_CLEAR).toBe(2);
-    expect(pickOrder(false, 1)).toEqual(['blessing']);
+  it('offers a trial then a blessing from stage 11, and a rule instead where the jar grows', () => {
+    for (const stage of [11, 12, 14, 16, 19, 21, 44]) {
+      expect(clearPicks(stage, false)).toEqual({ picks: ['trial', 'blessing'], trials: null });
+    }
+    for (const stage of [15, 20, 25, 50]) {
+      expect(clearPicks(stage, true)).toEqual({ picks: ['rule', 'blessing'], trials: null });
+    }
+  });
+
+  it("draws a trial pick from its clear's trials, follow-ups only after their pick", () => {
+    const pool = clearPicks(4, false).trials;
+    expect(openOptions('trial', levels(), 0, {}, pool)).toEqual([
+      'moreBoulders',
+      'ironBands',
+      'bigBoulders',
+      'cursedBell',
+    ]);
+    expect(openOptions('trial', levels({ cursedBell: 1 }), 0, {}, pool)).toEqual([
+      'moreBoulders',
+      'ironBands',
+      'bigBoulders',
+      'quickCurse',
+      'moreCurses',
+    ]);
+    // Fewer than three open: fewer cards; none: the pick is skipped.
+    const stage2 = clearPicks(2, false).trials;
+    expect(
+      drawOffer('trial', levels({ moreBoulders: 5, ironBands: 3 }), 0, new Rng(1), {}, stage2),
+    ).toEqual(['bigBoulders']);
+    expect(
+      drawOffer(
+        'trial',
+        levels({ moreBoulders: 5, ironBands: 3, bigBoulders: 4 }),
+        0,
+        new Rng(1),
+        {},
+        stage2,
+      ),
+    ).toEqual([]);
+    // Only trials are narrowed: a blessing pick ignores the pool.
+    expect(openOptions('blessing', levels(), 0, {}, stage2)).toEqual([...BLESSING_IDS]);
+    for (let seed = 0; seed < 40; seed++) {
+      for (const id of drawOffer(
+        'trial',
+        levels(),
+        0,
+        new Rng(seed),
+        {},
+        clearPicks(7, false).trials,
+      )) {
+        expect(['porcelain']).not.toContain(id);
+      }
+    }
   });
 
   it.each(TABLE)('%s: a %s, %s, max %i, %f per level', (id, kind, name, max, perLevel) => {

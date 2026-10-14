@@ -87,6 +87,8 @@ describe('chaos runs', () => {
         totals.pops++;
         totals.coins += p.coins;
       });
+      // A blessing pick with nothing open pays a Lucky gift (GAME_DESIGN §15.5).
+      events.on('luckyGift', (p) => (totals.coins += p.coins));
       events.on('expansionFinished', () => expansions++);
       events.on('luckySave', () => saves++);
       const run = new RunController({

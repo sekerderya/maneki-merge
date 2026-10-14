@@ -47,5 +47,11 @@ export const COMBO_BANNER_MIN = 2;
 /** A Lucky Save pops every cat over the line plus this many of the smallest cats (6 until v0.39). */
 export const LUCKY_SAVE_SMALLEST_POPS = 9;
 
+/**
+ * A stage clear whose blessing pick has nothing open pays a Lucky gift instead (GAME_DESIGN
+ * §15.5, v0.50): the cleared stage's last cat's pop value times this.
+ */
+export const LUCKY_GIFT_FACTOR = 1;
+
 /** Numbers from this value up use the short format (12.5K, 3.2M). */
 export const SHORT_NUMBER_FROM = 10_000;

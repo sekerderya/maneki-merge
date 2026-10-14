@@ -38,6 +38,7 @@ function setup(levels: Partial<UpgradeLevels> = {}, options: Partial<RunOptions>
     'jackpot',
     'merged',
     'catDropped',
+    'luckyGift',
   ];
   for (const type of types) events.on(type, (payload) => log.push([type, payload]));
   let banked = 0;
@@ -230,7 +231,10 @@ describe('stage clear payouts (GAME_DESIGN §7)', () => {
 
       playUntilStage(run, stage + 1);
       // Order: the merge, the pops and their total, the clear, the last cat's pop once it
-      // settled, then the zoom when the jar grows (stage 5), and the next stage.
+      // settled, then the zoom when the jar grows (stage 5), and the next stage. A fresh
+      // profile's two blessing levels go at stages 1 and 2: from stage 3 its blessing picks pay
+      // a Lucky gift (GAME_DESIGN §15.5), after the zoom when the jar grows.
+      const gift = stage >= 3 ? ['luckyGift', 'runCoinsChanged'] : [];
       const sequence = log
         .slice(logStart)
         .map((e) => e[0])
@@ -243,8 +247,9 @@ describe('stage clear payouts (GAME_DESIGN §7)', () => {
         'stageCleared',
         'catPopped',
         'runCoinsChanged',
-        ...(clearGrowsJar(stage) ? ['expansionStarted'] : []),
-        'expansionRevealed',
+        ...(clearGrowsJar(stage)
+          ? ['expansionStarted', 'expansionRevealed', ...gift]
+          : [...gift, 'expansionRevealed']),
         'expansionFinished',
       ]);
     }

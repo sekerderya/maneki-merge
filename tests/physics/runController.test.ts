@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { PHYSICS_STEP_MS, stepsFor } from '../../src/config/physics';
-import { stageInfo } from '../../src/config/stages';
+import { clearGrowsJar, stageInfo } from '../../src/config/stages';
 import { sizeRadius } from '../../src/config/tiers';
-import { tierCoins } from '../../src/core/economy';
+import { popCoins, tierCoins } from '../../src/core/economy';
 import {
   DANGER_TIMEOUT_MS,
   DROP_COOLDOWN_MS,
@@ -19,7 +19,9 @@ import type { UpgradeLevels } from '../../src/core/upgrades';
 import { RunController } from '../../src/run/RunController';
 import type { RunOptions } from '../../src/run/RunController';
 import { MAGNET_TAKE_MS } from '../../src/config/timings';
-import { FIRST_TRIAL_CLEAR, PICKS, RULE_IDS, TRIAL_IDS } from '../../src/config/picks';
+import { clearPicks, PICKS, RULE_IDS, TRIAL_IDS } from '../../src/config/picks';
+import { LUCKY_GIFT_FACTOR } from '../../src/config/economy';
+import { roundStable } from '../../src/core/math';
 import type { PickId } from '../../src/config/picks';
 import { MAX_DROP_RADIUS } from '../../src/physics/geometry';
 
@@ -40,6 +42,7 @@ const EVENT_TYPES: readonly (keyof GameEvents)[] = [
   'expansionRevealed',
   'expansionFinished',
   'luckySave',
+  'luckyGift',
   'ballTaken',
   'boulderHit',
   'boulderBroken',
@@ -439,19 +442,85 @@ describe('stage clears (GAME_DESIGN §7)', () => {
     expect(run.balls[0]!.y).toBeCloseTo(-run.radiusOf(tier), 0);
   });
 
-  it('offers blessings only up to their shop cards', () => {
-    // A fresh profile has Golden Cats and Big Drops at 1: two blessings, then trials only. The
-    // first clear offers only a blessing (FIRST_TRIAL_CLEAR).
-    const { run } = setup({ instantExpansion: true });
+  it('offers blessings only up to their shop cards, then pays a Lucky gift instead', () => {
+    // A fresh profile has Golden Cats and Big Drops at 1: two blessings (stages 1 and 2, the
+    // teaching order), then a Lucky gift in place of each blessing pick (GAME_DESIGN §15.5).
+    const { run, of } = setup({ instantExpansion: true });
     const picks: PickId[][] = [];
     for (let stage = 1; stage <= 4; stage++) {
       makeLastCat(run);
       picks.push(chooseAll(run));
     }
-    expect(picks.map((p) => p.length)).toEqual([1, 2, 1, 1]);
+    expect(picks.map((p) => p.length)).toEqual([1, 2, 0, 1]);
     expect([picks[0]![0], picks[1]![1]].sort()).toEqual(['bigDrops', 'goldenCats']);
     expect(run.pickLevels.goldenCats).toBe(1);
     expect(run.pickLevels.bigDrops).toBe(1);
+    // The cleared stage's last cat pays again, as run coins.
+    const gift = (stage: number) =>
+      roundStable(
+        popCoins(stageInfo(stage).lastTier, run.stats.coinMultiplier) * LUCKY_GIFT_FACTOR,
+      );
+    expect(of('luckyGift')).toEqual([
+      { stage: 3, coins: gift(3) },
+      { stage: 4, coins: gift(4) },
+    ]);
+  });
+
+  it('pays a Lucky gift as run coins, banked like any other', () => {
+    const { run, of, log } = setup();
+    for (const id of ['bigDrops', 'goldenCats'] as const) run.setPickLevel(id, 9);
+    const before = run.coins;
+    const banked = log.filter((e) => e[0] === 'bank').length;
+    // The debug picks at stage 1: a trial, then no blessing is open.
+    run.offerPicks();
+    chooseAll(run);
+    const coins = popCoins(stageInfo(1).lastTier, run.stats.coinMultiplier) * LUCKY_GIFT_FACTOR;
+    expect(of('luckyGift')).toEqual([{ stage: 1, coins: roundStable(coins) }]);
+    expect(run.coins - before).toBe(roundStable(coins));
+    expect(log.filter((e) => e[0] === 'bank')).toHaveLength(banked + 1);
+    expect(of('runCoinsChanged').at(-1)).toEqual({ coins: run.coins });
+    expect(run.state).toBe('playing');
+  });
+
+  it('follows the teaching order through stage 12, then the picks as before', () => {
+    const { run, of } = setup({ instantExpansion: true, upgrades: maxUpgradeLevels() });
+    const kinds: string[][] = [];
+    for (let stage = 1; stage <= 12; stage++) {
+      const start = of('pickOffered').length;
+      makeLastCat(run);
+      for (let i = 0; run.state === 'choosing'; i++) {
+        const offer = of('pickOffered').at(-1)!;
+        // A trial pick draws from its clear's trials only (null: every trial).
+        const pool = clearPicks(stage, clearGrowsJar(stage)).trials;
+        if (offer.kind === 'trial' && pool) {
+          for (const id of offer.options) expect(pool).toContain(id);
+        }
+        // Cursed Bell first, so its follow-ups open from stage 4's clear on.
+        const id = offer.options.includes('cursedBell') ? 'cursedBell' : offer.options[0]!;
+        run.choose(id);
+        if (i > 3) throw new Error('Too many picks');
+      }
+      kinds.push(
+        of('pickOffered')
+          .slice(start)
+          .map((p) => p.kind),
+      );
+    }
+    expect(kinds).toEqual([
+      ['blessing'],
+      ['trial', 'blessing'],
+      ['blessing'],
+      ['trial', 'blessing'],
+      ['rule', 'blessing'],
+      ['blessing'],
+      ['trial', 'blessing'],
+      ['blessing'],
+      ['trial', 'blessing'],
+      ['rule', 'blessing'],
+      ['trial', 'blessing'],
+      ['trial', 'blessing'],
+    ]);
+    expect(of('luckyGift')).toEqual([]);
   });
 
   it('opens every stage, without end: each clear moves on, and the jar grows every 5', () => {
@@ -459,11 +528,11 @@ describe('stage clears (GAME_DESIGN §7)', () => {
     for (let stage = 1; stage <= 11; stage++) {
       expect(run.stage).toBe(stage);
       makeLastCat(run);
-      // Only a blessing at the first clear; then a trial (or a rule) and a blessing.
-      expect(chooseAll(run)).toHaveLength(stage < FIRST_TRIAL_CLEAR ? 1 : 2);
+      // The teaching order's picks (GAME_DESIGN §15.5), then a trial (or a rule) and a blessing.
+      expect(chooseAll(run)).toHaveLength(clearPicks(stage, clearGrowsJar(stage)).picks.length);
     }
     expect(run.stage).toBe(12);
-    // A trial and a blessing at each of the next clears, until the options run out.
+    // A pick at each of the clears, until the options run out.
     const levels = Object.values(run.pickLevels);
     expect(levels.reduce((a, b) => a + b, 0)).toBeGreaterThanOrEqual(8);
     expect(of('stageCleared').map((e) => e.grows)).toEqual(
@@ -946,8 +1015,14 @@ describe('trials and blessings (GAME_DESIGN §15.5)', () => {
     const [rule] = chooseAll(run);
     expect(of('pickChosen').at(-2)).toEqual({ kind: 'rule', id: rule, level: 1 });
     expect(run.pickLevels[rule!]).toBe(1);
-    // Stage 6's clear: a trial again.
+    // Stage 6's clear: only a blessing in the teaching order, and none is left: a Lucky gift.
     expect(run.stage).toBe(6);
+    const offered = of('pickOffered').length;
+    makeLastCat(run);
+    expect(of('pickOffered')).toHaveLength(offered);
+    expect(of('luckyGift').at(-1)?.stage).toBe(6);
+    // Stage 7's clear: a trial again.
+    expect(run.stage).toBe(7);
     makeLastCat(run);
     expect(of('pickOffered').at(-1)!.kind).toBe('trial');
     chooseAll(run);

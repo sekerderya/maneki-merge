@@ -221,6 +221,11 @@ export interface GameEvents {
   expansionFinished: { readonly stage: number; readonly newTiers: readonly number[] };
   luckySave: { readonly savesLeft: number };
   /**
+   * A stage clear's blessing pick had nothing open: a Lucky gift of `coins` (run coins, already
+   * counted; GAME_DESIGN §15.5). `stage` is the stage cleared.
+   */
+  luckyGift: { readonly stage: number; readonly coins: number };
+  /**
    * A stage clear's pick (GAME_DESIGN §15.5): the run waits (state `choosing`) until one of
    * `options` is chosen. A trial comes first, then a blessing.
    */

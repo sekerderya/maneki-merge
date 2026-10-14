@@ -107,8 +107,26 @@ export function pickOpen(
 }
 
 /**
- * The cards of a pick: up to PICK_OPTIONS different open options of `kind` (`pickOpen`), drawn at
- * random in random order. Empty when none is open (the pick is skipped).
+ * The options of `kind` a pick may offer now (`pickOpen`), in card order; a trial pick only those
+ * in `trials` when it is given (the teaching order, GAME_DESIGN §15.5).
+ */
+export function openOptions(
+  kind: PickKind,
+  levels: PickLevels,
+  bigCatchTilt: number,
+  caps: PickCaps = {},
+  trials: readonly PickId[] | null = null,
+): PickId[] {
+  return pickIds(kind).filter(
+    (id) =>
+      (kind !== 'trial' || trials === null || trials.includes(id)) &&
+      pickOpen(id, levels, bigCatchTilt, caps),
+  );
+}
+
+/**
+ * The cards of a pick: up to PICK_OPTIONS different open options of `kind` (`openOptions`), drawn
+ * at random in random order. Empty when none is open (the pick is skipped).
  */
 export function drawOffer(
   kind: PickKind,
@@ -116,8 +134,9 @@ export function drawOffer(
   bigCatchTilt: number,
   rng: Rng,
   caps: PickCaps = {},
+  trials: readonly PickId[] | null = null,
 ): PickId[] {
-  const open = pickIds(kind).filter((id) => pickOpen(id, levels, bigCatchTilt, caps));
+  const open = openOptions(kind, levels, bigCatchTilt, caps, trials);
   // Fisher–Yates: each option lands on each place equally often.
   for (let i = open.length - 1; i > 0; i--) {
     const j = rng.int(0, i);
