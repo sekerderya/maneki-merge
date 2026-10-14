@@ -1,7 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { COMBO_BASE_HZ, MERGE_PITCH_TOP_HZ, SOUNDS } from '../../src/config/audio';
+import {
+  COMBO_BASE_HZ,
+  DEFAULT_SOUND_SET,
+  MERGE_PITCH_TOP_HZ,
+  REVERB,
+  SET_GAIN,
+  SOUND_SETS,
+  SOUNDS,
+} from '../../src/config/audio';
 import type { SoundName, SoundSpec } from '../../src/config/audio';
 import { comboPitch, dangerTickPitch, mergePitch, semitones } from '../../src/audio/pitch';
+import { CLASSIC_RECIPES } from '../../src/audio/sfx';
+import type { Voice } from '../../src/audio/sfx';
+import { SOFT_RECIPES } from '../../src/audio/softSfx';
 import { VoiceThrottle } from '../../src/audio/throttle';
 
 describe('sound pitches (GAME_DESIGN §12)', () => {
@@ -81,5 +92,84 @@ describe('VoiceThrottle', () => {
       expect(s.maxVoices).toBeGreaterThanOrEqual(1);
       expect(s.durationMs).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('sound sets (GAME_DESIGN §12)', () => {
+  /** A stand-in AudioContext that records what a recipe builds. */
+  function fakeVoice(): { voice: Voice; oscillators: string[]; filters: [string, number][] } {
+    const oscillators: string[] = [];
+    const filters: [string, number][] = [];
+    const param = (): Record<string, unknown> => ({
+      value: 0,
+      setValueAtTime: () => undefined,
+      exponentialRampToValueAtTime: () => undefined,
+    });
+    const node = (extra: Record<string, unknown>): Record<string, unknown> => ({
+      connect: (next: unknown) => next,
+      disconnect: () => undefined,
+      start: () => undefined,
+      stop: () => undefined,
+      ...extra,
+    });
+    const ctx = {
+      createOscillator: () => {
+        const osc = node({ frequency: param() });
+        // The recipe sets the type after creating the oscillator.
+        return new Proxy(osc, {
+          set(target, key, value) {
+            if (key === 'type') oscillators.push(String(value));
+            return Reflect.set(target, key, value);
+          },
+        });
+      },
+      createGain: () => node({ gain: param() }),
+      createBufferSource: () => node({}),
+      createBiquadFilter: () => {
+        const frequency = {
+          ...param(),
+          setValueAtTime: (hz: number) => {
+            filters.push([String(filter['type']), hz]);
+          },
+        };
+        const filter: Record<string, unknown> = node({ Q: param(), frequency });
+        return filter;
+      },
+    };
+    const voice = { ctx, out: node({}), t: 0, noise: {} } as unknown as Voice;
+    return { voice, oscillators, filters };
+  }
+
+  it('has every sound in both sets', () => {
+    for (const name of Object.keys(SOUNDS) as SoundName[]) {
+      expect(typeof SOFT_RECIPES[name]).toBe('function');
+      expect(typeof CLASSIC_RECIPES[name]).toBe('function');
+    }
+  });
+
+  it('builds the soft set from sine tones only, with no noise in the hiss range', () => {
+    for (const name of Object.keys(SOUNDS) as SoundName[]) {
+      const { voice, oscillators, filters } = fakeVoice();
+      SOFT_RECIPES[name](voice, 4);
+      expect(oscillators.length, name).toBeGreaterThan(0);
+      expect(new Set(oscillators), name).toEqual(new Set(['sine']));
+      for (const [type, hz] of filters) {
+        expect(type, name).not.toBe('highpass');
+        expect(hz, name).toBeLessThanOrEqual(2400);
+      }
+    }
+  });
+
+  it('keeps the set gains and the reverb sends in a sane range', () => {
+    expect(SOUND_SETS).toContain(DEFAULT_SOUND_SET);
+    for (const set of SOUND_SETS) {
+      expect(REVERB.send[set]).toBeGreaterThanOrEqual(0);
+      expect(REVERB.send[set]).toBeLessThan(0.5);
+      for (const gain of Object.values(SET_GAIN[set])) {
+        expect(gain).toBeGreaterThan(0.2);
+        expect(gain).toBeLessThanOrEqual(1.5);
+      }
+    }
+    expect(REVERB.send.classic).toBe(0);
   });
 });
