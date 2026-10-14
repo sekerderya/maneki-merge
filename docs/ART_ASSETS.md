@@ -2528,24 +2528,59 @@ The strip:
 No arrows, no labels, no other decorations. Portrait 9:16, the same framing as image 1.
 ```
 
-**2. One cat to go** (`ui/goal-strip-mockup-2.png`, 9:16), in the same chat, nothing new attached:
+**1b. Plainer** (`ui/goal-strip-mockup.png` again), in the same chat, nothing new attached. The
+first try (2026-10-15) was too shiny and showy for the owner: a big glossy gold ring with a glow
+round the goal, a glossy gold fill, a big torii sticking out of the card, and only six cat slots.
+This edit asks for a quiet strip, as plain as the coins card:
 
 ```text
 Style: exactly the same as the image you just made and the images attached before it. Polished
 casual mobile-game art, cute chibi kawaii illustration, thick warm dark-brown outlines (never
-black) of even weight, soft pastel cel shading with gentle gradients and one small glossy
-highlight, light from the upper left, clean crisp vector-like edges. No watermark, no signature.
+black) of even weight, soft pastel cel shading, light from the upper left, clean crisp vector-like
+edges. Quiet and simple: no glow, no shine streaks, no sparkles, no glossy highlights. No
+watermark, no signature.
+
+Edit the image you just made. The strip at the top is too shiny and too showy; make it much
+plainer and calmer, like the "COINS:" card on the right. Change only the strip; everything else
+stays exactly as it is (the score card, the coins card, the pause button, the NEXT bubble, the
+paw, the jar and its cats, the garden), in the same place and at the same size.
+
+The plain strip:
+- The card: a flat warm cream rounded bar with a thin dark-brown outline and a thin tan edge along
+  its bottom, exactly like the coins card. A little thinner than now: about three quarters of the
+  pause button's height. No highlight, no shine.
+- Left end: a small torii, fully inside the card (it does not stick out above or below it), and
+  right after it the stage number in dark brown chunky letters, like the word "NEXT".
+- The track: a thin flat sunken caramel line along the card, with a flat soft gold fill (no shine,
+  no gradient) from the left up to the sixth cat.
+- On the track, evenly spaced: all eight small cats 1 to 8 of the lineup, in order, the same small
+  size, with their usual dark-brown outline. Cats 1 to 6 in colour, cats 7 and 8 as flat light-tan
+  silhouettes with no face.
+- Right end: the gold cat as a flat light-tan silhouette, only a little bigger than the others
+  (about 1.3 times), inside a plain cream circle with a thin flat gold outline. No thick ring, no
+  glow, no sparkles; it stays inside the card's height or just slightly over it.
+Everything flat and quiet; the strip should not catch the eye more than the score card does.
+Portrait 9:16, the same framing as the image you just made.
+```
+
+**2. One cat to go** (`ui/goal-strip-mockup-2.png`, 9:16), in the same chat after 1b, nothing new
+attached:
+
+```text
+Style: exactly the same as the image you just made. Polished casual mobile-game art, cute chibi
+kawaii illustration, thick warm dark-brown outlines (never black) of even weight, soft pastel cel
+shading, light from the upper left, clean crisp vector-like edges. Quiet and simple: no glow, no
+shine streaks, no sparkles, no glossy highlights. No watermark, no signature.
 
 Now the same screen a little later in the same stage. Keep everything exactly as in the image you
-just made, the strip's size and place too, and change only the strip: cats 1 to 8 are all in full
-colour, and the gold in the well reaches the eighth cat and a little past it towards the gold cat.
-The gold cat at the right end is still a light-tan silhouette, but its gold ring shines brighter,
-with a few small four-pointed gold sparkles around it: one more red cat and the stage is clear.
-No other changes. Portrait 9:16.
+just made, the strip's size, place and plain look too, and change only this: cats 1 to 8 are all
+in full colour, and the flat gold fill reaches the eighth cat and a little past it towards the
+gold cat. The gold cat at the right end is still a light-tan silhouette in its plain circle; only
+its thin gold outline is a little thicker. No glow, no sparkles, no other changes. Portrait 9:16.
 ```
 
 Checks: nothing but the strip changed (lay it over image 1); the cats are in the lineup's order
-and look like it; the silhouettes have no faces; the number is the only text.
+and look like it; the silhouettes have no faces; the number is the only text; the strip stays plain (no glow, shine or sparkles).
 
 ## 5. Icon kit (every new icon)
 
