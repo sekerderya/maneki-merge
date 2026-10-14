@@ -137,6 +137,8 @@ export interface RunSnapshot {
   readonly echoRng?: RngState;
   /** Echo: a merge has echoed since the last drop (missing: none has). */
   readonly echoUsed?: boolean;
+  /** The biggest cat size the stage has had (missing before v0.48: the biggest in the jar). */
+  readonly stageBestSize?: number;
   /**
    * Hubris: the small pairs waiting to merge, as [older id, younger id, the step they started
    * touching, the step they were last seen touching].
@@ -242,6 +244,9 @@ function runSnapshot(value: unknown): RunSnapshot {
       : { porcelainRng: rngState(r['porcelainRng'], 'porcelainRng') }),
     ...(r['echoRng'] === undefined ? {} : { echoRng: rngState(r['echoRng'], 'echoRng') }),
     ...(r['echoUsed'] === undefined ? {} : { echoUsed: bool(r['echoUsed'], 'echoUsed') }),
+    ...(r['stageBestSize'] === undefined
+      ? {}
+      : { stageBestSize: count(r['stageBestSize'], 'stageBestSize') }),
     ...(r['hubrisWaits'] === undefined ? {} : { hubrisWaits: waits(r['hubrisWaits']) }),
     ...(r['curse'] === undefined ? {} : { curse: curse(r['curse']) }),
     ...(r['curseDue'] === undefined ? {} : { curseDue: count(r['curseDue'], 'curseDue') }),

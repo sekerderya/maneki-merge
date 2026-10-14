@@ -5,12 +5,16 @@ import {
   HUD_SPRITE_DIR,
 } from '../../config/hudSprites';
 import type { HudSprite } from '../../config/hudSprites';
+import { MENU_ART, MENU_SPRITE_DIR } from '../../config/menuSprites';
+import { stageInfo } from '../../config/stages';
+import { SIZE_COUNT } from '../../config/tiers';
 import type { Drop } from '../../core/dropQueue';
 import { formatNumber } from '../../core/format';
-import { catIcon, paintDropIcon } from '../catIcon';
+import { catIcon, paintCatIcon, paintDropIcon } from '../catIcon';
 import { button, el } from '../dom';
 import { coinIcon } from '../coinIcon';
 import { ICON_PAUSE, NEXT_BUBBLE_BACK, NEXT_BUBBLE_SHINE } from '../icons';
+import { artImage } from '../uiArt';
 import { scoreCardLayout } from './scoreCard';
 
 export interface HudActions {
@@ -20,7 +24,10 @@ export interface HudActions {
 export interface HudView {
   setScore(score: number): void;
   setCoins(coins: number): void;
-  setStage(stage: number): void;
+  /** A stage starts (or the run is shown): its cats on the goal strip, made up to `bestSize`. */
+  setStage(stage: number, bestSize: number): void;
+  /** The stage's jar has its first cat of `size`: the strip's cats up to it light up and pop. */
+  reachSize(size: number): void;
   /** The ball after the one in the dropper: a cat, the magnet or a boulder. */
   setNext(drop: Drop): void;
   /** NEXT took another size (Copycat, GAME_DESIGN §15.13): its cat pops like a merged one. */
@@ -68,9 +75,9 @@ function setArtProperties(root: HTMLElement): void {
 }
 
 /**
- * In-game HUD (GAME_DESIGN §2.3), floating over the top of the play area: the stage in words at
- * the top in the middle; on the right the pink pause button, the coins card and the next cat in a
- * round glass bubble under it; on the left the score card, level with the coins card (v0.26). Only
+ * In-game HUD (GAME_DESIGN §2.3), floating over the top of the play area: the goal strip along the
+ * top, left of the pause button; on the right the pink pause button, the coins card and the next
+ * cat in a round glass bubble under it; on the left the score card, level with the coins card (v0.26). Only
  * the pause button takes touches; the rest lets them through to the game. With `art` the score
  * card, the bubble, the button and the coin are the owner's images (config/hudSprites.ts); the
  * coins card is CSS drawn after the owner's reference image.
@@ -90,9 +97,32 @@ export function createHud(root: HTMLElement, actions: HudActions, art = false): 
   const left = el('div', 'hud-left');
   left.append(scoreCard);
 
-  // The stage: words only, at the top in the middle of the screen.
-  const stage = el('span', 'hud-stage', 'Stage 1');
+  // The goal strip (v0.48, the owner's mockup): the torii with the stage number, the stage's cats
+  // in order, and its last cat, the goal, in a gold ring. Cats the stage hasn't had yet are pale.
+  const goal = el('div', 'hud-goal hud-card');
+  goal.dataset['testid'] = 'hud-goal';
+  const stageMark = el('div', 'hud-goal-stage');
+  if (art) stageMark.append(artImage(`${MENU_SPRITE_DIR}${MENU_ART.torii.file}`, 'hud-goal-torii'));
+  const stage = el('span', 'hud-goal-number', '1');
   stage.dataset['testid'] = 'hud-stage';
+  stageMark.append(stage);
+  const goalCats = el('div', 'hud-goal-cats');
+  const cats = Array.from({ length: SIZE_COUNT }, (_, i) => catIcon(i + 1));
+  goalCats.append(...cats.slice(0, -1));
+  const slot = el('div', 'hud-goal-slot');
+  slot.append(cats[SIZE_COUNT - 1] as HTMLElement);
+  goal.append(stageMark, goalCats, slot);
+  let goalBest = 0;
+  const paintGoal = (best: number, pop: boolean): void => {
+    cats.forEach((cat, i) => {
+      const made = i < best;
+      if (pop && made && i >= goalBest) restartAnimation(cat, 'is-reached');
+      cat.classList.toggle('is-unmade', !made);
+    });
+    // One cat to go: the stage has made a size 8.
+    slot.classList.toggle('is-near', best === SIZE_COUNT - 1);
+    goalBest = best;
+  };
 
   // The next cat in a round glass bubble under the coins card.
   const next = el('div', 'hud-next');
@@ -126,13 +156,16 @@ export function createHud(root: HTMLElement, actions: HudActions, art = false): 
   const right = el('div', 'hud-right');
   right.append(coinsCard, next, pause);
 
-  root.append(stage, left, right);
+  root.append(goal, left, right);
 
-  const restartAnimation = (node: HTMLElement, className: string): void => {
+  function restartAnimation(node: HTMLElement, className: string): void {
     node.classList.remove(className);
     void node.offsetWidth; // restart the CSS animation
     node.classList.add(className);
-  };
+  }
+  for (const cat of cats) {
+    cat.addEventListener('animationend', () => cat.classList.remove('is-reached'));
+  }
   coinsCard.addEventListener('animationend', () => coinsCard.classList.remove('is-pulsing'));
   nextCat.addEventListener('animationend', () => nextCat.classList.remove('is-copied'));
 
@@ -143,8 +176,16 @@ export function createHud(root: HTMLElement, actions: HudActions, art = false): 
     setCoins(value) {
       coinValue.textContent = formatNumber(value);
     },
-    setStage(value) {
-      stage.textContent = `Stage ${value}`;
+    setStage(value, bestSize) {
+      stage.textContent = art ? String(value) : `Stage ${value}`;
+      stage.classList.toggle('is-long', value >= 100);
+      goal.setAttribute('aria-label', `Stage ${value}`);
+      const first = stageInfo(value).firstTier;
+      cats.forEach((cat, i) => paintCatIcon(cat, first + i));
+      paintGoal(bestSize, false);
+    },
+    reachSize(size) {
+      if (size > goalBest) paintGoal(size, true);
     },
     setNext(drop) {
       paintDropIcon(nextCat, drop);

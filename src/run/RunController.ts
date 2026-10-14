@@ -57,7 +57,7 @@ import {
 } from '../config/picks';
 import type { DiceRoll, ForcedDice, PickId, PickKind, WindDirection } from '../config/picks';
 import { catRadius, clearGrowsJar, stageHoldsTier, stageInfo } from '../config/stages';
-import { sizeRadius } from '../config/tiers';
+import { SIZE_COUNT, sizeRadius } from '../config/tiers';
 import {
   DROP_COOLDOWN_MS,
   EXPANSION_CLEAR_MS,
@@ -281,6 +281,8 @@ export class RunController {
   private wind: WindDirection;
   /** Echo: a merge has echoed since the last drop (only one does per drop). */
   private echoUsed = false;
+  /** The biggest cat size this stage has had in its jar, 0–9 (the HUD's goal strip). */
+  private bestSize = 0;
   /** Cursed Bell: the cursed cat and the drops left on its bell (it turns to stone after 0). */
   private cursed: Ball | null = null;
   private curseDropsLeft = 0;
@@ -483,6 +485,15 @@ export class RunController {
     };
   }
 
+  /**
+   * The biggest cat size the stage has had in its jar so far, dropped or merged (0 before the
+   * first drop): the goal strip shows the cats up to it as made (GAME_DESIGN §2.3). It never goes
+   * down within a stage, even when the cat is gone again, and starts over at 0 with the next stage.
+   */
+  get stageBestSize(): number {
+    return this.bestSize;
+  }
+
   /** The HUD's progress bar: the biggest cat in the jar against the stage's last cat. */
   get progress(): StageProgress {
     let biggest = 0;
@@ -561,6 +572,7 @@ export class RunController {
     this.dropAnnounced = false;
     this.echoUsed = false;
     this.events.emit('catDropped', { kind, tier: item.tier, golden: item.golden, x: at });
+    if (kind === 'cat') this.reachSize(this.world.sizeOf(item.tier));
     this.curseIfDue();
     return true;
   }
@@ -648,7 +660,9 @@ export class RunController {
     }
     const geo = this.world.geometry;
     const at = clampDropX(x, this.radiusOf(tier), geo);
-    return this.world.addBall({ ...options, tier, x: at, y: y ?? geo.dropY });
+    const ball = this.world.addBall({ ...options, tier, x: at, y: y ?? geo.dropY });
+    if (ball.kind === 'cat') this.reachSize(ball.size);
+    return ball;
   }
 
   /**
@@ -848,6 +862,7 @@ export class RunController {
       porcelainRng: this.porcelainRng.state(),
       echoRng: this.echoRng.state(),
       echoUsed: this.echoUsed,
+      stageBestSize: this.bestSize,
       hubrisWaits: this.merges.waits,
       curse: this.curse,
       curseDue: this.curseDue,
@@ -904,6 +919,22 @@ export class RunController {
     return h.digest();
   }
 
+  /** A cat of `size` is in the jar: the goal strip lights up to it (GAME_DESIGN §2.3). */
+  private reachSize(size: number): void {
+    if (size <= this.bestSize) return;
+    this.bestSize = size;
+    this.events.emit('stageBestChanged', { stage: this.world.stage, size });
+  }
+
+  /** The biggest cat size in the jar now (0 without cats). */
+  private jarBestSize(): number {
+    let best = 0;
+    for (const ball of this.world.balls) {
+      if (ball.kind === 'cat') best = Math.max(best, ball.size);
+    }
+    return best;
+  }
+
   /** Puts a saved run back in place (the constructor's second half), paused. */
   private load(saved: RunSnapshot): void {
     this.world.restore(saved.world);
@@ -915,6 +946,8 @@ export class RunController {
     if (saved.porcelainRng) this.porcelainRng.setState(saved.porcelainRng);
     if (saved.echoRng) this.echoRng.setState(saved.echoRng);
     this.echoUsed = saved.echoUsed ?? false;
+    // Saved before v0.48: the biggest cat in the jar.
+    this.bestSize = Math.min(SIZE_COUNT, saved.stageBestSize ?? this.jarBestSize());
     this.merges.restoreWaits(saved.hubrisWaits ?? []);
     // Runs saved before Batch 19 have no curse and never rolled a curse or a die.
     if (saved.curseRng) this.curseRng.setState(saved.curseRng);
@@ -1013,6 +1046,7 @@ export class RunController {
           ...p,
           coins: p.coins + bonus,
         });
+        if (o.ball) this.reachSize(o.ball.size);
         if (lifted) this.endCurse('lifted', bonus);
         this.echo(o, last);
       } else {
@@ -1669,6 +1703,7 @@ export class RunController {
     // The jar should be empty; anything in it (a debug spawn) pops.
     this.pop([...this.world.balls], 'cashOut');
     this.world.setStage(e.to);
+    this.bestSize = 0;
     this.queue.setStage(e.to);
     // Boulders come from stage 2 on (GAME_DESIGN §15.1).
     this.queue.setOdds(this.odds());

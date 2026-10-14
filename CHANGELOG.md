@@ -2,6 +2,23 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.48.0] - 2026-10-15
+
+The goal strip (the owner's playtest: the goal, the cats' order and the progress couldn't be seen; GAME_DESIGN §2.3).
+
+### Added
+
+- **The goal strip** along the top of the play screen, left of the pause button, after the owner's approved mockup (`art-source/ui/goal-strip-mockup.webp`): a cream card like the coins card, the menu's torii with the stage number between its posts, the stage's cats 1 to 8 in order, and its last cat, the goal, in a round slot with a flat gold ring. Every cat shows in full colour; the ones the stage hasn't had in its jar yet are pale, and a cat lights up with a small pop the first time the stage gets one (dropped or merged). Once a size 8 is made, the goal's ring breathes: one cat to go. Reduced motion keeps both still.
+- `run.stageBestSize` and the `stageBestChanged` event: the biggest cat size the stage has had. It never goes down within a stage and starts over at the next one. A saved run keeps it; a run saved by an older version takes the biggest cat in its jar.
+
+### Changed
+
+- The stage words at the top ("STAGE 2") are gone: the strip's number shows the stage.
+
+### Notes
+
+- The goal's slot is CSS for now; its image (docs/ART_ASSETS.md §4.19, prompt 3) can replace it. The silhouettes for cats not made yet were turned down, and there is no progress bar (both the owner's calls).
+
 ## [0.47.3] - 2026-10-14
 
 ### Removed

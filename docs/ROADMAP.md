@@ -370,6 +370,7 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
   - [x] chain lightning: the jar darkens, a sky bolt, a tree of flickering bolts to every struck cat, flashes, rings and crackles, thunder (code-drawn stand-ins)
   - [x] the owner's phase 15 art: the ball and four effect sheets on black (bolts, sky bolts, impact pieces, crackles), and their build step (v0.42.1)
   - [x] the Lightning clip on its cards (v0.42.1)
+- [x] The goal strip (v0.48.0, GAME_DESIGN §2.3; art: docs/ART_ASSETS.md §4.19), after the owner's playtest (the goal, the cats' order and the progress couldn't be seen): the stage number on a torii, the stage's nine cats in order with the goal in a gold ring, pale until the stage has had them. **Status:** done; the owner checks it on the phone, and may still send the goal slot's image
 
 ## M13: Final art integration
 

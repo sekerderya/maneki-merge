@@ -2621,7 +2621,9 @@ progress bar. The game builds it from these pieces:
 - the cats: the HUD's cat icons (`public/assets/cats/look-NN.webp`), all nine always in full
   colour: no silhouettes (the owner's call, 2026-10-15; a generated tan silhouette was turned down
   as soon as it came);
-- **new:** the goal's round slot, the image below. Save it as `.png`, `.jpg` or `.webp`.
+- **new:** the goal's round slot, the image below. Save it as `.png`, `.jpg` or `.webp`. Until it
+  comes (and if the owner keeps it so), the slot is CSS: a cream disc, a flat 3 px gold ring and thin
+  dark-brown edges (v0.48).
 
 **3. The goal slot** (`hud/goal-slot.png`, 1:1). Attach the approved mockup
 ([art-source/ui/goal-strip-mockup.webp](../art-source/ui/goal-strip-mockup.webp)):

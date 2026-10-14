@@ -331,7 +331,7 @@ export class GameSession {
     const showPreview = (): void => hud.setNext(run.next);
     hud.setScore(run.score);
     hud.setCoins(run.coins);
-    hud.setStage(run.stage);
+    hud.setStage(run.stage, run.stageBestSize);
     this.parts.scenery.setJar(stageJar(run.stage), false);
     this.parts.scenery.setWind(run.pickLevels.wind, run.windDirection);
     showPreview();
@@ -340,6 +340,7 @@ export class GameSession {
     // The menu catches up with the wallet when the run ends (it is hidden until then).
     events.on('runCoinsChanged', (e) => hud.setCoins(e.coins));
     events.on('catDropped', showPreview);
+    events.on('stageBestChanged', (e) => hud.reachSize(e.size));
     // Copycat (GAME_DESIGN §15.13): NEXT took the size of the latest merge.
     events.on('nextChanged', () => {
       showPreview();
@@ -404,13 +405,13 @@ export class GameSession {
     // The stage words move on as the new stage starts: when the jar grows, before its picks.
     events.on('expansionRevealed', () => {
       showPreview();
-      hud.setStage(run.stage);
+      hud.setStage(run.stage, run.stageBestSize);
     });
     // The wind's petals (GAME_DESIGN §15.8) show its level and direction.
     events.on('windChanged', (e) => this.parts.scenery.setWind(e.level, e.direction));
     events.on('expansionFinished', () => {
       showPreview();
-      hud.setStage(run.stage);
+      hud.setStage(run.stage, run.stageBestSize);
       // A rule picked at this clear: what it does, once, as the stage starts.
       const ruleHint = this.ruleHint;
       if (ruleHint) {

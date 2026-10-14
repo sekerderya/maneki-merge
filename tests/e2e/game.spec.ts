@@ -114,3 +114,24 @@ test('backgrounding pauses the run', async ({ page }) => {
   await expect(page.getByTestId('pause-overlay')).toBeVisible();
   expect((await state(page)).runState).toBe('paused');
 });
+
+test('the goal strip shows the stage, its cats and the ones the stage has had', async ({
+  page,
+}) => {
+  const errors = watchConsole(page);
+  await page.goto('./?debug=1&seed=7');
+  await page.getByTestId('play').click();
+  await expect.poll(async () => (await state(page)).canDrop, WAIT).toBe(true);
+  const goal = page.getByTestId('hud-goal');
+  await expect(page.getByTestId('hud-stage')).toHaveText('1');
+  const cats = goal.locator('.cat-icon');
+  await expect(cats).toHaveCount(9);
+  await expect(goal.locator('.cat-icon.is-unmade')).toHaveCount(9);
+  // A 5 lights cats 1–5; an 8 lights up to 8, and the goal's ring breathes.
+  await page.evaluate(() => window.__game?.spawnTier(5, -150, -window.__game.radiusOf(5)));
+  await expect(goal.locator('.cat-icon.is-unmade')).toHaveCount(4);
+  await page.evaluate(() => window.__game?.spawnTier(8, 120, -window.__game.radiusOf(8)));
+  await expect(goal.locator('.cat-icon.is-unmade')).toHaveCount(1);
+  await expect(goal.locator('.hud-goal-slot')).toHaveClass(/is-near/);
+  expect(errors).toEqual([]);
+});

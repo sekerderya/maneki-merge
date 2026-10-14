@@ -205,6 +205,11 @@ export interface GameEvents {
     readonly tier: number;
     readonly grows: boolean;
   };
+  /**
+   * The stage's jar has its first cat of `size` (dropped, merged or spawned): the goal strip lights
+   * up to it (GAME_DESIGN §2.3). Only when the stage's biggest size grows; never at a new stage.
+   */
+  stageBestChanged: { readonly stage: number; readonly size: number };
   /** The stage clear is over and the camera starts zooming out (whoosh, rim sparks). */
   expansionStarted: { readonly from: number; readonly to: number };
   /**
