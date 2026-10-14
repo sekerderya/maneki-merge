@@ -2,9 +2,6 @@
  * The procedural sound recipes (GAME_DESIGN §12): oscillators and filtered noise with short
  * envelopes, built on demand and disconnected when they end. Each recipe plays into `out`, a gain
  * already set to the sound's volume, starting at `t` (AudioContext time).
- *
- * This file holds the building blocks and the classic set (v0.9–v0.45, bright triangle and square
- * tones); the soft set, the default since v0.46, is in `softSfx.ts`.
  */
 import type { SoundName } from '../config/audio';
 import { comboPitch, dangerTickPitch, mergePitch, semitones } from './pitch';
@@ -30,7 +27,7 @@ interface ToneOptions {
 }
 
 /** One oscillator with an attack and an exponential decay. */
-export function tone(v: Voice, o: ToneOptions): void {
+function tone(v: Voice, o: ToneOptions): void {
   const { ctx } = v;
   const start = v.t + (o.delay ?? 0);
   const attack = o.attack ?? 0.004;
@@ -62,7 +59,7 @@ interface NoiseOptions {
 }
 
 /** Filtered white noise with a swell and a decay (whoosh, plop body). */
-export function noise(v: Voice, o: NoiseOptions): void {
+function noise(v: Voice, o: NoiseOptions): void {
   const { ctx } = v;
   const start = v.t + (o.delay ?? 0);
   const src = ctx.createBufferSource();
@@ -100,7 +97,7 @@ function bell(v: Voice, hz: number, delay: number, gain = 1): void {
 
 export type Recipe = (v: Voice, value: number) => void;
 
-export const CLASSIC_RECIPES: Readonly<Record<SoundName, Recipe>> = {
+export const RECIPES: Readonly<Record<SoundName, Recipe>> = {
   // A soft plop as the cat leaves the dropper.
   drop(v) {
     tone(v, { from: 540, to: 170, glide: 0.09, decay: 0.12 });

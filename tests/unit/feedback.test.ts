@@ -43,6 +43,7 @@ describe('run feedback wiring (GAME_DESIGN §12)', () => {
     expect(log).toEqual([
       'drop',
       'merge:5',
+      'coin',
       'buzz:tick',
       'combo:3',
       'jackpot',
@@ -61,7 +62,7 @@ describe('run feedback wiring (GAME_DESIGN §12)', () => {
 
     off();
     events.emit('catDropped', { kind: 'cat', tier: 1, golden: false, x: 0 });
-    expect(log).toHaveLength(16);
+    expect(log).toHaveLength(17);
   });
 
   it('rings a bell when a golden cat merges', () => {
@@ -77,7 +78,7 @@ describe('run feedback wiring (GAME_DESIGN §12)', () => {
     const joker = false;
     events.emit('merged', { ...merge, ...plain, golden: true, joker });
     events.emit('jackpot', { tier: 46, at, score: 1, coins: 1, combo: 1 });
-    expect(log).toEqual(['merge', 'chime', 'buzz:tick', 'jackpot', 'buzz:jackpot']);
+    expect(log).toEqual(['merge', 'coin', 'chime', 'buzz:tick', 'jackpot', 'buzz:jackpot']);
   });
 
   it('plays the special balls and the picks (GAME_DESIGN §15)', () => {
@@ -111,7 +112,7 @@ describe('run feedback wiring (GAME_DESIGN §12)', () => {
     events.emit('merged', { ...merge, ...plain, dice: null, curseLifted: true });
     events.emit('merged', { ...merge, ...plain, dice: 'lucky', curseLifted: false });
     events.emit('merged', { ...merge, ...plain, dice: 'fizzle', curseLifted: false });
-    const merged = (extra: string[]) => ['merge', ...extra, 'buzz:tick'];
+    const merged = (extra: string[]) => ['merge', 'coin', ...extra, 'buzz:tick'];
     expect(log).toEqual([
       'curse',
       'grind',
@@ -157,6 +158,15 @@ describe('run feedback wiring (GAME_DESIGN §12)', () => {
       dice: null,
       curseLifted: false,
     });
-    expect(log).toEqual(['tink', 'shatter', 'buzz:tick', 'echo', 'merge', 'chime', 'buzz:tick']);
+    expect(log).toEqual([
+      'tink',
+      'shatter',
+      'buzz:tick',
+      'echo',
+      'merge',
+      'coin',
+      'chime',
+      'buzz:tick',
+    ]);
   });
 });

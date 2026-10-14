@@ -2,7 +2,6 @@
  * Audio tunables (GAME_DESIGN §12, TECH_SPEC §2): procedural Web Audio sound effects, no files.
  * Volumes are linear gains before the master limiter.
  */
-import type { SoundSetId } from './soundSets';
 
 export type SoundName =
   | 'drop'
@@ -28,40 +27,6 @@ export type SoundName =
   | 'grind'
   | 'clack'
   | 'thunder';
-
-export { DEFAULT_SOUND_SET, SOUND_SETS } from './soundSets';
-export type { SoundSetId } from './soundSets';
-
-/**
- * Extra gain per sound in a set, on top of its `SOUNDS` volume (which was set for the classic
- * set). The soft set's were measured offline (v0.46: the loudest 50 ms, roughly A-weighted) to sit
- * about 1–2 dB under the classic sound, a little more for the busy merge chain's coin and combo;
- * the low thumps get a little more, since a phone speaker loses their bass. A missing sound takes 1.
- */
-export const SET_GAIN: Readonly<Record<SoundSetId, Partial<Record<SoundName, number>>>> = {
-  soft: {
-    merge: 1.12,
-    coin: 0.67,
-    combo: 0.63,
-    chime: 0.9,
-    dangerTick: 0.7,
-    gameOver: 0.75,
-    purchase: 0.7,
-    clang: 1.2,
-    crunch: 1.33,
-    boom: 0.7,
-    thud: 1.33,
-    shatter: 0.9,
-    curse: 1.4,
-    grind: 1.4,
-    clack: 0.35,
-    thunder: 1.4,
-  },
-  classic: {},
-};
-
-/** The soft set's merge bubble sits this much lower than the classic pop (mergePitch). */
-export const SOFT_MERGE_PITCH_SCALE = 0.7;
 
 /** Everything goes through one master gain and a limiter, so stacked sounds never clip. */
 export const MASTER_VOLUME = 0.8;

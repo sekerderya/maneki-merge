@@ -6,22 +6,13 @@
  * - Every sound goes through a per-sound gain, a master gain and a limiter, and is throttled per
  *   sound and globally (`VoiceThrottle`), so a burst of merges never clips.
  * - Sound off suspends the context; backgrounding suspends it and coming back resumes it.
- * - Two recipe sets (config SOUND_SETS): the soft set (default) and the classic set, which
- *   `?sfx=classic` and the debug sound board bring back.
  */
-import { DEFAULT_SOUND_SET, LIMITER, MASTER_VOLUME, SET_GAIN, SOUNDS } from '../config/audio';
-import type { SoundName, SoundSetId } from '../config/audio';
-import { CLASSIC_RECIPES } from './sfx';
-import type { Recipe } from './sfx';
-import { SOFT_RECIPES } from './softSfx';
+import { LIMITER, MASTER_VOLUME, SOUNDS } from '../config/audio';
+import type { SoundName } from '../config/audio';
+import { RECIPES } from './sfx';
 import { VoiceThrottle } from './throttle';
 
-export type { SoundName, SoundSetId } from '../config/audio';
-
-const RECIPE_SETS: Readonly<Record<SoundSetId, Readonly<Record<SoundName, Recipe>>>> = {
-  soft: SOFT_RECIPES,
-  classic: CLASSIC_RECIPES,
-};
+export type { SoundName } from '../config/audio';
 
 export interface Sfx {
   /** Plays a sound now; `value` is the tier, combo level or seconds left where it matters. */
@@ -41,19 +32,7 @@ export class AudioEngine implements Sfx {
   private hidden = false;
   private readonly throttle = new VoiceThrottle();
 
-  constructor(
-    private readonly create: () => AudioContext | null = defaultContext,
-    private soundSet: SoundSetId = DEFAULT_SOUND_SET,
-  ) {}
-
-  /** The recipe set the game plays (`?sfx=`, the debug sound board). */
-  get set(): SoundSetId {
-    return this.soundSet;
-  }
-
-  setSoundSet(set: SoundSetId): void {
-    this.soundSet = set;
-  }
+  constructor(private readonly create: () => AudioContext | null = defaultContext) {}
 
   /** Unlocks audio on user gestures (call once at boot). */
   listen(target: Window = window): void {
@@ -109,15 +88,6 @@ export class AudioEngine implements Sfx {
   }
 
   /**
-   * Debug only (the sound board): plays a sound from either set now, past the throttle, through
-   * the same mixer, so the two sets can be compared.
-   */
-  preview(set: SoundSetId, name: SoundName, value = 0): void {
-    if (!this.enabled || this.ctx?.state !== 'running') return;
-    this.schedule(name, value, set, false);
-  }
-
-  /**
    * Debug only (`window.__game.renderPeak()`, M9 acceptance): renders sounds that all start at
    * once through the same throttle, mixer and limiter into an OfflineAudioContext, and returns
    * the output's peak (≥ 1 would clip). Deterministic and needs no audio device.
@@ -134,17 +104,17 @@ export class AudioEngine implements Sfx {
     return peak;
   }
 
-  private schedule(name: SoundName, value: number, set = this.soundSet, throttled = true): void {
+  private schedule(name: SoundName, value: number): void {
     const ctx = this.ctx;
     const master = this.master;
     const noise = this.noise;
     if (!ctx || !master || !noise) return;
-    if (throttled && !this.throttle.allow(name, ctx.currentTime * 1000)) return;
+    if (!this.throttle.allow(name, ctx.currentTime * 1000)) return;
     const out = ctx.createGain();
-    out.gain.value = SOUNDS[name].volume * (SET_GAIN[set][name] ?? 1);
+    out.gain.value = SOUNDS[name].volume;
     out.connect(master);
     try {
-      RECIPE_SETS[set][name]({ ctx, out, t: ctx.currentTime + 0.005, noise }, value);
+      RECIPES[name]({ ctx, out, t: ctx.currentTime + 0.005, noise }, value);
     } catch {
       // A broken audio stack never breaks the game.
     }

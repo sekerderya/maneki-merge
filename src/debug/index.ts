@@ -10,7 +10,6 @@ import type { UrlFlags } from '../core/urlFlags';
 import type { GameView } from '../game';
 import type { GameSession } from '../session';
 import { button, el } from '../ui/dom';
-import { createSoundBoard } from './soundBoard';
 import type { ScreenId } from '../ui/screenManager';
 
 /** The stage jump lists stages 2 to this + 1 (the jar grows at 5, 10, 15 and 20). */
@@ -507,7 +506,6 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
   bell.title = 'Drops left on the bell';
   const die = el('select', 'debug-input');
   for (const face of ['lucky', 'fizzle', 'normal']) die.append(new Option(face, face));
-  const openSoundBoard = createSoundBoard(ctx.audio);
 
   body.append(
     stats,
@@ -579,7 +577,6 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
       action('Game over', () => hooks.forceGameOver()),
     ),
     row(
-      action('Sounds', openSoundBoard),
       action('Danger timeout', () => hooks.forceDangerTimeout()),
       action('Reset save', () => {
         if (window.confirm('Reset the save?')) hooks.resetSave();

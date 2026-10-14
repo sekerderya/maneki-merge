@@ -124,7 +124,7 @@ async function boot(): Promise<void> {
   if (flags.scenes !== null) scenesSwitch.set(flags.scenes);
 
   // Sound and haptics (GAME_DESIGN §12): audio unlocks on the first tap (iOS needs a gesture).
-  const audio = new AudioEngine(undefined, flags.sfx ?? undefined);
+  const audio = new AudioEngine();
   audio.setEnabled(profile.settings.sound);
   audio.listen();
   const haptics = Haptics.forNavigator();

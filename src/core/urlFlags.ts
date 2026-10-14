@@ -1,5 +1,3 @@
-import { SOUND_SETS } from '../config/soundSets';
-import type { SoundSetId } from '../config/soundSets';
 import { MAX_RENDER_RESOLUTION } from '../config/view';
 
 /** Skins that `?skin=` may force: `art` is the default, `vector` the code-drawn cats of v0.11–v0.15. */
@@ -34,8 +32,6 @@ export interface UrlFlags {
    * device remembers it. Null when absent or malformed.
    */
   readonly scenes: boolean | null;
-  /** `?sfx=<set>`: plays the classic or the soft sound set (GAME_DESIGN §12), or null for the default. */
-  readonly sfx: SoundSetId | null;
 }
 
 const MAX_SEED = 0xffffffff;
@@ -51,7 +47,6 @@ export function parseUrlFlags(search: string): UrlFlags {
     gravity: parseGravity(params.get('gravity')),
     interpolate: !parseOff(params.get('interp')),
     scenes: parseSwitch(params.get('scenes')),
-    sfx: parseSoundSet(params.get('sfx')),
   };
 }
 
@@ -102,10 +97,4 @@ function parseSkin(value: string | null): SkinId | null {
   if (value === null) return null;
   const normalized = value.trim().toLowerCase();
   return (SKIN_IDS as readonly string[]).includes(normalized) ? (normalized as SkinId) : null;
-}
-
-function parseSoundSet(value: string | null): SoundSetId | null {
-  if (value === null) return null;
-  const normalized = value.trim().toLowerCase();
-  return (SOUND_SETS as readonly string[]).includes(normalized) ? (normalized as SoundSetId) : null;
 }
