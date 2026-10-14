@@ -234,12 +234,15 @@ export class Profile {
   }
 
   /**
-   * Back to a fresh save (debug "Reset save"), written at once; with `coins` in the wallet (the
-   * tester reset, GAME_DESIGN §2.4).
+   * Back to a fresh save (debug "Reset save"), written at once; the tester reset (GAME_DESIGN
+   * §2.4) starts it with `coins` in the wallet and `bestStage` as the best stage.
    */
-  reset(coins = 0): void {
+  reset(coins = 0, bestStage: number = FIRST_STAGE): void {
     this.state = defaultSave();
     if (validAmount(coins)) this.state.wallet.coins = coins;
+    if (Number.isInteger(bestStage) && bestStage > FIRST_STAGE) {
+      this.state.records.bestStage = bestStage;
+    }
     this.dirty = true;
     this.flush();
   }

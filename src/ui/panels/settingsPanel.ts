@@ -26,7 +26,7 @@ export interface SettingsActions {
   onReplayTips(): void;
   /**
    * Seven quick taps on the version: the tester reset (GAME_DESIGN §2.4), a fresh save with a
-   * million coins and the menu's Scenes button on (§2.6).
+   * million coins and every upgrade open, and the menu's Scenes button on (§2.6).
    */
   onTesterReset(): void;
   onClose(): void;

@@ -249,16 +249,19 @@ describe('Profile: wallet, records and stats (GAME_DESIGN §5, §11)', () => {
     expect(scheduler.pendingTimers).toBe(0);
   });
 
-  it('resets with coins in the wallet for the tester reset (GAME_DESIGN §2.4)', () => {
+  it('resets with coins and a best stage for the tester reset (GAME_DESIGN §2.4)', () => {
     const { profile, store } = setup();
     profile.earn(50);
     profile.setBestStage(4);
-    profile.reset(1_000_000);
+    profile.reset(1_000_000, 20);
     expect(profile.coins).toBe(1_000_000);
-    expect(profile.records.bestStage).toBe(1);
+    expect(profile.records.bestStage).toBe(20);
+    expect(profile.records.bestScore).toBe(0);
+    const fresh = defaultSave();
     expect(store.last).toEqual({
-      ...defaultSave(),
-      wallet: { ...defaultSave().wallet, coins: 1_000_000 },
+      ...fresh,
+      wallet: { ...fresh.wallet, coins: 1_000_000 },
+      records: { ...fresh.records, bestStage: 20 },
     });
   });
 });

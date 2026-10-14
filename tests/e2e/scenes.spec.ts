@@ -37,7 +37,13 @@ test('the Scenes button is off until ?scenes=1 or the tester reset turn it on', 
   for (let i = 0; i < 7; i++) await version.click();
   await page.waitForFunction(() => window.__game?.state().wallet === 1_000_000, null, WAIT);
   await expect(page.getByTestId('scenes')).toBeVisible();
-  expect(await page.evaluate(() => window.__game!.state().bestStage)).toBe(1);
+  // Every upgrade opens: the best stage counts as 20, past every card's gate.
+  expect(await page.evaluate(() => window.__game!.state().bestStage)).toBe(20);
+  await expect(page.getByTestId('best-stage')).toHaveText('20');
+  await page.getByTestId('upgrades').click();
+  await expect(page.getByTestId('shop')).toBeVisible();
+  await expect(page.locator('[data-testid^="shop-card-"][data-state="locked"]')).toHaveCount(0);
+  await page.getByTestId('shop-close').click();
   expect(await page.evaluate((key) => localStorage.getItem(key), SCENES_KEY)).toBe('1');
   await page.reload();
   await expect(page.getByTestId('scenes')).toBeVisible();

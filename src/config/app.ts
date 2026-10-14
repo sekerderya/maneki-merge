@@ -30,11 +30,13 @@ export const RUN_SAVE_KEY = `${STORAGE_PREFIX}run`;
 export const SCENES_KEY = `${STORAGE_PREFIX}scenes`;
 /**
  * The tester reset (GAME_DESIGN §2.4): this many taps on the version in Settings, each within the
- * window of the last, start the save over with `TESTER_RESET_COINS` and turn the Scenes button on.
+ * window of the last, start the save over with `TESTER_RESET_COINS` and the best stage at
+ * `TESTER_RESET_BEST_STAGE` (past every upgrade's gate), and turn the Scenes button on.
  */
 export const TESTER_RESET_TAPS = 7;
 export const TESTER_RESET_TAP_WINDOW_MS = 1500;
 export const TESTER_RESET_COINS = 1_000_000;
+export const TESTER_RESET_BEST_STAGE = 20;
 
 /** First-run hints (GAME_DESIGN §2.3); the save remembers which ones were seen. */
 export const HINT_IDS = ['aim', 'merge', 'magnet', 'curse'] as const;

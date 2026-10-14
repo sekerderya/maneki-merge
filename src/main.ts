@@ -31,7 +31,7 @@ import {
   watchPhoneLandscape,
 } from './platform';
 import { GameSession } from './session';
-import { TESTER_RESET_COINS } from './config/app';
+import { TESTER_RESET_BEST_STAGE, TESTER_RESET_COINS } from './config/app';
 import { CUTOUT_RECHECK_MS, UPDATE_LAUNCH_APPLY_MS } from './config/platform';
 import { setIconSkin } from './ui/catIcon';
 import { byId } from './ui/dom';
@@ -258,7 +258,7 @@ async function boot(): Promise<void> {
       onTesterReset: () => {
         // The run ends first, so the page hide doesn't save it again (as the debug Reset save).
         session.endRun();
-        session.profile.reset(TESTER_RESET_COINS);
+        session.profile.reset(TESTER_RESET_COINS, TESTER_RESET_BEST_STAGE);
         scenesSwitch.set(true);
         window.location.reload();
       },
