@@ -111,8 +111,8 @@ export const DANGER_TICK_HZ = [1320, 1100, 940] as const;
  */
 export const MUSIC = {
   file: 'assets/music/koto-garden.mp3',
-  /** v0.47.1: 0.3 was too loud (the owner's call); 8 dB lower. */
-  volume: 0.12,
+  /** The owner found 0.3 (v0.47.0) and 0.12 (v0.47.1) too loud; v0.47.2 is 17.5 dB under 0.3. */
+  volume: 0.04,
   loopStartS: 12.187574,
   loopEndS: 97.752789,
   /** Fades when the music starts, and when it is switched off. */
