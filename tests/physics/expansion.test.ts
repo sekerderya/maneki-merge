@@ -60,7 +60,9 @@ function ticks(run: RunController, n: number): void {
 /** One tick, or, while a stage clear's pick waits, its first option (GAME_DESIGN §15.5). */
 function step(run: RunController): void {
   const offer = run.pickOffer;
-  if (run.state === 'choosing' && offer) run.choose(offer.options[0]!);
+  // Heavy Drop's fireballs may go faster than the speed limit (GAME_DESIGN §15.9): not taken here.
+  const pick = offer?.options.find((id) => id !== 'heavyDrop') ?? offer?.options[0];
+  if (run.state === 'choosing' && pick) run.choose(pick);
   else run.tick();
 }
 

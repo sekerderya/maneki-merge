@@ -19,7 +19,7 @@ import type { UpgradeLevels } from '../../src/core/upgrades';
 import { RunController } from '../../src/run/RunController';
 import type { RunOptions } from '../../src/run/RunController';
 import { MAGNET_TAKE_MS } from '../../src/config/timings';
-import { PICKS, RULE_IDS, TRIAL_IDS } from '../../src/config/picks';
+import { FIRST_TRIAL_CLEAR, PICKS, RULE_IDS, TRIAL_IDS } from '../../src/config/picks';
 import type { PickId } from '../../src/config/picks';
 import { MAX_DROP_RADIUS } from '../../src/physics/geometry';
 
@@ -440,15 +440,16 @@ describe('stage clears (GAME_DESIGN §7)', () => {
   });
 
   it('offers blessings only up to their shop cards', () => {
-    // A fresh profile has Golden Cats and Big Drops at 1: two blessings, then trials only.
+    // A fresh profile has Golden Cats and Big Drops at 1: two blessings, then trials only. The
+    // first clear offers only a blessing (FIRST_TRIAL_CLEAR).
     const { run } = setup({ instantExpansion: true });
     const picks: PickId[][] = [];
     for (let stage = 1; stage <= 4; stage++) {
       makeLastCat(run);
       picks.push(chooseAll(run));
     }
-    expect(picks.map((p) => p.length)).toEqual([2, 2, 1, 1]);
-    expect(picks.flatMap((p) => p.slice(1)).sort()).toEqual(['bigDrops', 'goldenCats']);
+    expect(picks.map((p) => p.length)).toEqual([1, 2, 1, 1]);
+    expect([picks[0]![0], picks[1]![1]].sort()).toEqual(['bigDrops', 'goldenCats']);
     expect(run.pickLevels.goldenCats).toBe(1);
     expect(run.pickLevels.bigDrops).toBe(1);
   });
@@ -458,10 +459,11 @@ describe('stage clears (GAME_DESIGN §7)', () => {
     for (let stage = 1; stage <= 11; stage++) {
       expect(run.stage).toBe(stage);
       makeLastCat(run);
-      expect(chooseAll(run)).toHaveLength(2);
+      // Only a blessing at the first clear; then a trial (or a rule) and a blessing.
+      expect(chooseAll(run)).toHaveLength(stage < FIRST_TRIAL_CLEAR ? 1 : 2);
     }
     expect(run.stage).toBe(12);
-    // A trial and a blessing at each of the first clears, until the options run out.
+    // A trial and a blessing at each of the next clears, until the options run out.
     const levels = Object.values(run.pickLevels);
     expect(levels.reduce((a, b) => a + b, 0)).toBeGreaterThanOrEqual(8);
     expect(of('stageCleared').map((e) => e.grows)).toEqual(

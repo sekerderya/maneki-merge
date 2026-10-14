@@ -38,6 +38,7 @@ import {
   CURSE_STONE_HITS,
   ECHO_MAX_SIZE,
   ECHO_MIN_SIZE,
+  FIRST_TRIAL_CLEAR,
   HANABI_REACH,
   HANABI_SIZE,
   HUBRIS_MAX_SIZE,
@@ -787,12 +788,12 @@ export class RunController {
   }
 
   /**
-   * Debug: opens a stage clear's picks now, as at a clear that grows the jar (a rule first) when
-   * `grows`; play goes on in the same stage after them.
+   * Debug: opens a stage clear's picks now, as at a later stage's clear (a trial first), or at a
+   * clear that grows the jar (a rule first) when `grows`; play goes on in the same stage after them.
    */
   offerPicks(grows = false): void {
     if (this.runState !== 'playing') return;
-    this.beginPicks(grows);
+    this.beginPicks(grows, FIRST_TRIAL_CLEAR);
   }
 
   /** Sets the run score (it only counts for records). */
@@ -1558,11 +1559,12 @@ export class RunController {
   // ── Trials and blessings (GAME_DESIGN §15.5) ───────────────────────────────
 
   /**
-   * Starts a stage clear's picks: a rule first when the clear grows the jar, else a trial
-   * (`pickOrder`). Returns false when every option is maxed (nothing to pick).
+   * Starts the picks at the clear of stage `cleared`: a rule first when the clear grows the jar,
+   * else a trial, and only a blessing at the first clears (`pickOrder`). Returns false when every
+   * option is maxed (nothing to pick).
    */
-  private beginPicks(grows: boolean): boolean {
-    this.pickQueue = [...pickOrder(grows)];
+  private beginPicks(grows: boolean, cleared: number): boolean {
+    this.pickQueue = [...pickOrder(grows, cleared)];
     return this.offerNextPick();
   }
 
@@ -1662,7 +1664,7 @@ export class RunController {
         this.pop([...this.world.balls], 'cashOut');
         if (!e.grows) {
           // The picks (time stands still), then the next stage in the same jar.
-          if (e.picks && this.beginPicks(e.grows)) return;
+          if (e.picks && this.beginPicks(e.grows, e.from)) return;
           this.moveOn(e);
           return;
         }
@@ -1675,7 +1677,7 @@ export class RunController {
     }
     if (e.elapsedSteps < EXPANSION_STEPS) return;
     // The grown jar's picks; `choose` goes on after the last one.
-    if (e.picks && this.beginPicks(e.grows)) return;
+    if (e.picks && this.beginPicks(e.grows, e.from)) return;
     this.finishExpansion(e);
   }
 

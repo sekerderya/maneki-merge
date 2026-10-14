@@ -225,11 +225,19 @@ export type PickId = TrialId | BlessingId | RuleId;
 export type PickKind = 'trial' | 'blessing' | 'rule';
 
 /**
- * The order of a stage clear's picks (GAME_DESIGN §15.5): a trial, then a blessing; at a clear
- * that grows the jar (every JAR_GROWTH_STAGES stages) a rule takes the trial's place. A rule pick
- * with no rule left offers a trial instead (RunController).
+ * The first stage whose clear offers a trial (GAME_DESIGN §15.5, v0.49): the earlier clears offer
+ * only a blessing, so a new player's first jar ends with a gift.
  */
-export function pickOrder(grows: boolean): readonly PickKind[] {
+export const FIRST_TRIAL_CLEAR = 2;
+
+/**
+ * The order of the picks at the clear of stage `cleared` (GAME_DESIGN §15.5): a trial, then a
+ * blessing; at a clear that grows the jar (every JAR_GROWTH_STAGES stages) a rule takes the
+ * trial's place. A rule pick with no rule left offers a trial instead (RunController). Before
+ * FIRST_TRIAL_CLEAR there is only the blessing.
+ */
+export function pickOrder(grows: boolean, cleared: number): readonly PickKind[] {
+  if (cleared < FIRST_TRIAL_CLEAR) return ['blessing'];
   return grows ? ['rule', 'blessing'] : ['trial', 'blessing'];
 }
 

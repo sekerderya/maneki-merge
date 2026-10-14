@@ -131,9 +131,10 @@ describe('saved runs (GAME_DESIGN §11)', () => {
     expect(back.expansion?.phase).toBe('clear');
     back.resume();
     expect(back.state).toBe('choosing');
+    // Stage 1's clear offers only a blessing (GAME_DESIGN §15.5).
+    expect(offer.kind).toBe('blessing');
     expect(back.choose(offer.options[0]!)).toBe(true);
-    expect(back.state).toBe('choosing');
-    expect(back.choose(back.pickOffer!.options[0]!)).toBe(true);
+    expect(back.pickOffer).toBeNull();
     for (let i = 0; i < 2000 && back.state !== 'playing'; i++) back.tick();
     expect(back.stage).toBe(2);
     expect(back.canDrop || back.canTake || back.cooldownRemainingMs >= 0).toBe(true);

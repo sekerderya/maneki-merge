@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   BLESSING_IDS,
+  FIRST_TRIAL_CLEAR,
   PICK_IDS,
   pickIds,
   pickOrder,
@@ -65,8 +66,14 @@ describe('the trials, rules and blessings (GAME_DESIGN §15.5)', () => {
   });
 
   it('offers a trial then a blessing, and a rule instead of the trial when the jar grows', () => {
-    expect(pickOrder(false)).toEqual(['trial', 'blessing']);
-    expect(pickOrder(true)).toEqual(['rule', 'blessing']);
+    expect(pickOrder(false, 2)).toEqual(['trial', 'blessing']);
+    expect(pickOrder(true, 5)).toEqual(['rule', 'blessing']);
+    expect(pickOrder(false, 9)).toEqual(['trial', 'blessing']);
+  });
+
+  it("offers only a blessing at stage 1's clear", () => {
+    expect(FIRST_TRIAL_CLEAR).toBe(2);
+    expect(pickOrder(false, 1)).toEqual(['blessing']);
   });
 
   it.each(TABLE)('%s: a %s, %s, max %i, %f per level', (id, kind, name, max, perLevel) => {
