@@ -132,6 +132,13 @@ test('the goal strip shows the stage, its cats and the ones the stage has had', 
   await expect(goal.locator('.cat-icon.is-unmade')).toHaveCount(4);
   await page.evaluate(() => window.__game?.spawnTier(8, 120, -window.__game.radiusOf(8)));
   await expect(goal.locator('.cat-icon.is-unmade')).toHaveCount(1);
-  await expect(goal.locator('.hud-goal-slot')).toHaveClass(/is-near/);
+  const slot = goal.locator('.hud-goal-slot');
+  await expect(slot).toHaveClass(/is-near/);
+  // It breathes three times and rests (v0.50.2): a running animation restyles the HUD every frame.
+  expect(await slot.evaluate((node) => node.getAnimations().length)).toBe(1);
+  await expect
+    .poll(() => slot.evaluate((node) => node.getAnimations().length), { timeout: 15_000 })
+    .toBe(0);
+  await expect(slot).toHaveClass(/is-near/);
   expect(errors).toEqual([]);
 });

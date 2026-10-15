@@ -116,7 +116,7 @@ export function createHud(root: HTMLElement, actions: HudActions, art = false): 
   const paintGoal = (best: number, pop: boolean): void => {
     cats.forEach((cat, i) => {
       const made = i < best;
-      if (pop && made && i >= goalBest) restartAnimation(cat, 'is-reached');
+      if (pop && made && i >= goalBest) playAnimation(cat, 'is-reached');
       cat.classList.toggle('is-unmade', !made);
     });
     // One cat to go: the stage has made a size 8.
@@ -163,8 +163,20 @@ export function createHud(root: HTMLElement, actions: HudActions, art = false): 
     void node.offsetWidth; // restart the CSS animation
     node.classList.add(className);
   }
+  /**
+   * Starts a CSS animation by adding its class, without restarting it the costly way: reading
+   * offsetWidth lays the page out in the middle of the game's frame (the goal strip's pops come
+   * from a merge in the physics step). Only one still running restarts like that.
+   */
+  function playAnimation(node: HTMLElement, className: string): void {
+    if (node.classList.contains(className)) restartAnimation(node, className);
+    else node.classList.add(className);
+  }
   for (const cat of cats) {
-    cat.addEventListener('animationend', () => cat.classList.remove('is-reached'));
+    // Cancelled when the game screen hides mid-pop: the class goes too, so the next pop plays.
+    const done = (): void => cat.classList.remove('is-reached');
+    cat.addEventListener('animationend', done);
+    cat.addEventListener('animationcancel', done);
   }
   coinsCard.addEventListener('animationend', () => coinsCard.classList.remove('is-pulsing'));
   nextCat.addEventListener('animationend', () => nextCat.classList.remove('is-copied'));

@@ -466,9 +466,11 @@
   }
 }
 
-/* One cat to go (a size 8 is in the jar): the goal's ring breathes. */
+/* One cat to go (a size 8 is in the jar): the goal's ring breathes three times, then rests. Not
+   for good: a running CSS animation makes the browser restyle the HUD every frame, which made
+   phones stutter for the whole second half of a stage (v0.50.2). */
 .hud-goal-slot.is-near {
-  animation: goal-near 1100ms ease-in-out infinite alternate;
+  animation: goal-near 1100ms ease-in-out 6 alternate;
 }
 
 @keyframes goal-near {
