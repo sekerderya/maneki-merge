@@ -8,7 +8,8 @@
  */
 .settings-overlay.is-art,
 .pause-overlay.is-art,
-.game-over-overlay.is-art {
+.game-over-overlay.is-art,
+.ad-offer-overlay.is-art {
   container-type: inline-size;
   padding: calc(var(--safe-top) + 16px) var(--safe-right) calc(var(--safe-bottom) + 16px)
     var(--safe-left);
@@ -17,7 +18,8 @@
 
 .settings-overlay.is-art .settings-card,
 .pause-overlay.is-art .overlay-panel,
-.game-over-overlay.is-art .overlay-panel {
+.game-over-overlay.is-art .overlay-panel,
+.ad-offer-overlay.is-art .overlay-panel {
   --u: calc(min(100cqw, 520px) / var(--shop-mockup-w));
   /* Card art pixels → CSS px, as on the Upgrades cards, so the outlines match. */
   --s: calc(677 * var(--u) / var(--shop-card-w));
@@ -37,7 +39,8 @@
 /* Titles: the Upgrades title's lettering, cream with a dark-brown edge, on the card itself. */
 .settings-overlay.is-art .settings-title,
 .pause-overlay.is-art .overlay-title,
-.game-over-overlay.is-art .overlay-title {
+.game-over-overlay.is-art .overlay-title,
+.ad-offer-overlay.is-art .overlay-title {
   margin: 0;
   color: #fbe7c6;
   font-size: calc(76 * var(--u));
@@ -48,9 +51,10 @@
   text-shadow: 0 calc(5 * var(--u)) 0 #4e2416;
 }
 
-/* Pause and Game Over: a column of pills. */
+/* Pause, Game Over and the ad's card: a column of pills. */
 .pause-overlay.is-art .overlay-panel,
-.game-over-overlay.is-art .overlay-panel {
+.game-over-overlay.is-art .overlay-panel,
+.ad-offer-overlay.is-art .overlay-panel {
   gap: calc(18 * var(--u));
   padding: calc(46 * var(--u)) calc(60 * var(--u)) calc(var(--strip) + 2 * var(--u));
 }
@@ -60,7 +64,8 @@
 }
 
 .pause-overlay.is-art .btn,
-.game-over-overlay.is-art .btn {
+.game-over-overlay.is-art .btn,
+.ad-offer-overlay.is-art .btn {
   --h: calc(100 * var(--u));
   min-height: max(var(--h), 48px);
   padding: 0 calc(24 * var(--u)) calc(8 * var(--u));
@@ -75,9 +80,10 @@
   text-shadow: none;
 }
 
-/* Resume and Play Again: the menu's coral PLAY pill. */
+/* Resume, Play Again and Watch ad: the menu's coral PLAY pill. */
 .pause-overlay.is-art .overlay-main-btn,
-.game-over-overlay.is-art .overlay-main-btn {
+.game-over-overlay.is-art .overlay-main-btn,
+.ad-offer-overlay.is-art .overlay-main-btn {
   --h: calc(116 * var(--u));
   padding-bottom: calc(10 * var(--u));
   border-image: var(--shop-play-art) 0 var(--shop-play-slice) fill / 0
@@ -286,4 +292,47 @@
   color: #8a6a55;
   font-size: calc(26 * var(--u));
   font-weight: var(--weight-semibold);
+}
+
+/* The rewarded ad's card (GAME_DESIGN §2.7): the ball it gives and one line, in the cards' brown. */
+.ad-offer-overlay.is-art .ad-offer-ball .cat-icon {
+  --size: calc(150 * var(--u));
+}
+
+.ad-offer-overlay.is-art .ad-offer-line {
+  max-width: none;
+  color: #4e2416;
+  font-size: calc(36 * var(--u));
+}
+
+.ad-offer-overlay.is-art .ad-offer-watch {
+  gap: calc(14 * var(--u));
+}
+
+.ad-offer-overlay.is-art .ad-offer-play {
+  width: calc(64 * var(--u));
+  height: calc(64 * var(--u));
+  background: none;
+}
+
+/* Game Over's Double coins: the gold Buy pill, with the play medallion. */
+.game-over-overlay.is-art .go-double {
+  gap: calc(14 * var(--u));
+  border-image: var(--shop-buy-art) 0 var(--shop-buy-slice) fill / 0
+    calc(var(--h) * var(--shop-buy-cap)) stretch;
+}
+
+.game-over-overlay.is-art .go-double .ad-offer-play {
+  width: calc(56 * var(--u));
+  height: calc(56 * var(--u));
+  background: none;
+}
+
+/* Its title can be long ("A free Lightning ball!"): smaller, and on two lines when it must. */
+.ad-offer-overlay.is-art .overlay-title {
+  max-width: 100%;
+  font-size: calc(62 * var(--u));
+  line-height: 1.1;
+  text-align: center;
+  white-space: normal;
 }

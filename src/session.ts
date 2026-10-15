@@ -5,6 +5,8 @@
  * run decides the rules, the profile keeps what lasts, the game scene draws it, the DOM shows
  * its state; this file only connects them.
  */
+import { AD_BALL_NAMES } from './config/ads';
+import type { AdBallKind } from './config/ads';
 import { COMBO_BANNER_MIN } from './config/economy';
 import {
   BANNER_JAR_OFFSET,
@@ -37,6 +39,7 @@ import type { Profile, Records, Settings } from './core/profile';
 import type { RunSave } from './core/runSave';
 import { comboBonus } from './core/upgrades';
 import type { GameView } from './game';
+import type { RewardedAds } from './platform';
 import { resumeProfileRun, startProfileRun } from './run/profileRun';
 import { startScenarioRun } from './run/scenario';
 import type { RunController } from './run/RunController';
@@ -45,6 +48,7 @@ import type { HintView } from './ui/banners/hint';
 import type { CoinFlyView } from './ui/fx/coinFly';
 import type { DoorsView } from './ui/fx/doors';
 import type { HudView } from './ui/hud/hud';
+import type { AdOfferView } from './ui/overlays/adOfferOverlay';
 import type { GameOverView } from './ui/overlays/gameOverOverlay';
 import type { PauseView } from './ui/overlays/pauseOverlay';
 import type { PickView } from './ui/overlays/pickOverlay';
@@ -72,6 +76,10 @@ export interface SessionParts {
   readonly doors: DoorsView;
   /** The cards that bring a hazard or a rule in as a stage opens (GAME_DESIGN §15.5). */
   readonly introCard: { readonly visible: boolean; show(card: IntroCard): void; hide(): void };
+  /** Rewarded ads (TECH_SPEC §16): none ready on the web, so nothing of GAME_DESIGN §2.7 shows. */
+  readonly ads: RewardedAds;
+  /** The card that offers a rewarded ad (GAME_DESIGN §2.7). */
+  readonly adOffer: AdOfferView;
   /** The garden behind the jar: a new one each time the jar grows (GAME_DESIGN §7). */
   readonly scenery: {
     setJar(jar: number, grow: boolean, newRun?: boolean): void;
@@ -127,9 +135,15 @@ export class GameSession {
    * nothing it earns reaches the profile, it is never saved, and it shows no first-run hints.
    */
   private scenario: ScenarioDef | null = null;
+  /** A rewarded ad is offered or showing (GAME_DESIGN §2.7): no second one meanwhile. */
+  private adBusy = false;
+  /** The coins Game Over's Double coins would pay once more; 0 when it can't (or did). */
+  private doubleCoinsFor = 0;
 
   constructor(private readonly parts: SessionParts) {
     this.recordsBefore = parts.profile.records;
+    // The ads' options follow whether an ad is ready (online, consent, loaded).
+    parts.ads.onChange(() => this.refreshAds());
     // Coins fly from wherever the scene shows a payout to the HUD counter: a shower for a
     // Jackpot, three coins for a golden merge.
     parts.game.onCoins((x, y, kind) => {
@@ -325,6 +339,100 @@ export class GameSession {
     this.parts.game.confirmTake();
   }
 
+  /**
+   * The bonus ball's bubble (GAME_DESIGN §2.7): time holds while its card asks; after the ad's
+   * reward the ball goes straight into the paw.
+   */
+  async offerBonus(): Promise<void> {
+    const run = this.current;
+    const ball = run?.adBall;
+    if (!run || !ball || this.adBusy || run.state !== 'playing') return;
+    if (!this.parts.ads.ready('specialBall')) return;
+    this.adBusy = true;
+    this.holding = true;
+    run.pause();
+    this.refreshAds();
+    const choice = await this.parts.adOffer.ask({
+      title: `A free ${AD_BALL_NAMES[ball.kind as AdBallKind]}!`,
+      line: 'Watch a short ad and it goes straight into your paw.',
+      ball,
+      decline: 'Not now',
+    });
+    if (choice === 'watch' && this.current === run) {
+      const result = await this.parts.ads.show('specialBall');
+      if (result === 'rewarded' && this.current === run && run.giveAdBall()) {
+        this.parts.feedback.play('chime');
+      }
+    }
+    this.adBusy = false;
+    if (this.current === run) {
+      this.holding = false;
+      if (!this.parts.pause.visible) run.resume();
+    }
+    this.refreshAds();
+  }
+
+  /**
+   * Out of room with no Lucky Save left, once per run (GAME_DESIGN §2.7): the card asks; after the
+   * ad's reward one more Lucky Save, otherwise the run ends.
+   */
+  private async offerLastChance(run: RunController): Promise<void> {
+    this.parts.hint.hide();
+    this.parts.banners.combo(0);
+    this.adBusy = true;
+    this.refreshAds();
+    const choice = await this.parts.adOffer.ask({
+      title: 'Out of room!',
+      line: 'Watch a short ad for one more Lucky Save.',
+      decline: 'No thanks',
+    });
+    const rewarded =
+      choice === 'watch' &&
+      this.current === run &&
+      (await this.parts.ads.show('luckySave')) === 'rewarded';
+    this.adBusy = false;
+    if (this.current !== run) return;
+    if (rewarded) run.takeLastChance();
+    else run.declineLastChance();
+    this.refreshAds();
+  }
+
+  /** Game Over's Double coins (GAME_DESIGN §2.7): after the ad's reward the run's coins again. */
+  async doubleCoins(): Promise<void> {
+    const coins = this.doubleCoinsFor;
+    if (coins <= 0 || this.adBusy || !this.parts.ads.ready('doubleCoins')) return;
+    this.adBusy = true;
+    this.refreshAds();
+    const result = await this.parts.ads.show('doubleCoins');
+    this.adBusy = false;
+    if (result === 'rewarded' && this.doubleCoinsFor === coins && this.parts.gameOver.visible) {
+      this.doubleCoinsFor = 0;
+      this.parts.profile.earn(coins);
+      this.parts.profile.flush();
+      this.parts.gameOver.coinsDoubled(coins * 2);
+      this.parts.feedback.play('jackpot');
+      this.parts.onProfileChange();
+    }
+    this.refreshAds();
+  }
+
+  /**
+   * The ads' options follow the run and whether an ad is ready: the bonus ball's bubble while the
+   * stage is played, one more Lucky Save, Game Over's Double coins. None in a scene.
+   */
+  private refreshAds(): void {
+    const { ads, hud, gameOver } = this.parts;
+    const run = this.current;
+    const free = !this.scenario && !this.adBusy;
+    const ball =
+      run && free && !this.holding && run.state === 'playing' && ads.ready('specialBall')
+        ? run.adBall
+        : null;
+    hud.setBonus(ball);
+    run?.setLastChanceReady(!this.scenario && ads.ready('luckySave'));
+    gameOver.setDoubleCoins(free && this.doubleCoinsFor > 0 && ads.ready('doubleCoins'));
+  }
+
   /** Writes everything pending, the run in progress too (backgrounding, page hide). */
   save(): boolean {
     const ok = this.parts.profile.flush();
@@ -426,6 +534,8 @@ export class GameSession {
   /** Clears what the last run left on screen. */
   private reset(): void {
     const { hint, banners, coins, pause, gameOver, picks, doors } = this.parts;
+    this.parts.adOffer.decline();
+    this.doubleCoinsFor = 0;
     this.heldPick = null;
     this.clearStageOpening();
     this.clearedAt = 0;
@@ -613,6 +723,20 @@ export class GameSession {
       this.releasePick(run);
     });
     events.on('gameOver', (e) => this.onGameOver(e));
+    // Rewarded ads (GAME_DESIGN §2.7): the bonus ball's bubble follows the stage's drops and the
+    // run's state; out of room, one more Lucky Save may be asked for.
+    for (const type of [
+      'catDropped',
+      'adBallGiven',
+      'stageCleared',
+      'expansionFinished',
+      'paused',
+      'resumed',
+    ] as const) {
+      events.on(type, () => this.refreshAds());
+    }
+    events.on('lastChanceOffered', () => void this.offerLastChance(run));
+    this.refreshAds();
 
     // A scene shows no first-run hints: its clips shouldn't have them.
     this.hintTimer = 0;
@@ -691,6 +815,8 @@ export class GameSession {
   /** Leaves the game for the menu: the run ends (its coins are already banked). */
   endRun(): void {
     window.clearTimeout(this.hintTimer);
+    this.parts.adOffer.decline();
+    this.doubleCoinsFor = 0;
     this.parts.pause.hide();
     this.parts.gameOver.hide();
     this.parts.picks.hide();
@@ -706,15 +832,23 @@ export class GameSession {
     this.parts.game.sleep();
     this.current = null;
     this.scenario = null;
+    this.refreshAds();
     // Quitting ends the run: it doesn't come back on the next launch.
     this.parts.runSave.clear();
     this.save();
     this.parts.onProfileChange();
   }
 
-  /** Back in the game: game → pause; pause or game over → menu; a stage's card closes. */
+  /**
+   * Back in the game: game → pause; pause or game over → menu; a stage's card closes; an ad's card
+   * declines.
+   */
   onBack(): GameBackResult {
     if (this.parts.pause.visible || this.parts.gameOver.visible || !this.current) return 'menu';
+    if (this.parts.adOffer.visible) {
+      this.parts.adOffer.decline();
+      return 'stay';
+    }
     if (this.parts.introCard.visible) {
       this.closeIntroCard();
       return 'stay';
@@ -752,6 +886,9 @@ export class GameSession {
       coins: e.coins,
       records,
     });
+    // A scene's coins never reached the wallet: nothing to double.
+    this.doubleCoinsFor = this.scenario ? 0 : e.coins;
+    this.refreshAds();
     this.parts.onProfileChange();
   }
 }

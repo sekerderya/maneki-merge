@@ -113,6 +113,11 @@ export class DropQueue {
   private stageDrops = 0;
   private dropper: Drop;
   private upcoming: Drop;
+  /**
+   * The ball that goes back into the dropper after the current one (`cutIn`), ahead of NEXT, or
+   * null.
+   */
+  private held: Drop | null = null;
 
   constructor(options: DropQueueOptions) {
     this.rng = options.rng;
@@ -131,6 +136,11 @@ export class DropQueue {
   /** The ball after `current`. */
   get next(): Drop {
     return this.upcoming;
+  }
+
+  /** The ball waiting to come back to the dropper after the current one (`cutIn`), or null. */
+  get waiting(): Drop | null {
+    return this.held;
   }
 
   /** Balls handed out since the stage started. */
@@ -163,9 +173,25 @@ export class DropQueue {
   take(wanted: readonly number[] = []): Drop {
     const drop = this.dropper;
     this.stageDrops++;
+    if (this.held) {
+      // The ball that waited for a cut-in comes back; NEXT stays where it was, nothing is rolled.
+      this.dropper = this.held;
+      this.held = null;
+      return drop;
+    }
     this.dropper = this.upcoming;
     this.upcoming = this.generate(wanted);
     return drop;
+  }
+
+  /**
+   * Puts `drop` in the dropper ahead of its ball, which waits and comes back after it; NEXT stays
+   * as it is (the rewarded ad's bonus ball, GAME_DESIGN §2.7). With a ball already waiting, `drop`
+   * only takes the dropper's place.
+   */
+  cutIn(drop: Drop): void {
+    this.held ??= this.dropper;
+    this.dropper = drop;
   }
 
   /**
@@ -197,15 +223,20 @@ export class DropQueue {
     this.usePool(stage);
     this.dropper = { ...this.dropper, tier: this.dropper.tier + shift };
     this.upcoming = { ...this.upcoming, tier: this.upcoming.tier + shift };
+    if (this.held) this.held = { ...this.held, tier: this.held.tier + shift };
   }
 
   /**
    * A stage was cleared and the jar is empty (GAME_DESIGN §15.1): the drop count starts again, and
    * a queued magnet, hanabi or lightning ball becomes a cat of the pool's smallest tier, since it
-   * would have nothing to take, pop or strike.
+   * would have nothing to take, pop or strike. A cut-in one (the bonus ball, GAME_DESIGN §2.7) isn't
+   * lost: it swaps places with the ball waiting behind it, and comes after the stage's first drop.
    */
   newStage(): void {
     this.stageDrops = 0;
+    if (this.held && this.forEmptyJar(this.dropper) !== this.dropper) {
+      [this.dropper, this.held] = [this.held, this.dropper];
+    }
     this.dropper = this.forEmptyJar(this.dropper);
     this.upcoming = this.forEmptyJar(this.upcoming);
   }
@@ -217,6 +248,7 @@ export class DropQueue {
       next: this.upcoming,
       generated: this.generated,
       stageDrops: this.stageDrops,
+      ...(this.held ? { held: this.held } : {}),
     };
   }
 
@@ -227,6 +259,7 @@ export class DropQueue {
     this.upcoming = { ...saved.next };
     this.generated = saved.generated;
     this.stageDrops = saved.stageDrops;
+    this.held = saved.held ? { ...saved.held } : null;
   }
 
   private forEmptyJar(drop: Drop): Drop {

@@ -5,6 +5,7 @@ import {
   HUD_SPRITE_DIR,
 } from '../../config/hudSprites';
 import type { HudSprite } from '../../config/hudSprites';
+import { ICON_SPRITE_DIR, iconSprite } from '../../config/iconSprites';
 import { MENU_ART, MENU_SPRITE_DIR } from '../../config/menuSprites';
 import { stageInfo } from '../../config/stages';
 import { SIZE_COUNT } from '../../config/tiers';
@@ -13,12 +14,14 @@ import { formatNumber } from '../../core/format';
 import { catIcon, paintCatIcon, paintDropIcon } from '../catIcon';
 import { button, el } from '../dom';
 import { coinIcon } from '../coinIcon';
-import { ICON_PAUSE, NEXT_BUBBLE_BACK, NEXT_BUBBLE_SHINE } from '../icons';
+import { ICON_PAUSE, ICON_PLAY, NEXT_BUBBLE_BACK, NEXT_BUBBLE_SHINE } from '../icons';
 import { artImage } from '../uiArt';
 import { scoreCardLayout } from './scoreCard';
 
 export interface HudActions {
   onPause(): void;
+  /** The bonus ball's bubble (GAME_DESIGN §2.7): its ad is offered. */
+  onBonus(): void;
 }
 
 export interface HudView {
@@ -32,6 +35,8 @@ export interface HudView {
   setNext(drop: Drop): void;
   /** NEXT took another size (Copycat, GAME_DESIGN §15.13): its cat pops like a merged one. */
   popNext(): void;
+  /** The bonus ball a rewarded ad gives (GAME_DESIGN §2.7), or null to hide its bubble. */
+  setBonus(drop: Drop | null): void;
   /** A coin landed on the counter. */
   pulseCoins(): void;
   /** Where flying coins land. */
@@ -94,8 +99,29 @@ export function createHud(root: HTMLElement, actions: HudActions, art = false): 
   // "SCORE:" centred on top, the score in a well (with `art`, the card's image: ui/hud/scoreCard.ts).
   scoreCard.append(el('span', 'hud-label', 'Score'), score);
 
+  // The bonus ball a rewarded ad gives (GAME_DESIGN §2.7): NEXT's bubble mirrored on the left,
+  // under the score card, tagged "Bonus", with the play medallion. It shows only while an ad is
+  // ready, and is the one part of the HUD besides the pause button that takes a touch.
+  const bonus = button('hud-bonus', '');
+  bonus.dataset['testid'] = 'hud-bonus';
+  bonus.setAttribute('aria-label', 'Bonus ball: watch an ad');
+  bonus.hidden = true;
+  const bonusBubble = el('div', 'hud-next-bubble');
+  if (!art) bonusBubble.insertAdjacentHTML('beforeend', NEXT_BUBBLE_BACK);
+  const bonusCats = el('div', 'hud-next-cats');
+  const bonusBall = catIcon(1);
+  bonusCats.append(bonusBall);
+  bonusBubble.append(bonusCats);
+  if (!art) bonusBubble.insertAdjacentHTML('beforeend', NEXT_BUBBLE_SHINE);
+  const play = el('span', 'hud-bonus-play');
+  const playArt = art ? iconSprite('clip') : null;
+  if (playArt) play.append(artImage(`${ICON_SPRITE_DIR}${playArt.file}`, 'hud-bonus-play-art'));
+  else play.insertAdjacentHTML('beforeend', ICON_PLAY);
+  bonus.append(el('span', 'hud-next-label', 'Bonus'), bonusBubble, play);
+  bonus.addEventListener('click', actions.onBonus);
+
   const left = el('div', 'hud-left');
-  left.append(scoreCard);
+  left.append(scoreCard, bonus);
 
   // The goal strip (v0.48, the owner's mockup): the torii with the stage number, the stage's cats
   // in order, and its last cat, the goal, in a gold ring. Cats the stage hasn't had yet are pale.
@@ -202,6 +228,10 @@ export function createHud(root: HTMLElement, actions: HudActions, art = false): 
     },
     popNext() {
       restartAnimation(nextCat, 'is-copied');
+    },
+    setBonus(drop) {
+      if (drop) paintDropIcon(bonusBall, drop);
+      bonus.hidden = drop === null;
     },
     pulseCoins() {
       restartAnimation(coinsCard, 'is-pulsing');

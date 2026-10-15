@@ -411,3 +411,61 @@ describe('Copycat in the queue (GAME_DESIGN §15.13)', () => {
     expect(golden && special).toBe(true);
   });
 });
+
+describe('a cut-in ball (the bonus ball, GAME_DESIGN §2.7)', () => {
+  const joker: Drop = { kind: 'joker', tier: 2, golden: false, hits: 0 };
+  const magnet: Drop = { kind: 'magnet', tier: 3, golden: false, hits: 0 };
+
+  it('goes into the dropper; its ball waits and comes back after it; NEXT stays', () => {
+    const q = makeQueue();
+    const twin = makeQueue();
+    const cat = q.current;
+    const next = q.next;
+    q.cutIn(joker);
+    expect([q.current, q.next, q.waiting]).toEqual([joker, next, cat]);
+    expect(q.take()).toEqual(joker);
+    expect([q.current, q.next, q.waiting]).toEqual([cat, next, null]);
+    expect(q.dropsThisStage).toBe(1);
+    // Nothing was rolled for it: the queue goes on as it would have.
+    expect(takeMany(q, 30)).toEqual(takeMany(twin, 30));
+  });
+
+  it('a second cut-in only takes the dropper’s place', () => {
+    const q = makeQueue();
+    const cat = q.current;
+    q.cutIn(joker);
+    q.cutIn(magnet);
+    expect([q.current, q.waiting]).toEqual([magnet, cat]);
+  });
+
+  it('swaps with its waiting ball when the stage clears, so an empty jar starts with the cat', () => {
+    const q = makeQueue();
+    const cat = q.current;
+    q.cutIn(magnet);
+    q.newStage();
+    expect([q.current, q.waiting]).toEqual([cat, magnet]);
+    q.take();
+    expect(q.current).toEqual(magnet);
+  });
+
+  it('keeps a joker in the dropper at a new stage, and moves both with the pool', () => {
+    const q = makeQueue({ stage: 2 });
+    const cat = q.current;
+    q.cutIn({ ...joker, tier: stageInfo(2).firstTier + 1 });
+    q.newStage();
+    q.setStage(3);
+    const shift = stageInfo(3).firstTier - stageInfo(2).firstTier;
+    expect(q.current).toEqual({ ...joker, tier: stageInfo(3).firstTier + 1 });
+    expect(q.waiting).toEqual({ ...cat, tier: cat.tier + shift });
+  });
+
+  it('is kept by a snapshot, which has no held ball without one', () => {
+    const q = makeQueue();
+    expect('held' in q.snapshot()).toBe(false);
+    const cat = q.current;
+    q.cutIn(joker);
+    const back = makeQueue();
+    back.restore(JSON.parse(JSON.stringify(q.snapshot())), 1);
+    expect([back.current, back.waiting]).toEqual([joker, cat]);
+  });
+});

@@ -64,6 +64,7 @@ import type { AdService, InstallContext, Network, ServiceWorkerControls } from '
 import type { NativeApp } from './platform/native';
 import { AD_TESTING_DEVICES, AD_UNITS, TEST_AD_UNITS } from './config/ads';
 import { showFakeAd } from './ui/overlays/fakeAd';
+import { createAdOfferOverlay } from './ui/overlays/adOfferOverlay';
 
 /**
  * Boot order (TECH_SPEC §3): the loading screen (fonts, every image, a new version's install; in the
@@ -362,7 +363,11 @@ async function boot(): Promise<void> {
 
   const gameScreen = createGameScreen(
     byId('game-screen'),
-    { onPause: () => session.pauseRun(), onTake: () => session.take() },
+    {
+      onPause: () => session.pauseRun(),
+      onTake: () => session.take(),
+      onBonus: () => void session.offerBonus(),
+    },
     skin === 'art',
     pickTime,
   );
@@ -391,6 +396,8 @@ async function boot(): Promise<void> {
     show: (card: IntroCard) => introPopup.show(card.clip, card.title, card.line),
     hide: () => introPopup.hide(),
   };
+  // A rewarded ad's card (GAME_DESIGN §2.7): over the game and the cards, under the pause.
+  const adOffer = createAdOfferOverlay(overlays, skin === 'art');
   const pause = createPauseOverlay(
     overlays,
     {
@@ -410,6 +417,7 @@ async function boot(): Promise<void> {
     {
       onPlayAgain: () => session.playAgain(),
       onMenu: () => screens?.showMenu(),
+      onDoubleCoins: () => void session.doubleCoins(),
     },
     skin === 'art',
   );
@@ -455,6 +463,8 @@ async function boot(): Promise<void> {
     picks,
     doors,
     introCard,
+    ads,
+    adOffer,
     scenery: gameScreen,
     feedback: {
       play: (name, value) => audio.play(name, value),

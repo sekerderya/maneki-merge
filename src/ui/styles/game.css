@@ -52,6 +52,7 @@
 
 /* The score card, level with the coins card (v0.26): their middles on one line. */
 .hud-left {
+  position: relative;
   flex: none;
   display: flex;
   flex-direction: column;
@@ -1123,4 +1124,82 @@
   box-shadow:
     0 0 0 2px #ffd34d,
     0 0 8px 2px #ffd34d;
+}
+
+/*
+ * The bonus ball (GAME_DESIGN §2.7): NEXT's bubble mirrored on the left, level with it (its top
+ * less the left column's margin), the play medallion on its lower right. It pops in once as it
+ * shows, then stays still.
+ */
+.hud-bonus {
+  position: absolute;
+  left: 2px;
+  top: 70px;
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  pointer-events: auto;
+  animation: hud-bonus-in 380ms ease-out;
+}
+
+.game-hud.is-art .hud-bonus {
+  left: 8px;
+  top: 74px;
+  width: 70px;
+  height: auto;
+  aspect-ratio: var(--hud-next-ratio);
+}
+
+.hud-bonus:active {
+  transform: scale(0.94);
+}
+
+.hud-bonus-play {
+  position: absolute;
+  right: -6px;
+  bottom: -4px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--color-coral);
+  color: #fff;
+}
+
+.hud-bonus-play > svg {
+  width: 14px;
+  height: 14px;
+}
+
+.game-hud.is-art .hud-bonus-play {
+  width: 30px;
+  height: 30px;
+  background: none;
+}
+
+.hud-bonus-play-art {
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes hud-bonus-in {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.reduce-motion .hud-bonus {
+  animation: none;
 }

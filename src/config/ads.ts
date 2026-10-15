@@ -59,3 +59,24 @@ export const FAKE_AD_SECONDS = 5;
 /** The dev app (`.dev`, TECH_SPEC §16) always starts with these flags: debug panel, fake ads. */
 export const DEV_APP_ID_SUFFIX = '.dev';
 export const DEV_APP_FLAGS = 'debug=1&ads=fake';
+
+/**
+ * The bonus ball (GAME_DESIGN §2.7): the special balls a `specialBall` ad can give, one rolled per
+ * stage from the run's seed.
+ */
+export const AD_BALL_KINDS = ['hanabi', 'joker', 'lightning', 'magnet'] as const;
+export type AdBallKind = (typeof AD_BALL_KINDS)[number];
+
+/** The bonus ball's name on its card ("A free Joker cat!"). */
+export const AD_BALL_NAMES: Readonly<Record<AdBallKind, string>> = {
+  hanabi: 'Hanabi',
+  joker: 'Joker cat',
+  lightning: 'Lightning ball',
+  magnet: 'Magnet',
+};
+
+/** The bonus ball shows once this many balls were dropped in the stage. */
+export const AD_BALL_AFTER_DROPS = 8;
+
+/** Mixed into the seed for the bonus ball's roll, so it never moves any of the run's own rolls. */
+export const AD_BALL_SALT = 0x5ad8a11;

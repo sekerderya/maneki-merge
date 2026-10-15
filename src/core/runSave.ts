@@ -38,6 +38,11 @@ export interface QueueSnapshot {
   /** Items rolled so far (the first ones are always the smallest cat). */
   readonly generated: number;
   readonly stageDrops: number;
+  /**
+   * The ball waiting to come back to the dropper after a cut-in (the bonus ball, GAME_DESIGN §2.7);
+   * null or missing (before v0.54) when none.
+   */
+  readonly held?: SavedDrop | null;
 }
 
 export interface EconomySnapshot {
@@ -165,6 +170,13 @@ export interface RunSnapshot {
    * missing when none.
    */
   readonly lightning?: LightningSnapshot | null;
+  /**
+   * The stage whose bonus ball (GAME_DESIGN §2.7) was taken from an ad; missing (before v0.54, or
+   * none taken yet) is 0.
+   */
+  readonly adBallStage?: number;
+  /** One more Lucky Save was taken for an ad this run (GAME_DESIGN §2.7); missing is false. */
+  readonly lastChanceUsed?: boolean;
   readonly queue: QueueSnapshot;
   readonly economy: EconomySnapshot;
   readonly danger: DangerSnapshot;
@@ -253,6 +265,12 @@ function runSnapshot(value: unknown): RunSnapshot {
     ...(r['curseRng'] === undefined ? {} : { curseRng: rngState(r['curseRng'], 'curseRng') }),
     ...(r['diceRng'] === undefined ? {} : { diceRng: rngState(r['diceRng'], 'diceRng') }),
     ...(r['lightning'] === undefined ? {} : { lightning: lightning(r['lightning']) }),
+    ...(r['adBallStage'] === undefined
+      ? {}
+      : { adBallStage: count(r['adBallStage'], 'adBallStage') }),
+    ...(r['lastChanceUsed'] === undefined
+      ? {}
+      : { lastChanceUsed: bool(r['lastChanceUsed'], 'lastChanceUsed') }),
     queue: queue(r['queue']),
     economy: economy(r['economy']),
     danger: danger(r['danger']),
@@ -327,6 +345,9 @@ function queue(value: unknown): QueueSnapshot {
     next: drop(q['next'], 'queue.next'),
     generated: count(q['generated'], 'queue.generated'),
     stageDrops: count(q['stageDrops'], 'queue.stageDrops'),
+    ...(q['held'] === undefined || q['held'] === null
+      ? {}
+      : { held: drop(q['held'], 'queue.held') }),
   };
 }
 

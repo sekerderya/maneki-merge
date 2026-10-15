@@ -298,6 +298,16 @@ export interface GameEvents {
   nextChanged: { readonly kind: DropKind; readonly tier: number; readonly golden: boolean };
   /** The wind (GAME_DESIGN §15.8) changed: its level (0: none) or, with the debug tools, its way. */
   windChanged: { readonly level: number; readonly direction: WindDirection };
+  /**
+   * A rewarded ad's bonus ball (GAME_DESIGN §2.7) went into the dropper; the ball that was there
+   * waits and comes back after it.
+   */
+  adBallGiven: { readonly kind: DropKind; readonly tier: number };
+  /**
+   * The danger timer ran out with no Lucky Save left, and one more can be had for an ad
+   * (GAME_DESIGN §2.7): time stands still until `takeLastChance` or `declineLastChance`.
+   */
+  lastChanceOffered: Record<string, never>;
   paused: Record<string, never>;
   resumed: Record<string, never>;
   gameOver: {

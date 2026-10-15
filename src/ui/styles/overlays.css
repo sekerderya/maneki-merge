@@ -375,3 +375,63 @@
 .reduce-motion .pick-panel.is-new {
   animation: none;
 }
+
+/* The rewarded ad's card (GAME_DESIGN §2.7) and Game Over's Double coins. */
+.ad-offer-ball .cat-icon {
+  --size: 72px;
+}
+
+.ad-offer-line {
+  max-width: 260px;
+  margin: 0;
+  color: var(--color-ink);
+  font-weight: var(--weight-semibold);
+  text-align: center;
+}
+
+.ad-offer-watch,
+.go-double {
+  gap: 8px;
+}
+
+.ad-offer-play {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.ad-offer-play > svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ad-offer-play-art {
+  width: 100%;
+  height: 100%;
+}
+
+/* The run's coins doubled by the ad: the number pops once. */
+.go-stats dd.is-doubled {
+  animation: go-coins-doubled 520ms ease-out;
+}
+
+@keyframes go-coins-doubled {
+  40% {
+    transform: scale(1.25);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.reduce-motion .go-stats dd.is-doubled {
+  animation: none;
+}
+
+.ad-offer-overlay .overlay-title {
+  text-align: center;
+}

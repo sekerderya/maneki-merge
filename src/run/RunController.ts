@@ -57,6 +57,7 @@ import {
   WIND_ACCEL_PER_LEVEL,
 } from '../config/picks';
 import type { DiceRoll, ForcedDice, PickId, PickKind, WindDirection } from '../config/picks';
+import { AD_BALL_AFTER_DROPS } from '../config/ads';
 import { LUCKY_GIFT_FACTOR } from '../config/economy';
 import {
   catRadius,
@@ -75,6 +76,7 @@ import {
   LUCKY_SAVE_GRACE_MS,
   MAGNET_TAKE_MS,
 } from '../config/timings';
+import { bonusBallKind } from '../core/bonusBall';
 import type { Drop, DropOdds } from '../core/dropQueue';
 import { DropQueue } from '../core/dropQueue';
 import { popCoins, RunEconomy } from '../core/economy';
@@ -110,7 +112,8 @@ import { FixedStepper, PhysicsWorld } from '../physics/PhysicsWorld';
 import type { FallForces } from '../physics/PhysicsWorld';
 
 /** `choosing`: a stage clear's pick waits for `choose` (GAME_DESIGN §15.5); time stands still. */
-export type RunState = 'playing' | 'paused' | 'expanding' | 'choosing' | 'over';
+/** `lastChance`: out of room and of Lucky Saves, one more offered for an ad (GAME_DESIGN §2.7). */
+export type RunState = 'playing' | 'paused' | 'expanding' | 'choosing' | 'lastChance' | 'over';
 
 /** A stage clear's pick: the options on its cards. */
 export interface PickOffer {
@@ -285,6 +288,11 @@ export class RunController {
   /** The whole seconds left on the danger countdown that were last announced (0: none). */
   private dangerSecond = 0;
   private savesLeft: number;
+  /** The stage whose bonus ball (GAME_DESIGN §2.7) was taken from an ad; 0 before the first. */
+  private adBallStage = 0;
+  /** An ad for one more Lucky Save can be offered now (the session keeps it up to date). */
+  private lastChanceReady = false;
+  private lastChanceUsed = false;
   private expansionState: Expansion | null = null;
   /** Debug only (`jumpToStage`): the stage the jump keeps clearing towards. */
   private debugTargetStage = 0;
@@ -537,6 +545,23 @@ export class RunController {
     return this.queue.dropsThisStage;
   }
 
+  /**
+   * The bonus ball a rewarded ad can give now (GAME_DESIGN §2.7), or null: once per stage, from its
+   * AD_BALL_AFTER_DROPS-th drop, while the stage is played (a pause keeps it). Whether an ad is
+   * ready is the session's business.
+   */
+  get adBall(): Drop | null {
+    const state = this.runState === 'paused' ? this.resumeTo : this.runState;
+    if (state !== 'playing' || this.adBallStage === this.world.stage) return null;
+    if (this.queue.dropsThisStage < AD_BALL_AFTER_DROPS) return null;
+    return this.specialDrop(bonusBallKind(this.seed, this.world.stage));
+  }
+
+  /** One more Lucky Save was taken for an ad this run (GAME_DESIGN §2.7). */
+  get lastChanceTaken(): boolean {
+    return this.lastChanceUsed;
+  }
+
   /** True while a debug jump clears stage after stage (GAME_DESIGN §15.1: it skips the picks). */
   get debugJumping(): boolean {
     return this.debugTargetStage > 0;
@@ -694,6 +719,48 @@ export class RunController {
   }
 
   /**
+   * The rewarded ad's bonus ball (GAME_DESIGN §2.7): `adBall` goes straight into the dropper, the
+   * ball that was there waits and comes back after it, and NEXT stays as it is. The stage's bonus
+   * ball is then taken. Returns false when none is on offer.
+   */
+  giveAdBall(): boolean {
+    const ball = this.adBall;
+    if (!ball) return false;
+    this.adBallStage = this.world.stage;
+    this.queue.cutIn(ball);
+    this.events.emit('adBallGiven', { kind: ball.kind, tier: ball.tier });
+    this.dropAnnounced = false;
+    this.announceDropIfReady();
+    return true;
+  }
+
+  /**
+   * The rewarded ad's one more Lucky Save (GAME_DESIGN §2.7) can be offered when the danger timer
+   * runs out with none left: the session says whether an ad is ready (never in a scene). Off by
+   * default, so runs without ads (the simulator, the tests) end as before.
+   */
+  setLastChanceReady(ready: boolean): void {
+    this.lastChanceReady = ready;
+  }
+
+  /** The ad was watched: one more Lucky Save, and play goes on. Returns false when none is offered. */
+  takeLastChance(): boolean {
+    if (this.runState !== 'lastChance') return false;
+    this.lastChanceUsed = true;
+    this.runState = 'playing';
+    this.stepper.reset();
+    this.world.holdPoses();
+    this.savesLeft++;
+    this.luckySave();
+    return true;
+  }
+
+  /** No ad (declined, closed early or failed): the run ends as it would have. */
+  declineLastChance(): void {
+    if (this.runState === 'lastChance') this.gameOver();
+  }
+
+  /**
    * Puts a magnet, a boulder (with the current trials' size and hits), a hanabi, a joker, a
    * lightning ball or a golden cat (of the stage's smallest tier) in the dropper instead of its ball.
    */
@@ -701,27 +768,29 @@ export class RunController {
     if (this.runState === 'over') return;
     const first = stageInfo(this.world.stage).firstTier;
     const odds = this.odds();
-    const plain = { golden: false, hits: 0 };
     this.queue.replaceCurrent(
-      kind === 'magnet'
-        ? { kind, tier: first + MAGNET_SIZE - 1, ...plain }
-        : kind === 'hanabi'
-          ? { kind, tier: first + HANABI_SIZE - 1, ...plain }
-          : kind === 'joker'
-            ? { kind, tier: first + JOKER_SIZE - 1, ...plain }
-            : kind === 'lightning'
-              ? { kind, tier: first + LIGHTNING_SIZE - 1, ...plain }
-              : kind === 'boulder'
-                ? {
-                    kind,
-                    tier: first + odds.boulderSize - 1,
-                    golden: false,
-                    hits: odds.boulderHits,
-                  }
-                : { kind: 'cat', tier: first, golden: true, hits: 0 },
+      kind === 'boulder'
+        ? { kind, tier: first + odds.boulderSize - 1, golden: false, hits: odds.boulderHits }
+        : kind === 'golden'
+          ? { kind: 'cat', tier: first, golden: true, hits: 0 }
+          : this.specialDrop(kind),
     );
     this.dropAnnounced = false;
     this.announceDropIfReady();
+  }
+
+  /** A magnet, a hanabi, a joker or a lightning ball of its size at the current stage. */
+  private specialDrop(kind: 'magnet' | 'hanabi' | 'joker' | 'lightning'): Drop {
+    const first = stageInfo(this.world.stage).firstTier;
+    const size =
+      kind === 'magnet'
+        ? MAGNET_SIZE
+        : kind === 'hanabi'
+          ? HANABI_SIZE
+          : kind === 'joker'
+            ? JOKER_SIZE
+            : LIGHTNING_SIZE;
+    return { kind, tier: first + size - 1, golden: false, hits: 0 };
   }
 
   /**
@@ -854,7 +923,7 @@ export class RunController {
   forceDangerTimeout(): void {
     if (this.runState !== 'playing') return;
     if (this.savesLeft > 0) this.luckySave();
-    else this.gameOver();
+    else this.outOfRoom();
   }
 
   /**
@@ -863,7 +932,9 @@ export class RunController {
    */
   snapshot(): RunSnapshot | null {
     if (this.runState === 'over') return null;
-    const state = this.runState === 'paused' ? this.resumeTo : this.runState;
+    const paused = this.runState === 'paused' ? this.resumeTo : this.runState;
+    // Asked for one more Lucky Save: saved as playing, its danger timer about to run out again.
+    const state = paused === 'lastChance' ? 'playing' : paused;
     if (state === 'paused' || state === 'over') return null;
     const e = this.expansionState;
     return {
@@ -901,6 +972,8 @@ export class RunController {
         targets: [...this.strike.ids],
         elapsedSteps: this.strike.elapsedSteps,
       },
+      ...(this.adBallStage > 0 ? { adBallStage: this.adBallStage } : {}),
+      ...(this.lastChanceUsed ? { lastChanceUsed: true } : {}),
       queue: this.queue.snapshot(),
       economy: this.economy.snapshot(),
       danger: this.danger.snapshot(),
@@ -931,10 +1004,13 @@ export class RunController {
     const strike = this.strike;
     h.number(strike?.bolt.id ?? 0).number(strike?.elapsedSteps ?? 0);
     for (const id of strike?.ids ?? []) h.number(id);
-    for (const item of [this.queue.current, this.queue.next]) {
+    const waiting = this.queue.waiting;
+    for (const item of waiting
+      ? [this.queue.current, this.queue.next, waiting]
+      : [this.queue.current, this.queue.next]) {
       h.string(item.kind).number(item.tier).bool(item.golden).number(item.hits);
     }
-    h.number(this.queue.dropsThisStage);
+    h.number(this.queue.dropsThisStage).number(this.adBallStage).bool(this.lastChanceUsed);
     for (const value of Object.values(this.levels)) h.number(value);
     h.number(this.wind);
     h.string(this.offer ? `${this.offer.kind}:${this.offer.options.join(',')}` : '');
@@ -999,7 +1075,12 @@ export class RunController {
     this.world.setFallForces(this.fallForces());
     this.queue.restore(saved.queue, stage);
     this.queue.setOdds(this.odds());
-    for (const item of [this.queue.current, this.queue.next]) {
+    this.adBallStage = saved.adBallStage ?? 0;
+    this.lastChanceUsed = saved.lastChanceUsed ?? false;
+    const waiting = this.queue.waiting;
+    for (const item of waiting
+      ? [this.queue.current, this.queue.next, waiting]
+      : [this.queue.current, this.queue.next]) {
       if (!stageHoldsTier(stage, item.tier) || (item.kind === 'boulder' && item.hits < 1)) {
         throw new RangeError(`Stage ${stage} can't queue ${item.kind} ${item.tier}`);
       }
@@ -1534,7 +1615,20 @@ export class RunController {
     this.showDanger();
     if (status !== 'timeout') return;
     if (this.savesLeft > 0) this.luckySave();
-    else this.gameOver();
+    else this.outOfRoom();
+  }
+
+  /**
+   * The danger timer ran out with no Lucky Save left: the run ends, unless one more can be had for
+   * an ad (GAME_DESIGN §2.7, once per run), which stops time and asks.
+   */
+  private outOfRoom(): void {
+    if (!this.lastChanceReady || this.lastChanceUsed) {
+      this.gameOver();
+      return;
+    }
+    this.runState = 'lastChance';
+    this.events.emit('lastChanceOffered', {});
   }
 
   private showDanger(): void {

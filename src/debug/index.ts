@@ -94,6 +94,10 @@ export interface GameStateSnapshot {
     readonly elapsedMs: number;
   } | null;
   readonly ticks: number;
+  /** The bonus ball a rewarded ad can give now (GAME_DESIGN §2.7), or null. */
+  readonly adBall: string | null;
+  /** One more Lucky Save was taken for an ad this run. */
+  readonly lastChanceTaken: boolean;
   /** Device pixels per CSS pixel the canvas renders at (adaptive, TECH_SPEC §6). */
   readonly resolution: number;
 }
@@ -267,6 +271,8 @@ export function installDebugHooks(ctx: DebugContext): GameHooks {
             }
           : null,
         ticks: run?.ticks ?? 0,
+        adBall: run?.adBall?.kind ?? null,
+        lastChanceTaken: run?.lastChanceTaken ?? false,
         resolution: ctx.game.resolution,
       };
     },

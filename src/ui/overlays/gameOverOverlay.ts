@@ -1,12 +1,16 @@
+import { ICON_SPRITE_DIR, iconSprite } from '../../config/iconSprites';
 import { formatNumber } from '../../core/format';
 import type { NewRecords } from '../../core/profile';
 import { coinIcon } from '../coinIcon';
 import { button, el } from '../dom';
-import { setUiArtProperties } from '../uiArt';
+import { ICON_PLAY } from '../icons';
+import { artImage, setUiArtProperties } from '../uiArt';
 
 export interface GameOverActions {
   onPlayAgain(): void;
   onMenu(): void;
+  /** Double coins (GAME_DESIGN §2.7): the rewarded ad that pays the run's coins once more. */
+  onDoubleCoins(): void;
 }
 
 export interface GameOverSummary {
@@ -22,6 +26,10 @@ export interface GameOverView {
   readonly visible: boolean;
   show(summary: GameOverSummary): void;
   hide(): void;
+  /** Double coins shows only while its ad is ready and the run's coins can still be doubled. */
+  setDoubleCoins(available: boolean): void;
+  /** The ad paid: the coins earned now read `coins`, with a pop. */
+  coinsDoubled(coins: number): void;
 }
 
 /**
@@ -77,6 +85,17 @@ export function createGameOverOverlay(
   coinValue.dataset['testid'] = 'go-coins-value';
   coins.append(coinValue);
 
+  // Double coins (GAME_DESIGN §2.7): the rewarded ad, with the play medallion.
+  const double = button('btn btn-secondary go-double', '');
+  double.dataset['testid'] = 'go-double';
+  const play = el('span', 'ad-offer-play');
+  const playArt = art ? iconSprite('clip') : null;
+  if (playArt) play.append(artImage(`${ICON_SPRITE_DIR}${playArt.file}`, 'ad-offer-play-art'));
+  else play.insertAdjacentHTML('beforeend', ICON_PLAY);
+  double.append(play, el('span', 'btn-label', 'Double coins'));
+  double.hidden = true;
+  double.addEventListener('click', actions.onDoubleCoins);
+
   const again = button('btn btn-primary overlay-main-btn', 'Play Again');
   again.dataset['testid'] = 'play-again';
   again.addEventListener('click', actions.onPlayAgain);
@@ -84,7 +103,7 @@ export function createGameOverOverlay(
   menu.dataset['testid'] = 'go-menu';
   menu.addEventListener('click', actions.onMenu);
 
-  panel.append(title, score, badge, stats, again, menu);
+  panel.append(title, score, badge, stats, double, again, menu);
   overlay.append(panel);
   root.append(overlay);
 
@@ -100,10 +119,20 @@ export function createGameOverOverlay(
       stage.textContent = String(summary.stage);
       stageChip.hidden = !records.stage;
       coinValue.textContent = formatNumber(summary.coins);
+      coins.classList.remove('is-doubled');
+      double.hidden = true;
       overlay.hidden = false;
     },
     hide() {
       overlay.hidden = true;
+    },
+    setDoubleCoins(available) {
+      double.hidden = !available;
+    },
+    coinsDoubled(value) {
+      coinValue.textContent = formatNumber(value);
+      double.hidden = true;
+      coins.classList.add('is-doubled');
     },
   };
 }
