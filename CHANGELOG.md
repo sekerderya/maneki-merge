@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.50.2] - 2026-10-15
+
+### Fixed
+
+- **Stutter in the second half of every stage** (the owner's report: the game started stuttering after the last updates; TECH_SPEC §13). Since v0.48 the goal's ring breathed from the stage's first size-8 cat until its clear, and a CSS animation that keeps running makes the browser restyle the page in every frame the game draws: about 10% more main-thread work, and on a slow CPU 6–15% fewer frames (v0.47.3 against v0.50.1, production builds, CPU throttled 14×). The ring now breathes three times when the first 8 is made and rests (GAME_DESIGN §2.3). Without an 8 the goal strip cost nothing measurable.
+- **A goal cat's pop no longer lays the page out mid-frame**: it started by reading `offsetWidth` inside the physics step that made the new size; it now just adds its class (the pop looks the same).
+
 ## [0.50.1] - 2026-10-15
 
 ### Added
