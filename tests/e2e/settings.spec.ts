@@ -70,7 +70,12 @@ test('settings: switches persist, reduce motion marks the page, tips come back',
   await page.reload();
   await expect(page.locator('html')).toHaveClass(/reduce-motion/);
   const data = await savedData(page);
-  expect(data['settings']).toEqual({ sound: false, haptics: true, reduceMotion: true });
+  expect(data['settings']).toEqual({
+    sound: false,
+    haptics: true,
+    reduceMotion: true,
+    dayNight: true,
+  });
   const flags = data['flags'] as { hintsSeen: unknown; clipsSeen: Record<string, boolean> };
   expect(flags.hintsSeen).toEqual({
     aim: false,
