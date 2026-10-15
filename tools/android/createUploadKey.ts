@@ -1,13 +1,13 @@
 /**
  * Creates the Google Play upload key and hands it to the Android workflow (docs/PLAY_STORE.md §2,
- * TECH_SPEC §15). The owner runs it once: `npm run android:key`.
+ * TECH_SPEC §16). Run it once: `npm run android:key`.
  *
  * - The key is written outside the repository, to `~/maneki-merge-upload-key/upload-key.p12`, with
  *   its password in `password.txt` beside it. Both must be backed up; they never enter the repo.
  *   (Play signs the app with its own key; losing the upload key means asking Play for a reset.)
  * - The keystore and its password become the repository secrets the workflow signs with, through
  *   the GitHub CLI.
- * - It prints the key's SHA-256 fingerprint for the Digital Asset Links file.
+ * - It prints the key's SHA-256 fingerprint (the Android workflow's summary shows it too).
  *
  * It needs `keytool` (any Java) and a logged-in `gh`. It never overwrites an existing key.
  */
