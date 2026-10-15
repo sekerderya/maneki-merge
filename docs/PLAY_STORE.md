@@ -64,8 +64,16 @@ When it's done, open the run and download the artifact **maneki-merge-android** 
 - `maneki-merge-dev.apk`: **Maneki Dev**, the dev app (§1).
 
 The run's summary shows the version and the upload key's fingerprint. Without the upload key
-secrets (§2) the outputs are unsigned and Play refuses them. To install an APK, open it on the phone
-and allow installs from that source; a newer build installs over the older one and keeps its save.
+secrets (§2) the outputs are unsigned and Play refuses them.
+
+**On the phone:** GitHub only offers a run's artifacts on a computer (as a zip). So a release tag's
+run also puts the two signed APKs on a **draft release** for that tag: only the repository's owner
+sees it, nobody else. In the phone's Chrome, signed in to GitHub, open
+https://github.com/sekerderya/maneki-merge/releases, open the newest draft ("Maneki Merge vX.Y.Z
+(Android)") and tap `maneki-merge-dev.apk` (or `maneki-merge.apk`) under Assets. Open the
+download, allow installs from Chrome the first time, and install. A newer build installs over the
+older one and keeps its save. Without a signed-in browser on the phone: download the artifact on
+the computer, unzip it and send the APK to the phone (USB cable, Quick Share or Google Drive).
 
 ## 4. Digital Asset Links (not needed any more)
 

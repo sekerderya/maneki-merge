@@ -109,3 +109,40 @@ jobs:
           name: maneki-merge-android
           path: android/out/
           retention-days: 30
+
+  # A phone can't download a run's artifacts, so every release tag's signed APKs also go on a draft
+  # GitHub release: only the repository's owner sees it (signed in), and each file downloads as an
+  # .apk with one tap (docs/PLAY_STORE.md §3). The bundle stays an artifact; it goes to Play.
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: maneki-merge-android
+          path: out
+      - name: Put the APKs on the tag's draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          if [ ! -f out/maneki-merge.apk ]; then
+            echo "::warning::The APKs are unsigned (no upload key): no draft release."
+            exit 0
+          fi
+          if ! gh release view "$TAG" > /dev/null 2>&1; then
+            gh release create "$TAG" --draft --verify-tag --title "Maneki Merge $TAG (Android)" \
+              --notes "Android builds of $TAG, signed with the upload key. A draft: only the repository's owner sees it.
+
+          - maneki-merge-dev.apk: Maneki Dev, the dev app (debug panel, test ads, its own save).
+          - maneki-merge.apk: the release app, as Play will have it.
+
+          On the phone: tap a file, open it, allow installs from the browser once. A newer build installs over the older one and keeps its save."
+          fi
+          gh release upload "$TAG" out/maneki-merge-dev.apk out/maneki-merge.apk --clobber
+          echo "### Draft release $TAG: https://github.com/$GH_REPO/releases" >> "$GITHUB_STEP_SUMMARY"
