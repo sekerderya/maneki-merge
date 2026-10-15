@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.52.0] - 2026-10-15
+
+The first stage's help (the owner's idea, GAME_DESIGN §8): stage 1 goes a little quicker, without it showing.
+
+### Added
+
+- **During stage 1, the cat that comes into NEXT leans towards the sizes the jar is waiting for**: the cats of sizes 1–4 on top of the jar that a cat of their size, dropped straight above, would land on, once the cats still on their way (falling, just dropped, in the paw) have each taken such a partner or begun to wait for one. Each wanted size comes three times as often as its weight says (`MATCH_HELP_FACTOR`). Nothing shows it: two or three of the four sizes are usually wanted, so the drops only shift from 40/30/20/10% to about 33/32/23/12%. The smart bot from a fresh profile clears stage 1 in 82% of runs instead of 69%, in 102 s instead of 117 s (127 drops instead of 145; 200 seeds). From stage 2 on the queue rolls as before.
+
+### Technical
+
+- `physics/reach.ts` finds the cats on top of the jar and the wanted sizes; `DropQueue.take` takes them and still draws once, so the rolls after it stay the seed's. Without counting the cats still on their way, the same help did nothing measurable.
+- The meta bot (`npm run sim -- --meta 30 --seeds 24`, GAME_DESIGN §14): stage 5 within 15 / 30 minutes 2 / 8 of 24 players → 3 / 10 (the smart bot alone, its first run still ending around stage 2–3) and 6 / 16 → 9 / 17 with one extra Lucky Save (the median player there after 18.2 minutes instead of 23.4).
+- The v0.33.5 legacy prints were re-recorded (its run drops a few cats in stage 1 before it jumps to stage 2), and one Copycat test now plays at stage 2, past the help.
+
 ## [0.51.0] - 2026-10-15
 
 Sunset and night (the owner's idea, like Pokémon GO's map; GAME_DESIGN §7.3): the gardens follow the phone's clock.

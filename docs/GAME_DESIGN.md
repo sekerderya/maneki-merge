@@ -301,7 +301,20 @@ The gardens follow the phone's clock, like Pokémon GO's map (the owner's idea).
   Until v0.12 it was `base_i × (1 + 0.12 × L × i)`, normalized (10% → 17.5% at L = 5).
 
 - The first two drops of a run are always the pool's smallest tier.
-- The queue comes from the seeded RNG. The next cat is visible. Every queued cat rolls its tier (the roll happens even for the two fixed opening drops). Magnets, boulders and golden cats roll on a second generator seeded from the same seed (§15.1), so a seed gives the same drops at every pick level.
+- **The first stage's help** (v0.52, the owner's idea, to make stage 1 a little quicker without it showing): each cat queued during stage 1 (the one that shows in NEXT as a cat drops) comes more often in a size that will be waiting for a partner on top of the jar when it comes. Waiting on top are the landed cats of sizes 1–4 that a cat of their own size, dropped straight above them, would land on: no other ball in the way, a bigger neighbour's shoulder included. The cats still to come before it count first, in order (the falling ones, the one just dropped, the one in the paw): each takes such a partner of its size, leaving a cat of the next size there, or, finding none, waits for a partner itself. Each wanted size's weight is multiplied by 3 (`MATCH_HELP_FACTOR`; `MATCH_HELP_LAST_STAGE` = 1, both in `src/config/stages.ts`). It is still one roll, so the rolls after it stay the seed's, and the run's two opening cats stay the smallest. From stage 2 on the queue rolls as before.
+
+  Two or three of the four sizes are usually wanted, so the drops only shift from 40/30/20/10% to about 33/32/23/12% (less than one Big Catch level moves them), while the cat in NEXT is one the jar waits for 69% of the time, where the plain weights would give 49% in the same jars. Measured with the smart bot from a fresh profile (200 seeds, `npm run sim -- base --aim smart --stages 1 --cap 900 --seeds 200`):
+
+  | Wanted size × | Stage 1 cleared | Time to clear | Drops | Drops 1/2/3/4 |
+  | ------------: | --------------: | ------------: | ----: | ------------- |
+  |   1 (no help) |             69% |         117 s |   145 | 40/29/20/10%  |
+  |             2 |             75% |         107 s |   136 | 36/31/22/11%  |
+  | **3 (v0.52)** |             82% |         102 s |   127 | 33/32/23/12%  |
+  |             5 |             80% |          93 s |   119 | 29/31/25/15%  |
+
+  Without counting the cats still to come, ×3 changed nothing measurable (67% and 110 s): most of what the jar waits for is already on its way.
+
+- The queue comes from the seeded RNG. The next cat is visible. Every queued cat rolls its tier (the roll happens even for the two fixed opening drops). Magnets, boulders and golden cats roll on a second generator seeded from the same seed (§15.1), so a seed gives the same drops at every pick level (in stage 1 the cats also follow the jar, above).
 - After an expansion, queued cats keep their size: each takes the tier at the same place in the new pool (a queued 3 becomes a 12), so the preview the player saw still holds. No new rolls. A queued magnet becomes a cat (§15.1).
 
 ## 9. Score, coins, records
@@ -472,6 +485,8 @@ Measured for v0.39 with the meta bot (`npm run sim -- --meta 30 --seeds 24`, TEC
 
 **v0.50 (the teaching order and the Lucky gift, §15.5)**, measured before and after with the same bots: stage 5 within 15 / 30 minutes 1 / 9 of 24 → 2 / 8 (the smart bot alone) and 9 / 17 → 6 / 16 (with one extra Lucky Save); a maxed profile's runs (`npm run sim -- base --aim smart --upgrades max --stages 40 --cap 3600 --seeds 60`) reach stage 8 → 7 (median); every card bought (`--meta 720`, the smart bot alone) after 575 → 576 minutes (the bot plays slower than the pacing model's 8 hours, §10), its runs reaching stage 10.5 → 12.5 after 8 hours. At 24 players the 15-minute figures are noise; nothing was retuned.
 
+**v0.52 (the first stage's help, §8)**, measured before and after with the same bots (`--meta 30 --seeds 24`): stage 5 within 15 / 30 minutes 2 / 8 of 24 → 3 / 10 (the smart bot alone, its first run reaching stage 2 → 2.5, median) and 6 / 16 → 9 / 17 (with one extra Lucky Save, the median player there after 23.4 → 18.2 minutes). Nothing else was retuned; from stage 2 on runs play as before.
+
 A maxed profile's smart bot clears 5 stages in 44 runs of 60 and reaches stage ~6 (median); v0.38's cleared 5 in 29. After v0.39.1 took the magnets out of runs without More Magnets (§15.1), the better player clears stage 5 within 15 minutes in 1 of 24 profiles and within 30 in 15, the weak bot in 1 and 3: at 24 players the 15-minute figure is noisy, but the early game lost a little help. (M10's targets, written for score thresholds, were set aside in v0.10.)
 
 ## 15. Special balls, trials and blessings
@@ -502,7 +517,7 @@ The dropper hands out six kinds of ball: cats, magnets, boulders, hanabi, joker 
 - Debug jumps (`?debug=1`, "Jump to stage") skip the stage-clear picks.
 - The NEXT bubble shows the item as it is: a cat (golden ones with their glow), the magnet, the boulder at its size with its bands, the hanabi, the joker or the lightning ball.
 - A level picked at a stage clear applies to items queued after the pick. The two items already queued (in the paw and in NEXT) stay as they are. At an expansion, queued cats change tier as in §8, and queued boulders keep their size and bands.
-- Determinism: kind and golden roll on their own generator, seeded from the run's seed. Every queued item rolls its kind, its golden and its tier every time, whatever the chances, so a seed gives the same tiers at any level.
+- Determinism: kind and golden roll on their own generator, seeded from the run's seed. Every queued item rolls its kind, its golden and its tier every time, whatever the chances, so a seed gives the same tiers at any level (in stage 1 the tiers also follow the jar, §8).
 
 ### 15.2 Magnet
 
