@@ -1,24 +1,29 @@
 # Maneki Merge on Google Play
 
-How the game gets to Google Play, step by step, and what to type into Play Console. The technical
-side (the Android project, the workflow, the asset links) is TECH_SPEC §16.
+How the game gets to Google Play, step by step, and what to type into Play Console and AdMob. The
+technical side (the Android project, the ads, the workflow) is TECH_SPEC §16.
 
 ## 1. How the Play app works
 
-- The Play app is a **Trusted Web Activity** (TWA, the owner's call on 2026-10-13, instead of the
-  Capacitor wrapper M14 first planned): a small Android app (a 3 MB APK; Play delivers less to each phone) that opens the live game,
-  https://sekerderya.github.io/maneki-merge/, in the phone's Chrome, full screen, with no browser
-  bar. It is the same game as the installed web app, running the same way.
+- The Play app is a **Capacitor** app (v0.53, the owner's call on 2026-10-15; v0.43–v0.52 planned
+  a Trusted Web Activity, which never reached Play): a native Android app with the whole game
+  inside it and Google's **AdMob** beside it. Google's ad SDK only runs in a native app, which is
+  why the app is no longer Chrome showing the live site.
+- **It plays fully offline**, from the first launch: nothing in the game needs the network.
+- **Ads exist only in this app, and only online.** Without a connection no ad option shows at all.
+  The web app (GitHub Pages, the iOS home-screen app, Android Chrome's Install app) stays ad-free.
+  Where the ads show in the game comes with the placements plan; until then the app only loads
+  Google's test ads in the background (TECH_SPEC §16).
 - Package name: **`io.github.sekerderya.manekimerge`**. It can never change once the app is on
   Play.
-- **Game updates need nothing on Play.** Every push to `main` deploys the site, and the Play app
-  updates itself like the installed web app does (the loading screen or the menu's update badge,
-  TECH_SPEC §9). A new Play release is only needed when `android/` changes (§7).
-- Saves live in Chrome's storage for the site, so a player who already plays in Chrome (or has the
-  web app installed) should keep their progress in the Play app.
-- The very first launch needs a connection, like a first visit. After that it plays offline.
-- Chrome only opens the app full screen when the site confirms the app is its own: the **Digital
-  Asset Links** file (§4). Without it the app shows a browser bar at the top.
+- **Game updates need a Play release.** The game is inside the app: a push to `main` updates the
+  web app at once, and the Play app with the next bundle uploaded to Play (§7). The app's version is
+  the game's (`0.53.0`, version code 53000).
+- **Saves don't come over from Chrome.** The app keeps its own storage, so progress in the Chrome
+  web app stays there (there are no players yet, so there is no transfer tool).
+- **The dev app.** Every build also makes **Maneki Dev**, a second app beside the Play app with its
+  own save: it starts with the debug panel and fake ads and only ever shows Google's test ads, so
+  the owner can try things without touching their real progress or tapping a real ad (§8).
 
 ## 2. One time: the upload key
 
@@ -35,7 +40,7 @@ It needs Java (`keytool`, already installed) and the GitHub CLI logged in. It:
   `password.txt` in the same folder (never in the repository);
 - stores both as repository secrets (`ANDROID_UPLOAD_KEYSTORE_BASE64`,
   `ANDROID_UPLOAD_KEYSTORE_PASSWORD`) so the Android workflow can sign;
-- prints the key's **SHA-256 fingerprint** (needed in §4).
+- prints the key's **SHA-256 fingerprint**.
 
 **Back up both files** (a password manager, or a private cloud folder). If the key is ever lost,
 Play Console → the app → Test and release → App integrity → App signing can reset the upload key
@@ -43,53 +48,26 @@ Play Console → the app → Test and release → App integrity → App signing 
 
 ## 3. Building the app bundle
 
-The **Android** workflow (`.github/workflows/android.yml`) builds the app on every push to `main`
-that changes `android/`, or by hand: GitHub → Actions → Android → **Run workflow**.
+The **Android** workflow (`.github/workflows/android.yml`) builds the app for every release tag
+(`vX.Y.Z`, pushed after each milestone and fix), on pushes that change `android/` or
+`capacitor.config.ts`, and by hand: GitHub → Actions → Android → **Run workflow**.
 
 When it's done, open the run and download the artifact **maneki-merge-android** (kept 30 days):
 
 - `maneki-merge.aab`: the bundle that goes to Play.
-- `maneki-merge.apk`: the same app to install directly on a phone (for a quick check; Chrome
-  shows the browser bar on it until the upload key is in the asset links, §4).
+- `maneki-merge.apk`: the same app to install directly on a phone.
+- `maneki-merge-dev.apk`: **Maneki Dev**, the dev app (§1).
 
-The run's summary shows the upload key's fingerprint. Without the upload key secrets (§2) the
-outputs are unsigned and Play refuses them.
+The run's summary shows the version and the upload key's fingerprint. Without the upload key
+secrets (§2) the outputs are unsigned and Play refuses them. To install an APK, open it on the phone
+and allow installs from that source; a newer build installs over the older one and keeps its save.
 
-## 4. Digital Asset Links
+## 4. Digital Asset Links (not needed any more)
 
-Android looks for the file at the root of the domain, so it lives in the owner's user-site
-repository [`sekerderya/sekerderya.github.io`](https://github.com/sekerderya/sekerderya.github.io),
-served at https://sekerderya.github.io/.well-known/assetlinks.json (`.nojekyll` makes Pages serve
-the `.well-known` folder; the owner's other sites are not affected). Until there is a key it is an
-empty list, `[]`.
-
-It must list the SHA-256 fingerprints of both keys that sign the app:
-
-1. **Play's app signing key**, for installs from Play: Play Console → the app → Test and release →
-   App integrity → **App signing** → "App signing key certificate" → SHA-256. It exists after the
-   first bundle is uploaded (§5.5).
-2. **The upload key**, for the APK installed directly: printed by `npm run android:key` and in the
-   Android workflow's summary.
-
-```json
-[
-  {
-    "relation": ["delegate_permission/common.handle_all_urls"],
-    "target": {
-      "namespace": "android_app",
-      "package_name": "io.github.sekerderya.manekimerge",
-      "sha256_cert_fingerprints": ["<Play app signing key SHA-256>", "<upload key SHA-256>"]
-    }
-  }
-]
-```
-
-Fingerprints are written as Play shows them (`AB:CD:…`, 32 pairs). Pages publishes the change in a
-minute; this checks what Google sees:
-https://digitalassetlinks.googleapis.com/v1/statements:list?source.web.site=https://sekerderya.github.io&relation=delegate_permission/common.handle_all_urls
-
-If the app still shows a browser bar after a fix, Chrome kept its old answer: clear the app's
-storage (or reinstall it) and open it again.
+The TWA needed `https://sekerderya.github.io/.well-known/assetlinks.json` (in the user-site
+repository `sekerderya/sekerderya.github.io`) to open full screen. The Capacitor app doesn't use
+it. The file stays as it is (`[]`); it harms nothing. The same repository will hold `app-ads.txt`
+(§9).
 
 ## 5. Play Console
 
@@ -115,20 +93,34 @@ free.)
 
 | Section                                  | Answer                                                                                                                                                                                                                                                                                           |
 | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Privacy policy                           | `https://sekerderya.github.io/maneki-merge/privacy.html` (also linked in the game's Settings)                                                                                                                                                                                                    |
+| Privacy policy                           | `https://sekerderya.github.io/maneki-merge/privacy.html` (also linked in the game's Settings). It has a section for the app's ads; read it before the release.                                                                                                                                   |
 | App access                               | All functionality is available without any access restrictions                                                                                                                                                                                                                                   |
-| Ads                                      | No, the app does not contain ads                                                                                                                                                                                                                                                                 |
+| Ads                                      | **Yes, the app contains ads** (Google AdMob)                                                                                                                                                                                                                                                     |
 | Content rating                           | Category: Game. No violence, sexuality, bad language, drugs or alcohol. Gambling: no (coins are earned by playing; they can't be bought, won by betting or cashed out). Users can't talk to each other or share anything; no location; no digital purchases. Expect an Everyone / PEGI 3 rating. |
-| Target audience                          | The owner's call. Ages 13 and over keeps the app out of the Families program (anyone can still install it). Including under 13 is possible too: the game already meets the Families rules (no ads, no data, no accounts), but reviews get stricter.                                              |
-| Data safety                              | Does the app collect or share any of the required user data types? **No.** The listing then says "No data collected" and "No data shared". (The game sends nothing anywhere; GitHub's own server logs are the host's, not the app's, and the policy mentions them.)                              |
-| Advertising ID                           | No, the app doesn't use it                                                                                                                                                                                                                                                                       |
+| Target audience                          | **13 and over** (13–15, 16–17, 18+). Under 13 would put the app in the Families program, whose ads need certified SDKs and stricter rules. The ads are limited to PG content and not tagged child-directed (TECH_SPEC §16).                                                                      |
+| Data safety                              | **Yes**, the app collects and shares data, through the Google Mobile Ads SDK only. Google's list for it: https://developers.google.com/admob/android/privacy/play-data-disclosure. See the table below.                                                                                          |
+| Advertising ID                           | **Yes**, the app uses it, for **Advertising or marketing** (the Mobile Ads SDK adds the `AD_ID` permission)                                                                                                                                                                                      |
 | Government, financial, health, news apps | None of these                                                                                                                                                                                                                                                                                    |
+
+The Data safety answers for AdMob (check them against Google's page above, which is updated with
+the SDK):
+
+| Data type                              | Collected | Shared | Purposes                                                                    |
+| -------------------------------------- | --------- | ------ | --------------------------------------------------------------------------- |
+| Location → Approximate location        | Yes       | Yes    | Advertising or marketing; Analytics; Fraud prevention, security, compliance |
+| App activity → App interactions        | Yes       | Yes    | Advertising or marketing; Analytics; Fraud prevention, security, compliance |
+| App info and performance → Diagnostics | Yes       | Yes    | Advertising or marketing; Analytics; Fraud prevention, security, compliance |
+| Device or other IDs                    | Yes       | Yes    | Advertising or marketing; Analytics; Fraud prevention, security, compliance |
+
+Then: the data is encrypted in transit (yes); collection is not optional while ads load (the
+consent form covers it where the law asks); there is no account, so no deletion request.
 
 ### 5.4 Store listing (Grow users → Store presence → Main store listing)
 
 - **App name:** Maneki Merge
 - **Short description** and **full description:** §6.
-- **App icon** (512×512 PNG): [`android/store_icon.png`](../android/store_icon.png), the app icon.
+- **App icon** (512×512 PNG): [`android/store_icon.png`](../android/store_icon.png), the app icon
+  (`npm run icons` writes it).
 - **Feature graphic** (1024×500): the owner's art, prompt in docs/ART_ASSETS.md §4.18; Claude crops
   it to size into `docs/play-store/feature-graphic.png`.
 - **Phone screenshots** (1080×1920, in this order):
@@ -138,18 +130,17 @@ free.)
   (`docs/play-store/screenshots/`, taken from the game on a GPU at 360×640, 3×).
 - Tablet screenshots are optional; skip them.
 - **Store settings:** category **Games → Puzzle** (or Casual); contact email (required, shown on
-  the page); website `https://sekerderya.github.io/maneki-merge/`.
+  the page); website **`https://sekerderya.github.io/`** (AdMob looks for `app-ads.txt` at the
+  root of the developer website, §9).
 
 ### 5.5 Releases
 
 1. **Internal testing** (Test and release → Testing → Internal testing): create a release, accept
-   **Play App Signing** with a Google-generated key, upload `maneki-merge.aab`, release name `1.0.0`.
-   Add your own Google account as a tester and install from the opt-in link.
-2. Copy Play's app signing fingerprint into the asset links (§4), wait a minute, reopen the app:
-   no browser bar. Go through §8 on the phone.
-3. **Closed testing** with 12+ testers for 14 days (personal accounts, §5.1). The same bundle can
+   **Play App Signing** with a Google-generated key, upload `maneki-merge.aab`. Add your own Google
+   account as a tester and install from the opt-in link. Go through §8 on the phone.
+2. **Closed testing** with 12+ testers for 14 days (personal accounts, §5.1). The same bundle can
    be promoted from internal testing.
-4. **Production**: apply for access, then create the production release (countries: all), roll
+3. **Production**: apply for access, then create the production release (countries: all), roll
    out. Google's review takes from a few hours to a few days.
 
 ## 6. Store listing texts (English, United States)
@@ -183,34 +174,65 @@ GROW YOUR LUCK
 Coins stay with you between runs. Spend them on permanent upgrades: more coins from everything, bigger cats more often, a Lucky Save when the jar is full, and new blessings to find.
 
 MADE TO RELAX
-• Plays offline once it has started the first time
-• No ads, no in-app purchases, no accounts
-• No tracking: your progress stays on your phone
+• Plays fully offline
+• Optional ads: watch one only when you want its reward
+• No in-app purchases, no accounts; your progress stays on your phone
 • Soft pastel shrine-garden art, gentle sounds and haptics
 • Portrait, one hand, short runs or long ones
 ```
 
 ## 7. Updating the Android app
 
-- **The game:** nothing to do on Play; a deploy reaches the Play app.
-- **A new Play release** is needed when `android/` changes: raise `versionCode` (and
-  `versionName`) in `android/app/build.gradle` and the same numbers (`appVersionCode`,
-  `appVersion`) in `android/twa-manifest.json`, push, download the new bundle and upload it as a
-  new release. Play refuses a `versionCode` it has seen.
+- **Every release is a new bundle.** The version comes from `package.json` (the version code is
+  major × 1,000,000 + minor × 1,000 + patch, so it always grows); the release tag builds the
+  bundle (§3). Upload `maneki-merge.aab` as a new release in Play Console (internal testing first,
+  then the track the app is on). Play refuses a version code it has seen.
+- An update never interrupts a run: Play updates the app while it is closed, and a run in progress
+  is saved whenever the app goes to the background.
+- Automatic uploads through the Play Developer API can come later (they need a service account
+  key as a repository secret).
 - **Every year** Google raises the required target API level (new apps and updates must target the
   Android version of the year before, from 31 August; in 2026: API 36). Until the deadline nothing
-  breaks; after it an update can't be published until `android/` targets the new level (TECH_SPEC
-  §16).
+  breaks; after it an update can't be published until `android/variables.gradle` targets the new
+  level (TECH_SPEC §16).
 
-## 8. Checks on the phone (the internal testing install)
+## 8. Checks on the phone
 
-- It opens full screen from the **Maneki** icon, with no browser bar (else §4), no black band at
-  the top where the camera is, and no Install button on the menu.
-- Progress from Chrome is there (when Chrome is the phone's browser).
-- The back button: game → pause → menu → leaves the app.
-- Sound, vibration, portrait only.
-- After one launch, airplane mode: the game still starts and plays.
-- Settings → **Privacy policy** opens the policy.
-- After the next deploy, the update arrives as in the installed web app.
-- The old installed web app and the Play app can live side by side (two icons); remove the web app
-  if two icons are confusing.
+On the dev APK first (Maneki Dev), then the release APK or the internal testing install:
+
+1. Install the app, turn on **airplane mode before the first launch**: the game opens and plays.
+2. Full screen, no black band at the camera cutout, the HUD inside the safe areas, portrait only;
+   a swipe from the edge shows the bars for a moment.
+3. The back button: game → pause → menu → leaves the app. Haptics, sound on and off, going to the
+   background and coming back.
+4. A run, kill the app, reopen: the run continues paused. Coins and upgrades are kept.
+5. Online, Maneki Dev's debug panel (**DBG**) → **Use AdMob test ads** (the app restarts its page):
+   the Ads lines show the consent and each placement `ready` after a few seconds; **Ad: Lucky
+   Save** plays Google's test ad; closing it early shows `closed` in "last ad", watching to the end
+   `rewarded`, and the game comes back with no pause overlay. Airplane mode: every placement shows
+   not ready at once.
+6. **EEA consent: off** → on, then **Reset consent** (the page restarts): Google's consent form
+   shows before the menu; Settings shows **Privacy options**, which opens it again.
+7. FPS in the debug panel with 150 cats (Merge ×10 a few times), against the Chrome web app on the
+   same phone.
+8. Settings → **Privacy policy** opens the live policy in the phone's browser.
+
+## 9. AdMob (the owner's steps)
+
+1. **Account:** https://admob.google.com, sign in with the Google account (free; payment and tax
+   details only matter once earnings near the payout threshold). Add the app: Android, "not
+   listed on a store yet". Create three **rewarded** ad units, named `specialBall`, `luckySave`
+   and `doubleCoins`. Send Claude the **App ID** (`ca-app-pub-…~…`) and the three **ad unit IDs**
+   (`ca-app-pub-…/…`); they are not secrets and go into `src/config/ads.ts` and the app's
+   resources.
+2. **Privacy & messaging:** create the **European regulations (GDPR)** message for the app, and the
+   US states message if AdMob offers it. This is the consent form the app shows (TECH_SPEC §16).
+3. **app-ads.txt:** AdMob shows a line like `google.com, pub-…, DIRECT, f08c47fec0942fa0`. It goes
+   in `https://sekerderya.github.io/app-ads.txt` (the user-site repository, like the asset links);
+   Claude can add it once the publisher ID is known. The store listing's website must be
+   `https://sekerderya.github.io/` (§5.4).
+4. **Test device:** never tap real ads on your own phone. Maneki Dev's debug panel shows the
+   phone's test device ID (**Copy device ID**); send it to Claude for `AD_TESTING_DEVICES`, and the
+   release app shows test ads on that phone too.
+5. Until the app is on Play and linked in AdMob (Apps → the app → App settings → link to Google
+   Play), AdMob serves few or no real ads; the dev app's test ads always work.

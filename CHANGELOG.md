@@ -2,6 +2,46 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.53.0] - 2026-10-15
+
+The Google Play app on Capacitor, ready for AdMob (M15, docs/plans/capacitor-admob.md; the owner's request): the game is inside the app and plays fully offline, and Google's ad SDK is in it with test ads, the consent form, an online check and an ad service the game can call. Where the ads show comes with the next plan. The web app is unchanged and has no ads.
+
+### Added
+
+- **The Android app is a Capacitor app** (replacing the Trusted Web Activity, which never reached Play): the same package, `io.github.sekerderya.manekimerge`, and upload key; the game's own files inside it, so it **opens and plays in airplane mode from the first launch**. Full screen with the bars hidden (a swipe shows them for a moment), into the camera cutout, portrait only, the cream splash with the cat, the back button (game → pause → menu → leaves the app), vibration. The app's version is the game's (0.53.0, version code 53000).
+- **Maneki Dev**, the dev app: every build also makes it. It installs beside the Play app with its own save, starts with the debug panel and fake ads, and only ever shows Google's test ads.
+- **Rewarded ads, ready for the game** (`platform/ads.ts`): `ready(placement)`, `show(placement)` → rewarded, closed or failed, for the three placements to come (`specialBall`, `luckySave`, `doubleCoins`, an ad unit each). In the app AdMob keeps one ad loaded per unit, retries a failed load (30 s, 1 min, 2 min, then every 5 min; at once when the connection returns) and replaces an ad before AdMob's hour runs out. **Offline no ad is ever ready**, even one already loaded. A reward counts only when AdMob sends it, not when the player closes the ad early.
+- **Consent**: in the EEA, the UK and Switzerland the app shows Google's consent form at launch, after the loading screen and before the menu (never over a run); Settings gets **Privacy options** there to change the answer.
+- **`?ads=fake`**: a test ad drawn by the page (a 5 s countdown, then Get reward; Close ends it early), in any build, to build and test the ad flows on a desktop. `?ads=admob` and `?consent=eea` for the app.
+- **The debug panel's Ads group**: the connection, the consent answer, each placement's ad and the last test ad's result; a test ad per placement; fake or AdMob test ads; the EEA consent test and its reset; the dev app's test device ID to copy. The panel now scrolls when it is taller than the screen.
+- The privacy policy has a section for the app's ads (Google AdMob, only online, the consent form); the web app keeps "no ads, no data".
+
+### Changed
+
+- **Game updates reach the Play app with a Play release**: a push to `main` updates the web app; every release tag builds the app's bundle, APK and dev APK (the Android workflow), and the owner uploads the bundle.
+- Saves don't come over from the Chrome web app (the app has its own storage; nobody plays it yet).
+- docs/PLAY_STORE.md: the Capacitor app, "Ads: yes", the Data safety answers for AdMob, audience 13 and over, the store text without "No ads", the phone checks, and the owner's AdMob steps.
+
+### Decisions taken for the owner
+
+- Web and iOS stay ad-free; only the Android app has ads. Same package name and upload key. The version code follows the game's version. No service worker in the app. Google's test IDs until the owner's AdMob account exists. One ad unit per placement. Audience 13 and over, ads rated PG, not child-directed. (The plan's decisions, §3.)
+- The dev app is recognised by its application ID (`….dev`) instead of a second web build with a define: one web build serves both APKs.
+- The back button needs `@capacitor/app`'s listener: without one Capacitor does nothing at the WebView's first page, so the menu could never leave the app.
+- The splash stays until the page has loaded (at most 2 s), not until its first paint: the splash holds back the WebView's drawing, so a first paint would never come.
+- The safe areas use Capacitor's `native` insets: WebView 140+ hands the real values to the existing `env(safe-area-inset-*)` CSS, so `tokens.css` is unchanged.
+- The consent check waits at most 3 s from boot (it runs beside the loading screen). After an offline launch it is asked when the connection comes, without the form.
+- The dev app reads its own test device ID (a small native plugin), so the EEA consent test works on the owner's phone and the ID can be copied for the release app.
+- The launcher says "Maneki", as the TWA did; the app's name is Maneki Merge.
+
+### Technical
+
+- `capacitor.config.ts` (origin `https://localhost`, never to change: it holds the saves), `npm run build:android` (`vite build --mode android`: base `/`, `dist-android/`, no PWA plugin, `__NATIVE_APP__`; then `cap sync`). Capacitor and AdMob code is only in `platform/native/`, a separate chunk the web build never loads; the web bundle has no Capacitor or AdMob code.
+- `platform/network.ts` (`@capacitor/network` in the app, `navigator.onLine` on the web), `config/ads.ts`, `core/urlFlags.ts` `bootFlags` (the page's flags, the debug panel's stored choices, the dev app's), `ui/overlays/fakeAd.ts`.
+- The Android project: `MainActivity` (immersive, the cutout, the splash), `DevicePlugin`, the version from `package.json`, the `.dev` build type, light themes, the manifest. `npm run icons` writes the launcher icons and Play's store icon (and runs again on its own: until now `npm run icons` did nothing, only `npm run art` built the icons).
+- `android.yml`: on every `v*` tag, Node + `npm run build:android`, Java 21, the bundle, APK and dev APK, all signed with the upload key.
+- Tests: `ads.test.ts` (a fake AdMob and clock: consent and its form after the loading, the 3 s limit, offline launches, the SDK start and its retry, one load per unit, the retries, offline, the 55-minute expiry, Rewarded against a plain Dismissed, Privacy options; FakeAds, NoAds), `network.test.ts`, the boot flags, the install context; `ads.spec.ts` (the fake ad's closed and rewarded, none ready offline, no ads on the web, no pause overlay after an ad). The `android` build was booted in a desktop browser through the plugins' web stand-ins: no service worker, no request off its own origin, a run played.
+- Not checked on a phone yet: everything native (docs/PLAY_STORE.md §8).
+
 ## [0.52.0] - 2026-10-15
 
 The first stage's help (the owner's idea, GAME_DESIGN §8): stage 1 goes a little quicker, without it showing.

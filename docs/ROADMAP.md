@@ -2,23 +2,24 @@
 
 Each milestone is one Claude Code session (model: Opus 5.5), started with the prompt from `docs/PROMPTS.md` at the effort level listed here. Claude Code ticks the boxes and updates the status as it works.
 
-| #   | Milestone                           | Effort             | Plan mode | Status      |
-| --- | ----------------------------------- | ------------------ | --------- | ----------- |
-| M0  | Owner setup                         | –                  | –         | done        |
-| M1  | Repository, toolchain and CI/CD     | medium             | –         | done        |
-| M2  | Mobile PWA shell                    | high               | –         | done        |
-| M3  | Core rules, config and save system  | high               | –         | done        |
-| M4  | Physics and merge engine (headless) | xhigh              | yes       | done        |
-| M5  | Playable game scene                 | high               | –         | done        |
-| M6  | Expansion system                    | xhigh              | yes       | done        |
-| M7  | Economy and persistence in play     | high               | –         | done        |
-| M8  | Main menu and upgrade shop          | high               | –         | done        |
-| M9  | Audio, haptics and juice            | medium             | –         | done        |
-| M10 | Balance simulation and tuning       | xhigh              | yes       | skipped     |
-| M11 | QA, performance and hardening       | high               | –         | not started |
-| M12 | Owner playtest and polish loop      | per issue          | –         | in progress |
-| M13 | Final art integration               | high               | yes       | in progress |
-| M14 | Release v1.0                        | medium (APK: high) | –         | in progress |
+| #   | Milestone                             | Effort             | Plan mode | Status      |
+| --- | ------------------------------------- | ------------------ | --------- | ----------- |
+| M0  | Owner setup                           | –                  | –         | done        |
+| M1  | Repository, toolchain and CI/CD       | medium             | –         | done        |
+| M2  | Mobile PWA shell                      | high               | –         | done        |
+| M3  | Core rules, config and save system    | high               | –         | done        |
+| M4  | Physics and merge engine (headless)   | xhigh              | yes       | done        |
+| M5  | Playable game scene                   | high               | –         | done        |
+| M6  | Expansion system                      | xhigh              | yes       | done        |
+| M7  | Economy and persistence in play       | high               | –         | done        |
+| M8  | Main menu and upgrade shop            | high               | –         | done        |
+| M9  | Audio, haptics and juice              | medium             | –         | done        |
+| M10 | Balance simulation and tuning         | xhigh              | yes       | skipped     |
+| M11 | QA, performance and hardening         | high               | –         | not started |
+| M12 | Owner playtest and polish loop        | per issue          | –         | in progress |
+| M13 | Final art integration                 | high               | yes       | in progress |
+| M14 | Release v1.0                          | medium (APK: high) | –         | in progress |
+| M15 | Android app on Capacitor, AdMob-ready | high               | –         | in progress |
 
 ## Phone test checklist (owner, after every milestone)
 
@@ -410,7 +411,7 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
 - [ ] README: screenshots/GIF, install and update instructions for iOS and Android, known limitations
 - [x] Google Play app (v0.43; the owner's call on 2026-10-13: a Trusted Web Activity of the live site instead of the Capacitor wrapper planned here): `android/`, `android.yml` building the signed bundle, `npm run android:key`, the asset links at `sekerderya.github.io`, the privacy policy (in Settings too), the store texts and screenshots (docs/PLAY_STORE.md, TECH_SPEC §16)
 - [x] Scenes for the owner's clips to publishers (v0.44, GAME_DESIGN §2.6): a hidden menu panel of 18 set-up moments, two per special ball, Lucky Save, Hubris, Heavy Drop and Dice
-- [ ] Owner: the upload key, the Play Console app, Play's fingerprint in the asset links, the feature graphic (ART_ASSETS §4.18), the closed test (12 testers, 14 days) and the production release (docs/PLAY_STORE.md §2–§5)
+- [ ] Owner: the upload key, the Play Console app, the feature graphic (ART_ASSETS §4.18), the closed test (12 testers, 14 days) and the production release (docs/PLAY_STORE.md §2–§5; since M15 the asset links aren't needed)
 
 ### Release QA checklist
 
@@ -419,3 +420,24 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
 - Every upgrade bought and verified; coins persist across restarts
 - Sound and haptics toggles, the rotate overlay, backgrounding, and the update badge flow
 - No console errors; 60 fps on the test phones
+
+## M15: Android app on Capacitor, AdMob-ready
+
+**Effort:** high. **Plan:** [docs/plans/capacitor-admob.md](plans/capacitor-admob.md) (the owner's request, 2026-10-15). **Goal:** the Google Play app becomes a Capacitor app with the whole game inside it, fully offline, with Google's AdMob SDK ready for rewarded ads. The three ad placements come in a later plan.
+
+- [x] Capacitor 8 project in `android/` (replaces the TWA), `capacitor.config.ts` (origin `https://localhost`, never to change), version name and code from `package.json`, the `.dev` build type "Maneki Dev" (v0.53)
+- [x] Two builds: `npm run build:android` (`vite build --mode android` without the service worker, `cap sync`), `__NATIVE_APP__`; the web bundle carries no Capacitor or AdMob code
+- [x] Full screen with the bars hidden (a swipe shows them), the camera cutout, portrait, the splash, the back button (`@capacitor/app`), vibration permission
+- [x] Online check (`platform/network.ts`) and the ad service (`platform/ads.ts`: `NoAds`, `AdMobAds`, `FakeAds`), config in `config/ads.ts`, unit-tested; ads never ready offline
+- [x] Consent (UMP) at launch before the menu, Privacy options in Settings, `?consent=eea`, the privacy policy's ads section
+- [x] Debug: `?ads=fake|admob`, the dev app's flags, the debug panel's Ads group (state, a test ad per placement, fake or AdMob ads, EEA consent, reset, the phone's test device ID)
+- [x] Launcher icons and Play's store icon from `npm run icons`
+- [x] `android.yml`: on release tags, Java 21, the signed bundle, APK and dev APK
+- [x] Docs: TECH_SPEC §16, PLAY_STORE.md, CLAUDE.md, GAME_DESIGN §2.4
+- [ ] Owner, on the phone (docs/PLAY_STORE.md §8): offline first launch, full screen and the cutout, back button, haptics, sound, a run kept after killing the app, the test ad's `closed` and `rewarded`, the consent form, FPS against the Chrome web app
+- [ ] Owner: the AdMob account, the three ad units, the GDPR message, `app-ads.txt` (docs/PLAY_STORE.md §9); then Claude puts the real IDs in `src/config/ads.ts` and `strings.xml`
+- [ ] Next: the placements plan (the special ball side box, one more Lucky Save, double coins at game over)
+
+**Owner check:** install `maneki-merge-dev.apk` from the Android workflow's run (GitHub → Actions → Android → the run → maneki-merge-android) and go through docs/PLAY_STORE.md §8.
+
+**Acceptance:** the app plays offline from its first launch; online, the dev app's test ad gives `rewarded` and `closed` and the game comes back without the pause overlay; offline no ad is ready; the web app is unchanged.
