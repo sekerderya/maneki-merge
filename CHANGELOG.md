@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.50.1] - 2026-10-15
+
+### Added
+
+- **Account reset** (the owner's request; GAME_DESIGN §2.4): exactly five quick taps on the version in Settings, then a 1.5 s pause, start the save over as a new player's (no coins, best stage 1, every card and hint unseen, the saved run dropped) and reload the app. No confirmation. The Scenes button stays as the device has it. Seven taps are still the tester reset: it fires on the seventh tap, so the five-tap reset only runs when the taps stop at five.
+
 ## [0.50.0] - 2026-10-15
 
 The teaching order (the owner's schedule; GAME_DESIGN §15.5): the first ten clears bring the hazards in one at a time, each shown on a card as a stage opens and offered as a trial only from that stage's clear, so a player is never asked to pick a trial about something they haven't been shown.
