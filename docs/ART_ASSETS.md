@@ -2738,8 +2738,8 @@ branches); the top edge is one flat colour; the centre column is calm; at night 
 read (Claude tries a night background behind a full jar before the rest are made).
 
 **First round (2026-10-15).** Nine came; the sunsets of jars 1, 3, 4 and 5 are good. Every picture
-came about 1% zoomed in (the rug about 12 px lower); the pipeline scales it back onto its day
-picture. Behind a full jar the night reads well, cats included. Two fixes:
+came about 1% zoomed in (the rug about 12 px lower); the pipeline measures that and the game
+places each picture by it (no resampling, TECH_SPEC §14). Behind a full jar the night reads well, cats included. Two fixes:
 
 - **Jar 2's sunset** drew jar 1's shrine in place of the pagoda: generate it again with jar 3's
   sunset as the look reference (not jar 1's) and the line `Take only the colours and the light from
@@ -2756,6 +2756,10 @@ band and its edge: the night sky is one smooth, even gradient all the way up to 
 little deeper blue at the very top, with no band, no stripe and no line anywhere in the sky. The
 same size and shape as the attached picture. No text, no watermark, no signature.
 ```
+
+**Done (2026-10-15):** the mended nights (the peak's came back bigger, 937 × 1679: fine, it is
+placed by its fit) and the new jar 2 sunset, with its pagoda, are in the game (v0.51.0). The menu
+shows jar 1's pictures. Phase 19 is done.
 
 ## 5. Icon kit (every new icon)
 

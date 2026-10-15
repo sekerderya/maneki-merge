@@ -2,6 +2,26 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.51.0] - 2026-10-15
+
+Sunset and night (the owner's idea, like Pokémon GO's map; GAME_DESIGN §7.3): the gardens follow the phone's clock.
+
+### Added
+
+- **Every jar's garden at sunset and at night**, the owner's edits of the five day pictures (docs/ART_ASSETS.md phase 19): a dusty-rose sky and warm low light with the lanterns just lit; a deep indigo sky with a full moon, a few stars and every lantern glowing (on the peak the sun becomes the moon). The sunset shows from an hour before the sun sets to half an hour after, then night until sunrise. The sun's times come from the date (41° N, the sun highest at 13:00: Turkey's clock), with no location asked for: 19:00 is night in winter and day in summer.
+- **Never in the middle of a jar**: the time is picked as a run starts or comes back and each time the jar grows, behind the growth clouds. The menu picks it each time it shows.
+- **Day and night** in Settings (a crescent moon, on by default; a save without it has it on): off, the gardens stay in the day.
+- `?time=day|sunset|night` pins a time of day; the clip recorder pins the day.
+
+### Changed
+
+- **The menu shows the first jar's garden** (the owner's call), at the time of day: its own garden with the stone path is gone (`public/assets/menu/background.webp` removed). The loading screen shows the day garden and fades into the menu's.
+- **The loading screen loads only the clock's time's gardens**; the other times' load when they are picked (the service worker still keeps them all for offline).
+
+### Technical
+
+- The image tool hands an edit back zoomed in by 1–3% (the peak's night at 937 × 1679). The art pipeline converts the pictures as they are (no resampling, no quality lost) and measures each one's fit onto its day picture from the outlines (`tools/backgroundFit.ts`); the game places it by that fit, so the jar's feet stay on the rug. Checked at 390 × 844 for all ten (`docs/screenshots/v0.51.0/`).
+
 ## [0.50.3] - 2026-10-15
 
 ### Changed
