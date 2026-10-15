@@ -263,6 +263,12 @@ async function boot(): Promise<void> {
         scenesSwitch.set(true);
         window.location.reload();
       },
+      onAccountReset: () => {
+        // A new player's save; the Scenes button stays as the device has it (it isn't in the save).
+        session.endRun();
+        session.profile.reset();
+        window.location.reload();
+      },
       onClose: () => closeSettings(),
     },
     skin === 'art',

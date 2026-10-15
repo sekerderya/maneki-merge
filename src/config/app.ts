@@ -37,6 +37,12 @@ export const TESTER_RESET_TAPS = 7;
 export const TESTER_RESET_TAP_WINDOW_MS = 1500;
 export const TESTER_RESET_COINS = 1_000_000;
 export const TESTER_RESET_BEST_STAGE = 20;
+/**
+ * The account reset (GAME_DESIGN §2.4): exactly this many taps on the version, then a pause of
+ * `TESTER_RESET_TAP_WINDOW_MS`, start the save over as a new player's. Fewer than
+ * `TESTER_RESET_TAPS`, so tapping on to seven still makes the tester reset.
+ */
+export const ACCOUNT_RESET_TAPS = 5;
 
 /**
  * First-run hints (GAME_DESIGN §2.3); the save remembers which ones were seen. From 'boulders' on,

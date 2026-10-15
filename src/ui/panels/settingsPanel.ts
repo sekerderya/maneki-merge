@@ -1,4 +1,5 @@
 import {
+  ACCOUNT_RESET_TAPS,
   PRIVACY_POLICY_PATH,
   TESTER_RESET_TAP_WINDOW_MS,
   TESTER_RESET_TAPS,
@@ -29,6 +30,8 @@ export interface SettingsActions {
    * million coins and every upgrade open, and the menu's Scenes button on (§2.6).
    */
   onTesterReset(): void;
+  /** Exactly five taps on the version, then a pause: the account reset, a new player's save. */
+  onAccountReset(): void;
   onClose(): void;
 }
 
@@ -129,15 +132,22 @@ export function createSettingsPanel(
   const versionLabel = formatVersionLabel(__APP_VERSION__, __BUILD_HASH__);
   const version = el('span', '', versionLabel);
   version.dataset['testid'] = 'version';
+  // Seven taps make the tester reset at once; exactly five and a pause make the account reset.
   let taps = 0;
   let tapTimer = 0;
   version.addEventListener('click', () => {
     taps++;
     window.clearTimeout(tapTimer);
-    tapTimer = window.setTimeout(() => (taps = 0), TESTER_RESET_TAP_WINDOW_MS);
-    if (taps < TESTER_RESET_TAPS) return;
-    taps = 0;
-    actions.onTesterReset();
+    if (taps >= TESTER_RESET_TAPS) {
+      taps = 0;
+      actions.onTesterReset();
+      return;
+    }
+    tapTimer = window.setTimeout(() => {
+      const count = taps;
+      taps = 0;
+      if (count === ACCOUNT_RESET_TAPS) actions.onAccountReset();
+    }, TESTER_RESET_TAP_WINDOW_MS);
   });
   // A new tab, so the menu stays as it is (Google Play wants the policy reachable in the app).
   const privacy = el('a', 'settings-privacy', 'Privacy policy');

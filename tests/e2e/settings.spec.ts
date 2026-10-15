@@ -100,6 +100,33 @@ test('settings: switches persist, reduce motion marks the page, tips come back',
   expect(errors).toEqual([]);
 });
 
+test('five taps on the version and a pause start a new player save', async ({ page }) => {
+  const errors = watchConsole(page);
+  await page.goto('./?debug=1');
+  await expect(page.getByTestId('play')).toBeVisible();
+  await page.evaluate(() => {
+    window.__game!.addCoins(500);
+    window.__game!.setBestStage(5);
+  });
+
+  // Four taps and a pause do nothing (GAME_DESIGN §2.4).
+  await page.getByTestId('settings').click();
+  const version = page.getByTestId('version');
+  for (let i = 0; i < 4; i++) await version.click();
+  await page.waitForTimeout(2000);
+  expect(await page.evaluate(() => window.__game!.state().bestStage)).toBe(5);
+
+  // Five taps and the pause: the save starts over and the app reloads.
+  const reloaded = page.waitForEvent('load', { timeout: 10_000 });
+  for (let i = 0; i < 5; i++) await version.click();
+  await reloaded;
+  await expect(page.getByTestId('play')).toBeVisible();
+  await page.waitForFunction(() => window.__game !== undefined);
+  expect(await page.evaluate(() => window.__game!.state().bestStage)).toBe(1);
+  expect(await page.evaluate(() => window.__game!.state().wallet)).toBe(0);
+  expect(errors).toEqual([]);
+});
+
 for (const [width, height] of [
   [375, 667],
   [430, 932],
