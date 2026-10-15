@@ -14,6 +14,7 @@ import {
   DROP_TILT_STEP,
   DROP_WEIGHTS,
   FIRST_DROPS_SMALLEST_COUNT,
+  MATCH_HELP_FACTOR,
   stageInfo,
 } from '../config/stages';
 import type { Rng } from './rng';
@@ -155,12 +156,15 @@ export class DropQueue {
     return this.generated <= FIRST_DROPS_SMALLEST_COUNT;
   }
 
-  /** Hands out the current ball and moves the queue forward. */
-  take(): Drop {
+  /**
+   * Hands out the current ball and moves the queue forward. A cat queued now comes in a `wanted`
+   * tier MATCH_HELP_FACTOR times as often (the first stage's help, GAME_DESIGN §8).
+   */
+  take(wanted: readonly number[] = []): Drop {
     const drop = this.dropper;
     this.stageDrops++;
     this.dropper = this.upcoming;
-    this.upcoming = this.generate();
+    this.upcoming = this.generate(wanted);
     return drop;
   }
 
@@ -235,11 +239,18 @@ export class DropQueue {
     this.weights = dropWeights(this.odds.tiltLevel);
   }
 
-  private generate(): Drop {
+  private generate(wanted: readonly number[] = []): Drop {
     const forceSmallest = this.generated < FIRST_DROPS_SMALLEST_COUNT;
     this.generated++;
     const first = this.pool[0] as number;
-    const tier = this.pool[this.rng.weightedIndex(this.weights)] as number;
+    // Still one draw, so the help only moves where the roll falls.
+    const weights =
+      wanted.length > 0
+        ? this.weights.map((w, i) =>
+            wanted.includes(this.pool[i] as number) ? w * MATCH_HELP_FACTOR : w,
+          )
+        : this.weights;
+    const tier = this.pool[this.rng.weightedIndex(weights)] as number;
     const kindRoll = this.specialRng.next();
     const goldenRoll = this.specialRng.next();
     const odds = this.odds;

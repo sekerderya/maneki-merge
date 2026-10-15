@@ -16,17 +16,18 @@ import { botMove, publicFingerprint, upgrades } from './fixtures';
  * 1.5 times as high and a Lucky Save pop 9 small cats instead of 6 (GAME_DESIGN §6, §15.1), also on
  * purpose: the prints from tick 2400 on were re-recorded by v0.39, and again by v0.39.1, which
  * dropped the 1% magnets of a run without More Magnets (§15.1). v0.41 re-recorded all of them:
- * its stronger gravity (TECH_SPEC §5) makes every fall shorter.
+ * its stronger gravity (TECH_SPEC §5) makes every fall shorter. v0.52 re-recorded them all again:
+ * the first stage's help (§8) leans the cats queued before the jump to stage 2 towards the jar's.
  */
 const V0_33_5 = [
-  '600:75f77648:playing:3',
-  '1200:46922ed6:playing:7',
-  '1800:1c25fdca:playing:14',
-  '2400:d4325cce:playing:17',
-  '3000:10913ae5:playing:14',
-  '3600:8e2a1769:playing:17',
-  '4200:f40013dc:playing:27',
-  '4800:3a526f29:playing:29',
+  '600:2922a02e:playing:3',
+  '1200:26fd56d5:playing:9',
+  '1800:963ea049:playing:9',
+  '2400:a925515d:playing:14',
+  '2999:2000d88a:playing:1',
+  '3599:251bed3d:playing:7',
+  '4199:4b0539f0:playing:10',
+  '4799:02e3e7a1:playing:12',
 ];
 
 const LEVELS: [PickId, number][] = [

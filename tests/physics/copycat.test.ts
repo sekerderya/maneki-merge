@@ -10,8 +10,8 @@ import { RunController } from '../../src/run/RunController';
 import { botMove } from './fixtures';
 
 /** A run with Copycat on (or off) that logs NEXT's changes. */
-function setup(seed = 2, copycat = true) {
-  const run = new RunController({ seed });
+function setup(seed = 2, copycat = true, stage = 1) {
+  const run = new RunController({ seed, stage });
   if (copycat) run.setPickLevel('copycat', 1);
   const changes: GameEvents['nextChanged'][] = [];
   run.events.on('nextChanged', (e) => changes.push(e));
@@ -58,8 +58,10 @@ describe('Copycat (GAME_DESIGN §15.13)', () => {
   });
 
   it('copies into NEXT once: the cats after it roll as usual', () => {
-    const plain = setup(9, false).run;
-    const { run } = setup(9);
+    // At stage 2, past the first stage's help (GAME_DESIGN §8): it leans each new cat towards the
+    // jar's, and only one of these jars has the merged pair.
+    const plain = setup(9, false, 2).run;
+    const { run } = setup(9, true, 2);
     for (const r of [plain, run]) dropAt(r, -250);
     spawnPair(run, 3, 150);
     run.tick();

@@ -58,7 +58,13 @@ import {
 } from '../config/picks';
 import type { DiceRoll, ForcedDice, PickId, PickKind, WindDirection } from '../config/picks';
 import { LUCKY_GIFT_FACTOR } from '../config/economy';
-import { catRadius, clearGrowsJar, stageHoldsTier, stageInfo } from '../config/stages';
+import {
+  catRadius,
+  clearGrowsJar,
+  MATCH_HELP_LAST_STAGE,
+  stageHoldsTier,
+  stageInfo,
+} from '../config/stages';
 import { SIZE_COUNT, sizeRadius } from '../config/tiers';
 import {
   DROP_COOLDOWN_MS,
@@ -98,6 +104,7 @@ import { strikeTargets } from '../physics/lightning';
 import type { JarGeometry } from '../physics/geometry';
 import { MergeResolver } from '../physics/merges';
 import type { MergeOutcome, MergeRules } from '../physics/merges';
+import { openCats, wantedTiers } from '../physics/reach';
 import { echoSpot, pieceSpots } from '../physics/spawns';
 import { FixedStepper, PhysicsWorld } from '../physics/PhysicsWorld';
 import type { FallForces } from '../physics/PhysicsWorld';
@@ -573,7 +580,7 @@ export class RunController {
     if (!this.canDrop || !Number.isFinite(x) || kind === 'magnet') return false;
     // A cursed cat's bell counts the drop first; at 0 the cat turns to stone before the ball goes.
     this.countCurse();
-    const item = this.queue.take();
+    const item = this.queue.take(this.wantedTiers());
     const geo = this.world.geometry;
     const radius = this.radiusOf(item.tier);
     const at = clampDropX(x, radius, geo);
@@ -1457,6 +1464,24 @@ export class RunController {
       pieces.push(a.id, b.id);
     }
     this.events.emit('catBroken', { id: cat.id, tier: cat.tier, at, pieces });
+  }
+
+  /**
+   * The first stage's help (GAME_DESIGN §8): the tiers the cat queued at this drop leans towards,
+   * the ones that will wait on top of the jar for a partner when it comes, after the falling cats,
+   * the one now dropped and the next. None after MATCH_HELP_LAST_STAGE.
+   */
+  private wantedTiers(): number[] {
+    const stage = this.world.stage;
+    if (stage > MATCH_HELP_LAST_STAGE) return [];
+    const balls = this.world.balls;
+    const coming = [
+      ...balls.filter((ball) => ball.landedMs < 0),
+      this.queue.current,
+      this.queue.next,
+    ].flatMap((item) => (item.kind === 'cat' ? [item.tier] : []));
+    const open = openCats(balls).map((cat) => cat.tier);
+    return wantedTiers(open, coming, stageInfo(stage).dropPool);
   }
 
   /** What the queue rolls now: the stage and the picks so far. */

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { HANABI_FREE_DROPS, MAGNET_FREE_DROPS } from '../../src/config/picks';
-import { stageInfo } from '../../src/config/stages';
+import { MATCH_HELP_FACTOR, stageInfo } from '../../src/config/stages';
 import { DropQueue, dropWeights, PLAIN_ODDS } from '../../src/core/dropQueue';
 import type { Drop, DropOdds, DropQueueOptions } from '../../src/core/dropQueue';
 import { Rng } from '../../src/core/rng';
@@ -324,6 +324,36 @@ describe('special balls in the queue (GAME_DESIGN §15.1)', () => {
     for (const kind of ['magnet', 'boulder', 'hanabi', 'joker', 'cat'] as const) {
       expect(count(drops, (d) => d.kind === kind) / drops.length).toBeCloseTo(0.2, 1);
     }
+  });
+});
+
+describe("The first stage's help in the queue (GAME_DESIGN §8)", () => {
+  it('rolls a wanted tier MATCH_HELP_FACTOR times as often as its weight says', () => {
+    const q = makeQueue();
+    takeMany(q, 2);
+    const drops = Array.from({ length: 20000 }, () => q.take([4]));
+    const share = drops.filter((d) => d.tier === 4).length / drops.length;
+    const expected = (10 * MATCH_HELP_FACTOR) / (90 + 10 * MATCH_HELP_FACTOR);
+    expect(MATCH_HELP_FACTOR).toBeGreaterThan(1);
+    expect(Math.abs(share - expected)).toBeLessThan(0.01);
+  });
+
+  it("still draws once per item, so the rolls after it stay the seed's own", () => {
+    const helped = makeQueue();
+    const plain = makeQueue();
+    for (let i = 0; i < 50; i++) {
+      helped.take([2, 3]);
+      plain.take();
+    }
+    // The two queued items were rolled with the help; the ones after them weren't.
+    expect(takeMany(helped, 52).slice(2)).toEqual(takeMany(plain, 52).slice(2));
+  });
+
+  it('changes nothing when no tier or every tier is wanted', () => {
+    const every = makeQueue();
+    const none = makeQueue();
+    const pool = stageInfo(1).dropPool;
+    for (let i = 0; i < 300; i++) expect(every.take(pool)).toEqual(none.take([]));
   });
 });
 

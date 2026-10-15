@@ -43,6 +43,16 @@ export const DROP_TILT_STEP = 0.03;
 /** The first drops of a run are always the pool's smallest tier. */
 export const FIRST_DROPS_SMALLEST_COUNT = 2;
 
+/**
+ * The first stage's quiet help (v0.52, the owner's call, GAME_DESIGN §8): up to this stage, a cat
+ * queued while cats of drop sizes wait on top of the jar for a partner comes in one of their sizes
+ * more often, so the stage goes a little quicker.
+ */
+export const MATCH_HELP_LAST_STAGE = 1;
+
+/** How much more often: a wanted size's drop weight is multiplied by this. */
+export const MATCH_HELP_FACTOR = 3;
+
 export interface StageInfo {
   readonly stage: number;
   /** The stage's smallest cat (size 1): the tier after the previous stage's last cat. */

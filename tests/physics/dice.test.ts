@@ -199,7 +199,8 @@ describe('Dice (GAME_DESIGN §15.14)', () => {
     expect(seen[0]).toMatchObject({ newTier: 3, dice: null });
   });
 
-  it('plays the same for the same seed and inputs', () => {
+  // Two whole runs: under coverage, with every test file running at once, they can take 8 s.
+  it('plays the same for the same seed and inputs', { timeout: 30_000 }, () => {
     const play = (): { hash: string; rolls: string } => {
       const { run, merges } = setup(23);
       const aim = new Rng(4);
