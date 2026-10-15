@@ -9,8 +9,14 @@ import { createHud } from '../hud/hud';
 import type { HudActions, HudView } from '../hud/hud';
 import { JAR_GLASS } from '../../config/jarArt';
 import { JAR_WIDTH } from '../../config/stages';
-import { BACKGROUND_JAR, backgroundArt, SCENE_SPRITE_DIR } from '../../config/sceneSprites';
+import {
+  BACKGROUND_ARTS,
+  backgroundArt,
+  backgroundJar,
+  SCENE_SPRITE_DIR,
+} from '../../config/sceneSprites';
 import type { BackgroundSprite } from '../../config/sceneSprites';
+import type { TimeOfDay } from '../../config/timeOfDay';
 import {
   CLOUD_PART_MS,
   CLOUD_PART_STAGGER_MS,
@@ -68,9 +74,11 @@ export interface GameScreenView {
   /**
    * Shows jar `jar`'s background (GAME_DESIGN §7: 1 for stages 1–5, 2 for 6–10, …). With `grow`
    * the growth clouds well up, the background changes behind them, and it settles from a little
-   * close as they part (§7.1); else it just switches. Only with the painted backgrounds.
+   * close as they part (§7.1); else it just switches. Only with the painted backgrounds. The time
+   * of day (§7.3) is picked anew as a run starts (`newRun`) and as the jar grows, never in the
+   * middle of a jar.
    */
-  setJar(jar: number, grow: boolean): void;
+  setJar(jar: number, grow: boolean, newRun?: boolean): void;
   /** Freezes the growth clouds and the wind's petals while the run is paused. */
   setPaused(paused: boolean): void;
   /** Shows the run's wind (GAME_DESIGN §15.8): its level (0: none) and direction. */
@@ -80,12 +88,14 @@ export interface GameScreenView {
 /**
  * Game screen (GAME_DESIGN §2.3): the play area fills the screen, with the shrine garden behind
  * the transparent canvas, and the DOM HUD floats over its top. The garden is the owner's painted
- * background with `sceneArt` (config/sceneSprites.ts), else the vector one (ui/scenery.ts).
+ * background with `sceneArt` (config/sceneSprites.ts), else the vector one (ui/scenery.ts), at
+ * the time of day `pickTime` gives (§7.3).
  */
 export function createGameScreen(
   root: HTMLElement,
   actions: GameScreenActions,
   sceneArt = false,
+  pickTime: () => TimeOfDay = () => 'day',
 ): GameScreenView {
   root.replaceChildren();
   root.classList.add('game-screen');
@@ -93,7 +103,14 @@ export function createGameScreen(
   const playArea = el('div', 'play-area');
   playArea.dataset['testid'] = 'play-area';
   let scenery: HTMLElement | SVGSVGElement;
-  let art: BackgroundSprite = backgroundArt(1);
+  let time: TimeOfDay = pickTime();
+  let art: BackgroundSprite = backgroundArt(1, time);
+  // The grown jars' gardens at this time of day load ahead, so a growth never shows a blank one.
+  const preload = (): void => {
+    for (let jar = 2; jar <= BACKGROUND_ARTS.length; jar++) {
+      new Image().src = `${import.meta.env.BASE_URL}${SCENE_SPRITE_DIR}${backgroundArt(jar, time).file}`;
+    }
+  };
   const showArt = (image: HTMLImageElement): void => {
     image.src = `${import.meta.env.BASE_URL}${SCENE_SPRITE_DIR}${art.file}`;
     playArea.style.setProperty('--scene-sky', art.sky);
@@ -108,10 +125,7 @@ export function createGameScreen(
     image.draggable = false;
     showArt(image);
     playArea.append(image);
-    // The grown jars' gardens load ahead, so the first growth never shows a blank one.
-    for (let jar = 2; backgroundArt(jar) !== backgroundArt(jar - 1); jar++) {
-      new Image().src = `${import.meta.env.BASE_URL}${SCENE_SPRITE_DIR}${backgroundArt(jar).file}`;
-    }
+    preload();
     playArea.classList.add('has-scene-art');
     scenery = image;
   } else {
@@ -153,7 +167,7 @@ export function createGameScreen(
   const placeScenery = (box: ScreenJarBox): void => {
     // The painted background also always spans the play area's width (on wide screens its rug
     // is then wider than the jar).
-    const jar = sceneArt ? BACKGROUND_JAR : SCENERY_JAR;
+    const jar = sceneArt ? backgroundJar(art) : SCENERY_JAR;
     const view = sceneArt ? art : SCENERY_VIEW;
     let scale = (box.right - box.left) / jar.width;
     if (sceneArt) scale = Math.max(scale, playArea.clientWidth / view.width);
@@ -190,11 +204,19 @@ export function createGameScreen(
       g.setProperty('--glass-line', `${JAR_GLASS.lineWidth * unit}px`);
       glass.classList.toggle('is-hidden', growing);
     },
-    setJar(jar, grow) {
+    setJar(jar, grow, newRun = false) {
       if (!sceneArt || !(scenery instanceof HTMLImageElement)) return;
       const image = scenery;
+      // Picked now, so a new time's gardens load while the clouds well up.
+      if (grow || newRun) {
+        const picked = pickTime();
+        if (picked !== time) {
+          time = picked;
+          preload();
+        }
+      }
       const show = (): void => {
-        const next = backgroundArt(jar);
+        const next = backgroundArt(jar, time);
         if (next === art) return;
         art = next;
         showArt(image);
@@ -211,7 +233,8 @@ export function createGameScreen(
         if (reducedMotion()) return;
         // Behind the clouds the new place starts a little close, around the jar's feet, and
         // settles as they part: the camera pulls back.
-        image.style.transformOrigin = `${(BACKGROUND_JAR.cx / art.width) * 100}% ${(BACKGROUND_JAR.floor / art.height) * 100}%`;
+        const feet = backgroundJar(art);
+        image.style.transformOrigin = `${(feet.cx / art.width) * 100}% ${(feet.floor / art.height) * 100}%`;
         settling?.cancel();
         settling = image.animate(
           [{ transform: `scale(${GROWTH_BG_START_SCALE})` }, { transform: 'none' }],

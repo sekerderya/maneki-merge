@@ -15,6 +15,10 @@
  *   are painted with the jar's spot where the first one has it, so each is scaled to the first's
  *   size, cropped from the top (plain sky) or the sides if its shape differs, and the game places
  *   them all the same way (BACKGROUND_JAR).
+ * - Times of day (v0.51, GAME_DESIGN §7.3): `<name>-sunset` and `<name>-night`, each optional, are
+ *   the owner's edits of a day background. They are converted as they are, never resampled (the
+ *   image tool zooms an edit in by a percent or two): their fit onto the day picture is measured
+ *   from the outlines instead (tools/backgroundFit.ts), and the game places them by it.
  */
 import { mkdir, readdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -33,6 +37,8 @@ import {
   saveWebp,
 } from './artImage.ts';
 import type { Rect, Rgba } from './artImage.ts';
+import { measureFit } from './backgroundFit.ts';
+import type { BackgroundFit } from './backgroundFit.ts';
 
 const SOURCE_DIR = 'art-source/scene';
 const OUT_DIR = 'public/assets/scene';
@@ -45,6 +51,10 @@ const BACKGROUNDS = [
   'background-4',
   'background-5',
 ] as const;
+/** The times of day painted besides the day (GAME_DESIGN §7.3), as `<name>-<time>`. */
+const TIMES = ['sunset', 'night'] as const;
+/** A time of day's fit is reported when a measured patch lies this far off it, px. */
+const FIT_WARN_PX = 4;
 
 /** The bamboo's ink outline: red channel below this. */
 const INK_MAX_RED = 150;
@@ -89,19 +99,41 @@ interface BackgroundData {
   height: number;
   sky: string;
   ground: string;
+  fit: BackgroundFit;
 }
+
+/** One jar's backgrounds: the day's, and the other times' painted so far. */
+interface BackgroundSetData {
+  day: BackgroundData;
+  sunset?: BackgroundData;
+  night?: BackgroundData;
+}
+
+/** The day picture's fit onto itself. */
+const SAME: BackgroundFit = { sx: 1, sy: 1, x: 0, y: 0 };
 
 export async function buildScene(): Promise<void> {
   await mkdir(OUT_DIR, { recursive: true });
   const jar = await buildJar(await findSource(SOURCE_DIR, 'jar'));
   const paw = await buildPaw(await findSource(SOURCE_DIR, 'paw'));
-  const backgrounds: BackgroundData[] = [];
+  const backgrounds: BackgroundSetData[] = [];
   const files = await readdir(SOURCE_DIR);
+  const has = (name: string): boolean => files.some((f) => f.startsWith(`${name}.`));
   for (const name of BACKGROUNDS) {
     // The first is required; a later one stops the list where it is missing.
-    if (backgrounds.length > 0 && !files.some((f) => f.startsWith(`${name}.`))) break;
-    const first = backgrounds[0];
-    backgrounds.push(await buildBackground(await findSource(SOURCE_DIR, name), name, first));
+    if (backgrounds.length > 0 && !has(name)) break;
+    const first = backgrounds[0]?.day;
+    const day = await loadBackground(await findSource(SOURCE_DIR, name), first);
+    const set: BackgroundSetData = { day: await saveBackground(day, name, SAME) };
+    for (const time of TIMES) {
+      const variant = `${name}-${time}`;
+      if (!has(variant)) continue;
+      const path = await findSource(SOURCE_DIR, variant);
+      const { fit, worst } = await measureFit(day, path);
+      if (worst > FIT_WARN_PX) console.warn(`${path}: a patch lies ${worst}px off its fit`);
+      set[time] = await saveBackground(await loadRgba(path), variant, fit);
+    }
+    backgrounds.push(set);
   }
   await writeFile(DATA_FILE, dataModule(jar, paw, backgrounds));
   console.log(`Wrote the scene to ${OUT_DIR} and ${DATA_FILE}`);
@@ -242,12 +274,19 @@ async function buildPaw(path: string): Promise<PawData> {
   return data;
 }
 
-async function buildBackground(
+/** A day background, scaled to `size` (the first one's) when given. */
+function loadBackground(
   path: string,
-  name: string,
   size?: { readonly width: number; readonly height: number },
+): Promise<Rgba> {
+  return size ? loadSized(path, size.width, size.height) : loadRgba(path);
+}
+
+async function saveBackground(
+  image: Rgba,
+  name: string,
+  fit: BackgroundFit,
 ): Promise<BackgroundData> {
-  const image = size ? await loadSized(path, size.width, size.height) : await loadRgba(path);
   const file = `${name}.webp`;
   await saveWebp(image, join(OUT_DIR, file), 85);
   const sample = (y0: number, y1: number): string => {
@@ -263,8 +302,12 @@ async function buildBackground(
     height: image.height,
     sky: sample(0, 6),
     ground: sample(image.height - 6, image.height),
+    fit,
   };
-  console.log(`${path}: ${image.width}×${image.height}, sky ${data.sky}, ground ${data.ground}`);
+  const at = fit === SAME ? '' : `, fit ×${fit.sx} ×${fit.sy} +${fit.x} +${fit.y}`;
+  console.log(
+    `${name}: ${image.width}×${image.height}, sky ${data.sky}, ground ${data.ground}${at}`,
+  );
   return data;
 }
 
@@ -356,23 +399,29 @@ function rects(list: readonly Rect[]): string {
   return list.map((r) => `{ x: ${r.x}, y: ${r.y}, w: ${r.w}, h: ${r.h} }`).join(', ');
 }
 
-function dataModule(jar: JarData, paw: PawData, backgrounds: readonly BackgroundData[]): string {
+function dataModule(jar: JarData, paw: PawData, backgrounds: readonly BackgroundSetData[]): string {
+  const sprite = (time: string, bg: BackgroundData): string => `    ${time}: {
+      file: '${bg.file}',
+      width: ${bg.width},
+      height: ${bg.height},
+      sky: '${bg.sky}',
+      ground: '${bg.ground}',
+      fit: { sx: ${bg.fit.sx}, sy: ${bg.fit.sy}, x: ${bg.fit.x}, y: ${bg.fit.y} },
+    },`;
   const bgs = backgrounds
-    .map(
-      (bg) => `  {
-    file: '${bg.file}',
-    width: ${bg.width},
-    height: ${bg.height},
-    sky: '${bg.sky}',
-    ground: '${bg.ground}',
-  },`,
-    )
+    .map((set) => {
+      const times = (['day', ...TIMES] as const).flatMap((time) => {
+        const bg = set[time];
+        return bg ? [sprite(time, bg)] : [];
+      });
+      return `  {\n${times.join('\n')}\n  },`;
+    })
     .join('\n');
   return `/**
  * Generated by tools/build-art.ts (\`npm run art\`) from art-source/scene/: do not edit by hand.
  * Image pixels of the sprites in public/assets/scene/ (see sceneSprites.ts for each field).
  */
-import type { BackgroundSprite, JarSprite, PawSprite } from './sceneSprites';
+import type { BackgroundSet, JarSprite, PawSprite } from './sceneSprites';
 
 export const JAR_SPRITE: JarSprite = {
   back: '${jar.back}',
@@ -398,8 +447,8 @@ export const PAW_SPRITE: PawSprite = {
   armRow: ${paw.armRow},
 };
 
-/** The first jar's background first, then the grown jars' painted so far. */
-export const BACKGROUND_SPRITES: readonly BackgroundSprite[] = [
+/** The first jar's backgrounds first, then the grown jars' painted so far, by time of day. */
+export const BACKGROUND_SPRITES: readonly BackgroundSet[] = [
 ${bgs}
 ];
 

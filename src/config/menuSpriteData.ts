@@ -5,7 +5,6 @@
 import type { MenuSprites } from './menuSprites';
 
 export const MENU_SPRITE_DATA: MenuSprites = {
-  background: { file: 'background.webp', width: 768, height: 1376, sky: '#f3ebc7' },
   logo: { file: 'logo.webp', width: 921, height: 482 },
   hero: { file: 'hero.webp', width: 742, height: 648 },
   gear: { file: 'gear.webp', width: 168, height: 176 },

@@ -202,10 +202,21 @@ describe('Profile: wallet, records and stats (GAME_DESIGN §5, §11)', () => {
 
   it('keeps settings and hint flags', () => {
     const { profile } = setup();
-    expect(profile.settings).toEqual({ sound: true, haptics: true, reduceMotion: false });
+    expect(profile.settings).toEqual({
+      sound: true,
+      haptics: true,
+      reduceMotion: false,
+      dayNight: true,
+    });
     profile.setSetting('sound', false);
     profile.setSetting('haptics', false);
-    expect(profile.settings).toEqual({ sound: false, haptics: false, reduceMotion: false });
+    profile.setSetting('dayNight', false);
+    expect(profile.settings).toEqual({
+      sound: false,
+      haptics: false,
+      reduceMotion: false,
+      dayNight: false,
+    });
     expect(profile.hintSeen('aim')).toBe(false);
     profile.markHintSeen('aim');
     expect(profile.hintSeen('aim')).toBe(true);

@@ -23,7 +23,7 @@ function watchConsole(page: Page): string[] {
 }
 
 async function startRun(page: Page, seed: number): Promise<void> {
-  await page.goto(`./?debug=1&seed=${seed}`);
+  await page.goto(`./?debug=1&seed=${seed}&time=day`);
   await page.getByTestId('play').click();
   await expect.poll(async () => (await state(page)).canDrop, WAIT).toBe(true);
   // A few cats, so the stage clear has something to pop.

@@ -4,6 +4,7 @@
  * files. The measured data is in sceneSpriteData.ts; the choices here place the art. Pure data.
  */
 import { JAR_HEIGHT, JAR_WIDTH } from './stages';
+import type { TimeOfDay } from './timeOfDay';
 import { BACKGROUND_SPRITES, JAR_SPRITE, PAW_SPRITE } from './sceneSpriteData';
 
 /** A rectangle in an image's pixels. */
@@ -49,6 +50,14 @@ export interface PawSprite {
   readonly armRow: number;
 }
 
+/** Where the day picture's pixel (u, v) lies in a background: (u · sx + x, v · sy + y). */
+export interface BackgroundFit {
+  readonly sx: number;
+  readonly sy: number;
+  readonly x: number;
+  readonly y: number;
+}
+
 export interface BackgroundSprite {
   readonly file: string;
   readonly width: number;
@@ -56,6 +65,18 @@ export interface BackgroundSprite {
   /** The sky's colour at the top of the image (the screen above it) and the floor's at the bottom. */
   readonly sky: string;
   readonly ground: string;
+  /**
+   * Its fit onto the jar's day picture: the day picture's own is (1, 1, 0, 0); a sunset or a
+   * night is the owner's edit of it, a little zoomed in, measured by tools/backgroundFit.ts.
+   */
+  readonly fit: BackgroundFit;
+}
+
+/** One jar's backgrounds by time of day (GAME_DESIGN §7.3); a missing time shows the day. */
+export interface BackgroundSet {
+  readonly day: BackgroundSprite;
+  readonly sunset?: BackgroundSprite;
+  readonly night?: BackgroundSprite;
 }
 
 /** Where the sprites live, relative to the app's base URL. */
@@ -64,15 +85,19 @@ export const SCENE_SPRITE_DIR = 'assets/scene/';
 export const JAR_ART: JarSprite = JAR_SPRITE;
 export const PAW_ART: PawSprite = PAW_SPRITE;
 /**
- * The backgrounds, one per jar (GAME_DESIGN §7): the jar grows every JAR_GROWTH_STAGES stages and
- * each grown jar stands in a bigger place, up to five. Jars past the last painted one keep it.
+ * The backgrounds, one set per jar (GAME_DESIGN §7): the jar grows every JAR_GROWTH_STAGES stages
+ * and each grown jar stands in a bigger place, up to five. Jars past the last painted one keep it.
  */
-export const BACKGROUND_ARTS: readonly BackgroundSprite[] = BACKGROUND_SPRITES;
+export const BACKGROUND_ARTS: readonly BackgroundSet[] = BACKGROUND_SPRITES;
 
-/** The background of jar `jar` (1 for stages 1–5, 2 for 6–10, …; config/stages.ts stageJar). */
-export function backgroundArt(jar: number): BackgroundSprite {
+/**
+ * The background of jar `jar` (1 for stages 1–5, 2 for 6–10, …; config/stages.ts stageJar) at
+ * `time` (GAME_DESIGN §7.3), the day's where that time isn't painted.
+ */
+export function backgroundArt(jar: number, time: TimeOfDay = 'day'): BackgroundSprite {
   const index = Math.min(Math.max(1, Math.floor(jar)), BACKGROUND_ARTS.length) - 1;
-  return BACKGROUND_ARTS[index] as BackgroundSprite;
+  const set = BACKGROUND_ARTS[index] as BackgroundSet;
+  return set[time] ?? set.day;
 }
 
 /** World units per jar image pixel, across and down (the opening fills JAR_WIDTH × JAR_HEIGHT). */
@@ -102,3 +127,32 @@ export const PAW_ART_FADE = 55;
  * background is painted with the jar's place in the same spot (docs/ART_ASSETS.md phase 9).
  */
 export const BACKGROUND_JAR = { cx: 384, width: 560, floor: 1200 } as const;
+
+/**
+ * The background files (under SCENE_SPRITE_DIR) painted for another time of day than `time`: the
+ * loading screen leaves them out, as a day's play shows only one time's (GAME_DESIGN §7.3).
+ */
+export function otherTimesFiles(time: TimeOfDay): Set<string> {
+  const files = new Set<string>();
+  for (const set of BACKGROUND_ARTS) {
+    for (const other of ['sunset', 'night'] as const) {
+      const art = set[other];
+      if (art && other !== time) files.add(art.file);
+    }
+  }
+  return files;
+}
+
+/** Where the jar stands in `art`'s own pixels: BACKGROUND_JAR moved by its fit. */
+export function backgroundJar(art: BackgroundSprite): {
+  readonly cx: number;
+  readonly width: number;
+  readonly floor: number;
+} {
+  const { sx, sy, x, y } = art.fit;
+  return {
+    cx: BACKGROUND_JAR.cx * sx + x,
+    width: BACKGROUND_JAR.width * sx,
+    floor: BACKGROUND_JAR.floor * sy + y,
+  };
+}

@@ -12,6 +12,7 @@ import {
   ICON_CHEVRON,
   ICON_CLOSE,
   ICON_HELP,
+  ICON_MOON,
   ICON_MOTION,
   ICON_SOUND_ON,
   ICON_VIBRATE,
@@ -19,7 +20,7 @@ import {
 import { artImage, setUiArtProperties } from '../uiArt';
 
 /** The settings the panel switches (GAME_DESIGN §2.4); each one is a save setting. */
-export type SettingKey = 'sound' | 'haptics' | 'reduceMotion';
+export type SettingKey = 'sound' | 'haptics' | 'reduceMotion' | 'dayNight';
 
 export interface SettingsActions {
   onToggle(key: SettingKey): void;
@@ -51,7 +52,7 @@ interface SwitchRow {
 
 /**
  * Settings panel over the main menu (GAME_DESIGN §2.4): sound effects, haptics, reduce motion,
- * "How to play" and the version. Each switch is a whole row, so the target is the full width.
+ * day and night, "How to play" and the version. Each switch is a whole row, so the target is the full width.
  * With `art` (the art skin) it is the owner's approved mockup (docs/ART_ASSETS.md §4.14), built
  * from the Upgrades and menu pieces (panel-art.css): gold-rimmed icons, gold switches.
  */
@@ -112,6 +113,7 @@ export function createSettingsPanel(
       'Reduce motion',
       'Less shake, fewer sparkles',
     ),
+    dayNight: switchRow('dayNight', ICON_MOON, 'Day and night', 'The garden follows your clock'),
   };
 
   const tips = rowParts(ICON_HELP, 'How to play', 'Show the first-run tips again');

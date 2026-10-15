@@ -21,9 +21,8 @@ export interface MenuFrameSprite extends MenuSprite {
   readonly slice: number;
 }
 
+/** Since v0.51 the menu's garden is the first jar's (config/sceneSprites.ts, GAME_DESIGN §2.1). */
 export interface MenuSprites {
-  /** The garden, the mockup without its interface; `sky` fills the screen above it. */
-  readonly background: MenuSprite & { readonly sky: string };
   readonly logo: MenuSprite;
   /** The golden cat on its pink cushion. */
   readonly hero: MenuSprite;

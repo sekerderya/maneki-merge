@@ -30,7 +30,11 @@ export interface SaveData {
     totalCoinsEarned: number;
     jackpots: number;
   };
-  settings: { sound: boolean; haptics: boolean; reduceMotion: boolean };
+  /**
+   * `dayNight` (v0.51, GAME_DESIGN §7.3, added without a version step: a save without it has it
+   * on): the gardens follow the clock; off, they stay in the day.
+   */
+  settings: { sound: boolean; haptics: boolean; reduceMotion: boolean; dayNight: boolean };
   flags: {
     hintsSeen: Record<HintId, boolean>;
     /** The how-it-works clips opened at least once (v0.38): their buttons lose the new dot. */
@@ -55,7 +59,7 @@ export function defaultSave(): SaveData {
     upgrades,
     records: { bestScore: 0, bestStage: FIRST_STAGE, highestTier: 0 },
     stats: { runsPlayed: 0, totalMerges: 0, totalCoinsEarned: 0, jackpots: 0 },
-    settings: { sound: true, haptics: true, reduceMotion: false },
+    settings: { sound: true, haptics: true, reduceMotion: false, dayNight: true },
     flags: { hintsSeen, clipsSeen },
   };
 }
@@ -325,6 +329,7 @@ export function sanitize(data: Record<string, unknown>): { data: SaveData; issue
   out.settings.sound = r.bool(settings, 'settings.sound', out.settings.sound);
   out.settings.haptics = r.bool(settings, 'settings.haptics', out.settings.haptics);
   out.settings.reduceMotion = r.bool(settings, 'settings.reduceMotion', out.settings.reduceMotion);
+  out.settings.dayNight = r.bool(settings, 'settings.dayNight', out.settings.dayNight);
 
   const flags = r.section(data, 'flags');
   const hints = r.section(flags, 'flags.hintsSeen');

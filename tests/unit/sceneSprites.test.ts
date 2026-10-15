@@ -4,25 +4,35 @@ import {
   BACKGROUND_ARTS,
   BACKGROUND_JAR,
   backgroundArt,
+  backgroundJar,
   JAR_ART,
   JAR_ART_SCALE_X,
   JAR_ART_SCALE_Y,
   jarArtToWorld,
+  otherTimesFiles,
   PAW_ART,
   SCENE_SPRITE_DIR,
 } from '../../src/config/sceneSprites';
-import type { PxRect } from '../../src/config/sceneSprites';
+import type { BackgroundSprite, PxRect } from '../../src/config/sceneSprites';
 import { JAR_HEIGHT, JAR_WIDTH } from '../../src/config/stages';
+import { TIMES_OF_DAY } from '../../src/config/timeOfDay';
 import { jarGeometry, MAX_DROP_RADIUS } from '../../src/physics/geometry';
 import { CAMERA_SIDE_MARGIN_RATIO } from '../../src/config/view';
 
 const HEX = /^#[0-9a-f]{6}$/i;
 const inside = (r: PxRect, w: number, h: number): boolean =>
   r.x >= 0 && r.y >= 0 && r.w > 0 && r.h > 0 && r.x + r.w <= w && r.y + r.h <= h;
+/** Every background, each jar's day first. */
+const ALL: BackgroundSprite[] = BACKGROUND_ARTS.flatMap((set) =>
+  TIMES_OF_DAY.flatMap((time) => {
+    const art = set[time];
+    return art ? [art] : [];
+  }),
+);
 
 describe('scene art sprites (GAME_DESIGN §13.1)', () => {
   it('ships every image', () => {
-    const backgrounds = BACKGROUND_ARTS.map((art) => art.file);
+    const backgrounds = ALL.map((art) => art.file);
     for (const file of [JAR_ART.back, JAR_ART.front, PAW_ART.file, ...backgrounds]) {
       expect(existsSync(`public/${SCENE_SPRITE_DIR}${file}`), file).toBe(true);
     }
@@ -72,19 +82,62 @@ describe('scene art sprites (GAME_DESIGN §13.1)', () => {
   it('stands the jar inside every background, with its sky and floor colours', () => {
     expect(BACKGROUND_ARTS.length).toBeGreaterThanOrEqual(1);
     expect(BACKGROUND_ARTS.length).toBeLessThanOrEqual(5);
-    for (const art of BACKGROUND_ARTS) {
-      expect(BACKGROUND_JAR.cx).toBeLessThan(art.width);
-      expect(BACKGROUND_JAR.floor).toBeLessThan(art.height);
+    for (const art of ALL) {
+      const jar = backgroundJar(art);
+      expect(jar.cx - jar.width / 2).toBeGreaterThan(0);
+      expect(jar.cx + jar.width / 2).toBeLessThan(art.width);
+      expect(jar.floor).toBeLessThan(art.height);
       expect(art.sky).toMatch(HEX);
       expect(art.ground).toMatch(HEX);
     }
   });
 
+  it('places the day pictures as painted, and their edits by their fit (v0.51)', () => {
+    for (const set of BACKGROUND_ARTS) {
+      expect(set.day.fit).toEqual({ sx: 1, sy: 1, x: 0, y: 0 });
+      expect(backgroundJar(set.day)).toEqual(BACKGROUND_JAR);
+      for (const art of [set.sunset, set.night]) {
+        if (!art) continue;
+        // The image tool zooms an edit in a little: the jar's spot moves a few percent at most,
+        // measured in the day picture's pixels.
+        const k = art.width / set.day.width;
+        expect(art.fit.sx / k).toBeGreaterThan(0.97);
+        expect(art.fit.sx / k).toBeLessThan(1.05);
+        expect(Math.abs(art.fit.sx - art.fit.sy) / art.fit.sx).toBeLessThan(0.02);
+        const jar = backgroundJar(art);
+        expect(Math.abs(jar.cx / k - BACKGROUND_JAR.cx)).toBeLessThan(15);
+        expect(Math.abs(jar.floor / k - BACKGROUND_JAR.floor)).toBeLessThan(40);
+      }
+    }
+  });
+
   it('gives each jar its background, the last one for every jar after it', () => {
-    expect(backgroundArt(1)).toBe(BACKGROUND_ARTS[0]);
-    expect(backgroundArt(0)).toBe(BACKGROUND_ARTS[0]);
+    const first = BACKGROUND_ARTS[0];
+    expect(backgroundArt(1)).toBe(first?.day);
+    expect(backgroundArt(0)).toBe(first?.day);
     const last = BACKGROUND_ARTS[BACKGROUND_ARTS.length - 1];
-    expect(backgroundArt(BACKGROUND_ARTS.length)).toBe(last);
-    expect(backgroundArt(50)).toBe(last);
+    expect(backgroundArt(BACKGROUND_ARTS.length)).toBe(last?.day);
+    expect(backgroundArt(50)).toBe(last?.day);
+  });
+
+  it('shows each time of day where it is painted, else the day (v0.51)', () => {
+    BACKGROUND_ARTS.forEach((set, i) => {
+      expect(backgroundArt(i + 1, 'day')).toBe(set.day);
+      expect(backgroundArt(i + 1, 'sunset')).toBe(set.sunset ?? set.day);
+      expect(backgroundArt(i + 1, 'night')).toBe(set.night ?? set.day);
+      // Every jar has its sunset and night (the owner's, 2026-10-15).
+      expect(set.sunset).toBeDefined();
+      expect(set.night).toBeDefined();
+    });
+  });
+
+  it('leaves the other times’ gardens out of the loading screen, never a day’s', () => {
+    const atNight = otherTimesFiles('night');
+    for (const set of BACKGROUND_ARTS) {
+      expect(atNight.has(set.day.file)).toBe(false);
+      if (set.night) expect(atNight.has(set.night.file)).toBe(false);
+      if (set.sunset) expect(atNight.has(set.sunset.file)).toBe(true);
+    }
+    expect(otherTimesFiles('day').size).toBe(ALL.length - BACKGROUND_ARTS.length);
   });
 });

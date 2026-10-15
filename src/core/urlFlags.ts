@@ -1,3 +1,5 @@
+import { TIMES_OF_DAY } from '../config/timeOfDay';
+import type { TimeOfDay } from '../config/timeOfDay';
 import { MAX_RENDER_RESOLUTION } from '../config/view';
 
 /** Skins that `?skin=` may force: `art` is the default, `vector` the code-drawn cats of v0.11–v0.15. */
@@ -32,6 +34,11 @@ export interface UrlFlags {
    * device remembers it. Null when absent or malformed.
    */
   readonly scenes: boolean | null;
+  /**
+   * `?time=day|sunset|night` shows the gardens at that time of day whatever the clock and the
+   * setting say (GAME_DESIGN §7.3). Null when absent or unknown.
+   */
+  readonly time: TimeOfDay | null;
 }
 
 const MAX_SEED = 0xffffffff;
@@ -47,6 +54,7 @@ export function parseUrlFlags(search: string): UrlFlags {
     gravity: parseGravity(params.get('gravity')),
     interpolate: !parseOff(params.get('interp')),
     scenes: parseSwitch(params.get('scenes')),
+    time: parseTime(params.get('time')),
   };
 }
 
@@ -97,4 +105,12 @@ function parseSkin(value: string | null): SkinId | null {
   if (value === null) return null;
   const normalized = value.trim().toLowerCase();
   return (SKIN_IDS as readonly string[]).includes(normalized) ? (normalized as SkinId) : null;
+}
+
+function parseTime(value: string | null): TimeOfDay | null {
+  if (value === null) return null;
+  const normalized = value.trim().toLowerCase();
+  return (TIMES_OF_DAY as readonly string[]).includes(normalized)
+    ? (normalized as TimeOfDay)
+    : null;
 }

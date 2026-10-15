@@ -74,7 +74,7 @@ export interface SessionParts {
   readonly introCard: { readonly visible: boolean; show(card: IntroCard): void; hide(): void };
   /** The garden behind the jar: a new one each time the jar grows (GAME_DESIGN §7). */
   readonly scenery: {
-    setJar(jar: number, grow: boolean): void;
+    setJar(jar: number, grow: boolean, newRun?: boolean): void;
     setPaused(paused: boolean): void;
     setWind(level: number, direction: 1 | -1): void;
   };
@@ -464,7 +464,8 @@ export class GameSession {
     hud.setScore(run.score);
     hud.setCoins(run.coins);
     hud.setStage(run.stage, run.stageBestSize);
-    this.parts.scenery.setJar(stageJar(run.stage), false);
+    // A run starting (or coming back) picks the garden's time of day anew (GAME_DESIGN §7.3).
+    this.parts.scenery.setJar(stageJar(run.stage), false, true);
     this.parts.scenery.setWind(run.pickLevels.wind, run.windDirection);
     showPreview();
 

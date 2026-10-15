@@ -76,13 +76,15 @@ function image(url: string): Promise<HTMLImageElement> {
  * Loads and decodes every image the game shows (`__PRELOAD_IMAGES__`, listed by vite.config.ts:
  * all of public/assets and the clips' posters), calling `onProgress` with the share done (0–1).
  * An image that fails or takes longer than PRELOAD_TIMEOUT_MS is skipped (the DOM loads it later).
- * `loadArt` then finds its images here.
+ * `loadArt` then finds its images here. Files in `skip` (the gardens at the other times of day,
+ * GAME_DESIGN §7.3) are left to load when they are picked.
  */
 export async function preloadImages(
   baseUrl: string,
   onProgress: (done: number) => void,
+  skip: ReadonlySet<string> = new Set(),
 ): Promise<void> {
-  const files = __PRELOAD_IMAGES__;
+  const files = __PRELOAD_IMAGES__.filter((file) => !skip.has(file));
   let settled = 0;
   const loads = files.map((file) =>
     image(`${baseUrl}${file}`)

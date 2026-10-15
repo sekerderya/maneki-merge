@@ -1,6 +1,8 @@
 import { APP_NAME } from '../../config/app';
 import { HUD_SCORE_CARD_ART, HUD_SPRITE_DIR } from '../../config/hudSprites';
 import { MENU_ART, MENU_SPRITE_DIR } from '../../config/menuSprites';
+import { backgroundArt, SCENE_SPRITE_DIR } from '../../config/sceneSprites';
+import type { TimeOfDay } from '../../config/timeOfDay';
 import type { MenuSprite, MenuStripSprite } from '../../config/menuSprites';
 import { formatNumber } from '../../core/format';
 import { paintHeroCat } from '../catIcon';
@@ -31,6 +33,8 @@ export interface MenuView {
   setUpgradesAffordable(affordable: boolean): void;
   /** The Scenes button shows only on a device that turned it on (GAME_DESIGN §2.6). */
   setScenesVisible(visible: boolean): void;
+  /** The garden at `time` (GAME_DESIGN §7.3): the first jar's, as in the game (art only). */
+  setTimeOfDay(time: TimeOfDay): void;
 }
 
 /**
@@ -93,6 +97,8 @@ interface MenuControls {
   readonly iosHint: HTMLElement;
   readonly install: HTMLButtonElement;
   readonly scenes: HTMLButtonElement;
+  /** The painted garden (art only). */
+  readonly garden?: HTMLImageElement;
 }
 
 /**
@@ -105,7 +111,7 @@ export function createMenuScreen(root: HTMLElement, actions: MenuActions, art = 
   root.classList.toggle('is-art', art);
   const controls = art ? artLayout(root, actions) : vectorLayout(root, actions);
   const { coinValue, bestScoreValue, bestStageValue, upgrades, upgradesDot } = controls;
-  const { bottom, update, iosHint, install, scenes } = controls;
+  const { bottom, update, iosHint, install, scenes, garden } = controls;
 
   const syncBottom = (): void => {
     bottom.hidden = update.hidden && iosHint.hidden && install.hidden;
@@ -139,9 +145,17 @@ export function createMenuScreen(root: HTMLElement, actions: MenuActions, art = 
       upgradesDot.hidden = !affordable;
       upgrades.setAttribute('aria-label', affordable ? 'Upgrades, one is affordable' : 'Upgrades');
     },
+    setTimeOfDay(time) {
+      if (!garden) return;
+      const art = backgroundArt(1, time);
+      const src = `${import.meta.env.BASE_URL}${SCENE_SPRITE_DIR}${art.file}`;
+      if (garden.getAttribute('src') !== src) garden.src = src;
+      root.style.setProperty('--menu-sky', art.sky);
+    },
   };
   view.setCoins(0);
   view.setRecords(0, 1);
+  view.setTimeOfDay('day');
   syncBottom();
   return view;
 }
@@ -303,7 +317,6 @@ function menuImage(sprite: MenuSprite, className: string, alt = ''): HTMLImageEl
 function setMenuArtProperties(root: HTMLElement): void {
   const set = (name: string, value: string | number): void =>
     root.style.setProperty(name, String(value));
-  set('--menu-sky', MENU_ART.background.sky);
   const strips: [string, MenuStripSprite][] = [
     ['play', MENU_ART.play],
     ['upgrades', MENU_ART.upgrades],
@@ -345,7 +358,11 @@ function setMenuArtProperties(root: HTMLElement): void {
  */
 function artLayout(root: HTMLElement, actions: MenuActions): MenuControls {
   setMenuArtProperties(root);
-  const background = menuImage(MENU_ART.background, 'menu-bg');
+  // The first jar's garden (v0.51, the owner's call: the menu's own, with its stone path, is
+  // gone), at the time of day (setTimeOfDay).
+  const garden = el('img', 'menu-bg');
+  garden.alt = '';
+  garden.draggable = false;
 
   const stage = el('div', 'menu-stage');
   const glow = el('span', 'menu-glow');
@@ -398,6 +415,15 @@ function artLayout(root: HTMLElement, actions: MenuActions): MenuControls {
   const scenes = scenesButton(actions, 'menu-art-scenes');
   stage.append(scenes);
 
-  root.append(background, stage, top);
-  return { coinValue, bestScoreValue, bestStageValue, upgrades, upgradesDot, scenes, ...foot };
+  root.append(garden, stage, top);
+  return {
+    coinValue,
+    bestScoreValue,
+    bestStageValue,
+    upgrades,
+    upgradesDot,
+    scenes,
+    garden,
+    ...foot,
+  };
 }

@@ -184,7 +184,7 @@ export class ClipBrowser {
         window.addEventListener(type, (event) => event.stopImmediatePropagation(), true);
       }
     });
-    const flags = `?debug=1&seed=${options.seed}&res=2`;
+    const flags = `?debug=1&seed=${options.seed}&res=2&time=day`;
     await page.goto(url + flags);
     await page.addStyleTag({
       content:

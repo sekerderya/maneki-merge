@@ -9,6 +9,7 @@ import { RunSaveStore } from './core/runSave';
 import { ScenesSwitch } from './core/scenesSwitch';
 import { SaveStore } from './core/save';
 import type { SaveData } from './core/save';
+import { timeOfDayAt } from './core/timeOfDay';
 import { parseUrlFlags } from './core/urlFlags';
 import { installDebugHooks } from './debug';
 import { createGame, loadArt, preloadImages } from './game';
@@ -34,6 +35,8 @@ import {
 import { GameSession } from './session';
 import { TESTER_RESET_BEST_STAGE, TESTER_RESET_COINS } from './config/app';
 import { CUTOUT_RECHECK_MS, UPDATE_LAUNCH_APPLY_MS } from './config/platform';
+import { otherTimesFiles, SCENE_SPRITE_DIR } from './config/sceneSprites';
+import type { TimeOfDay } from './config/timeOfDay';
 import { setIconSkin } from './ui/catIcon';
 import { byId } from './ui/dom';
 import { createGameOverOverlay } from './ui/overlays/gameOverOverlay';
@@ -82,7 +85,11 @@ async function boot(): Promise<void> {
   // Every image loads with the fonts and the update check; if the cats' art can't, the game falls
   // back to the vector art.
   const base = import.meta.env.BASE_URL;
-  const images = skin === 'art' ? preloadImages(base, (share) => loading.setProgress(share)) : null;
+  // The gardens at the clock's time of day load now (GAME_DESIGN §7.3); the other times' wait.
+  const clockTime = (): TimeOfDay => flags.time ?? timeOfDayAt(new Date());
+  const otherTimes = new Set([...otherTimesFiles(clockTime())].map((f) => SCENE_SPRITE_DIR + f));
+  const images =
+    skin === 'art' ? preloadImages(base, (share) => loading.setProgress(share), otherTimes) : null;
   const [, art, updateWaiting] = await Promise.all([
     loadFonts().then(() => loading.fontsReady()),
     skin === 'art' ? loadArt(base).catch(() => null) : null,
@@ -119,6 +126,8 @@ async function boot(): Promise<void> {
     },
   };
   const profile = new Profile(profileStore, loaded.data, { scheduler: windowScheduler });
+  // The gardens' time of day (GAME_DESIGN §7.3): the clock's, unless the setting keeps the day.
+  const pickTime = (): TimeOfDay => flags.time ?? (profile.settings.dayNight ? clockTime() : 'day');
   if (storage.persistent) void requestPersistentStorage();
   // The menu's Scenes button (GAME_DESIGN §2.6): `?scenes=1` or the tester reset (7 taps on the version) turn it on.
   const scenesSwitch = new ScenesSwitch(storage.adapter);
@@ -169,6 +178,7 @@ async function boot(): Promise<void> {
     skin === 'art',
   );
   menu.setScenesVisible(scenesSwitch.on);
+  menu.setTimeOfDay(pickTime());
 
   menu.setInstallHint(installHintFor(installContext, installPrompt.available));
   onUpdateReady = (ready) => menu.setUpdateReady(ready);
@@ -251,6 +261,7 @@ async function boot(): Promise<void> {
       onToggle: (key) => {
         session.setSetting(key, !session.settings[key]);
         if (key === 'haptics') haptics.play('tick');
+        if (key === 'dayNight') menu.setTimeOfDay(pickTime());
       },
       onReplayTips: () => {
         session.replayHints();
@@ -328,6 +339,7 @@ async function boot(): Promise<void> {
     byId('game-screen'),
     { onPause: () => session.pauseRun(), onTake: () => session.take() },
     skin === 'art',
+    pickTime,
   );
   const overlays = byId('overlays');
   // The stage doors shut over the game screen, under the picks and the pause overlay.
@@ -438,7 +450,10 @@ async function boot(): Promise<void> {
     (screen) => {
       closeClip();
       // End (and save) the run first: back on the menu, a waiting update reloads the app soon.
-      if (screen === 'menu') session.endRun();
+      if (screen === 'menu') {
+        session.endRun();
+        menu.setTimeOfDay(pickTime());
+      }
       gate.setMenuActive(
         screen === 'menu' && !shop.visible && !settingsPanel.visible && !scenes.visible,
       );
@@ -468,7 +483,11 @@ async function boot(): Promise<void> {
       session.save();
       audio.suspend();
     },
-    onVisible: () => audio.resume(),
+    onVisible: () => {
+      audio.resume();
+      // Back after a while on the menu: its garden catches up with the clock.
+      if (screens?.screen === 'menu') menu.setTimeOfDay(pickTime());
+    },
   });
 
   sw ??= registerServiceWorker(gate);

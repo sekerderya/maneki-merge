@@ -67,3 +67,25 @@ test('the vector menu stays behind ?skin=vector', async ({ page }) => {
   await expect(page.locator('#menu-screen')).not.toHaveClass(/is-art/);
   await expect(page.locator('.menu-title')).toHaveText('Maneki Merge');
 });
+
+// The gardens follow the clock (GAME_DESIGN §7.3); `?time=` pins the time of day, and the
+// setting keeps the day.
+test('the menu and the game show the garden at the time of day', async ({ page }) => {
+  await page.goto('./?debug=1&seed=3&time=night');
+  await expect(page.locator('.menu-bg')).toHaveAttribute('src', /scene\/background-night\.webp$/);
+  await page.getByTestId('play').click();
+  await expect(page.locator('.play-scenery')).toHaveAttribute('src', /background-night\.webp$/);
+
+  await page.goto('./?time=sunset');
+  await expect(page.locator('.menu-bg')).toHaveAttribute('src', /background-sunset\.webp$/);
+});
+
+test('the Day and night setting keeps the garden in the day', async ({ page }) => {
+  await page.goto('./');
+  await page.getByTestId('settings').click();
+  const row = page.getByTestId('setting-dayNight');
+  await expect(row).toHaveAttribute('aria-checked', 'true');
+  await row.click();
+  await expect(row).toHaveAttribute('aria-checked', 'false');
+  await expect(page.locator('.menu-bg')).toHaveAttribute('src', /scene\/background\.webp$/);
+});

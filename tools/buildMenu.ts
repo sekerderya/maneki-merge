@@ -3,7 +3,7 @@
  * owner's menu images from `art-source/menu/` (all cut from the chosen mockup, `mockup.jpg`),
  * written to `public/assets/menu/` with their measurements in `src/config/menuSpriteData.ts`.
  *
- * - Background: converted as is; its sky colour is sampled for the screen above it.
+ * - Background: none since v0.51; the menu shows the first jar's garden (tools/buildScene.ts).
  * - Logo: cut out, its cream rim lifted to the mockup's lighter cream.
  * - Hero: the golden cat on its cushion, cut out; the cushion turned from peach to the mockup's
  *   pink.
@@ -69,12 +69,7 @@ interface FrameSprite extends Sprite {
   slice: number;
 }
 
-interface BackgroundSprite extends Sprite {
-  sky: string;
-}
-
 interface MenuData {
-  background: BackgroundSprite;
   logo: Sprite;
   hero: Sprite;
   gear: Sprite;
@@ -92,8 +87,6 @@ interface MenuData {
 export async function buildMenu(): Promise<void> {
   await mkdir(OUT_DIR, { recursive: true });
   const source = (base: string): Promise<string> => findSource(SOURCE_DIR, base);
-
-  const background = await buildBackground(await source('background'));
 
   const logoImage = await cutOut(await source('logo'));
   liftCream(logoImage);
@@ -159,7 +152,6 @@ export async function buildMenu(): Promise<void> {
   const arrow = await icon(0, 2, 'arrow.webp');
 
   const data: MenuData = {
-    background,
     logo,
     hero,
     gear,
@@ -178,21 +170,6 @@ export async function buildMenu(): Promise<void> {
     `Menu: logo ${logo.width}×${logo.height}, hero ${hero.width}×${hero.height}, ` +
       `PLAY ${play.width}×${play.height}, card ${card.width}×${card.height}; wrote ${DATA_FILE}`,
   );
-}
-
-async function buildBackground(path: string): Promise<BackgroundSprite> {
-  const image = await loadRgba(path);
-  await saveWebp(image, join(OUT_DIR, 'background.webp'), 85);
-  const samples: number[][] = [];
-  for (let y = 0; y < 6; y++) {
-    for (let x = 0; x < image.width; x += 4) samples.push(pixel(image, x, y));
-  }
-  return {
-    file: 'background.webp',
-    width: image.width,
-    height: image.height,
-    sky: median(samples),
-  };
 }
 
 async function cutOut(path: string): Promise<Rgba> {

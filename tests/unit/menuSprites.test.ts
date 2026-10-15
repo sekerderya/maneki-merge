@@ -7,6 +7,8 @@ import {
   MENU_SPRITE_DIR,
   menuSprites,
 } from '../../src/config/menuSprites';
+import { backgroundArt } from '../../src/config/sceneSprites';
+import { TIMES_OF_DAY } from '../../src/config/timeOfDay';
 
 describe('main menu art sprites (GAME_DESIGN §2.1, §13.1)', () => {
   it('ships every image', () => {
@@ -17,10 +19,13 @@ describe('main menu art sprites (GAME_DESIGN §2.1, §13.1)', () => {
     }
   });
 
-  it('keeps the garden at the mockup’s size, so the stage lines up with it', () => {
-    expect(MENU_ART.background.width).toBe(MENU_MOCKUP_WIDTH);
-    expect(MENU_ART.background.height).toBe(MENU_MOCKUP_HEIGHT);
-    expect(MENU_ART.background.sky).toMatch(/^#[0-9a-f]{6}$/);
+  it('stands on the first jar’s garden, at the mockup’s shape at every time of day (v0.51)', () => {
+    for (const time of TIMES_OF_DAY) {
+      const garden = backgroundArt(1, time);
+      expect(garden.width / garden.height).toBeCloseTo(MENU_MOCKUP_WIDTH / MENU_MOCKUP_HEIGHT, 2);
+      expect(garden.sky).toMatch(/^#[0-9a-f]{6}$/);
+    }
+    expect(backgroundArt(1).width).toBe(MENU_MOCKUP_WIDTH);
   });
 
   it('keeps each strip’s round ends whole and leaves a middle to stretch', () => {

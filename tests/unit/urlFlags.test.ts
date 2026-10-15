@@ -12,10 +12,11 @@ describe('parseUrlFlags', () => {
       gravity: null,
       interpolate: true,
       scenes: null,
+      time: null,
     });
   });
 
-  it('reads all seven flags, with or without the leading ?', () => {
+  it('reads all eight flags, with or without the leading ?', () => {
     const expected = {
       debug: true,
       seed: 42,
@@ -24,8 +25,10 @@ describe('parseUrlFlags', () => {
       gravity: 1.2,
       interpolate: false,
       scenes: true,
+      time: 'night',
     };
-    const query = 'debug=1&seed=42&skin=placeholder&res=1.5&gravity=1.2&interp=0&scenes=1';
+    const query =
+      'debug=1&seed=42&skin=placeholder&res=1.5&gravity=1.2&interp=0&scenes=1&time=night';
     expect(parseUrlFlags(`?${query}`)).toEqual(expected);
     expect(parseUrlFlags(query)).toEqual(expected);
   });
@@ -88,6 +91,7 @@ describe('parseUrlFlags', () => {
       gravity: null,
       interpolate: true,
       scenes: null,
+      time: null,
     });
   });
 
@@ -127,5 +131,15 @@ describe('parseUrlFlags', () => {
     ['?interp=FALSE', false],
   ])('parses %s as interpolate=%s', (search, interpolate) => {
     expect(parseUrlFlags(search).interpolate).toBe(interpolate);
+  });
+
+  it.each([
+    ['?time=day', 'day'],
+    ['?time=sunset', 'sunset'],
+    ['?time=NIGHT', 'night'],
+    ['?time=dawn', null],
+    ['?time=', null],
+  ])('parses %s as time=%s', (search, time) => {
+    expect(parseUrlFlags(search).time).toBe(time);
   });
 });

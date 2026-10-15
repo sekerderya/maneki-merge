@@ -57,6 +57,11 @@ export const ICON_MOTION = stroke(
   '<circle cx="15" cy="12" r="5"/><path d="M2 9h6"/><path d="M3 15h5"/><path d="M5 12h4"/>',
 );
 
+/** The day-and-night setting (GAME_DESIGN §7.3): a crescent moon. */
+export const ICON_MOON = stroke(
+  '<path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a6.5 6.5 0 0 0 11 11z"/>',
+);
+
 export const ICON_HELP = stroke(
   '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
 );
