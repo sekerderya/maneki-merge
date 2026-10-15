@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.50.3] - 2026-10-15
+
+### Changed
+
+- **The goal's ring no longer breathes** (the owner's call): it stays still when the stage has its first size-8 cat (GAME_DESIGN §2.3).
+
+### Fixed
+
+- **Less drawing behind the HUD** (the owner's report: better since v0.50.2 but still not as smooth as before today's updates; TECH_SPEC §13). The goal strip shared the HUD's layer, so every repaint of the coins card (about 10 a second while coins land), the score or NEXT drew the strip's nine outlined cats again: the HUD's raster work doubled against v0.47.3. The goal strip and the coins card now have layers of their own, and that work is now below v0.47.3's (software raster: 15–39 ms a second with v0.47.3, 48–57 with v0.50.2, 6–10 now). Nothing looks different.
+
 ## [0.50.2] - 2026-10-15
 
 ### Fixed
