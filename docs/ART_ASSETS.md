@@ -117,6 +117,9 @@ narrower than their canvas: Claude crops the empty space.
 | 40  | 17 Play    | `store/feature-graphic.png`               | Google Play's feature graphic: the logo and the cats, wide (§4.18)  | 3:2, 1536×1024    |
 | 41  | 18 goal    | `ui/goal-strip-mockup*.png`               | Play screen with the stage goal strip, two states (§4.19)           | 9:16              |
 | 42  | 18 goal    | `hud/goal-slot.png`                       | The goal's round slot: cream disc, flat gold ring                   | 1:1, 1024×1024    |
+| 43  | 19 time    | `scene/background…-sunset.png`            | The five jar backgrounds at sunset, edits of the day ones (§4.20)   | 9:16              |
+| 44  | 19 time    | `scene/background…-night.png`             | The five jar backgrounds at night                                   | 9:16              |
+| 45  | 19 time    | `menu/background-sunset`, `-night`        | The menu garden at sunset and at night                              | 2:3 or 9:16       |
 
 How the pieces go into the game:
 
@@ -2643,6 +2646,97 @@ a thinner one round its inside. The disc is empty: nothing in it. Square 1:1.
 ```
 
 Checks: a closed, perfect, empty circle; flat, no shine; white background.
+
+### 4.20 Phase 19: sunset and night backgrounds
+
+The owner's idea (2026-10-15), like Pokémon GO: the backgrounds follow the phone's clock. Today's
+pictures are the day; every background gets two more times of day, **sunset** and **night**. The
+day ones already read as a soft morning, so there is no separate morning. The game picks the time
+from the clock (no location), when a run starts and when the jar grows, never in the middle of a
+jar; a setting can keep it always day. The details go into GAME_DESIGN when it is built.
+
+| Picture         | Day (attach this)        | Sunset                          | Night                          |
+| --------------- | ------------------------ | ------------------------------- | ------------------------------ |
+| Jar 1, garden   | `scene/background.jpg`   | `scene/background-sunset.png`   | `scene/background-night.png`   |
+| Jar 2, temple   | `scene/background-2.jpg` | `scene/background-2-sunset.png` | `scene/background-2-night.png` |
+| Jar 3, town     | `scene/background-3.jpg` | `scene/background-3-sunset.png` | `scene/background-3-night.png` |
+| Jar 4, mountain | `scene/background-4.jpg` | `scene/background-4-sunset.png` | `scene/background-4-night.png` |
+| Jar 5, peak     | `scene/background-5.jpg` | `scene/background-5-sunset.png` | `scene/background-5-night.png` |
+| Menu garden     | `menu/background.jpg`    | `menu/background-sunset.png`    | `menu/background-night.png`    |
+
+**How to generate.** Every picture is an **edit** of its day picture, so nothing moves: the game
+lays the times over each other, and the rug and the jar's spot must stay exactly in place. Attach
+the day picture first. Do jar 1 first, sunset in one chat and night in another; once the owner
+likes them, they are the **look reference**: attach `background-sunset` (or `-night`) as the second
+image to every other picture of that time, so all six share one sky and one light. Ask for the
+same shape as the attached picture (9:16; 1024×1536 also works, the pipeline crops the sides).
+
+**Sunset**, the whole prompt for jar 1 (the others add the look-reference line after the first
+paragraph and swap the scene line, see below):
+
+```text
+Edit the attached picture, a background from my mobile game. Keep the picture exactly as it is:
+every object with its shape, size and place, the composition, the mint rug at the bottom, the thick
+warm dark-brown outlines and the cute pastel cel-shaded style. Change only the time of day: the
+sky, the light and the colours.
+
+Make it a warm spring sunset. The sky is a soft dusty rose at the top edge, flowing down through
+warm peach and coral to a glowing golden orange just above the horizon. The low sun is outside the
+picture on the left: golden-orange light comes from the left, with long soft shadows to the right
+and warm rim light on the left edges of things. Clouds are lit pink and gold from below, the sakura
+blossoms glow a warmer coral pink, and the lanterns are just lit, with a small warm glow inside.
+The torii and the shrine's red wood glow warm in the low light, and the two lanterns hanging at the
+shrine are lit.
+
+Keep it pastel, soft and cosy: not dark, not oversaturated. The top 15% stays plain sky that ends
+in one flat colour at the top edge, so the game can extend it upwards. The centre column (the
+middle 85% of the width, from 30% to 87% of the height) stays calm and low in contrast, because a
+glass jar full of cats stands there. No jar, no cats, no people, no user interface, no text, no
+letters, no kanji, no watermark, no signature. The same size and shape as the attached picture.
+```
+
+**Night**, the whole prompt for jar 1:
+
+```text
+Edit the attached picture, a background from my mobile game. Keep the picture exactly as it is:
+every object with its shape, size and place, the composition, the mint rug at the bottom, the thick
+warm dark-brown outlines and the cute pastel cel-shaded style. Change only the time of day: the
+sky, the light and the colours.
+
+Make it a calm spring night under a full moon. The sky is a soft deep indigo blue at the top edge,
+flowing down to a lighter dusty blue-violet just above the horizon, with a round pale-cream full
+moon and its soft halo high in the sky on the left (below the top 15%), and a few small soft cream
+stars in the middle of the sky only. Cool soft moonlight comes from the upper left. Every lantern
+is lit and glows warm gold with a soft round halo, casting a warm pool of light on the ground
+around it. The sakura blossoms are a pale moonlit pink. The shrine's doorway glows softly from
+inside, and the clouds are soft blue-grey with silver edges.
+
+A cosy storybook night: clearly night, but never black or gloomy, soft mid-tone colours, the
+outlines still warm dark brown, the mint rug still clearly mint. The top 15% stays plain sky that
+ends in one flat colour at the top edge (no stars, moon or clouds there), so the game can extend it
+upwards. The centre column (the middle 85% of the width, from 30% to 87% of the height) stays calm,
+low in contrast and mid-dark, never black, because a glass jar full of colourful cats stands there
+and they must stay easy to see. No jar, no cats, no people, no user interface, no text, no letters,
+no kanji, no watermark, no signature. The same size and shape as the attached picture.
+```
+
+**Look-reference line** (every picture after jar 1, after the first paragraph):
+`The second attached picture is the same sunset (night) already done for another scene of my game:
+match its sky colours, light and mood exactly.`
+
+**Scene lines** (they replace jar 1's last sentence or two before the closing paragraph):
+
+| Picture | Sunset                                                                                                                                                                                                                                                                                                                                     | Night                                                                                                                                                                                                                                                                                                                             |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Jar 2   | The gate's and the pagoda's red wood glow warm orange in the low light, and the green hills turn soft violet.                                                                                                                                                                                                                              | Small warm lights glow in the temple hall's doorways and on each roof of the pagoda, the stone plaza is silvery blue with warm lantern pools, and the hills are a soft dark blue.                                                                                                                                                 |
+| Jar 3   | Mount Fuji's snow glows pink, the river reflects the orange sky, the water in the rice fields shines gold, and the first windows in the town light up.                                                                                                                                                                                     | The whole little town's windows glow warm yellow, small lanterns line the path of red torii gates up the hill, the river and the rice fields reflect the moonlight, and Mount Fuji is soft blue-grey with moonlit snow.                                                                                                           |
+| Jar 4   | Mount Fuji's snow glows pink, the bands of cloud below the stage turn peach and gold, the waterfall catches the orange light, and the valley sinks into soft violet shade.                                                                                                                                                                 | The tiny village far below has a few warm lights, the waterfall and the river shine silver in the moonlight, the bands of cloud below the stage are soft blue-grey with silver edges, and Mount Fuji is moonlit.                                                                                                                  |
+| Jar 5   | Instead of "The low sun is outside the picture…": the sun already in the picture stays in its place and size, turns a deep golden orange and sinks halfway into the sea of clouds; the light comes from it. The clouds glow peach, coral and gold, lilac in their shade, Fuji's tip glows pink, and the cranes are small dark silhouettes. | Instead of the moon sentence: the sun in the picture becomes a big pale-cream full moon with a soft halo, in the same place and the same size (no other moon). The sea of clouds is soft silvery blue in the moonlight, Fuji is moonlit, the cranes are small and white, and the paper streamers on the sacred rope glow faintly. |
+| Menu    | As jar 1, plus: the stone path glows warm in the low light. This is the main menu's background and buttons sit over its middle, so keep it a little softer and lighter.                                                                                                                                                                    | As jar 1, plus: the stone path is silvery in the moonlight with warm lantern pools. This is the main menu's background and buttons sit over its middle, so make it the lightest of the night scenes.                                                                                                                              |
+
+Checks: laid over its day picture, nothing moved (the rug, the jar's spot, the buildings, the
+branches); the top edge is one flat colour; the centre column is calm; at night the cats will still
+read (Claude tries a night background behind a full jar before the rest are made).
 
 ## 5. Icon kit (every new icon)
 
