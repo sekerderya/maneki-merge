@@ -127,18 +127,18 @@ test('the goal strip shows the stage, its cats and the ones the stage has had', 
   const cats = goal.locator('.cat-icon');
   await expect(cats).toHaveCount(9);
   await expect(goal.locator('.cat-icon.is-unmade')).toHaveCount(9);
-  // A 5 lights cats 1–5; an 8 lights up to 8, and the goal's ring breathes.
+  // A 5 lights cats 1–5; an 8 lights up to 8. The goal's ring stays still (v0.50.3).
   await page.evaluate(() => window.__game?.spawnTier(5, -150, -window.__game.radiusOf(5)));
   await expect(goal.locator('.cat-icon.is-unmade')).toHaveCount(4);
   await page.evaluate(() => window.__game?.spawnTier(8, 120, -window.__game.radiusOf(8)));
   await expect(goal.locator('.cat-icon.is-unmade')).toHaveCount(1);
-  const slot = goal.locator('.hud-goal-slot');
-  await expect(slot).toHaveClass(/is-near/);
-  // It breathes three times and rests (v0.50.2): a running animation restyles the HUD every frame.
-  expect(await slot.evaluate((node) => node.getAnimations().length)).toBe(1);
-  await expect
-    .poll(() => slot.evaluate((node) => node.getAnimations().length), { timeout: 15_000 })
-    .toBe(0);
-  await expect(slot).toHaveClass(/is-near/);
+  expect(await goal.locator('.hud-goal-slot').evaluate((node) => node.getAnimations().length)).toBe(
+    0,
+  );
+  // The strip and the coins card have layers of their own, so the HUD's repaints don't draw the
+  // strip's cats again (v0.50.3, TECH_SPEC §13).
+  for (const node of [goal, page.locator('.hud-coins-card')]) {
+    expect(await node.evaluate((n) => getComputedStyle(n).willChange)).toBe('transform');
+  }
   expect(errors).toEqual([]);
 });

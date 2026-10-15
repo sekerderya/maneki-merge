@@ -210,6 +210,9 @@
   height: 58px;
   padding: 3px 0 0 39px;
   border-radius: 18px;
+  /* Its own layer (v0.50.3): every landing coin's pulse repaints it for 180 ms (its background
+     can't be animated on the GPU), and only its own small layer is drawn again. */
+  will-change: transform;
 }
 
 .hud-coins {
@@ -346,6 +349,9 @@
   height: 38px;
   padding: 0 0 0 4px;
   border-radius: 19px;
+  /* Its own layer (v0.50.3): the HUD repaints all through play (the coins, the score, NEXT), and
+     in the HUD's shared layer every repaint drew the strip's nine outlined cats again too. */
+  will-change: transform;
 }
 
 .game-hud.is-art .hud-goal {
@@ -463,19 +469,6 @@
   }
   55% {
     transform: scale(1.3);
-  }
-}
-
-/* One cat to go (a size 8 is in the jar): the goal's ring breathes three times, then rests. Not
-   for good: a running CSS animation makes the browser restyle the HUD every frame, which made
-   phones stutter for the whole second half of a stage (v0.50.2). */
-.hud-goal-slot.is-near {
-  animation: goal-near 1100ms ease-in-out 6 alternate;
-}
-
-@keyframes goal-near {
-  to {
-    transform: scale(1.08);
   }
 }
 
@@ -1086,8 +1079,7 @@
 .reduce-motion .hud-next-cats .cat-icon.is-copied,
 .reduce-motion .combo.is-step,
 .reduce-motion .hud-coins-card.is-pulsing,
-.reduce-motion .hud-goal .cat-icon.is-reached,
-.reduce-motion .hud-goal-slot.is-near {
+.reduce-motion .hud-goal .cat-icon.is-reached {
   animation: none;
 }
 

@@ -119,8 +119,6 @@ export function createHud(root: HTMLElement, actions: HudActions, art = false): 
       if (pop && made && i >= goalBest) playAnimation(cat, 'is-reached');
       cat.classList.toggle('is-unmade', !made);
     });
-    // One cat to go: the stage has made a size 8.
-    slot.classList.toggle('is-near', best === SIZE_COUNT - 1);
     goalBest = best;
   };
 
