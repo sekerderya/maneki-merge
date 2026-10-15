@@ -1,3 +1,4 @@
+import { DEV_APP_FLAGS } from '../config/ads';
 import { TIMES_OF_DAY } from '../config/timeOfDay';
 import type { TimeOfDay } from '../config/timeOfDay';
 import { MAX_RENDER_RESOLUTION } from '../config/view';
@@ -5,6 +6,13 @@ import { MAX_RENDER_RESOLUTION } from '../config/view';
 /** Skins that `?skin=` may force: `art` is the default, `vector` the code-drawn cats of v0.11–v0.15. */
 export const SKIN_IDS = ['placeholder', 'vector', 'art'] as const;
 export type SkinId = (typeof SKIN_IDS)[number];
+
+/**
+ * What `?ads=` may force (TECH_SPEC §16): `fake`, a test ad the page draws itself (any build);
+ * `admob`, Google's test ads through AdMob (the Android app only, its default).
+ */
+export const AD_MODES = ['fake', 'admob'] as const;
+export type AdMode = (typeof AD_MODES)[number];
 
 export interface UrlFlags {
   /** `?debug=1` (or `true`): debug panel and `window.__game` hooks. */
@@ -39,6 +47,13 @@ export interface UrlFlags {
    * setting say (GAME_DESIGN §7.3). Null when absent or unknown.
    */
   readonly time: TimeOfDay | null;
+  /** `?ads=fake|admob` (TECH_SPEC §16). Null when absent or unknown: the build's own ads. */
+  readonly ads: AdMode | null;
+  /**
+   * `?consent=eea`: AdMob's consent check answers as in the EEA, so the form shows (on a test
+   * device). Null when absent or unknown.
+   */
+  readonly consent: 'eea' | null;
 }
 
 const MAX_SEED = 0xffffffff;
@@ -55,7 +70,40 @@ export function parseUrlFlags(search: string): UrlFlags {
     interpolate: !parseOff(params.get('interp')),
     scenes: parseSwitch(params.get('scenes')),
     time: parseTime(params.get('time')),
+    ads: parseChoice(params.get('ads'), AD_MODES),
+    consent: parseChoice(params.get('consent'), ['eea'] as const),
   };
+}
+
+/**
+ * The flags the game boots with, the one place they are read (TECH_SPEC §11): the page's query
+ * string, then the dev app's `DEV_APP_FLAGS` (it has no address bar). With debug on, the debug
+ * panel's choices stored on the device (`stored`, a query string) come between the two. An
+ * earlier source wins a flag.
+ */
+export function bootFlags(search: string, stored: string, devApp: boolean): UrlFlags {
+  const dev = devApp ? DEV_APP_FLAGS : '';
+  const plain = mergeSearch(search, dev);
+  return parseUrlFlags(parseUrlFlags(plain).debug ? mergeSearch(search, stored, dev) : plain);
+}
+
+/** One query string from several; the first one that has a flag gives its value. */
+export function mergeSearch(...searches: readonly string[]): string {
+  const merged = new URLSearchParams();
+  for (const search of searches) {
+    for (const [key, value] of new URLSearchParams(search)) {
+      if (!merged.has(key)) merged.set(key, value);
+    }
+  }
+  return merged.toString();
+}
+
+/** `search` with `key` set to `value`, or removed when `value` is null. */
+export function withFlag(search: string, key: string, value: string | null): string {
+  const params = new URLSearchParams(search);
+  if (value === null) params.delete(key);
+  else params.set(key, value);
+  return params.toString();
 }
 
 function parseBoolean(value: string | null): boolean {
@@ -105,6 +153,12 @@ function parseSkin(value: string | null): SkinId | null {
   if (value === null) return null;
   const normalized = value.trim().toLowerCase();
   return (SKIN_IDS as readonly string[]).includes(normalized) ? (normalized as SkinId) : null;
+}
+
+function parseChoice<T extends string>(value: string | null, choices: readonly T[]): T | null {
+  if (value === null) return null;
+  const normalized = value.trim().toLowerCase();
+  return (choices as readonly string[]).includes(normalized) ? (normalized as T) : null;
 }
 
 function parseTime(value: string | null): TimeOfDay | null {

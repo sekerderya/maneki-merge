@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { MAX_RENDER_RESOLUTION } from '../../src/config/view';
-import { parseUrlFlags } from '../../src/core/urlFlags';
+import { bootFlags, mergeSearch, parseUrlFlags, withFlag } from '../../src/core/urlFlags';
 
 describe('parseUrlFlags', () => {
   it('defaults everything off when the query is empty', () => {
@@ -13,10 +13,12 @@ describe('parseUrlFlags', () => {
       interpolate: true,
       scenes: null,
       time: null,
+      ads: null,
+      consent: null,
     });
   });
 
-  it('reads all eight flags, with or without the leading ?', () => {
+  it('reads all ten flags, with or without the leading ?', () => {
     const expected = {
       debug: true,
       seed: 42,
@@ -26,9 +28,11 @@ describe('parseUrlFlags', () => {
       interpolate: false,
       scenes: true,
       time: 'night',
+      ads: 'fake',
+      consent: 'eea',
     };
     const query =
-      'debug=1&seed=42&skin=placeholder&res=1.5&gravity=1.2&interp=0&scenes=1&time=night';
+      'debug=1&seed=42&skin=placeholder&res=1.5&gravity=1.2&interp=0&scenes=1&time=night&ads=fake&consent=eea';
     expect(parseUrlFlags(`?${query}`)).toEqual(expected);
     expect(parseUrlFlags(query)).toEqual(expected);
   });
@@ -92,6 +96,8 @@ describe('parseUrlFlags', () => {
       interpolate: true,
       scenes: null,
       time: null,
+      ads: null,
+      consent: null,
     });
   });
 
@@ -141,5 +147,65 @@ describe('parseUrlFlags', () => {
     ['?time=', null],
   ])('parses %s as time=%s', (search, time) => {
     expect(parseUrlFlags(search).time).toBe(time);
+  });
+});
+
+describe('ads and consent flags (TECH_SPEC §16)', () => {
+  it.each([
+    ['?ads=fake', 'fake'],
+    ['?ads=ADMOB', 'admob'],
+    ['?ads=real', null],
+    ['?ads=', null],
+  ])('parses %s as ads=%s', (search, ads) => {
+    expect(parseUrlFlags(search).ads).toBe(ads);
+  });
+
+  it.each([
+    ['?consent=eea', 'eea'],
+    ['?consent=EEA', 'eea'],
+    ['?consent=us', null],
+  ])('parses %s as consent=%s', (search, consent) => {
+    expect(parseUrlFlags(search).consent).toBe(consent);
+  });
+});
+
+describe('bootFlags', () => {
+  it('reads only the page in a browser or the release app', () => {
+    expect(bootFlags('?seed=7', 'ads=admob&consent=eea', false)).toMatchObject({
+      debug: false,
+      seed: 7,
+      ads: null,
+      consent: null,
+    });
+  });
+
+  it('starts the dev app with the debug panel and fake ads', () => {
+    expect(bootFlags('', '', true)).toMatchObject({ debug: true, ads: 'fake', consent: null });
+  });
+
+  it("lets the debug panel's stored choices beat the dev app's defaults", () => {
+    expect(bootFlags('', 'ads=admob&consent=eea', true)).toMatchObject({
+      debug: true,
+      ads: 'admob',
+      consent: 'eea',
+    });
+  });
+
+  it('lets the page beat both, and ignores stored choices without debug', () => {
+    expect(bootFlags('?debug=1&ads=fake', 'ads=admob', false).ads).toBe('fake');
+    expect(bootFlags('?debug=1', 'ads=admob', false).ads).toBe('admob');
+    expect(bootFlags('?debug=0', 'ads=admob', true)).toMatchObject({ debug: false, ads: 'fake' });
+  });
+});
+
+describe('mergeSearch and withFlag', () => {
+  it('keeps the first value of each flag', () => {
+    expect(mergeSearch('?a=1&b=2', 'b=3&c=4', '')).toBe('a=1&b=2&c=4');
+  });
+
+  it('sets and removes one flag', () => {
+    expect(withFlag('', 'ads', 'fake')).toBe('ads=fake');
+    expect(withFlag('ads=fake&consent=eea', 'ads', 'admob')).toBe('ads=admob&consent=eea');
+    expect(withFlag('ads=fake&consent=eea', 'consent', null)).toBe('ads=fake');
   });
 });

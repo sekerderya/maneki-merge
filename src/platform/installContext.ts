@@ -1,6 +1,6 @@
 /**
  * What install hint the menu shows:
- * - `installed`: running as a home-screen app, no hint.
+ * - `installed`: running as a home-screen app or inside the Android app, no hint.
  * - `ios-browser`: an iOS browser tab, show "Share → Add to Home Screen".
  * - `browser`: any other browser tab, show an Install button once `beforeinstallprompt` fires.
  */
@@ -12,6 +12,8 @@ export interface InstallEnvironment {
   readonly maxTouchPoints: number;
   /** `navigator.standalone` (iOS) or a matching `display-mode` media query. */
   readonly standalone: boolean;
+  /** The Android app's build (TECH_SPEC §16): installed from Google Play. */
+  readonly nativeApp?: boolean;
 }
 
 export function isIos(env: Pick<InstallEnvironment, 'userAgent' | 'platform' | 'maxTouchPoints'>) {
@@ -21,7 +23,7 @@ export function isIos(env: Pick<InstallEnvironment, 'userAgent' | 'platform' | '
 }
 
 export function detectInstallContext(env: InstallEnvironment): InstallContext {
-  if (env.standalone) return 'installed';
+  if (env.standalone || env.nativeApp) return 'installed';
   return isIos(env) ? 'ios-browser' : 'browser';
 }
 
@@ -36,6 +38,7 @@ export function readInstallEnvironment(): InstallEnvironment {
     platform: nav.platform,
     maxTouchPoints: nav.maxTouchPoints,
     standalone: nav.standalone === true || displayMode,
+    nativeApp: __NATIVE_APP__,
   };
 }
 

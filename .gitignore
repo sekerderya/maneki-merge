@@ -1,5 +1,6 @@
 node_modules/
 dist/
+dist-android/
 coverage/
 playwright-report/
 test-results/
@@ -13,10 +14,12 @@ Thumbs.db
 !.env.example
 .claude/settings.local.json
 
-# Android (android/): Gradle outputs, and never a signing key
+# Android (android/): Gradle outputs, the web build cap sync copies in, and never a signing key
+# (android/.gitignore lists Capacitor's other generated files)
 android/.gradle/
 android/build/
 android/app/build/
+android/app/src/main/assets/public/
 android/out/
 android/local.properties
 *.p12

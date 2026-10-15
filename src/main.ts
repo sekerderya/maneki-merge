@@ -10,23 +10,29 @@ import { ScenesSwitch } from './core/scenesSwitch';
 import { SaveStore } from './core/save';
 import type { SaveData } from './core/save';
 import { timeOfDayAt } from './core/timeOfDay';
-import { parseUrlFlags } from './core/urlFlags';
+import { bootFlags } from './core/urlFlags';
+import type { UrlFlags } from './core/urlFlags';
 import { installDebugHooks } from './debug';
 import { createGame, loadArt, preloadImages } from './game';
 import type { SceneSkin } from './game/GameScene';
 import {
   BackStack,
+  browserNetwork,
   controlledByServiceWorker,
   detectInstallContext,
+  FakeAds,
   Haptics,
   InstallPrompt,
   loadFonts,
+  NoAds,
   openStorage,
   readInstallEnvironment,
+  readStoredFlags,
   registerServiceWorker,
   requestPersistentStorage,
   setReduceMotion,
   setupViewport,
+  storeFlag,
   UpdateGate,
   watchDisplayCutout,
   watchLifecycle,
@@ -54,22 +60,29 @@ import { loadingScreen } from './ui/loadingScreen';
 import { createGameScreen } from './ui/screens/gameScreen';
 import { createMenuScreen } from './ui/screens/menuScreen';
 import type { InstallHint } from './ui/screens/menuScreen';
-import type { InstallContext, ServiceWorkerControls } from './platform';
+import type { AdService, InstallContext, Network, ServiceWorkerControls } from './platform';
+import type { NativeApp } from './platform/native';
+import { AD_TESTING_DEVICES, AD_UNITS, TEST_AD_UNITS } from './config/ads';
+import { showFakeAd } from './ui/overlays/fakeAd';
 
 /**
- * Boot order (TECH_SPEC §3): the loading screen (fonts, every image, a new version's install) →
- * save → UI → Phaser → service worker (on a first visit) → the loading screen fades out.
+ * Boot order (TECH_SPEC §3): the loading screen (fonts, every image, a new version's install; in the
+ * Android app the ad consent) → save → UI → Phaser → service worker (on a first visit) → the
+ * loading screen fades out.
  */
 async function boot(): Promise<void> {
   setupViewport();
   const recheckCutout = watchDisplayCutout();
   const loading = loadingScreen();
-  const flags = parseUrlFlags(window.location.search);
+  // The Android app's native side (TECH_SPEC §16); the web build carries none of it.
+  const native = __NATIVE_APP__ ? await startNative() : null;
+  const flags = bootFlags(window.location.search, readStoredFlags(), native?.devApp ?? false);
   let skin: SceneSkin = flags.skin ?? 'art';
 
   // Updates (TECH_SPEC §9) go through the gate. On a launch after the first visit the service
   // worker registers now, so a new version installs and reloads the app on the loading screen; a
-  // first visit registers it last, so its precaching doesn't slow the loading down.
+  // first visit registers it last, so its precaching doesn't slow the loading down. The Android
+  // app has no service worker: its files are on the phone and Play updates it.
   let onUpdateReady = (_ready: boolean): void => {};
   const gate = new UpdateGate({
     activate: () => sw?.activate(),
@@ -77,10 +90,17 @@ async function boot(): Promise<void> {
     schedule: (run, delayMs) => window.setTimeout(run, delayMs),
     onReadyChange: (ready) => onUpdateReady(ready),
   });
-  let sw: ServiceWorkerControls | null = controlledByServiceWorker()
-    ? registerServiceWorker(gate)
-    : null;
+  let sw: ServiceWorkerControls | null =
+    !__NATIVE_APP__ && controlledByServiceWorker() ? registerServiceWorker(gate) : null;
   const update = sw?.launchUpdate(() => loading.setStatus('updating')) ?? false;
+
+  // Rewarded ads (TECH_SPEC §16): AdMob in the Android app, a fake one with `?ads=fake`, none on
+  // the web. The consent check starts now, beside the loading; its form (where needed) shows once
+  // the loading is done, before the menu and any saved run.
+  const network = native?.network ?? browserNetwork();
+  const ads = createAds(flags, network, native);
+  let launched = (): void => {};
+  const adsStarted = ads.start(new Promise<void>((resolve) => (launched = resolve)));
 
   // Every image loads with the fonts and the update check; if the cats' art can't, the game falls
   // back to the vector art.
@@ -103,6 +123,8 @@ async function boot(): Promise<void> {
     gate.markReady();
     await new Promise((resolve) => window.setTimeout(resolve, UPDATE_LAUNCH_APPLY_MS));
   }
+  launched();
+  await adsStarted.catch(() => undefined);
   if (skin === 'art' && !art) skin = 'vector';
   setIconSkin(skin);
 
@@ -280,11 +302,14 @@ async function boot(): Promise<void> {
         session.profile.reset();
         window.location.reload();
       },
+      onPrivacyOptions: () => void ads.showPrivacyOptions(),
       onClose: () => closeSettings(),
     },
     skin === 'art',
   );
   settingsPanel.setHapticsSupported(haptics.supported);
+  settingsPanel.setPrivacyOptionsVisible(ads.privacyOptionsRequired);
+  ads.onChange(() => settingsPanel.setPrivacyOptionsVisible(ads.privacyOptionsRequired));
   const openSettings = (): void => {
     if (settingsPanel.visible) return;
     showProfile();
@@ -478,8 +503,12 @@ async function boot(): Promise<void> {
 
   watchLifecycle({
     onHidden: () => {
-      closeClip();
-      session.autoPause();
+      // A full-screen ad covers the app (platform/ads.ts): the run is saved, but coming back from
+      // the ad must not open the pause overlay.
+      if (!ads.showing) {
+        closeClip();
+        session.autoPause();
+      }
       session.save();
       audio.suspend();
     },
@@ -490,7 +519,7 @@ async function boot(): Promise<void> {
     },
   });
 
-  sw ??= registerServiceWorker(gate);
+  if (!__NATIVE_APP__) sw ??= registerServiceWorker(gate);
   gate.finishLaunch();
   loading.hide();
   // Chrome may have kept the app out of the camera cutout while it launched (platform/displayCutout.ts).
@@ -505,6 +534,13 @@ async function boot(): Promise<void> {
       audio,
       screen: () => screens?.screen ?? 'menu',
       simulateUpdateReady: () => gate.markReady(),
+      ads,
+      nativeApp: native !== null,
+      testDeviceId: native?.testDeviceId ?? null,
+      storeFlag: (key, value) => {
+        storeFlag(key, value);
+        window.location.reload();
+      },
     });
   }
 }
@@ -514,6 +550,38 @@ const windowScheduler: Scheduler = {
   setTimeout: (fn, ms) => window.setTimeout(fn, ms),
   clearTimeout: (handle) => window.clearTimeout(handle),
 };
+
+/**
+ * The Android app's native side (TECH_SPEC §16), loaded only by its build. If it can't start, the
+ * game still opens, without ads.
+ */
+async function startNative(): Promise<NativeApp | null> {
+  try {
+    return await (await import('./platform/native')).startNativeApp();
+  } catch (error) {
+    console.warn('The native side could not start.', error);
+    return null;
+  }
+}
+
+/** The ads this build shows (TECH_SPEC §16). */
+function createAds(flags: UrlFlags, network: Network, native: NativeApp | null): AdService {
+  const mode = flags.ads ?? (native ? 'admob' : null);
+  if (mode === 'fake') {
+    return new FakeAds(network, (placement) => showFakeAd(document.body, placement));
+  }
+  if (mode !== 'admob' || !native) return new NoAds(network);
+  const device = native.testDeviceId;
+  return native.createAds(
+    {
+      // The dev app never shows a real ad.
+      units: native.devApp ? TEST_AD_UNITS : AD_UNITS,
+      testingDevices: device ? [...AD_TESTING_DEVICES, device] : AD_TESTING_DEVICES,
+      consentDebugEea: flags.consent === 'eea',
+    },
+    windowScheduler,
+  );
+}
 
 function installHintFor(context: InstallContext, promptAvailable: boolean): InstallHint {
   if (context === 'ios-browser') return 'ios-share';

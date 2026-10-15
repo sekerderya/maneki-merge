@@ -60,4 +60,16 @@ describe('detectInstallContext', () => {
       ).toBe('installed');
     }
   });
+
+  it('shows no hint in the Android app, whose WebView is a plain browser tab', () => {
+    expect(
+      detectInstallContext({
+        userAgent: ANDROID_CHROME,
+        platform: 'Linux armv8l',
+        maxTouchPoints: 5,
+        standalone: false,
+        nativeApp: true,
+      }),
+    ).toBe('installed');
+  });
 });

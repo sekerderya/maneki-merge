@@ -66,6 +66,11 @@ export const ICON_HELP = stroke(
   '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
 );
 
+/** Privacy options (the Android app's ad consent, GAME_DESIGN §2.4): a shield. */
+export const ICON_SHIELD = stroke(
+  '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>',
+);
+
 export const ICON_CHEVRON = stroke('<path d="m9 18 6-6-6-6"/>', 2.6);
 
 export const ICON_CHECK = stroke('<path d="M20 6 9 17l-5-5"/>', 3);

@@ -1,6 +1,7 @@
 import {
   ACCOUNT_RESET_TAPS,
   PRIVACY_POLICY_PATH,
+  PRIVACY_POLICY_URL,
   TESTER_RESET_TAP_WINDOW_MS,
   TESTER_RESET_TAPS,
 } from '../../config/app';
@@ -14,6 +15,7 @@ import {
   ICON_HELP,
   ICON_MOON,
   ICON_MOTION,
+  ICON_SHIELD,
   ICON_SOUND_ON,
   ICON_VIBRATE,
 } from '../icons';
@@ -33,6 +35,8 @@ export interface SettingsActions {
   onTesterReset(): void;
   /** Exactly five taps on the version, then a pause: the account reset, a new player's save. */
   onAccountReset(): void;
+  /** "Privacy options" (the Android app): AdMob's form to change the ad consent answer. */
+  onPrivacyOptions(): void;
   onClose(): void;
 }
 
@@ -43,6 +47,8 @@ export interface SettingsView {
   setValues(values: Readonly<Record<SettingKey, boolean>>): void;
   /** Haptics only exist where the browser can vibrate (Android); elsewhere the row hides. */
   setHapticsSupported(supported: boolean): void;
+  /** "Privacy options" shows only in the Android app, while AdMob says it is needed. */
+  setPrivacyOptionsVisible(visible: boolean): void;
 }
 
 interface SwitchRow {
@@ -130,6 +136,15 @@ export function createSettingsPanel(
   });
   list.append(tips);
 
+  const privacyOptions = rowParts(ICON_SHIELD, 'Privacy options', 'Your choices for the ads');
+  privacyOptions.dataset['testid'] = 'setting-privacy-options';
+  const privacyMark = el('span', 'settings-chevron');
+  privacyMark.insertAdjacentHTML('beforeend', ICON_CHEVRON);
+  privacyOptions.append(privacyMark);
+  privacyOptions.hidden = true;
+  privacyOptions.addEventListener('click', actions.onPrivacyOptions);
+  list.append(privacyOptions);
+
   const footer = el('p', 'settings-version');
   const versionLabel = formatVersionLabel(__APP_VERSION__, __BUILD_HASH__);
   const version = el('span', '', versionLabel);
@@ -151,10 +166,16 @@ export function createSettingsPanel(
       if (count === ACCOUNT_RESET_TAPS) actions.onAccountReset();
     }, TESTER_RESET_TAP_WINDOW_MS);
   });
-  // A new tab, so the menu stays as it is (Google Play wants the policy reachable in the app).
+  // A new tab, so the menu stays as it is (Google Play wants the policy reachable in the app). The
+  // Android app opens the live page in the phone's browser: Capacitor sends every link off its
+  // own origin there, so the game never leaves the WebView.
   const privacy = el('a', 'settings-privacy', 'Privacy policy');
-  privacy.href = `${import.meta.env.BASE_URL}${PRIVACY_POLICY_PATH}`;
-  privacy.target = '_blank';
+  if (__NATIVE_APP__) {
+    privacy.href = PRIVACY_POLICY_URL;
+  } else {
+    privacy.href = `${import.meta.env.BASE_URL}${PRIVACY_POLICY_PATH}`;
+    privacy.target = '_blank';
+  }
   privacy.rel = 'noopener';
   privacy.dataset['testid'] = 'privacy-link';
   footer.append(version, el('span', '', '·'), privacy);
@@ -187,6 +208,9 @@ export function createSettingsPanel(
     },
     setHapticsSupported(supported) {
       switches.haptics.row.hidden = !supported;
+    },
+    setPrivacyOptionsVisible(visible) {
+      privacyOptions.hidden = !visible;
     },
   };
 }

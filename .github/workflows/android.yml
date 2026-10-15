@@ -1,13 +1,17 @@
 name: Android
 
-# Builds the Google Play app: a Trusted Web Activity that opens the live site full screen
-# (TECH_SPEC §15, docs/PLAY_STORE.md). It runs when the Android project changes, or by hand. Game
-# updates don't need it: the app loads the site, so they ship through the Deploy workflow.
+# Builds the Google Play app (TECH_SPEC §16, docs/PLAY_STORE.md): Capacitor's Android project with
+# the game's `android` build inside it and AdMob beside it. It runs on every release tag (path
+# filters don't apply to tags), when the Android project or its config changes, and by hand. A push
+# to main only updates the web app: the Android app gets the game with the next bundle uploaded to
+# Play.
 on:
   push:
     branches: [main]
+    tags: ['v*']
     paths:
       - 'android/**'
+      - 'capacitor.config.ts'
       - '.github/workflows/android.yml'
   workflow_dispatch:
 
@@ -26,26 +30,36 @@ jobs:
       # Set by `npm run android:key`. Without it the outputs are unsigned (they still show the
       # project builds) and can't be uploaded to Play.
       HAS_UPLOAD_KEY: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 != '' }}
-    defaults:
-      run:
-        working-directory: android
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Build the game into the app (vite --mode android, cap sync)
+        run: npm run build:android
       - uses: actions/setup-java@v6
         with:
           distribution: temurin
-          java-version: 17
+          # Capacitor 8 compiles for Java 21.
+          java-version: 21
           cache: gradle
-      - name: Build the bundle (for Play) and the APK (for a direct install)
-        run: ./gradlew --no-daemon bundleRelease assembleRelease
-      - name: Show the app's identity
+      - name: Build the bundle (Play), the APK (direct install) and the dev APK
+        working-directory: android
+        run: ./gradlew --no-daemon bundleRelease assembleRelease assembleDebug
+      - name: Show the apps' identity
+        working-directory: android
         run: |
           BUILD_TOOLS="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
           echo "BUILD_TOOLS=$BUILD_TOOLS" >> "$GITHUB_ENV"
-          "$BUILD_TOOLS/aapt2" dump badging app/build/outputs/apk/release/app-release-unsigned.apk \
-            | grep -E "^(package|sdkVersion|targetSdkVersion|application-label|launchable-activity)"
+          for APK in app/build/outputs/apk/release/app-release-unsigned.apk app/build/outputs/apk/debug/app-debug.apk; do
+            "$BUILD_TOOLS/aapt2" dump badging "$APK" \
+              | grep -E "^(package|sdkVersion|targetSdkVersion|application-label|launchable-activity)"
+          done
       - name: Sign with the upload key
         if: env.HAS_UPLOAD_KEY == 'true'
+        working-directory: android
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_PASSWORD }}
@@ -56,27 +70,38 @@ jobs:
           jarsigner -keystore "$KEYSTORE" -storetype PKCS12 -storepass:env KEYSTORE_PASSWORD \
             -sigalg SHA256withRSA -digestalg SHA-256 \
             -signedjar out/maneki-merge.aab app/build/outputs/bundle/release/app-release.aab upload
-          "$BUILD_TOOLS/zipalign" -p -f 4 app/build/outputs/apk/release/app-release-unsigned.apk \
-            "$RUNNER_TEMP/aligned.apk"
-          "$BUILD_TOOLS/apksigner" sign --ks "$KEYSTORE" --ks-pass env:KEYSTORE_PASSWORD \
-            --ks-key-alias upload --out out/maneki-merge.apk "$RUNNER_TEMP/aligned.apk"
-          "$BUILD_TOOLS/apksigner" verify out/maneki-merge.apk
+          sign_apk() {
+            "$BUILD_TOOLS/zipalign" -p -f 4 "$1" "$RUNNER_TEMP/aligned.apk"
+            "$BUILD_TOOLS/apksigner" sign --ks "$KEYSTORE" --ks-pass env:KEYSTORE_PASSWORD \
+              --ks-key-alias upload --out "$2" "$RUNNER_TEMP/aligned.apk"
+            "$BUILD_TOOLS/apksigner" verify "$2"
+          }
+          sign_apk app/build/outputs/apk/release/app-release-unsigned.apk out/maneki-merge.apk
+          # The dev app too, so a newer one installs over the last (a runner's own debug key
+          # changes every run).
+          sign_apk app/build/outputs/apk/debug/app-debug.apk out/maneki-merge-dev.apk
           FINGERPRINT=$(keytool -list -v -keystore "$KEYSTORE" -storetype PKCS12 \
             -storepass:env KEYSTORE_PASSWORD -alias upload | grep -m1 'SHA256:' | sed 's/.*SHA256: *//')
           rm "$KEYSTORE"
+          VERSION=$("$BUILD_TOOLS/aapt2" dump badging out/maneki-merge.apk | grep -m1 '^package' \
+            | sed -E "s/.*versionCode='([0-9]+)'.*versionName='([^']+)'.*/\2 (versionCode \1)/")
           {
-            echo "### Signed with the upload key"
+            echo "### Maneki Merge $VERSION, signed with the upload key"
             echo
             echo "Upload key SHA-256: \`$FINGERPRINT\`"
             echo
-            echo "\`maneki-merge.aab\` goes to Play; \`maneki-merge.apk\` installs directly on a phone."
+            echo "- \`maneki-merge.aab\` goes to Play."
+            echo "- \`maneki-merge.apk\` installs the release app directly on a phone."
+            echo "- \`maneki-merge-dev.apk\` installs the dev app (Maneki Dev) beside it: debug panel, test ads."
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Keep the unsigned outputs
         if: env.HAS_UPLOAD_KEY != 'true'
+        working-directory: android
         run: |
           mkdir -p out
           cp app/build/outputs/bundle/release/app-release.aab out/maneki-merge-unsigned.aab
           cp app/build/outputs/apk/release/app-release-unsigned.apk out/maneki-merge-unsigned.apk
+          cp app/build/outputs/apk/debug/app-debug.apk out/maneki-merge-dev.apk
           echo "::warning::No upload key in the repository secrets (run npm run android:key): the outputs are unsigned and can't go to Play."
       - uses: actions/upload-artifact@v7
         with:

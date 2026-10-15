@@ -1,3 +1,5 @@
+import { AD_PLACEMENTS } from '../config/ads';
+import type { AdPlacement } from '../config/ads';
 import { PICK_IDS, PICKS } from '../config/picks';
 import type { PickId } from '../config/picks';
 import { stageHoldsTier, stageInfo } from '../config/stages';
@@ -8,6 +10,7 @@ import { UPGRADE_IDS, UPGRADES } from '../config/upgrades';
 import type { UpgradeId } from '../config/upgrades';
 import type { UrlFlags } from '../core/urlFlags';
 import type { GameView } from '../game';
+import type { AdResult, AdService, AdsStatus } from '../platform';
 import type { GameSession } from '../session';
 import { button, el } from '../ui/dom';
 import type { ScreenId } from '../ui/screenManager';
@@ -23,6 +26,14 @@ export interface DebugContext {
   screen(): ScreenId;
   /** Pretends a new service worker is waiting, to test the update badge policy. */
   simulateUpdateReady(): void;
+  /** The rewarded ads (TECH_SPEC §16). */
+  readonly ads: AdService;
+  /** The Android app's build, where AdMob's test ads can be chosen. */
+  readonly nativeApp: boolean;
+  /** The hashed ID AdMob knows this phone by (the dev app), or null. */
+  readonly testDeviceId: string | null;
+  /** Stores a debug flag on the device (`platform/debugFlags.ts`) and reloads. */
+  storeFlag(key: string, value: string | null): void;
 }
 
 /** A snapshot for tests; `run*` fields are null on the menu before the first run. */
@@ -194,6 +205,13 @@ export interface GameHooks {
   forceDangerTimeout(): void;
   /** Wipes the save back to defaults and reloads the page. */
   resetSave(): void;
+  /** The ads' state (TECH_SPEC §16), with each placement's `ready` and whether one shows. */
+  adsState(): AdsStatus & {
+    readonly ready: Readonly<Record<AdPlacement, boolean>>;
+    readonly showing: boolean;
+  };
+  /** Shows a rewarded ad for the placement and resolves with its result. */
+  showAd(placement: AdPlacement): Promise<AdResult>;
 }
 
 declare global {
@@ -420,6 +438,18 @@ export function installDebugHooks(ctx: DebugContext): GameHooks {
       session.profile.reset();
       window.location.reload();
     },
+    adsState() {
+      const ads = ctx.ads;
+      const ready = Object.fromEntries(AD_PLACEMENTS.map((p) => [p, ads.ready(p)]));
+      return {
+        ...ads.status(),
+        ready: ready as Record<AdPlacement, boolean>,
+        showing: ads.showing,
+      };
+    },
+    showAd(placement) {
+      return ctx.ads.show(placement);
+    },
   };
   window.__game = hooks;
   createDebugPanel(ctx, hooks);
@@ -433,11 +463,15 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
   const toggle = button('debug-toggle', 'DBG');
   const body = el('div', 'debug-body');
   body.hidden = true;
+  // Taller than a small phone's screen: it scrolls under a finger.
+  body.dataset['scrollable'] = '';
   toggle.addEventListener('click', () => {
     body.hidden = !body.hidden;
   });
 
   const stats = el('pre', 'debug-stats');
+  const adsText = el('pre', 'debug-stats');
+  adsText.dataset['testid'] = 'debug-ads';
   const row = (...children: HTMLElement[]): HTMLElement => {
     const node = el('div', 'debug-row');
     node.append(...children);
@@ -582,6 +616,7 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
         if (window.confirm('Reset the save?')) hooks.resetSave();
       }),
     ),
+    ...adsRows(ctx, hooks, adsText),
   );
   panel.append(toggle, body);
   document.body.append(panel);
@@ -616,5 +651,83 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
       `combo ${s.combo}  saves ${s.luckySaves}  best stage ${s.bestStage}\n` +
       `time ${clock(s.playMs)}  this stage ${clock(s.playMs - stageStartMs)}\n` +
       `stages ${recent || '-'}`;
+    adsText.textContent = describeAds(hooks, ctx.testDeviceId, lastAd);
   }, 250);
+}
+
+/** The placements' short names on the debug panel's buttons. */
+const AD_LABELS: Readonly<Record<AdPlacement, string>> = {
+  specialBall: 'special ball',
+  luckySave: 'Lucky Save',
+  doubleCoins: 'double coins',
+};
+
+/** The last test ad's placement and result, for the Ads group's text. */
+let lastAd = '-';
+
+/**
+ * The Ads group (TECH_SPEC §16): the online check, consent and each placement's ad; a test ad per
+ * placement; which ads to use; the EEA consent test and its reset (the Android app).
+ */
+function adsRows(ctx: DebugContext, hooks: GameHooks, text: HTMLElement): HTMLElement[] {
+  const node = (...children: HTMLElement[]): HTMLElement => {
+    const row = el('div', 'debug-row');
+    row.append(...children);
+    return row;
+  };
+  const action = (label: string, fn: () => void): HTMLButtonElement => {
+    const btn = button('debug-btn', label);
+    btn.addEventListener('click', fn);
+    return btn;
+  };
+  const show = (placement: AdPlacement): void => {
+    lastAd = `${placement} …`;
+    void hooks.showAd(placement).then((result) => (lastAd = `${placement} → ${result}`));
+  };
+  const rows = [
+    text,
+    node(...AD_PLACEMENTS.map((p) => action(`Ad: ${AD_LABELS[p]}`, () => show(p)))),
+    node(
+      action('Use fake ads', () => ctx.storeFlag('ads', 'fake')),
+      ctx.nativeApp
+        ? action('Use AdMob test ads', () => ctx.storeFlag('ads', 'admob'))
+        : action('No ads', () => ctx.storeFlag('ads', null)),
+    ),
+  ];
+  if (ctx.nativeApp) {
+    const eea = hooks.flags.consent === 'eea';
+    rows.push(
+      node(
+        action(eea ? 'EEA consent: on' : 'EEA consent: off', () =>
+          ctx.storeFlag('consent', eea ? null : 'eea'),
+        ),
+        action('Reset consent', () => {
+          void ctx.ads.resetConsent().then(() => window.location.reload());
+        }),
+      ),
+    );
+  }
+  const device = ctx.testDeviceId;
+  if (device) {
+    rows.push(
+      node(
+        action('Copy device ID', () => {
+          void navigator.clipboard?.writeText(device).catch(() => undefined);
+        }),
+      ),
+    );
+  }
+  return rows;
+}
+
+function describeAds(hooks: GameHooks, device: string | null, last: string): string {
+  const s = hooks.adsState();
+  const lines = [
+    `ads ${s.kind} · ${s.online ? 'online' : 'offline'} · sdk ${s.sdk}`,
+    `consent ${s.consent}`,
+    ...AD_PLACEMENTS.map((p) => `${p}: ${s.placements[p]}`),
+    `last ad ${last}`,
+  ];
+  if (device) lines.push(`device ${device}`);
+  return lines.join('\n');
 }

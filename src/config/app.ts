@@ -9,6 +9,11 @@ export const APP_DESCRIPTION =
  * Google Play asks for it in the app and on the store listing (docs/PLAY_STORE.md).
  */
 export const PRIVACY_POLICY_PATH = 'privacy.html';
+/**
+ * The policy on the live site. The Android app links here (its own files hold no policy page that
+ * a browser could open), and the link leaves the app for the phone's browser.
+ */
+export const PRIVACY_POLICY_URL = `https://sekerderya.github.io/maneki-merge/${PRIVACY_POLICY_PATH}`;
 
 /** Prefix for every storage key; the github.io origin is shared with other Pages sites. */
 export const STORAGE_PREFIX = 'maneki-merge:';
@@ -28,6 +33,11 @@ export const RUN_SAVE_KEY = `${STORAGE_PREFIX}run`;
  * the save, since it is a tool for making clips, not part of the player's profile.
  */
 export const SCENES_KEY = `${STORAGE_PREFIX}scenes`;
+/**
+ * The debug panel's choices kept over a reload (TECH_SPEC §11), as a query string such as
+ * `ads=admob&consent=eea`; read only with debug on. Not part of the save.
+ */
+export const DEBUG_FLAGS_KEY = `${STORAGE_PREFIX}debug-flags`;
 /**
  * The tester reset (GAME_DESIGN §2.4): this many taps on the version in Settings, each within the
  * window of the last, start the save over with `TESTER_RESET_COINS` and the best stage at

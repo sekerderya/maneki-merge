@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <!-- The dev app (applicationIdSuffix .dev, docs/TECH_SPEC.md §16): installed beside the Play
+         app with its own save, Google's test App ID always. -->
+    <string name="app_name">Maneki Dev</string>
+    <string name="title_activity_main">Maneki Dev</string>
+    <string name="admob_app_id">ca-app-pub-3940256099942544~3347511713</string>
+</resources>
