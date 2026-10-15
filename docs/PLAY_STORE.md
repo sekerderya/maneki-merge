@@ -42,6 +42,11 @@ It needs Java (`keytool`, already installed) and the GitHub CLI logged in. It:
   `ANDROID_UPLOAD_KEYSTORE_PASSWORD`) so the Android workflow can sign;
 - prints the key's **SHA-256 fingerprint**.
 
+**Done on 2026-10-15** (v0.53.0, on the owner's PC with its Java 8 `keytool`): RSA 2048,
+SHA256withRSA, valid until 2056, SHA-256
+`D5:71:8A:DF:B8:92:5E:29:7A:78:86:25:56:97:04:0B:03:A3:C5:8D:65:3C:09:46:BA:2A:D3:F4:B2:E4:02:9A`.
+Play Console shows the same fingerprint as the upload key certificate after the first upload.
+
 **Back up both files** (a password manager, or a private cloud folder). If the key is ever lost,
 Play Console → the app → Test and release → App integrity → App signing can reset the upload key
 (it takes a few days); the app itself is never lost, because Play holds the signing key.

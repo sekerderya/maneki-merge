@@ -72,8 +72,9 @@ jobs:
             -signedjar out/maneki-merge.aab app/build/outputs/bundle/release/app-release.aab upload
           sign_apk() {
             "$BUILD_TOOLS/zipalign" -p -f 4 "$1" "$RUNNER_TEMP/aligned.apk"
+            # No v4 signature: its .idsig file is only for adb's incremental installs.
             "$BUILD_TOOLS/apksigner" sign --ks "$KEYSTORE" --ks-pass env:KEYSTORE_PASSWORD \
-              --ks-key-alias upload --out "$2" "$RUNNER_TEMP/aligned.apk"
+              --ks-key-alias upload --v4-signing-enabled false --out "$2" "$RUNNER_TEMP/aligned.apk"
             "$BUILD_TOOLS/apksigner" verify "$2"
           }
           sign_apk app/build/outputs/apk/release/app-release-unsigned.apk out/maneki-merge.apk
