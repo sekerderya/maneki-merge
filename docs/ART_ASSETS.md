@@ -119,7 +119,6 @@ narrower than their canvas: Claude crops the empty space.
 | 42  | 18 goal    | `hud/goal-slot.png`                       | The goal's round slot: cream disc, flat gold ring                   | 1:1, 1024×1024    |
 | 43  | 19 time    | `scene/background…-sunset.png`            | The five jar backgrounds at sunset, edits of the day ones (§4.20)   | 9:16              |
 | 44  | 19 time    | `scene/background…-night.png`             | The five jar backgrounds at night                                   | 9:16              |
-| 45  | 19 time    | `menu/background-sunset`, `-night`        | The menu garden at sunset and at night                              | 2:3 or 9:16       |
 
 How the pieces go into the game:
 
@@ -2653,7 +2652,9 @@ The owner's idea (2026-10-15), like Pokémon GO: the backgrounds follow the phon
 pictures are the day; every background gets two more times of day, **sunset** and **night**. The
 day ones already read as a soft morning, so there is no separate morning. The game picks the time
 from the clock (no location), when a run starts and when the jar grows, never in the middle of a
-jar; a setting can keep it always day. The details go into GAME_DESIGN when it is built.
+jar; a setting can keep it always day. The details go into GAME_DESIGN when it is built. The menu
+shows jar 1's garden at every time of day (the owner's call, 2026-10-15: the menu's own garden, with
+its stone path, is dropped), so the menu needs no pictures of its own.
 
 | Picture         | Day (attach this)        | Sunset                          | Night                          |
 | --------------- | ------------------------ | ------------------------------- | ------------------------------ |
@@ -2662,13 +2663,12 @@ jar; a setting can keep it always day. The details go into GAME_DESIGN when it i
 | Jar 3, town     | `scene/background-3.jpg` | `scene/background-3-sunset.png` | `scene/background-3-night.png` |
 | Jar 4, mountain | `scene/background-4.jpg` | `scene/background-4-sunset.png` | `scene/background-4-night.png` |
 | Jar 5, peak     | `scene/background-5.jpg` | `scene/background-5-sunset.png` | `scene/background-5-night.png` |
-| Menu garden     | `menu/background.jpg`    | `menu/background-sunset.png`    | `menu/background-night.png`    |
 
 **How to generate.** Every picture is an **edit** of its day picture, so nothing moves: the game
 lays the times over each other, and the rug and the jar's spot must stay exactly in place. Attach
 the day picture first. Do jar 1 first, sunset in one chat and night in another; once the owner
 likes them, they are the **look reference**: attach `background-sunset` (or `-night`) as the second
-image to every other picture of that time, so all six share one sky and one light. Ask for the
+image to every other picture of that time, so all five share one sky and one light. Ask for the
 same shape as the attached picture (9:16; 1024×1536 also works, the pipeline crops the sides).
 
 **Sunset**, the whole prompt for jar 1 (the others add the look-reference line after the first
@@ -2712,9 +2712,9 @@ around it. The sakura blossoms are a pale moonlit pink. The shrine's doorway glo
 inside, and the clouds are soft blue-grey with silver edges.
 
 A cosy storybook night: clearly night, but never black or gloomy, soft mid-tone colours, the
-outlines still warm dark brown, the mint rug still clearly mint. The top 15% stays plain sky that
-ends in one flat colour at the top edge (no stars, moon or clouds there), so the game can extend it
-upwards. The centre column (the middle 85% of the width, from 30% to 87% of the height) stays calm,
+outlines still warm dark brown, the mint rug still clearly mint. The sky is one smooth gradient all
+the way up to the top edge, with no flat band, stripe or line anywhere in it, and the top 15% has
+no stars, moon or clouds, so the game can extend it upwards. The centre column (the middle 85% of the width, from 30% to 87% of the height) stays calm,
 low in contrast and mid-dark, never black, because a glass jar full of colourful cats stands there
 and they must stay easy to see. No jar, no cats, no people, no user interface, no text, no letters,
 no kanji, no watermark, no signature. The same size and shape as the attached picture.
@@ -2732,11 +2732,30 @@ match its sky colours, light and mood exactly.`
 | Jar 3   | Mount Fuji's snow glows pink, the river reflects the orange sky, the water in the rice fields shines gold, and the first windows in the town light up.                                                                                                                                                                                     | The whole little town's windows glow warm yellow, small lanterns line the path of red torii gates up the hill, the river and the rice fields reflect the moonlight, and Mount Fuji is soft blue-grey with moonlit snow.                                                                                                           |
 | Jar 4   | Mount Fuji's snow glows pink, the bands of cloud below the stage turn peach and gold, the waterfall catches the orange light, and the valley sinks into soft violet shade.                                                                                                                                                                 | The tiny village far below has a few warm lights, the waterfall and the river shine silver in the moonlight, the bands of cloud below the stage are soft blue-grey with silver edges, and Mount Fuji is moonlit.                                                                                                                  |
 | Jar 5   | Instead of "The low sun is outside the picture…": the sun already in the picture stays in its place and size, turns a deep golden orange and sinks halfway into the sea of clouds; the light comes from it. The clouds glow peach, coral and gold, lilac in their shade, Fuji's tip glows pink, and the cranes are small dark silhouettes. | Instead of the moon sentence: the sun in the picture becomes a big pale-cream full moon with a soft halo, in the same place and the same size (no other moon). The sea of clouds is soft silvery blue in the moonlight, Fuji is moonlit, the cranes are small and white, and the paper streamers on the sacred rope glow faintly. |
-| Menu    | As jar 1, plus: the stone path glows warm in the low light. This is the main menu's background and buttons sit over its middle, so keep it a little softer and lighter.                                                                                                                                                                    | As jar 1, plus: the stone path is silvery in the moonlight with warm lantern pools. This is the main menu's background and buttons sit over its middle, so make it the lightest of the night scenes.                                                                                                                              |
 
 Checks: laid over its day picture, nothing moved (the rug, the jar's spot, the buildings, the
 branches); the top edge is one flat colour; the centre column is calm; at night the cats will still
 read (Claude tries a night background behind a full jar before the rest are made).
+
+**First round (2026-10-15).** Nine came; the sunsets of jars 1, 3, 4 and 5 are good. Every picture
+came about 1% zoomed in (the rug about 12 px lower); the pipeline scales it back onto its day
+picture. Behind a full jar the night reads well, cats included. Two fixes:
+
+- **Jar 2's sunset** drew jar 1's shrine in place of the pagoda: generate it again with jar 3's
+  sunset as the look reference (not jar 1's) and the line `Take only the colours and the light from
+the second picture; do not copy any building or object from it.` after the look-reference line.
+- **Every night** has a flat darker band across the top with a straight edge (the old night prompt's
+  "ends in one flat colour" read as a band). In the game it is a hard line under the score card.
+  The night prompt above is fixed; the five pictures are mended with an edit of each one:
+
+```text
+Edit the attached picture. Keep everything exactly as it is: every object with its shape, size and
+place, the colours, the moon, the stars, the branches, the outlines and the style. Change only one
+thing: across the very top there is a flat darker blue band with a straight lower edge. Remove the
+band and its edge: the night sky is one smooth, even gradient all the way up to the top edge, a
+little deeper blue at the very top, with no band, no stripe and no line anywhere in the sky. The
+same size and shape as the attached picture. No text, no watermark, no signature.
+```
 
 ## 5. Icon kit (every new icon)
 
