@@ -229,6 +229,10 @@ On the dev APK first (Maneki Dev), then the release APK or the internal testing 
 7. FPS in the debug panel with 150 cats (Merge ×10 a few times), against the Chrome web app on the
    same phone.
 8. Settings → **Privacy policy** opens the live policy in the phone's browser.
+9. The ads in play (GAME_DESIGN §2.7, with fake or AdMob test ads): from a stage's 8th drop the
+   **Bonus** bubble on the left; its card's Watch ad puts the ball straight into the paw and the
+   cat comes back after it. Out of room with no Lucky Save left: "Out of room!" once per run.
+   Game Over: **Double coins**. Airplane mode: none of them shows.
 
 ## 9. AdMob (the owner's steps)
 

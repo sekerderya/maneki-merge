@@ -2,6 +2,31 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.54.0] - 2026-10-15
+
+The rewarded ads in play (GAME_DESIGN §2.7, the owner's choices): a bonus ball once per stage, one more Lucky Save once per run, the run's coins doubled at Game Over. Only in the Google Play app and only while an ad is ready; offline, on the web and in a scene none of it shows.
+
+### Added
+
+- **The bonus ball:** from a stage's 8th drop, once per stage, NEXT's bubble shows mirrored on the left under the score card, tagged "Bonus", with a hanabi, a joker cat, a lightning ball or a magnet (rolled per stage from the run's seed) and the play medallion. A tap holds time and asks ("A free Joker cat!", Watch ad / Not now). After the ad the ball goes **straight into the paw** (the owner's call): the cat that was there waits and comes back after it, and NEXT stays as it was. Not now or an ad closed early gives nothing and leaves the bubble for the rest of the stage.
+- **One more Lucky Save:** when the danger timer runs out with no Lucky Save left, once per run, time stops and "Out of room!" asks; after the ad it is a Lucky Save like the upgrade's, otherwise the run ends.
+- **Double coins** at Game Over: a gold pill under the stats when the run earned coins; after the ad the run's coins are paid once more and the number doubles.
+- All three work with `?ads=fake` on the web too, for testing.
+
+### Decisions taken for the owner
+
+- The cat displaced by the bonus ball isn't lost: it waits and comes back after the ball.
+- A bonus ball still in the paw when the stage clears comes after the new stage's first drop (an empty jar has nothing for a magnet, a hanabi or a lightning ball).
+- Every ad starts from a card or a pill that says what it gives; a tap on the bubble alone never starts an ad (it sits where a finger may start aiming).
+- The bubble shows from the stage's 8th drop; the balls are the four helpful ones. Both in `config/ads.ts`, to tune by playing.
+- No new art: NEXT's bubble, the pause card, the PLAY and Buy pills and the icon kit's play medallion.
+
+### Technical
+
+- Headless rules: `RunController.adBall` / `giveAdBall()` (`core/bonusBall.ts` rolls the ball on a generator of its own), `DropQueue.cutIn` and its `held` slot, the run state `lastChance` with `setLastChanceReady`, `takeLastChance` and `declineLastChance`. Saved runs keep `adBallStage`, `lastChanceUsed` and the queue's held ball only when there are any, so other saves are unchanged and the simulator plays as before.
+- `GameSession` shows the options from `RewardedAds.ready`; `ui/overlays/adOfferOverlay.ts` is the card; `HudView.setBonus`, `GameOverView.setDoubleCoins`.
+- Tests: `adRewards.test.ts` (13), the queue's cut-in (5), `adRewards.spec.ts` (3 flows with the fake ad).
+
 ## [0.53.0] - 2026-10-15
 
 The Google Play app on Capacitor, ready for AdMob (M15, docs/plans/capacitor-admob.md; the owner's request): the game is inside the app and plays fully offline, and Google's ad SDK is in it with test ads, the consent form, an online check and an ad service the game can call. Where the ads show comes with the next plan. The web app is unchanged and has no ads.

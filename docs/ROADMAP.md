@@ -437,7 +437,7 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
 - [x] Docs: TECH_SPEC §16, PLAY_STORE.md, CLAUDE.md, GAME_DESIGN §2.4
 - [ ] Owner, on the phone (docs/PLAY_STORE.md §8): offline first launch, full screen and the cutout, back button, haptics, sound, a run kept after killing the app, the test ad's `closed` and `rewarded`, the consent form, FPS against the Chrome web app
 - [ ] Owner: the AdMob account, the three ad units, the GDPR message, `app-ads.txt` (docs/PLAY_STORE.md §9); then Claude puts the real IDs in `src/config/ads.ts` and `strings.xml`
-- [ ] Next: the placements plan (the special ball side box, one more Lucky Save, double coins at game over)
+- [x] The placements (v0.54, GAME_DESIGN §2.7, the owner's choices): the bonus ball once per stage, straight into the paw; one more Lucky Save once per run; Double coins at Game Over. Built and tested with fake ads; the numbers are the owner's to tune by playing
 
 **Owner check:** install `maneki-merge-dev.apk` from the Android workflow's run (GitHub → Actions → Android → the run → maneki-merge-android) and go through docs/PLAY_STORE.md §8.
 
