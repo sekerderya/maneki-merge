@@ -90,8 +90,9 @@ export function pickArt(id: PickId, level: number): PickArt | null {
       return cat(3, false);
     case 'echo':
       return cat(4, false);
-    // The Katana and Quick Katana show its ball (the owner's call, v0.55.3), More Blades and Wide
-    // Blade their icon-kit icons (config/iconSprites.ts).
+    // The Katana shows its ball (the owner's call, v0.55.3), and so does a Katana pick until its
+    // family picture comes (docs/ART_ASSETS.md §4.21, pictures 8–10; Quick Katana's since v0.55.4,
+    // above). More Blades and Wide Blade show their icon-kit icons (config/iconSprites.ts) till then.
     case 'katana':
     case 'quickKatana':
       return SPECIAL_ART.katana && special(SPECIAL_ART.katana);

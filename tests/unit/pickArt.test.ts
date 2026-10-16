@@ -73,11 +73,12 @@ describe("a pick card's icon is the game's own art (GAME_DESIGN §15.5)", () => 
     }
   });
 
-  it('shows the katana ball for the Katana and Quick Katana, icons for the other two', () => {
-    for (const id of ['katana', 'quickKatana'] as const) {
-      expect(iconSprite(id)).toBeNull();
-      expect(artOf(id, 0).path).toBe(`${SPECIAL_SPRITE_DIR}katana-ball.webp`);
-    }
+  it('shows the katana ball for the Katana, its family picture for Quick Katana, icons for the other two', () => {
+    for (const id of ['katana', 'quickKatana'] as const) expect(iconSprite(id)).toBeNull();
+    expect(artOf('katana', 0).path).toBe(`${SPECIAL_SPRITE_DIR}katana-ball.webp`);
+    // The ball with an hourglass (docs/ART_ASSETS.md §4.21, picture 8).
+    expect(artOf('quickKatana', 0).path).toBe(`${PICK_SPRITE_DIR}quickKatana.webp`);
+    expect(artOf('quickKatana', 0).picture).toBe(true);
     for (const id of KATANA_ICONS) expect(pickArt(id, 0)).toBeNull();
     expect(iconSprite('moreBlades')?.file).toBe('moreBlades.webp');
     expect(iconSprite('wideBlade')?.file).toBe('wideBlade.webp');
