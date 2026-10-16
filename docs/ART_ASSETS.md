@@ -3150,6 +3150,20 @@ curve and angled tip, the same place and length. Change only two things:
 Everything stays inside the ball's circle. Nothing else changes.
 ```
 
+**The edit's result (2026-10-16), not taken:** the arrows grew as asked, but the blade only went
+from about 70 to 80 px wide. The tool keeps a blade's width when told "twice as wide", so the next
+edit, in the same chat, sizes it against the arrows that are now in place:
+
+```text
+The blade is still too thin. Keep everything else exactly as it is: the ball, the hilt, the guard,
+the arrows and their places. Widen only the katana's blade so that it fills most of the space
+between the two arrows: from the arrow on the left to the arrow on the right there should be only
+a small gap of red on each side of the blade. The blade keeps its gentle curve, its wavy white
+temper line along the cutting edge and its angled katana tip, and its length: a heavy, broad
+katana, never a straight knife, a cleaver or a dagger. The guard may grow a little so it stays
+wider than the blade. Nothing else changes.
+```
+
 ## 5. Icon kit (every new icon)
 
 > Read this before writing a prompt for any new icon: an upgrade, a trial or blessing card, a
