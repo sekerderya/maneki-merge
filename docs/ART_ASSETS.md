@@ -2999,6 +2999,47 @@ so nothing was regenerated. The katana's point lies a little left of its hilt (t
 the game lays the hilt-to-point line along each cut. The first katana came out a dagger and the first
 icons with the sword over the rim or a doubled rim; the prompts above carry the fixes.
 
+**8–10. The Katana family's card pictures** (2026-10-16, the owner's call after v0.55.3). Like the
+boulder family (§4.9: a heap of boulders, a big boulder with an arrow) and the curse family (§4.13:
+the bell with an hourglass, three bells), every Katana pick shows **the red katana ball** with one
+small addition that says what the pick does; the Katana's own card stays the plain ball. They
+replace the icon-kit icons 4–6. They are card pictures: no medallion, the subject alone on white
+(the game puts it in the card's medallion). Save them as `art-source/picks/<id>.png` (or
+.jpg/.webp); a picture there wins over the ball (`ui/pickArt.ts`). One at a time, each checked
+before the next, in a new chat each time: Quick Katana, then More Blades, then Wide Blade.
+
+**8. Quick Katana** (`picks/quickKatana.png`, square 1:1): katanas come more often. Attach the
+katana's ball (`art-source/specials/katana-ball.jpg`) and the Quick Curse picture
+(`art-source/picks/quickCurse.jpg`, only for its hourglass):
+
+```text
+Style: match the attached images exactly. Polished casual mobile-game art, cute chibi kawaii
+illustration, thick warm dark-brown outlines (never black) of even weight, soft pastel cel shading
+with gentle gradients and one small glossy highlight, light from the upper left, clean crisp
+vector-like edges, readable at 48 px.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow.
+No text, no letters, no numbers, no kanji, no watermark, no signature.
+
+Draw a brand-new picture; the attached images only show what the two things look like. A small
+game picture of two things:
+1. The first attached image, the katana ball, exactly as it is: a perfect circle of glossy deep
+   crimson-red lacquer with small gold wave arcs, and across its front the same katana, its gold
+   guard and red hilt at the upper right and its silver blade pointing to the lower left. Same
+   colours, same sword, same size of sword on the ball. It fills about 70% of the canvas width,
+   slightly up and to the left of the centre.
+2. In front of the ball at its lower right, overlapping the ball's edge, a small wooden hourglass
+   drawn like the one in the second attached image (ignore that image's bell, cord and flames),
+   standing upright, about a third of the ball's height. Its sand is gold, not purple: most of it
+   has already run into the bottom bulb and a thin stream is still falling.
+The hourglass does not cover the katana's blade or hilt. Both are fully visible with complete
+outlines, and nothing touches the edge of the image. No frame, no circle around them, no
+medallion, no ground, no flames, no glow, no sparkles, nothing else. Square 1:1.
+```
+
+Checks: the ball is the attached one (crimson, gold waves, the same diagonal katana, a closed
+circle); the hourglass is small, wooden, upright, with gold sand, at the lower right in front of
+the ball and clear of the sword; no bell, no purple, no flames; plain white around.
+
 ## 5. Icon kit (every new icon)
 
 > Read this before writing a prompt for any new icon: an upgrade, a trial or blessing card, a
