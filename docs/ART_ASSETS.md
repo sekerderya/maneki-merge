@@ -3302,6 +3302,34 @@ top of the circle (and in the gulping pose the two puffed cheeks may bulge a lit
 All four bodies are the same size. Nothing else changes. Square 1:1.
 ```
 
+If the edit keeps the pear shape, a fresh sheet in a new chat, with the first sheet attached only
+for its look:
+
+```text
+Style: match the attached image exactly. Polished casual mobile-game art, cute chibi kawaii
+illustration, thick warm dark-brown outlines (never black) of even weight, soft pastel cel shading
+with gentle gradients and one small glossy highlight, light from the upper left, clean crisp
+vector-like edges, readable at small sizes.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow
+under the objects. No text, no letters, no numbers, no kanji, no watermark.
+
+Draw a brand-new sheet; the attached sheet only shows the frog's colours, faces and collar. A sheet
+of FOUR poses of the same lucky frog for a ball-merging game, in a 2×2 grid, each pose centred in its
+own quarter with plain white all round it. The frog is shaped exactly like a ball: its body is a
+perfect circle, as tall as it is wide, round at the bottom just like at the top, like a balloon or a
+round mochi, with no flat bottom, no wide hips and no feet sticking out below the circle. Only its
+two big round eyes bulge out above the top of the circle. Its tiny hands and feet are drawn as small
+shapes on the lower front of the ball, inside its outline. Fresh leaf-green, a soft cream-yellow
+round belly, rosy cheeks and a small red cord collar with one tiny gold oval coin at the front,
+exactly as in the attached sheet. All four poses are the same size and sit at the same place in
+their quarters; only the face changes:
+- top left: calm and watchful, mouth closed in a small smile, eyes wide open;
+- top right: mouth wide open in a round dark-pink mouth, no tongue drawn;
+- bottom left: gulping: mouth shut, both cheeks puffed out round, eyes squeezed shut happily;
+- bottom right: content and sleepy, eyes closed in two happy curves, a tiny smile.
+No glow, no sparkles, no motion lines, no lily pad, no water, nothing else. Square 1:1.
+```
+
 The game was built (v0.56) on this first sheet, pear-shaped as it is: the rounder sheet replaces it
 in `art-source/specials/frog` and `npm run art` takes it in, with no code change. Since the owner's
 call the frog rolls like the other balls, so a round body matters even more.
@@ -3310,8 +3338,8 @@ call the frog rolls like the other balls, so a round body matters even more.
 v0.56, after the owner asked for every prompt before the build). Like the Katana family's (§4.21,
 pictures 8–10): the calm frog with one small addition that says what the pick does; the Frog's own
 card stays the calm frog. Card pictures: no medallion, the subject alone on white. One at a time,
-each in a new chat; attach the rounder frog sheet once it is in (until then the first sheet,
-`art-source/specials/frog.jpg`).
+each in a new chat, and **only after the rounder frog sheet is in** (the owner's call: the cards
+are drawn from the frog the game shows, never from the pear-shaped first sheet).
 
 **3. Quick Frog** (`picks/quickFrog.png`): frogs come more often. Attach the frog sheet and the
 Quick Katana picture (`art-source/picks/quickKatana.jpg`, only for its hourglass):
