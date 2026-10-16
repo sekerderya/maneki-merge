@@ -128,9 +128,19 @@ The owner took these as proposed (2026-10-16). Chances and widths are start valu
   every drop: a turret). The owner turned it into **a frog**:
 - The frog **stays for 5 drops; every drop ("turn") it shoots its tongue at the jar's smallest cat
   and swallows it** (one cat per drop).
-- Open, to discuss in detail: the effect and the look (the tongue, the swallow), whether a swallowed
-  cat pays its value, where the frog sits (in the jar as a ball, presumably), what happens when it
-  is over the line, upgrades, gate and price.
+- 2026-10-16: the owner asked to start the frog, art prompts first so they can generate while the
+  rules are settled. The prompts (the frog's four poses and its tongue) are in docs/ART_ASSETS.md
+  §4.22. Proposed to the owner the same day, **waiting for their answer**:
+  1. **Where it sits:** dropped from the paw like a ball, it lands in the jar as a body about a
+     size-3 cat's size; it never merges (like a boulder) and stays upright, never rolling over.
+  2. **When it shoots:** each time a ball leaves the paw after it (its own drop doesn't count), its
+     tongue swallows the jar's smallest cat (between equals, the nearest); the tongue passes
+     through bigger cats. After 5 swallows it falls asleep and goes in a puff.
+  3. **A swallowed cat pays its value** (coins, no score, no combo), like a katana's cut.
+  4. **The danger line:** the frog doesn't count for it.
+  5. **Upgrades**, separate picks needing the Frog (like the Katana's): Quick Frog (comes more
+     often), Long Stay (5 → 7 → 9 drops), Big Gulp (the two smallest per drop).
+  6. **Shop card:** opens at best stage 13 (the Katana at 10), prices near the Katana's.
 - (A separate frog pitch, "Kaeru hops across the pile three times popping a cat per hop", was not
   picked; the owner's frog is the turret above.)
 

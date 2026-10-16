@@ -130,6 +130,8 @@ so the exact pixel size doesn't matter.
 | 47  | 20 katana  | `fx/cut.png`                               | Sheet on black: cut flash, glint, sparks, swoosh, strike, flash     | 4:3               |
 | 48  | 20 katana  | `icons/katana.png` … `icons/wideBlade.png` | The three Katana pick icons (icon kit, §5)                          | 1:1, 1024×1024    |
 | 49  | 20 katana  | `specials/katana-ball.png`                 | The katana's ball in the paw and NEXT (v0.55.1, §4.21)              | 1:1, 1024×1024    |
+| 50  | 21 frog    | `specials/frog.png`                        | Sheet: the frog's four poses (calm, open mouth, gulp, sleepy)       | 1:1, 1024×1024    |
+| 51  | 21 frog    | `fx/frog-tongue.png`                       | Sheet: the tongue's stretchable band and its round tip (§4.22)      | 16:9              |
 
 How the pieces go into the game:
 
@@ -3202,6 +3204,89 @@ enough, with a katana's curved back and angled tip; its temper line is drawn bol
 little like a saw edge and its hilt is short. Shown side by side with the thin katana at card size,
 the owner took it as it is. The Katana family is complete: the icon-kit icons 4–6 stay in
 `art-source/icons/` but no card shows them.
+
+### 4.22 Phase 21: the Frog (the second weapon)
+
+The Frog (docs/plans/weapons-and-passives.md §3.4, the owner's design): dropped from the paw, it
+lands in the jar and stays for a few drops; each time a ball leaves the paw, its tongue shoots out
+to the jar's smallest cat and swallows it. Its rules are still being settled with the owner; the
+prompts were given first (2026-10-16, the owner's request) because the look doesn't hang on them.
+
+How it plays (the art below is made for it):
+
+1. In the paw, in NEXT and on its cards the frog shows in its **calm** pose.
+2. In the jar it sits upright. When a ball leaves the paw it turns to the **open mouth** pose and
+   the game stretches its **tongue** from its mouth to the smallest cat; the tongue's tip sticks to
+   the cat and pulls it back into the mouth (the game shrinks the cat's own art).
+3. It **gulps** (cheeks puffed), then goes back to calm.
+4. After its last swallow it turns **sleepy** and goes in a puff.
+
+Two images, both on white with outlines (the frog and its tongue are things, not light). One per
+request, in a new chat each time; the frog first, since the tongue is drawn from it.
+
+**1. The frog** (`specials/frog.png`, square 1:1). Attach the lineup sheet
+(`art-source/style/lineup.webp`), the katana's ball (`art-source/specials/katana-ball.jpg`) and the
+hanabi (`art-source/specials/hanabi.jpg`):
+
+```text
+Style: match the attached images exactly (the game's cat lineup and two of its special balls).
+Polished casual mobile-game art, cute chibi kawaii illustration, thick warm dark-brown outlines
+(never black) of even weight, soft pastel cel shading with gentle gradients and one small glossy
+highlight, light from the upper left, clean crisp vector-like edges, readable at small sizes.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow
+under the objects. No text, no letters, no numbers, no kanji, no watermark.
+
+A sheet of FOUR poses of the same lucky frog (kaeru) for a Suika-style merge game with a lucky-cat
+theme, in a 2×2 grid, each pose centred in its own quarter with plain white all round it: nothing
+touches another pose or the edge of the image. The frog is a ball: a chubby, perfectly round frog,
+its body outline a perfect circle like the attached balls and cats, with its two big round eyes
+bulging on top of the circle (the only thing that sticks out, only as much as a cat's ears) and its
+little hands and feet tucked against the front of the ball. Strictly front view, upright. Fresh
+leaf-green, clearly different from the attached red and navy balls, with a soft cream-yellow belly,
+rosy cheeks and a small red cord collar with one tiny gold oval coin (koban) charm at the front.
+All four poses are exactly the same size, colour and shape and sit at the same place in their
+quarters; only the face changes:
+- top left: calm and watchful, mouth closed in a small smile, eyes wide open;
+- top right: mouth wide open in a round dark-pink mouth, no tongue drawn (the game adds the tongue);
+- bottom left: gulping: mouth shut, both cheeks puffed out round, eyes squeezed shut happily;
+- bottom right: content and sleepy, eyes closed in two happy curves, a tiny smile.
+No glow, no sparkles, no motion lines, no lily pad, no water, nothing else. Square 1:1.
+```
+
+**2. The tongue** (`fx/frog-tongue.png`, landscape 16:9). Attach the frog once you have it and the
+game screenshot `docs/screenshots/v0.26.0/390-1-hud.png`:
+
+```text
+Style: match the attached frog exactly. Polished casual mobile-game art, cute chibi kawaii
+illustration, thick warm dark-brown outlines (never black) of even weight, soft pastel cel shading
+with gentle gradients and one small glossy highlight, light from the upper left, clean crisp
+vector-like edges, readable at small sizes.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow.
+No text, no letters, no numbers, no kanji, no watermark.
+
+A sheet of two pieces of the attached frog's tongue, one above the other, with plain white between
+them; nothing touches the edge of the image.
+- Top half: the middle of the tongue: one perfectly straight horizontal band of even thickness,
+  running from the far left of the image to the far right with only a small white margin at each
+  end, about one twelfth of the image's height thick. Soft glossy pink with a slightly darker pink
+  line down its middle and one thin white highlight along its top. The thick dark-brown outline
+  runs only along its top and bottom edges; its two ends are cut off straight with no outline
+  across them, so the game can stretch it to any length.
+- Bottom half, centred: the tip of the tongue: a round, sticky pink blob a little thicker than the
+  band, the same pink, outline and highlight, its left side cut off straight and open (no outline
+  there) where it joins the band.
+No frog, no mouth, no glow, no drops, no sparkles, nothing else. Landscape 16:9.
+```
+
+Checks: the frog follows the general checklist (§2): four poses of one frog, the same size and
+place in each quarter, the body a closed circle with only the eyes above it, green (not the red,
+navy or violet of the other balls), the collar and its coin in every pose, no tongue in the open
+mouth, nothing touching another pose or the edge. The tongue: the band straight and even from edge
+to edge, outlined only along its top and bottom; the tip round, open on its left; the same pink in
+both.
+
+The Frog's cards show the calm pose, as the Katana's show its ball. Its upgrades' card pictures
+(the frog with one small addition, like the Katana family's) come once the upgrades are settled.
 
 ## 5. Icon kit (every new icon)
 
