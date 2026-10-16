@@ -122,7 +122,10 @@ The owner took these as proposed (2026-10-16). Chances and widths are start valu
   touches the orbit pops. Vampire Survivors' King Bible (an orbiting weapon).
 - The owner liked it, but how it should work is to be talked over again.
 
-### 3.4 Frog (Kaeru): liked, the owner's version
+### 3.4 Frog (Kaeru): built (v0.56)
+
+Built on 2026-10-16 as below, with the owner's one change (it rolls like the other balls); the rules
+now live in GAME_DESIGN §15.17, which wins over this section.
 
 - Pitched as **Shikigami** (a paper spirit that stays 5 drops and pops the jar's smallest cat after
   every drop: a turret). The owner turned it into **a frog**:
@@ -130,9 +133,10 @@ The owner took these as proposed (2026-10-16). Chances and widths are start valu
   and swallows it** (one cat per drop).
 - 2026-10-16: the owner asked to start the frog, art prompts first so they can generate while the
   rules are settled. The prompts (the frog's four poses and its tongue) are in docs/ART_ASSETS.md
-  §4.22. Proposed to the owner the same day, **waiting for their answer**:
+  §4.22. Proposed to the owner the same day and taken, with one change (the owner's: it rolls like
+  the other balls, not kept upright):
   1. **Where it sits:** dropped from the paw like a ball, it lands in the jar as a body about a
-     size-3 cat's size; it never merges (like a boulder) and stays upright, never rolling over.
+     size-3 cat's size; it never merges (like a boulder).
   2. **When it shoots:** each time a ball leaves the paw after it (its own drop doesn't count), its
      tongue swallows the jar's smallest cat (between equals, the nearest); the tongue passes
      through bigger cats. After 5 swallows it falls asleep and goes in a puff.
@@ -143,6 +147,14 @@ The owner took these as proposed (2026-10-16). Chances and widths are start valu
   6. **Shop card:** opens at best stage 13 (the Katana at 10), prices near the Katana's.
 - (A separate frog pitch, "Kaeru hops across the pile three times popping a cat per hop", was not
   picked; the owner's frog is the turret above.)
+
+- **Open after the build (v0.56):** the smart bot (GAME_DESIGN §15.17) finds that frogs eating
+  faster than the paw drops stall runs (every pick together: 0 of 30 runs cleared three stages, all
+  30 out of time, none lost). Options to put to the owner, measured before choosing: one frog in the
+  jar at a time; a frog eats only sizes 1–2; a frog skips a cat that has a partner of its size in the
+  jar; Big Gulp's second cat only every other meal; lower Quick Frog.
+- **Lesson (the owner, 2026-10-16):** give every art prompt the build needs (the card pictures too)
+  before starting the code, so the owner can generate while the build runs.
 
 ### 3.5 Other weapon pitches still open
 

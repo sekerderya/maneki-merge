@@ -42,7 +42,7 @@ Layout: everything sits where it is in the mockup, on a stage of the mockup's si
 - Slides up over the menu, which shows through blurred and a little darker. At the top, "Upgrades" on a cream pill, a round close button on the right, and the coin balance in the menu's coins pill under them (v0.31, the owner's approved mockup, §13.1), inside the header so it never covers the first card (v0.42.4; it hung over the list before).
 - One card per upgrade (§10) showing its icon, the name with the level (e.g. 3/10), a one-line effect, the current → next value in the card's tan strip, and a gold Buy button with the price, standing on the strip's right end. The level pips are gone (v0.31, the owner's call); the level is the number.
 - Under the four upgrades, the **Blessings** heading ("How far each blessing can go in a run", dark brown words with a cream edge) and the six blessing cards (v0.36, §10; Lightning since v0.42). A blessing card's icon is the blessing's own ball in a cream medallion with a gold rim, as on its pick card (§15.5); its effect line starts with "Blessing:".
-- The last blessing card is the **Katana's** (v0.55, §10, §15.16), with its ball (the red katana ball) in the gold-rimmed medallion like the others; its levels open the Katana's picks, so its value is "Opens". (v0.55.0–v0.55.2 put it under a separate Weapons heading with the icon kit's katana; the owner's call in v0.55.3: among the blessings, with its ball.)
+- The last blessing cards are the weapons': the **Katana's** (v0.55, §10, §15.16), with its ball (the red katana ball) in the gold-rimmed medallion like the others, and the **Frog's** (v0.56, §15.17), with the calm frog; their levels open the weapon's picks, so their value is "Opens". (v0.55.0–v0.55.2 put the Katana under a separate Weapons heading with the icon kit's katana; the owner's call in v0.55.3: among the blessings, with its ball.)
 - The value each card shows (derived from §10; at MAX only the current value; a blessing card shows the blessing at the level a run can reach, without Big Catch):
 
   | Card          | Value                                                          | First level  | At max      |
@@ -58,6 +58,7 @@ Layout: everything sits where it is in the mockup, on a stage of the mockup's si
   | Joker Cat     | Up to (jokers)                                                 | 0% → 2.25%   | 11.25%      |
   | Lightning     | Up to (lightning balls)                                        | 0% → 1.5%    | 7.5%        |
   | Katana        | Opens: the pick its last level opened                          | – → Katana   | More Blades |
+  | Frog          | Opens: the pick its last level opened                          | – → Frog     | Big Gulp    |
 
   Lucky Paw shows one decimal, the blessings' chances up to two (v0.39).
 
@@ -358,6 +359,7 @@ A card can be bought once the profile's **best stage** reaches its **gate** (the
 | `joker`        | Joker Cat     | Joker Cat can go one level higher in a run       |     0 |   5 |    5 | 10K, 18K, 48K, 85K, 130K                        |
 | `lightning`    | Lightning     | Lightning can go one level higher in a run       |     0 |   5 |    8 | 15K, 25K, 40K, 60K, 85K                         |
 | `katana`       | Katana        | Opens the next of the Katana's picks             |     0 |   4 |   10 | 20K, 32K, 50K, 75K                              |
+| `frog`         | Frog          | Opens the next of the Frog's picks               |     0 |   4 |   13 | 22K, 35K, 55K, 80K                              |
 
 **v0.39 (the owner's call):** the early game was too slow, runs stopped at stages 5–6 and even a maxed shop made the first stages dull, so every shop effect became 1.5 times as strong (Lucky Paw +15% → +22.5%, Big Catch 0.8 → 1.2 tilt levels, Combo Charm +8% → +12%, a Lucky Save pops 9 small cats instead of 6, and each blessing level 1.5 times as much, §15.5), the first levels got cheaper, the gates lower (Combo Charm and More Magnets stage 3 → 2, Hanabi 5 → 3, Joker Cat 8 → 5), and Second Chance, the strongest help for getting past the first jar, opened from the start at 1K and 15K (stage 5, 10K and 50K before). The last levels got dearer so that everything still takes about 8 hours.
 
@@ -367,7 +369,9 @@ v0.42 (Batch 23, the owner's call): the Lightning card (§15.15) opens later tha
 
 v0.55 (the owner's call, docs/plans/weapons-and-passives.md §3.1.1): the **Katana's card** opens at stage 10, after the second jar. Its levels open the Katana's picks one by one, each up to its own top level: 1 the Katana (20K), 2 Quick Katana (32K), 3 Wide Blade (50K), 4 More Blades (75K), 177K in all. Until a profile buys its first level no run offers any of them, so every earlier run plays as before.
 
-Every card but Lightning and the Katana costs ~1.02M coins in all (~610K in v0.36–v0.38); Lightning adds 225K (~1.25M in all), bought at the end of the pacing model's timeline, where runs pay most: about an hour more to buy everything. Big Drops has 3 levels: its tilt adds to Big Catch's up to 13 (§8), and one level (3) on top of Big Catch 10 (12) already reaches it. The prices come from a pacing model (docs/plans/batch-20.md §7): a player who keeps playing and buys whatever is affordable has bought everything in about 8 hours. Rerun with v0.39's effects (power 1.5 times as strong, so runs go further and pay more), the model buys everything in ~7.8 hours (12 runs; 8.9 hours and 23 runs with v0.36's numbers), with runs reaching stage ~14 after an hour and ~17 after two. In v0.36–v0.38 the first run (about 5 minutes) paid for two or three cheap cards, and runs reached stage ~7 after an hour, ~10 after two and ~16 after four. Until v0.36 the four upgrades cost 21,455 in all (Lucky Paw 50 to 3200, Big Catch 100 to 3500 for 5 levels of 3 points, Combo Charm 80 to 1280, Second Chance 500 and 4000), and the blessings were all open from the first run.
+v0.56 (the owner's call, 2026-10-16): the **Frog's card** opens at stage 13, three stages after the Katana's, its prices a little above the Katana's: 1 the Frog (22K), 2 Quick Frog (35K), 3 Long Stay (55K), 4 Big Gulp (80K), 192K in all. As with the Katana, no run offers its picks until a profile buys its first level.
+
+Every card but Lightning and the weapons costs ~1.02M coins in all (~610K in v0.36–v0.38); Lightning adds 225K (~1.25M in all), bought at the end of the pacing model's timeline, where runs pay most: about an hour more to buy everything. Big Drops has 3 levels: its tilt adds to Big Catch's up to 13 (§8), and one level (3) on top of Big Catch 10 (12) already reaches it. The prices come from a pacing model (docs/plans/batch-20.md §7): a player who keeps playing and buys whatever is affordable has bought everything in about 8 hours. Rerun with v0.39's effects (power 1.5 times as strong, so runs go further and pay more), the model buys everything in ~7.8 hours (12 runs; 8.9 hours and 23 runs with v0.36's numbers), with runs reaching stage ~14 after an hour and ~17 after two. In v0.36–v0.38 the first run (about 5 minutes) paid for two or three cheap cards, and runs reached stage ~7 after an hour, ~10 after two and ~16 after four. Until v0.36 the four upgrades cost 21,455 in all (Lucky Paw 50 to 3200, Big Catch 100 to 3500 for 5 levels of 3 points, Combo Charm 80 to 1280, Second Chance 500 and 4000), and the blessings were all open from the first run.
 
 Derived values, where each name means that card's current level:
 
@@ -513,11 +517,11 @@ A maxed profile's smart bot clears 5 stages in 44 runs of 60 and reaches stage ~
 
 > The owner's design (2026-10-08), built in v0.21. Its numbers are starting values: balance and the economy come later.
 
-Later stages get harder and every run gets its own build. Every stage clear asks the player to pick a **trial**, which makes the coming stages harder, and then a **blessing**, which helps (the first ten clears follow a teaching order, v0.50, §15.5); every 5 stages, where the jar grows, a **rule**, which changes how the game works, takes the trial's place (v0.34, the owner's call). Picks stack by level for the rest of the run, like Vampire Survivors' level-ups: the same pick again raises its level; a rule has one level, on or off. Trials work through **boulders** (more, bigger, harder to break), the **wind**, **porcelain** cats (v0.34: trials that make the game harder in different ways, which don't build on each other) and the **Cursed Bell** with its two follow-ups (Batch 19). Rules: **Hubris** and **Echo** (v0.34), **Copycat** and **Dice** (Batch 19), and **Heavy Drop** (a trial from v0.34, a rule since v0.40). Blessings work through **magnets**, bigger drops, **golden cats**, **hanabi**, **joker cats** (since v0.28) and **lightning balls** (v0.42). Since v0.55 the blessings also hold the first **weapon**, the **Katana** (§15.16; the weapons-and-passives direction, docs/plans/weapons-and-passives.md): taking it once opens it, and its upgrades are blessing picks of their own.
+Later stages get harder and every run gets its own build. Every stage clear asks the player to pick a **trial**, which makes the coming stages harder, and then a **blessing**, which helps (the first ten clears follow a teaching order, v0.50, §15.5); every 5 stages, where the jar grows, a **rule**, which changes how the game works, takes the trial's place (v0.34, the owner's call). Picks stack by level for the rest of the run, like Vampire Survivors' level-ups: the same pick again raises its level; a rule has one level, on or off. Trials work through **boulders** (more, bigger, harder to break), the **wind**, **porcelain** cats (v0.34: trials that make the game harder in different ways, which don't build on each other) and the **Cursed Bell** with its two follow-ups (Batch 19). Rules: **Hubris** and **Echo** (v0.34), **Copycat** and **Dice** (Batch 19), and **Heavy Drop** (a trial from v0.34, a rule since v0.40). Blessings work through **magnets**, bigger drops, **golden cats**, **hanabi**, **joker cats** (since v0.28) and **lightning balls** (v0.42). Since v0.55 the blessings also hold the **weapons** (the weapons-and-passives direction, docs/plans/weapons-and-passives.md): the **Katana** (§15.16) and, since v0.56, the **Frog** (§15.17). Taking one once opens it, and its upgrades are blessing picks of their own.
 
 ### 15.1 The queue
 
-The dropper hands out six kinds of ball, cats, magnets, boulders, hanabi, joker cats and lightning balls, and the katana (v0.55), which never goes into the jar as a ball. Every item rolls its kind when it is queued, with one roll checked in this order:
+The dropper hands out six kinds of ball, cats, magnets, boulders, hanabi, joker cats and lightning balls, the katana (v0.55), which never goes into the jar as a ball, and the frog (v0.56). Every item rolls its kind when it is queued, with one roll checked in this order:
 
 | Kind      | Chance per queued item                                                      |
 | --------- | --------------------------------------------------------------------------- |
@@ -527,16 +531,17 @@ The dropper hands out six kinds of ball, cats, magnets, boulders, hanabi, joker 
 | Joker     | 2.25% per Joker Cat level (0% without)                                      |
 | Lightning | 1.5% per Lightning level (0% without); none in a stage's first 20 drops     |
 | Katana    | 2.25% once taken, +2.25% per Quick Katana level; none in the first 20 drops |
+| Frog      | 2.25% once taken, +2.25% per Quick Frog level; none in the first 20 drops   |
 | Cat       | the rest; a cat is golden with 6% per Golden Cats level (0% without)        |
 
 - The first two drops of a run are always cats of the pool's smallest tier (§8).
 - The wind (§15.8) and Heavy Drop (§15.9) act on every ball that leaves the paw, whatever its kind (a cat, a golden cat, a boulder, a hanabi, a joker, a lightning ball, a ball the magnet took and drops again), from the drop until it first touches a ball or the floor (a wall doesn't end a fall, §15.8).
 - **No magnet early in a stage** (v0.24, owner): only items queued after the player has dropped 20 balls in the stage can be magnets, so the first that can be one is the 22nd ball (NEXT after the 20th drop). Every stage starts with an empty jar, where a magnet would have nothing to take. The count starts again at every stage clear, the last stage's too. While magnets are held back the boulder chance stays the same. The same holds for hanabi (v0.28): an empty jar has nothing for one to pop.
-- **At a stage clear** a queued magnet, hanabi, lightning ball or katana (in the paw or in NEXT) becomes a cat of the pool's smallest tier; other queued items stay as they are. Like magnets and hanabi, no lightning ball comes in a stage's first 20 drops (v0.42): an empty jar has nothing to strike.
+- **At a stage clear** a queued magnet, hanabi, lightning ball, katana or frog (in the paw or in NEXT) becomes a cat of the pool's smallest tier; other queued items stay as they are. Like magnets and hanabi, no lightning ball comes in a stage's first 20 drops (v0.42): an empty jar has nothing to strike.
 - v0.24 (owner): the magnet chance was halved, 2% → 1% and +3% → +1.5% per More Magnets level. v0.39 (owner): every blessing level counts 1.5 times as much, so +2.25% (golden cats 4% → 6%, hanabi and jokers 1.5% → 2.25%). v0.39.1 (owner): no magnets without the More Magnets blessing, like hanabi and jokers; until then every run had 1%, a fresh profile too.
-- Magnets, boulders, hanabi, jokers, lightning balls and katanas are never golden. The katana is rolled last (after the lightning ball), so a seed's other kinds stay where they were.
+- Magnets, boulders, hanabi, jokers, lightning balls, katanas and frogs are never golden. The katana is rolled after the lightning ball and the frog after the katana, each new kind last, so a seed's other kinds stay where they were.
 - Debug jumps (`?debug=1`, "Jump to stage") skip the stage-clear picks.
-- The NEXT bubble shows the item as it is: a cat (golden ones with their glow), the magnet, the boulder at its size with its bands, the hanabi, the joker, the lightning ball or the katana's ball.
+- The NEXT bubble shows the item as it is: a cat (golden ones with their glow), the magnet, the boulder at its size with its bands, the hanabi, the joker, the lightning ball, the katana's ball or the frog.
 - A level picked at a stage clear applies to items queued after the pick. The two items already queued (in the paw and in NEXT) stay as they are. At an expansion, queued cats change tier as in §8, and queued boulders keep their size and bands.
 - Determinism: kind and golden roll on their own generator, seeded from the run's seed. Every queued item rolls its kind, its golden and its tier every time, whatever the chances, so a seed gives the same tiers at any level (in stage 1 the tiers also follow the jar, §8).
 
@@ -625,7 +630,7 @@ The cards show in front of the shut stage doors (§7.1). With the art skin (v0.3
 
 Then play resumes in the next stage as the doors open: in the grown jar, or in the same empty jar.
 
-- **Options:** each pick shows up to 3 different options, drawn at random from those that are open, with the run's seeded RNG. An option is open when it isn't at its max level (for a blessing: at its shop card's level, §10, v0.36) and, for a **follow-up**, once the pick it needs has been taken (Batch 19): Quick Curse and More Curses are never offered before Cursed Bell. Today there are 8 trials (6 open at first), so the trial pick shows 3 of them, 5 rules (v0.40: Heavy Drop became one), so a rule pick shows 3 of the 5 in random order, and 10 blessings (Lightning since v0.42; the Katana and its three upgrades since v0.55, which need the Katana and their shop card's level), so the blessing pick shows 3 of those open, two of the Katana's upgrades side by side at times. With fewer than 3 open it shows fewer cards; with none open the pick is skipped (a blessing pick pays a Lucky gift instead, v0.50). A trial pick in the teaching order draws only from its clear's trials.
+- **Options:** each pick shows up to 3 different options, drawn at random from those that are open, with the run's seeded RNG. An option is open when it isn't at its max level (for a blessing: at its shop card's level, §10, v0.36) and, for a **follow-up**, once the pick it needs has been taken (Batch 19): Quick Curse and More Curses are never offered before Cursed Bell. Today there are 8 trials (6 open at first), so the trial pick shows 3 of them, 5 rules (v0.40: Heavy Drop became one), so a rule pick shows 3 of the 5 in random order, and 14 blessings (Lightning since v0.42; the Katana and its three upgrades since v0.55 and the Frog and its three since v0.56, the upgrades needing their weapon, each needing its shop card's level), so the blessing pick shows 3 of those open, two of a weapon's upgrades side by side at times. With fewer than 3 open it shows fewer cards; with none open the pick is skipped (a blessing pick pays a Lucky gift instead, v0.50). A trial pick in the teaching order draws only from its clear's trials.
 - The player must pick exactly one: no skip, no reroll, no rarities.
 - **Levels:** a pick raises that option's level by 1. Levels last for the run, and every run starts at 0. They are saved with the run in progress (§11).
 - **Card:** an icon, the name, a one-line effect, the level as pips with "Lv 1 → 2", and the value it changes (current → next), like a shop card (§2.2). Every trial, rule and blessing but Big Drops has a clip button on its icon that shows what it does (§2.5, v0.38); a tap on it doesn't select the card.
@@ -671,6 +676,10 @@ The boulder trials still multiply each other (more × bigger × harder to break)
 | `quickKatana` | Quick Katana | +2.25% katanas (needs Katana) |   2 | 2.25% → 6.75% |
 | `wideBlade`   | Wide Blade   | A wider cut (needs Katana)    |   2 | Thin → Broad  |
 | `moreBlades`  | More Blades  | One more blade (needs Katana) |   3 | 1 → 4 blades  |
+| `frog`        | Frog         | Frogs come (§15.17)           |   1 | 0% → 2.25%    |
+| `quickFrog`   | Quick Frog   | +2.25% frogs (needs Frog)     |   2 | 2.25% → 6.75% |
+| `longStay`    | Long Stay    | +2 meals (needs Frog)         |   2 | 5 → 9 meals   |
+| `bigGulp`     | Big Gulp     | Two cats a meal (needs Frog)  |   1 | 1 → 2 cats    |
 
 Every blessing level counts 1.5 times as much since v0.39 (the owner's call, with the shop, §10): until then +1.5% magnets, +2 tilt levels, +4% golden cats, +1.5% hanabi and +1.5% jokers.
 
@@ -887,12 +896,35 @@ A weapon that cuts every small cat in a straight line.
 
   Thirty seeds swing a few runs either way (the Katana alone and no picks are within that).
 
-### 15.17 Notes for building it
+### 15.17 Frog
+
+> The owner's design (2026-10-16, docs/plans/weapons-and-passives.md §3.4), built in v0.56: the second weapon. Its look is the owner's art (docs/ART_ASSETS.md §4.22); with `?skin=vector` or `placeholder` the game draws plain stand-ins. Its chances and meals are starting values.
+
+A weapon that stays in the jar and eats the smallest cats.
+
+- **Picks:** taking **Frog** once (a blessing pick) opens it: frogs start to come, 2.25% per queued item. Its upgrades are blessing picks of their own that need it, like the Katana's (§15.16): **Quick Frog** (+2.25% per level, 2 levels, up to 6.75%), **Long Stay** (+2 meals per level, 2 levels: 5, 7, 9) and **Big Gulp** (two cats at each meal, 1 level). Each needs a level of the Frog's shop card (§10). Their cards show the calm frog until their own pictures come (docs/ART_ASSETS.md §4.22).
+- **The drop:** none comes in a stage's first 20 drops, and a queued one becomes a cat at a stage clear (§15.1). It is a ball of **size 3**, dropped from the paw like the others (the wind and Heavy Drop move it like any ball). In the jar it **rolls like the other balls** (the owner's call: it isn't kept upright), never merges and **doesn't count for the danger line**: it never ends a run, even over the line, and a Lucky Save leaves it alone. The magnet can take it; it keeps its meals.
+- **The meals:** each time a ball leaves the paw (a cat, a special ball or a katana; not the frog's own drop), every frog in the jar, oldest first, makes a meal: its tongue swallows the jar's **smallest landed cat**, the nearest to it between cats of one size, through anything in the way (Big Gulp: the two smallest). A ball still falling from the paw isn't in the jar yet. A swallowed cat **pops into its value** (§5: coins, no score, no combo), golden ones at their plain value; a cursed one is swallowed like any other and its curse just ends. A meal counts once, whatever it swallowed; a jar with no landed cat feeds nothing and costs no meal.
+- **Leaving:** after its last meal (5; Long Stay 7 or 9) the frog falls asleep and is gone. A stage clear's pops take it too, paying nothing. A run saved with a frog in the jar keeps its meals left (`hitsLeft`, like a boulder's bands).
+- **Look** (§12): the owner's four poses of one frog (calm in the paw, in NEXT, on its cards and at rest; mouth open; gulping; asleep). As a ball leaves the paw the frog opens its mouth, its tongue (the owner's band and round tip, stretched from the mouth, which turns with the rolling frog) shoots out to the cat in 0.11 s and pulls it back in 0.17 s, the cat's own picture riding on the tip and shrinking into the mouth, with a wet snap and a gulp and the cat's "+coins"; the frog gulps for 0.32 s. After its last meal it sleeps where it is for 0.42 s, then shrinks away in a puff of sparks with two soft croaks.
+- **Measured** (v0.56, the smart bot, 30 seeds of three stages from a fresh profile, 15 minutes at most; it drops a frog low and out of the way): the Frog alone helps about as much as one or two levels of Hanabi, and never makes a run end; but frogs that eat faster than the paw drops (Quick Frog 2, and above all every pick together: up to about 1.2 cats a drop) empty the jar of the small cats the big ones are made from, so runs stall without losing. **Open with the owner:** how to keep the eating below the dropping (docs/plans/weapons-and-passives.md §3.4).
+
+  | Picks (the rest at 0)                               | Cleared | Out of time | Lost | Median run |
+  | --------------------------------------------------- | ------: | ----------: | ---: | ---------: |
+  | none                                                |      13 |           0 |   17 |      266 s |
+  | Frog                                                |      19 |           0 |   11 |      321 s |
+  | Frog, Quick Frog 2                                  |      14 |          11 |    5 |      669 s |
+  | Frog, Long Stay 2                                   |      17 |           0 |   13 |      342 s |
+  | Frog, Big Gulp                                      |      15 |           3 |   12 |      490 s |
+  | Frog, Quick Frog 2, Long Stay 2, Big Gulp           |       0 |          30 |    0 |      900 s |
+  | Katana, Quick Katana 2, Wide Blade 2, More Blades 3 |      25 |           0 |    5 |      360 s |
+
+### 15.18 Notes for building it
 
 - The rules (kinds, chances, hits, golden merges, the picks and their levels) live in the headless layers with unit tests. `game/` and `ui/` only draw and send intents (select, Take, the card pick). Every number goes in `src/config/`.
-- Debug panel (`?debug=1`): set trial, rule and blessing levels, put a magnet, a boulder, a hanabi, a joker, a lightning ball, a katana or a golden cat in the paw, open the stage-clear picks (or a rule pick), flip the wind, drop a cracked cat and crack the newest cat, curse the newest cat and set its bell, force the next die. `window.__game` gets matching hooks for Playwright.
+- Debug panel (`?debug=1`): set trial, rule and blessing levels, put a magnet, a boulder, a hanabi, a joker, a lightning ball, a katana, a frog or a golden cat in the paw, open the stage-clear picks (or a rule pick), flip the wind, drop a cracked cat and crack the newest cat, curse the newest cat and set its bell, force the next die. `window.__game` gets matching hooks for Playwright.
 - The visuals are code-drawn first; the owner's raster art follows through docs/ART_ASSETS.md. Since Batch 19, new looks come from the owner's art only: the code moves, scales, turns and fades it, writes numbers as live text and reuses the existing effects.
-- Procedural sounds (§12): the magnet's take, a boulder hit (clang), a boulder break (crunch), the golden two-tier merge (also a joker's merge, a Hubris three, a lifted curse and a lucky die), the hanabi's boom, Heavy Drop's thud, a crack's tink, a break's shatter, an echo's bell, a curse's dull bell, a stone's grind, a fizzle's clack, Lightning's thunder, and the Katana's shing and slice.
+- Procedural sounds (§12): the magnet's take, a boulder hit (clang), a boulder break (crunch), the golden two-tier merge (also a joker's merge, a Hubris three, a lifted curse and a lucky die), the hanabi's boom, Heavy Drop's thud, a crack's tink, a break's shatter, an echo's bell, a curse's dull bell, a stone's grind, a fizzle's clack, Lightning's thunder, the Katana's shing and slice, and the Frog's tongue and croak.
 - The balance bot (`npm run sim`, TECH_SPEC §11) measures a new pick against the game without it before it ships.
 
 ## 16. Not in v1 (ideas for later)

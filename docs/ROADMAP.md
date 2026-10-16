@@ -386,6 +386,12 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
   - [x] the Katana's shop card among the blessings, with its ball (v0.55.3; a Weapons section until then), from stage 10, each of its four levels opening one of its picks (20K, 32K, 50K, 75K)
   - [x] the owner's art: the katana, its streaks and cut pieces, the ball in the paw and NEXT (v0.55.1–v0.55.2), More Blades' and Wide Blade's icons (the Katana and Quick Katana show the ball); halves of each cut cat from its own art; shing and slice sounds
   - [x] measured with the smart bot against Hanabi and Lightning
+- [x] The Frog (v0.56.0, GAME_DESIGN §15.17; direction: docs/plans/weapons-and-passives.md §3.4; art: docs/ART_ASSETS.md §4.22), the second weapon, the owner's design. **Status:** built; the owner checks it on the phone, sends the rounder frog and the three card pictures, and picks how to keep the eating below the dropping (the bot found runs stall with every Frog pick):
+  - [x] the frog: a size-3 ball that rolls like the others, never merges and never counts for the danger line; each time a ball leaves the paw its tongue swallows the jar's smallest landed cat (the nearest between equals) into coins; after 5 meals it falls asleep and goes
+  - [x] its picks: Frog (opens it, 2.25%), Quick Frog (+2.25% ×2), Long Stay (+2 meals ×2), Big Gulp (two cats a meal), the upgrades needing the Frog
+  - [x] the Frog's shop card among the blessings, after the Katana's, from stage 13 (22K, 35K, 55K, 80K)
+  - [x] the owner's art: the frog's four poses and its tongue (the first sheet; the rounder one and the card pictures to come); the tongue shooting out and pulling the cat's own picture in, the gulp, the sleep and the puff; tongue and croak sounds
+  - [x] measured with the smart bot (GAME_DESIGN §15.17)
 
 ## M13: Final art integration
 

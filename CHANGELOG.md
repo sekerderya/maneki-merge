@@ -2,6 +2,41 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.56.0] - 2026-10-16
+
+The Frog, the second weapon (GAME_DESIGN §15.17; the owner's design, docs/plans/weapons-and-passives.md §3.4): a frog that sits in the jar and, each time a ball leaves the paw, swallows the smallest cat with its tongue.
+
+### Added
+
+- **The frog:** a size-3 ball, dropped from the paw like the others. In the jar it rolls like any ball (the owner's call), never merges and never counts for the danger line, so it never ends a run. Each time a ball leaves the paw (not its own drop), its tongue swallows the jar's smallest landed cat, the nearest between cats of one size, and the cat pops into its value (coins, no score, no combo). After 5 meals it falls asleep and goes; a stage clear takes it too. A jar with no landed cat feeds it nothing and costs no meal.
+- **Its picks** (blessings): **Frog** (frogs start to come, 2.25%), then, once it is taken, **Quick Frog** (+2.25%, two levels), **Long Stay** (+2 meals, two levels: 5, 7, 9) and **Big Gulp** (two cats at each meal).
+- **Its shop card** among the blessings, after the Katana's: it opens at stage 13, and each of its four levels opens one of its picks for every run (Frog 22K, Quick Frog 35K, Long Stay 55K, Big Gulp 80K). Until a profile buys the first, every run plays as before.
+- **The owner's art:** the frog's four poses (calm in the paw, in NEXT, on its cards and at rest; mouth open; gulping; asleep) and its tongue. The tongue shoots from the mouth (which turns with the rolling frog) to the cat in 0.11 s and pulls it back in 0.17 s, the cat's own picture riding in on its tip; the frog gulps, and after its last meal sleeps a moment and shrinks away in a puff of sparks. New sounds: a wet snap and gulp for the tongue, two soft croaks as it goes.
+- Debug panel: a Frog button; `window.__game.give('frog')`.
+
+### Decisions taken for the owner
+
+- A meal counts once whatever it swallowed (Big Gulp's two cats are one meal), and only a meal that swallowed something counts.
+- A cat still falling from the paw isn't in the jar yet, so the frog never eats the ball just dropped; the tongue reaches through anything in the way.
+- The magnet can take a frog; it keeps its meals left.
+- The frog's mouth is drawn a fifth of its radius above its centre, turning with it; the payout shows where the cat was.
+- The Frog's cards show the calm frog until the family's pictures come.
+
+### Measured
+
+- The smart bot, 30 seeds of three stages from a fresh profile (cleared / out of time / lost): no picks 13 / 0 / 17; Frog 19 / 0 / 11; with Quick Frog 2 14 / 11 / 5; with Long Stay 2 17 / 0 / 13; with Big Gulp 15 / 3 / 12; with all of them 0 / 30 / 0. Frogs that eat faster than the paw drops empty the jar of the small cats, so runs stall without ending: how to keep the eating below the dropping is the owner's call (GAME_DESIGN §15.17).
+
+### Known issues
+
+- The frog sheet in the game is the first generation, pear-shaped; the owner's rounder sheet replaces it with `npm run art` (docs/ART_ASSETS.md §4.22).
+
+### Technical
+
+- Headless: ball and drop kind `frog` (its meals left in `hitsLeft` / `hits`, like a boulder's bands, so a saved run and the magnet keep them), `physics/frog.ts` (`frogMeal`), `RunController.feedFrogs` at every drop after the curse's count, events `frogSwallowed` and `frogLeft`, reason `frog` on `catPopped`, kind `frog` on `specialPopped`; `countsForDanger` and `luckySaveVictims` skip frogs. The frog is rolled last, after the katana, so every seed's other drops stay where they were.
+- Picks and shop: `FROG_*` in `config/picks.ts`, `frogChance`, `frogMeals`, `frogBites` in `core/picks.ts`, `WEAPON_CARD_OPENS.frog`.
+- Art: `tools/buildFrog.ts` (the 2×2 sheet through `artBall.ts`, the tongue's band sliced from its even middle and its tip), `config/frogSprites.ts`, `SpecialSkin.frog(size, pose)`, `BallRenderer.setFrogPose`, `game/fx/FrogFx.ts` (stand-ins without the art).
+- Tests: `frog.test.ts` (14) and the picks, shop, upgrades, config and clips tests for the new picks and card. The bot drops a frog low and out of the way and takes the Frog's picks after the Katana's.
+
 ## [0.55.6] - 2026-10-16
 
 ### Changed
