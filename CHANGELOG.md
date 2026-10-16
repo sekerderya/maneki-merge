@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.56.7] - 2026-10-17
+
+### Changed
+
+- **The katana shows where it will cut** (GAME_DESIGN §15.16, the owner's call): while it is in the paw, every blade's line is drawn as a red dotted line (with More Blades the diagonals and the one across too, not only the cut straight down), and every cat and boulder the cut would reach now has a pulsing red ring, Wide Blade's reach included. Aim it to ring the cats you want gone.
+
+### Technical
+
+- `AimGuide.cuts(lines, targets, nowMs)`: dotted lines at any angle (the column of dots turned onto each line, a pool per line) and a pool of target rings (`ringTexture`) over the balls; the targets come from `katanaCuts` on the balls' drawn positions. `KATANA_TARGET` (view) and `KATANA_TARGET_COLOR` (skin).
+
 ## [0.56.6] - 2026-10-17
 
 ### Changed
