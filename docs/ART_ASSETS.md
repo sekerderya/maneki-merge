@@ -2895,10 +2895,12 @@ under the icon. No text, no letters, no numbers, no kanji, no watermark, no sign
 
 One round icon for the mobile game "Maneki Merge", drawn exactly like the attached icons: a
 perfect circle, centred, filling about 80% of the canvas, with a cream face inside a gold rim and
-the same thick dark-brown outline round it. Inside, big and centred: the attached katana, lying
-diagonally across the face, its gold guard and vermilion hilt at the upper right, its point at
-the lower left. It stands for a sword that cuts
-the small cats in a straight line. Nothing sticks out of the circle. Square 1:1.
+the same thick dark-brown outline round it.
+Inside, centred: the attached katana, drawn shorter and a little chunkier so that the whole
+sword, hilt and point included, lies inside the cream face with a clear gap to the gold rim. It
+lies diagonally across the face, its gold guard and vermilion hilt at the upper right, its point
+at the lower left. It stands for a sword that cuts the small cats in a straight line. Nothing
+sticks out of the circle: not the hilt, not the point. Square 1:1.
 ```
 
 ```text
@@ -2911,11 +2913,13 @@ under the icon. No text, no letters, no numbers, no kanji, no watermark, no sign
 
 One round icon for the mobile game "Maneki Merge", drawn exactly like the attached icons: a
 perfect circle, centred, filling about 80% of the canvas, with a cream face inside a gold rim and
-the same thick dark-brown outline round it. Inside, big and centred: three of the attached katanas
-crossed in a star, all with their hilts up and their points down: one straight up and down in the
-middle, and two crossing it diagonally in an X, their hilts at the upper left and upper right,
-their points at the lower right and lower left. Smaller than a single katana would be, so all
-three fit. It stands for more blades in every cut. Nothing sticks out of the circle. Square 1:1.
+the same thick dark-brown outline round it.
+Inside, centred: three of the attached katanas, drawn shorter and a little chunkier so that
+every sword, hilt and point included, lies inside the cream face with a clear gap to the gold rim.
+They cross in a star, all with their hilts up and their points down: one straight up and down in
+the middle, and two crossing it diagonally in an X, their hilts at the upper left and upper right,
+their points at the lower right and lower left. It stands for more blades in every cut. Nothing
+sticks out of the circle: no hilt, no point. Square 1:1.
 ```
 
 ```text
@@ -2928,10 +2932,12 @@ under the icon. No text, no letters, no numbers, no kanji, no watermark, no sign
 
 One round icon for the mobile game "Maneki Merge", drawn exactly like the attached icons: a
 perfect circle, centred, filling about 80% of the canvas, with a cream face inside a gold rim and
-the same thick dark-brown outline round it. Inside, big and centred: the attached katana falling
-point down, tilted a little, with two paler, fading copies of it trailing just above it and three
-short speed lines, as if katanas keep coming one after another. It stands for katanas coming more
-often. Nothing sticks out of the circle. Square 1:1.
+the same thick dark-brown outline round it.
+Inside, centred: the attached katana, drawn shorter and a little chunkier, falling point down,
+tilted a little, with two paler, fading copies of it trailing just above it and three short speed
+lines, as if katanas keep coming one after another. All of it, every hilt and point included, lies
+inside the cream face with a clear gap to the gold rim. It stands for katanas coming more often.
+Nothing sticks out of the circle. Square 1:1.
 ```
 
 ```text
@@ -2944,10 +2950,12 @@ under the icon. No text, no letters, no numbers, no kanji, no watermark, no sign
 
 One round icon for the mobile game "Maneki Merge", drawn exactly like the attached icons: a
 perfect circle, centred, filling about 80% of the canvas, with a cream face inside a gold rim and
-the same thick dark-brown outline round it. Inside, big and centred: the attached katana pointing
-straight down, but with an extra-broad gleaming blade, nearly twice as wide as usual, and one small
-chunky gold arrow on each side of the blade pointing outward, away from it. It stands for a wider
-cut. Nothing sticks out of the circle. Square 1:1.
+the same thick dark-brown outline round it.
+Inside, centred: the attached katana, drawn shorter and chunkier, pointing straight down, with
+an extra-broad gleaming blade, nearly twice as wide as usual, and one small chunky gold arrow on
+each side of the blade pointing outward, away from it. The whole sword, hilt and point included,
+lies inside the cream face with a clear gap to the gold rim. It stands for a wider cut. Nothing
+sticks out of the circle. Square 1:1.
 ```
 
 Checks for these: the katana follows the general checklist (§2): perfectly vertical with the point
@@ -2956,7 +2964,8 @@ hilt, no
 glow or lines round it, nothing touching the edge. The effect sheets: pure black everywhere around
 the pieces, no outlines, nothing touching another piece or the image's edge, every piece white at
 its core with a steel-blue glow and a faint pink edge; each slash streak straight, the full width
-of its row, both ends on the row's middle line. The icons: §5's list; the three katanas of More
+of its row, both ends on the row's middle line. The icons: §5's list; every sword wholly inside the circle (the first katana icon came
+with its hilt and point outside the rim, 2026-10-16); the three katanas of More
 Blades still read as katanas at 48 px.
 
 **Into the game.** Tell Claude when they are in `art-source/specials/`, `art-source/fx/` and
