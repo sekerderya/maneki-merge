@@ -38,6 +38,11 @@ export const NUMBER_STROKE_RATIO = 0.16;
 export const DANGER_RED = 0xd9483b;
 /** The aim guide's dots and the ghost of the landing cat. */
 export const AIM_LINE_COLOR = 0x8b6650;
+/**
+ * The katana's aim (GAME_DESIGN §15.16): its cut lines and the ring round each ball they would
+ * reach, in the katana's red.
+ */
+export const KATANA_TARGET_COLOR = 0xe2403a;
 export const AIM_LINE_ALPHA = 0.75;
 /** The danger countdown over the jar. */
 export const COUNTDOWN_FILL = '#d9483b';

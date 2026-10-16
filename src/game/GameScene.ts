@@ -53,6 +53,7 @@ import type { Drop } from '../core/dropQueue';
 import type { GameEvents } from '../core/events';
 import type { BallView } from '../physics/balls';
 import { clampDropX, dropStartY, jarGeometry, MAX_DROP_RADIUS } from '../physics/geometry';
+import { katanaBlades, katanaCuts } from '../physics/katana';
 import { reducedMotion } from '../platform/motion';
 import type { RunController } from '../run/RunController';
 import { landingY } from './aim';
@@ -88,6 +89,7 @@ import { CatSkin } from './skins/CatSkin';
 import { PlaceholderSkin } from './skins/PlaceholderSkin';
 import { SpecialSkin } from './skins/SpecialSkin';
 import { drawnX, drawnY } from './drawnPose';
+import { katanaGrace } from '../core/picks';
 import { RING_PX_PER_UNIT, restoreRingTextures, ringTexture } from './ringTexture';
 
 /**
@@ -234,7 +236,7 @@ export class GameScene extends Phaser.Scene {
     const art = this.skinId === 'art' ? this.art : null;
     this.jar = new JarView(this, jarBack, jarFront, this.add.graphics(), art);
 
-    this.aimGuide = new AimGuide(this, aim);
+    this.aimGuide = new AimGuide(this, aim, numbers);
     this.balls = new BallRenderer(this, this.skin, this.special, glows, bodies, numbers);
 
     const first = this.skin.body(1);
@@ -785,9 +787,21 @@ export class GameScene extends Phaser.Scene {
     }
     // The magnet is used on a ball in the jar, not dropped: no aim guide.
     if (item.kind === 'magnet') return;
-    // The katana's aim guide is its cut, straight down to the floor (GAME_DESIGN §15.16).
+    // The katana's aim guide is its cut (GAME_DESIGN §15.16): every blade's line, the first straight
+    // down from under the paw's ball, and a ring round each ball the cut would reach now.
     if (item.kind === 'katana') {
-      this.aimGuide.line(x, geo.dropY + shown + AIM_DOT_SPACING, 0);
+      const blades = katanaBlades(x, dropStartY(radius, geo), run.levelOf('moreBlades'), geo);
+      const reach = katanaCuts(blades, 1, run.balls, katanaGrace(run.pickLevels));
+      const alpha = run.renderAlpha;
+      const targets = [...reach.cats, ...reach.boulders].map(({ ball }) => ({
+        x: drawnX(ball, alpha),
+        y: drawnY(ball, alpha),
+        radius: ball.radius,
+      }));
+      const lines = blades.map((b, i) =>
+        i === 0 ? { ...b, y0: geo.dropY + shown + AIM_DOT_SPACING } : b,
+      );
+      this.aimGuide.cuts(lines, targets, this.nowMs);
       return;
     }
 

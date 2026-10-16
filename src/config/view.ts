@@ -87,6 +87,11 @@ export const AIM_DOT_SPACING = 18;
 export const AIM_LINE_WIDTH = 3;
 /** The ghost of the landing cat is this faint, relative to the dots. */
 export const AIM_GHOST_ALPHA = 0.45;
+/**
+ * The katana's aim (GAME_DESIGN §15.16): a ring `gap` world units outside each ball its cut would
+ * reach, `width` wide, its alpha pulsing between `alphaMin` and 1 over `periodMs`.
+ */
+export const KATANA_TARGET = { gap: 3, width: 9, alphaMin: 0.6, periodMs: 700 } as const;
 /** Pop-in of the next cat in the dropper. */
 export const DROPPER_POP_IN_MS = 160;
 
