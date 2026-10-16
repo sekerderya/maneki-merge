@@ -3164,6 +3164,38 @@ katana, never a straight knife, a cleaver or a dagger. The guard may grow a litt
 wider than the blade. Nothing else changes.
 ```
 
+**The second edit (2026-10-16), not taken:** the blade stayed about 80 px wide; edits keep a
+sword's width whatever they ask. Next: a fresh picture in a new chat with **only the ball
+attached**, so no slender katana pins the width, the blade sized against its guard and arrows. If
+this one is still thin, the edited picture with the big arrows (blade about 80 px, a clear katana)
+is the fallback.
+
+```text
+Style: match the attached image exactly. Polished casual mobile-game art, cute chibi kawaii
+illustration, thick warm dark-brown outlines (never black) of even weight, soft pastel cel shading
+with gentle gradients and one small glossy highlight, light from the upper left, clean crisp
+vector-like edges, readable at 48 px.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow.
+No text, no letters, no numbers, no kanji, no watermark, no signature.
+
+Draw a brand-new picture; the attached image only shows what the ball looks like. A small game
+picture of one ball: the attached katana ball, the same perfect circle of glossy deep crimson-red
+lacquer with small gold wave arcs and the same glossy highlight at the upper left, filling about
+80% of the canvas. Instead of the diagonal sword on it, it carries one big, heavy, broad-bladed
+katana standing straight up and down in the middle of the ball, in the same drawing style as the
+sword on the attached ball: a gold cap and a vermilion cord-wrapped hilt at the top, a wide oval
+gold guard, a gold collar with a tiny paw print, then the blade pointing down. The blade is very
+broad: almost as wide as the gold guard, and about as wide as the hilt is long. It is still
+clearly a katana, not a knife: single-edged, its back curving gently along its whole length, a
+soft wavy white temper line along its cutting edge, and the katana's angled tip at the bottom.
+The blade is about three times as long as the hilt; the whole sword reaches from near the top of
+the ball to near its bottom. On each side of the blade, at its middle, one big chunky gold arrow
+with a dark-brown outline, pointing outward, away from the blade, with only a small gap of red
+between the arrow and the blade. Everything lies on the red ball and stays wholly inside its
+circle with a clear gap to its edge. Nothing sticks out of the circle. No frame, no extra circle
+or rim, no medallion, no ground, no glow, no sparkles, no motion lines, nothing else. Square 1:1.
+```
+
 ## 5. Icon kit (every new icon)
 
 > Read this before writing a prompt for any new icon: an upgrade, a trial or blessing card, a
