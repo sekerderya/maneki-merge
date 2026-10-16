@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.56.6] - 2026-10-17
+
+### Changed
+
+- **Long Stay's and Big Gulp's pictures are bigger on their cards** (1.4 times, the owner's call): their frog was small in its square; they now fill the medallion and reach a little over its rim. Easy to take back (`PICK_PICTURE_SCALE` in `ui/pickArt.ts`).
+
 ## [0.56.5] - 2026-10-17
 
 ### Changed
