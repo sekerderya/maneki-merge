@@ -8,27 +8,27 @@ export const FROG_SPRITE_DATA: FrogSprites = {
   poses: [
     {
       file: 'frog-calm.webp',
-      side: 426,
-      radius: 181.63,
-      color: '#e0ad76',
+      side: 406,
+      radius: 183.24,
+      color: '#a3cd79',
     },
     {
       file: 'frog-open.webp',
-      side: 426,
-      radius: 181.54,
-      color: '#c8b976',
+      side: 406,
+      radius: 183.08,
+      color: '#d1b47c',
     },
     {
       file: 'frog-gulp.webp',
       side: 400,
-      radius: 184.98,
-      color: '#d3b776',
+      radius: 185.02,
+      color: '#a2cb7d',
     },
     {
       file: 'frog-sleepy.webp',
-      side: 418,
-      radius: 181.01,
-      color: '#daad74',
+      side: 414,
+      radius: 180.86,
+      color: '#e2a670',
     },
   ],
   band: {
