@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.56.5] - 2026-10-17
+
+### Changed
+
+- **Big Gulp's card shows its own picture**, the owner's art: the round frog's tongue catching two of the game's smallest lucky cats at once (docs/ART_ASSETS.md §4.22). Every Frog card now has its own picture; the owner decides on Big Gulp's by seeing it in the game.
+
 ## [0.56.4] - 2026-10-17
 
 ### Changed

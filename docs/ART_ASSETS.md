@@ -3466,6 +3466,44 @@ Checks: the frog is the sheet's (green, cream belly, red collar with its coin), 
 the addition is small, at its lower right, and covers no face; plain white around. Until a picture
 comes, its card shows the calm frog.
 
+**Big Gulp, three rounds (2026-10-17).** The prompt above drew two kittens with bodies and tails
+beside the frog, one of them scared: not the game's cats, and nothing said "two at once". A second
+try (two cat-ball heads flying to its mouth) drew plain cat heads, not the game's lucky cats, its
+motion lines read as falling past, and asking for a coin "with no marks" made it draw a new coin.
+The third, in the game since v0.56.5 as `picks/bigGulp.jpg` (the owner decides by seeing it in the
+game), shows what happens in play: the tongue catching two of the game's size-1 cats at once. Its
+frog's eyes lost their pale rims. Lessons: attach the game's own cat (`art-source/cats/size-01`)
+rather than the lineup, and say "the same charm as in the sheet" instead of describing it.
+
+```text
+Style: match the attached images exactly. Polished casual mobile-game art, cute chibi kawaii
+illustration, thick warm dark-brown outlines (never black) of even weight, soft pastel cel shading
+with gentle gradients and one small glossy highlight, light from the upper left, clean crisp
+vector-like edges, readable at 48 px.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow.
+No text, no letters, no numbers, no kanji, no watermark, no signature.
+
+Draw a brand-new picture; the attached images only show what the three things look like. A small
+game picture of a frog catching two small cats at once with its tongue:
+1. The frog from the top right of the first attached sheet, the one with its mouth wide open, copied
+   exactly: same round shape, colours, eyes, cheeks, hands, feet, red cord collar and the same gold
+   charm on it as in that sheet, unchanged. It fills about 55% of the canvas width, at the left,
+   a little above the middle.
+2. Its pink tongue, drawn like the third attached image (a soft glossy pink band with a round sticky
+   tip), shoots out of its open mouth in a gentle curve down to the lower right of the picture.
+3. Stuck together on the tongue's round tip, two copies of the cat in the second attached image,
+   drawn exactly like it: a round white lucky-cat ball with pink ears, closed happy eyes, a raised
+   paw, a red collar and a gold bell. Each cat is about a quarter of the frog's height, side by side,
+   touching each other and the tongue's tip. They look happy, never scared.
+Nothing covers the frog's eyes. Nothing touches the edge of the image. No frame, no circle around
+them, no medallion, no ground, no water, no glow, no sparkles, no motion lines, nothing else.
+Square 1:1.
+```
+
+Attach the frog sheet (`art-source/specials/frog.jpg`), the size-1 cat
+(`art-source/cats/size-01.jpg`) and the tongue (`art-source/fx/frog-tongue.jpg`). The Frog family is
+complete: every card shows its own picture (`docs/screenshots/v0.56.0/390-5-frog-picks.png`).
+
 ## 5. Icon kit (every new icon)
 
 > Read this before writing a prompt for any new icon: an upgrade, a trial or blessing card, a
