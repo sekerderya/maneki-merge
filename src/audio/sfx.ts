@@ -268,6 +268,26 @@ export const RECIPES: Readonly<Record<SoundName, Recipe>> = {
       gain: 0.7,
     });
   },
+  // A katana leaves the paw (GAME_DESIGN §15.16): a bright steel ring over a rushing swish.
+  shing(v) {
+    noise(v, {
+      filter: 'bandpass',
+      from: 2600,
+      to: 7200,
+      q: 1.2,
+      attack: 0.03,
+      decay: 0.2,
+      gain: 0.55,
+    });
+    tone(v, { from: 2637, decay: 0.38, gain: 0.35 });
+    tone(v, { from: 3951, decay: 0.26, gain: 0.22 });
+    tone(v, { from: 5274, delay: 0.01, decay: 0.16, gain: 0.12 });
+  },
+  // The katana cuts a ball: a short, sharp slice of high noise and a glassy tick.
+  slice(v) {
+    noise(v, { filter: 'highpass', from: 3800, to: 6400, attack: 0.002, decay: 0.07, gain: 0.8 });
+    tone(v, { from: 4186, to: 3136, glide: 0.06, decay: 0.07, gain: 0.3 });
+  },
   // Two rising notes and a ching.
   purchase(v) {
     const hz = 659.25;

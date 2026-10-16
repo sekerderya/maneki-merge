@@ -3,11 +3,12 @@ import { CAT_SPRITE_DIR, CAT_SPRITES, catSprite } from '../config/catSprites';
 import type { CatSprite } from '../config/catSprites';
 import type { ArtShape, CatLook } from '../config/catArt';
 import { OUTLINE_DARKEN, tierColor } from '../config/skin';
+import { KATANA_ART, KATANA_SWORD_DIR } from '../config/katanaSprites';
 import { SPECIAL_ART, SPECIAL_SPRITE_DIR, boulderSprite } from '../config/specialSprites';
 import { darken } from '../core/color';
 import type { Drop } from '../core/dropQueue';
 import { el } from './dom';
-import { boulderSvg, HANABI_SVG, JOKER_SVG, LIGHTNING_SVG, MAGNET_SVG } from './icons';
+import { boulderSvg, HANABI_SVG, JOKER_SVG, KATANA_SVG, LIGHTNING_SVG, MAGNET_SVG } from './icons';
 
 /** Which art DOM icons use; `?skin=` switches them along with the game. */
 export type IconSkin = 'art' | 'vector' | 'placeholder';
@@ -64,7 +65,8 @@ export function catIcon(tier: number): HTMLElement {
 
 /**
  * A ball from the dropper's queue as a DOM icon (the HUD's NEXT, GAME_DESIGN §15.1): a cat (a
- * golden one glows), the magnet, a boulder with its bands, a hanabi, a joker or a lightning ball.
+ * golden one glows), the magnet, a boulder with its bands, a hanabi, a joker, a lightning ball or a
+ * katana.
  */
 export function paintDropIcon(icon: HTMLElement, drop: Drop): void {
   icon.classList.toggle('is-golden', drop.golden);
@@ -85,9 +87,16 @@ export function paintDropIcon(icon: HTMLElement, drop: Drop): void {
       ? null
       : drop.kind === 'boulder'
         ? boulderSprite(drop.hits - 1)
-        : SPECIAL_ART[drop.kind];
+        : drop.kind === 'katana'
+          ? null
+          : SPECIAL_ART[drop.kind];
   if (sprite) {
     paintSpecialArt(icon, sprite);
+    return;
+  }
+  // The katana itself, turned to lie across the bubble, or its code-drawn look.
+  if (drop.kind === 'katana' && iconSkin === 'art' && KATANA_ART) {
+    paintKatanaArt(icon, KATANA_ART.katana.file);
     return;
   }
   // The code-drawn looks (`?skin=vector`, and a ball whose art hasn't come yet).
@@ -100,7 +109,9 @@ export function paintDropIcon(icon: HTMLElement, drop: Drop): void {
           ? JOKER_SVG
           : drop.kind === 'lightning'
             ? LIGHTNING_SVG
-            : boulderSvg(Math.max(0, drop.hits - 1));
+            : drop.kind === 'katana'
+              ? KATANA_SVG
+              : boulderSvg(Math.max(0, drop.hits - 1));
 }
 
 export function paintCatIcon(icon: HTMLElement, tier: number): void {
@@ -174,6 +185,20 @@ function paintSpecialArt(icon: HTMLElement, sprite: CatSprite): void {
   image.alt = '';
   image.draggable = false;
   image.style.transform = `scale(${(CAT_BODY_SHARE * sprite.side) / sprite.radius})`;
+  icon.replaceChildren(image);
+}
+
+/** How long the katana lies across its icon, as a share of the icon's side (it reaches the corners). */
+const KATANA_ICON_LENGTH = 1.3;
+
+/** The katana's art (GAME_DESIGN §15.16): the sword turned 45°, its point to the lower left. */
+function paintKatanaArt(icon: HTMLElement, file: string): void {
+  const image = el('img');
+  image.src = `${import.meta.env.BASE_URL}${KATANA_SWORD_DIR}${file}`;
+  image.alt = '';
+  image.draggable = false;
+  image.style.objectFit = 'contain';
+  image.style.transform = `rotate(45deg) scale(${KATANA_ICON_LENGTH})`;
   icon.replaceChildren(image);
 }
 

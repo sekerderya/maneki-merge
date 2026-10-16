@@ -15,6 +15,9 @@ import {
   HEAVY_DROP_FALL_TIMES,
   HEAVY_DROP_RULE_LEVEL,
   HUBRIS_PAIR_WAIT_MS,
+  KATANA_CHANCE,
+  KATANA_GRACE,
+  KATANA_WIDTH_NAMES,
   MAX_DROP_TILT_LEVEL,
   PICK_IDS,
   PICK_OPTIONS,
@@ -62,6 +65,20 @@ export function boulderChance(levels: PickLevels, stage: number): number {
   return BOULDER_BASE_CHANCE + PICKS.moreBoulders.perLevel * levels.moreBoulders;
 }
 
+/**
+ * The Katana's chance per queued item (GAME_DESIGN §15.16): none until it is taken, then
+ * KATANA_CHANCE and more with each Quick Katana level.
+ */
+export function katanaChance(levels: PickLevels): number {
+  if (levels.katana <= 0) return 0;
+  return KATANA_CHANCE + PICKS.quickKatana.perLevel * levels.quickKatana;
+}
+
+/** How far past a cat's edge the katana's blade still cuts it: Wide Blade's level. */
+export function katanaGrace(levels: PickLevels): number {
+  return KATANA_GRACE[Math.min(levels.wideBlade, KATANA_GRACE.length - 1)] as number;
+}
+
 /** What the queue rolls at `stage` with these pick levels (GAME_DESIGN §15.1). */
 export function dropOdds(levels: PickLevels, stage: number, bigCatchTilt: number): DropOdds {
   return {
@@ -72,6 +89,7 @@ export function dropOdds(levels: PickLevels, stage: number, bigCatchTilt: number
     hanabiChance: PICKS.hanabi.perLevel * levels.hanabi,
     jokerChance: PICKS.joker.perLevel * levels.joker,
     lightningChance: PICKS.lightning.perLevel * levels.lightning,
+    katanaChance: katanaChance(levels),
     boulderSize: BOULDER_BASE_SIZE + PICKS.bigBoulders.perLevel * levels.bigBoulders,
     boulderHits: BOULDER_BASE_HITS + PICKS.ironBands.perLevel * levels.ironBands,
   };
@@ -219,6 +237,13 @@ export function pickValue(id: PickId, levels: PickLevels, bigCatchTilt: number):
       return percent(odds.jokerChance);
     case 'lightning':
       return percent(odds.lightningChance);
+    case 'katana':
+    case 'quickKatana':
+      return percent(odds.katanaChance);
+    case 'moreBlades':
+      return String(1 + levels.moreBlades);
+    case 'wideBlade':
+      return KATANA_WIDTH_NAMES[levels.wideBlade] ?? '';
     case 'wind':
       return WIND_NAMES[levels.wind] ?? '';
     case 'heavyDrop':

@@ -312,6 +312,9 @@ export const SHAKE = {
   /** Heavy Drop's fireball landing (GAME_DESIGN §15.9). */
   heavy: 6,
   heavyMs: 220,
+  /** The Katana's points striking the floor (GAME_DESIGN §15.16). */
+  katana: 4,
+  katanaMs: 160,
   comboMin: 5,
   comboStep: 1.2,
   comboMax: 7,
@@ -384,6 +387,39 @@ export const LIGHTNING_FX = {
   burstMs: 320,
   arcEveryMs: 900,
   arcMs: 140,
+} as const;
+/**
+ * The Katana's look (GAME_DESIGN §15.16), in world units and ms. The sword is `length` long as it
+ * falls and `heldLength` in the paw; behind it a streak of light `streakBand` wide runs from where
+ * its blade started to its point, and fades over `streakFadeMs` once it lands. The point sticks in
+ * the floor for `stickMs`, its last `fadeMs` fading. A blade that doesn't start at the paw (More
+ * Blades) fades in over `enterMs`. A cut cat splits in two along the cut: each half slides
+ * `splitDistance` radii away and turns `splitTurn` radians over `splitMs`, fading, under a cut
+ * flash `flashScale` radii long. The paw lets go with a swoosh, and the point strikes the floor
+ * with a burst of sparks and a soft flash.
+ */
+export const KATANA_FX = {
+  length: 330,
+  heldLength: 230,
+  streakBand: 44,
+  streakAlpha: 0.9,
+  streakFadeMs: 260,
+  stickMs: 420,
+  fadeMs: 220,
+  enterMs: 60,
+  splitMs: 340,
+  splitDistance: 0.55,
+  splitTurn: 0.35,
+  flashScale: 2.6,
+  flashMs: 220,
+  glintSize: 90,
+  swooshSize: 120,
+  swooshMs: 220,
+  strikeSize: 130,
+  strikeMs: 300,
+  glowSize: 110,
+  glowMs: 260,
+  cutSparks: 8,
 } as const;
 /** Particles when a boulder loses a band or crumbles. */
 export const BOULDER_HIT_SPARKS = 7;

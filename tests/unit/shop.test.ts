@@ -11,18 +11,34 @@ const levels = (overrides: Partial<Record<UpgradeId, number>> = {}): UpgradeLeve
 });
 
 describe('shop cards (GAME_DESIGN §2.2)', () => {
-  it('lists every card in shop order: the upgrades, then the blessings', () => {
+  it('lists every card in shop order: the upgrades, the blessings, then the weapons', () => {
     const cards = shopCards(levels(), 0, 1);
     expect(cards.map((c) => c.id)).toEqual([...UPGRADE_IDS]);
     expect(cards.map((c) => c.section)).toEqual([
       ...Array<string>(4).fill('upgrade'),
       ...Array<string>(6).fill('blessing'),
+      'weapon',
     ]);
     for (const card of cards) {
       expect(card.name).toBe(UPGRADES[card.id].name);
       expect(card.description).toBe(UPGRADES[card.id].description);
       expect(card.statLabel.length).toBeGreaterThan(0);
     }
+  });
+
+  it("names the pick each level of the Katana's card opens (GAME_DESIGN §10)", () => {
+    const at = (katana: number) => shopCard('katana', levels({ katana }), 0, 10);
+    expect(at(0)).toMatchObject({ statLabel: 'Opens', current: '–', next: 'Katana' });
+    expect(at(1)).toMatchObject({ current: 'Katana', next: 'Quick Katana' });
+    expect(at(2)).toMatchObject({ current: 'Quick Katana', next: 'Wide Blade' });
+    expect(at(3)).toMatchObject({ current: 'Wide Blade', next: 'More Blades' });
+    expect(at(4)).toMatchObject({ current: 'More Blades', next: null, state: 'max' });
+    // Locked until the best stage reaches 10.
+    expect(shopCard('katana', levels(), 1e6, 9).state).toBe('locked');
+    expect(shopCard('katana', levels(), 1e6, 10)).toMatchObject({
+      state: 'affordable',
+      price: 20_000,
+    });
   });
 
   it('shows an affordable price', () => {

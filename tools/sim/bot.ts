@@ -13,7 +13,8 @@
  * It imports the headless layers only (config → core → physics → run), so it runs in Node
  * (tools/simulate.ts) and in Vitest (tests/unit/sim.test.ts).
  */
-import { PICK_IDS, WIND_ACCEL_PER_LEVEL } from '../../src/config/picks';
+import { KATANA_MAX_CUT_SIZE, PICK_IDS, WIND_ACCEL_PER_LEVEL } from '../../src/config/picks';
+import { katanaGrace } from '../../src/core/picks';
 import type { PickId } from '../../src/config/picks';
 import { Rng } from '../../src/core/rng';
 import { UPGRADE_IDS, UPGRADES } from '../../src/config/upgrades';
@@ -226,6 +227,10 @@ const SMART_BLESSINGS: readonly PickId[] = [
   'goldenCats',
   'joker',
   'lightning',
+  'katana',
+  'moreBlades',
+  'wideBlade',
+  'quickKatana',
   'hanabi',
   'moreMagnets',
 ];
@@ -288,6 +293,8 @@ function smartX(run: RunController): number {
   const r = run.radiusOf(item.tier);
   const balls = run.balls;
   const sizeInStage = tierSize(item.tier, run.stage);
+  // A katana falls straight, whatever the wind: down the line that cuts the most.
+  if (item.kind === 'katana') return katanaX(run, r);
   let bestX = 0;
   let bestScore = -Infinity;
   for (let x = -halfWidth + r; x <= halfWidth - r; x += SMART_STEP) {
@@ -333,6 +340,30 @@ function smartX(run: RunController): number {
     bestX -= run.windDirection * 0.5 * WIND_ACCEL_PER_LEVEL * wind * t2;
   }
   return Math.max(-halfWidth + r, Math.min(halfWidth - r, bestX));
+}
+
+/**
+ * Where a katana cuts the most (GAME_DESIGN §15.16): the x whose straight-down line reaches the
+ * most small cats and boulders (its other blades fall the same wherever it is aimed).
+ */
+function katanaX(run: RunController, r: number): number {
+  const { halfWidth } = run.geometry;
+  const grace = katanaGrace(run.pickLevels);
+  let bestX = 0;
+  let best = -1;
+  for (let x = -halfWidth + r; x <= halfWidth - r; x += SMART_STEP) {
+    let score = 0;
+    for (const ball of run.balls) {
+      if (Math.abs(ball.x - x) > ball.radius + grace) continue;
+      if (ball.kind === 'boulder') score += 150;
+      else if (ball.kind === 'cat' && ball.size <= KATANA_MAX_CUT_SIZE) score += 100;
+    }
+    if (score > best) {
+      best = score;
+      bestX = x;
+    }
+  }
+  return bestX;
 }
 
 /** How much a lightning ball that lands on `on` is worth: the balls it would strike. */

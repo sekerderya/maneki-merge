@@ -53,6 +53,11 @@ describe('the trials, rules and blessings (GAME_DESIGN §15.5)', () => {
     ['hanabi', 'blessing', 'Hanabi', 5, 0.0225],
     ['joker', 'blessing', 'Joker Cat', 5, 0.0225],
     ['lightning', 'blessing', 'Lightning', 5, 0.015],
+    // The Katana (GAME_DESIGN §15.16): taken once, then its three upgrades of its own.
+    ['katana', 'blessing', 'Katana', 1, 0.0225],
+    ['moreBlades', 'blessing', 'More Blades', 3, 1],
+    ['quickKatana', 'blessing', 'Quick Katana', 2, 0.0225],
+    ['wideBlade', 'blessing', 'Wide Blade', 2, 1],
     ['hubris', 'rule', 'Hubris', 1, 1],
     ['echo', 'rule', 'Echo', 1, 1],
     ['copycat', 'rule', 'Copycat', 1, 1],
@@ -61,7 +66,7 @@ describe('the trials, rules and blessings (GAME_DESIGN §15.5)', () => {
     ['heavyDrop', 'rule', 'Heavy Drop', 1, 5],
   ];
 
-  it('lists eight trials, six blessings and five rules, in card order', () => {
+  it('lists eight trials, ten blessings and five rules, in card order', () => {
     expect([...PICK_IDS]).toEqual(TABLE.map(([id]) => id));
     expect(pickIds('trial')).toEqual(TRIAL_IDS);
     expect(pickIds('blessing')).toEqual(BLESSING_IDS);
@@ -140,8 +145,10 @@ describe('the trials, rules and blessings (GAME_DESIGN §15.5)', () => {
         stage2,
       ),
     ).toEqual([]);
-    // Only trials are narrowed: a blessing pick ignores the pool.
-    expect(openOptions('blessing', levels(), 0, {}, stage2)).toEqual([...BLESSING_IDS]);
+    // Only trials are narrowed: a blessing pick ignores the pool (the Katana's upgrades need it).
+    expect(openOptions('blessing', levels(), 0, {}, stage2)).toEqual(
+      BLESSING_IDS.filter((id) => !followUps(id)),
+    );
     for (let seed = 0; seed < 40; seed++) {
       for (const id of drawOffer(
         'trial',
@@ -179,6 +186,7 @@ describe('dropOdds (GAME_DESIGN §15.1)', () => {
       hanabiChance: 0,
       jokerChance: 0,
       lightningChance: 0,
+      katanaChance: 0,
       boulderSize: 2,
       boulderHits: 1,
     });
@@ -195,6 +203,7 @@ describe('dropOdds (GAME_DESIGN §15.1)', () => {
     expect(odds.hanabiChance).toBeCloseTo(0.1125, 12);
     expect(odds.jokerChance).toBeCloseTo(0.1125, 12);
     expect(odds.lightningChance).toBeCloseTo(0.075, 12);
+    expect(odds.katanaChance).toBeCloseTo(0.0675, 12);
     expect(odds.boulderSize).toBe(6);
     expect(odds.boulderHits).toBe(4);
     expect(odds.tiltLevel).toBe(13);
@@ -278,18 +287,37 @@ describe('the cards', () => {
     expect(drawOffer('rule', levels(all), 0, new Rng(1))).toEqual([]);
   });
 
-  it('offers three of the six blessings, each of them at times', () => {
+  it('offers three of the blessings open at first, each of them at times', () => {
     const seen = new Set<string>();
     for (let seed = 0; seed < 60; seed++) {
       const offer = drawOffer('blessing', levels(), 0, new Rng(seed));
       expect(new Set(offer).size).toBe(3);
       for (const id of offer) seen.add(id);
     }
-    expect([...seen].sort()).toEqual([...BLESSING_IDS].sort());
+    expect([...seen].sort()).toEqual(BLESSING_IDS.filter((id) => !followUps(id)).sort());
+  });
+
+  it("offers the Katana's upgrades only once it is taken, two of them on one card at times", () => {
+    const upgrades = ['moreBlades', 'quickKatana', 'wideBlade'] as const;
+    for (const id of upgrades) {
+      expect(PICKS[id].requires).toBe('katana');
+      expect(pickOpen(id, levels(), 0)).toBe(false);
+      expect(pickOpen(id, levels({ katana: 1 }), 0)).toBe(true);
+    }
+    expect(pickOpen('katana', levels({ katana: 1 }), 0)).toBe(false);
+    let together = 0;
+    for (let seed = 0; seed < 80; seed++) {
+      const offer = drawOffer('blessing', levels({ katana: 1 }), 0, new Rng(seed));
+      if (offer.filter((id) => (upgrades as readonly string[]).includes(id)).length >= 2) {
+        together++;
+      }
+    }
+    expect(together).toBeGreaterThan(0);
   });
 
   it('leaves maxed options out, and offers nothing when every one is maxed', () => {
-    const maxed = { goldenCats: 5, hanabi: 5, joker: 5, lightning: 5 };
+    const katana = { katana: 1, moreBlades: 3, quickKatana: 2, wideBlade: 2 };
+    const maxed = { goldenCats: 5, hanabi: 5, joker: 5, lightning: 5, ...katana };
     const some = drawOffer('blessing', levels(maxed), 0, new Rng(1));
     expect([...some].sort()).toEqual(['bigDrops', 'moreMagnets']);
     const none = levels(Object.fromEntries(TRIAL_IDS.map((id) => [id, PICKS[id].maxLevel])));
@@ -305,6 +333,7 @@ describe('the cards', () => {
       hanabi: 0,
       joker: 0,
       lightning: 0,
+      katana: 0,
     };
     const first = drawOffer('blessing', levels(), 0, new Rng(1), fresh);
     expect([...first].sort()).toEqual(['bigDrops', 'goldenCats']);
@@ -342,6 +371,13 @@ describe('the cards', () => {
     ['joker', { joker: 4 }, 0, '9%', '11.25%'],
     ['lightning', {}, 0, '0%', '1.5%'],
     ['lightning', { lightning: 4 }, 0, '6%', '7.5%'],
+    ['katana', {}, 0, '0%', '2.25%'],
+    ['quickKatana', { katana: 1 }, 0, '2.25%', '4.5%'],
+    ['quickKatana', { katana: 1, quickKatana: 1 }, 0, '4.5%', '6.75%'],
+    ['moreBlades', { katana: 1 }, 0, '1', '2'],
+    ['moreBlades', { katana: 1, moreBlades: 2 }, 0, '3', '4'],
+    ['wideBlade', { katana: 1 }, 0, 'Thin', 'Wide'],
+    ['wideBlade', { katana: 1, wideBlade: 1 }, 0, 'Wide', 'Broad'],
     ['wind', {}, 0, 'Calm', 'Breeze'],
     ['wind', { wind: 4 }, 0, 'Gale', 'Storm'],
     // The rule: the fall of the old trial's last level.

@@ -90,5 +90,11 @@ export function pickArt(id: PickId, level: number): PickArt | null {
       return cat(3, false);
     case 'echo':
       return cat(4, false);
+    // The Katana's picks show their icon-kit icons (config/iconSprites.ts), or their glyph.
+    case 'katana':
+    case 'moreBlades':
+    case 'quickKatana':
+    case 'wideBlade':
+      return null;
   }
 }

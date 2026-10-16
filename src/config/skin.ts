@@ -118,5 +118,13 @@ export const LIGHTNING_GLOW = '#ffe14d';
 export const LIGHTNING_HAZE = 'rgba(176, 140, 255, 0.55)';
 /** The sparks the struck balls pop in. */
 export const LIGHTNING_SPARKS = 0xfff1a8;
+/**
+ * The Katana's stand-in light (GAME_DESIGN §15.16), like its art: a white core, a steel-blue glow
+ * and a sakura-pink haze; and the sparks of its cuts.
+ */
+export const KATANA_CORE = '#ffffff';
+export const KATANA_GLOW = '#a9d2f2';
+export const KATANA_HAZE = 'rgba(255, 190, 215, 0.5)';
+export const KATANA_SPARKS = 0xdcefff;
 /** The magnet's selection ring round the chosen ball. */
 export const SELECT_RING = 0xf2b83b;

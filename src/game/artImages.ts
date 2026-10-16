@@ -13,6 +13,12 @@ import { HUD_BADGE_ART, HUD_SPRITE_DIR } from '../config/hudSprites';
 import { ICON_SPRITE_DIR, iconSprites } from '../config/iconSprites';
 import { MENU_SPRITE_DIR, menuSprites } from '../config/menuSprites';
 import { PICK_SPRITE_DIR, pickPictures } from '../config/pickSprites';
+import {
+  KATANA_ART,
+  KATANA_FX_DIR,
+  KATANA_SWORD_DIR,
+  katanaFxSprites,
+} from '../config/katanaSprites';
 import { LIGHTNING_SPRITE_DIR, lightningSprites } from '../config/lightningSprites';
 import { JAR_ART, PAW_ART, SCENE_SPRITE_DIR } from '../config/sceneSprites';
 import { SHOP_ART, SHOP_SPRITE_DIR } from '../config/shopSprites';
@@ -41,6 +47,8 @@ export interface FxImages {
    * `lightningSprites`), empty until they are in.
    */
   readonly lightning: readonly HTMLImageElement[];
+  /** The Katana's lights (config/katanaSprites.ts, in the order of `katanaFxSprites`), or empty. */
+  readonly katana: readonly HTMLImageElement[];
 }
 
 /** The special balls' images (config/specialSprites.ts). */
@@ -50,6 +58,8 @@ export interface SpecialImages {
   readonly joker: HTMLImageElement;
   /** Null until the owner's image comes (docs/ART_ASSETS.md §4.16). */
   readonly lightning: HTMLImageElement | null;
+  /** The Katana's sword (docs/ART_ASSETS.md §4.21), null until it comes. */
+  readonly katana: HTMLImageElement | null;
   /** With 0, 1, 2 and 3 iron bands. */
   readonly boulders: readonly HTMLImageElement[];
 }
@@ -110,12 +120,14 @@ export function loadArt(baseUrl: string): Promise<ArtImages> {
     special(SPECIAL_ART.joker.file),
     SPECIAL_ART.lightning ? special(SPECIAL_ART.lightning.file) : null,
     Promise.all(SPECIAL_ART.boulders.map(({ file }) => special(file))),
-  ]).then(([magnet, hanabi, joker, lightning, boulders]) => ({
+    KATANA_ART ? image(`${baseUrl}${KATANA_SWORD_DIR}${KATANA_ART.katana.file}`) : null,
+  ]).then(([magnet, hanabi, joker, lightning, boulders, katana]) => ({
     magnet,
     hanabi,
     joker,
     lightning,
     boulders,
+    katana,
   }));
   const fxList = (list: readonly { file: string }[]): Promise<HTMLImageElement[]> =>
     Promise.all(list.map(({ file }) => image(`${baseUrl}${FX_SPRITE_DIR}${file}`)));
@@ -128,13 +140,15 @@ export function loadArt(baseUrl: string): Promise<ArtImages> {
     Promise.all(
       lightningSprites().map(({ file }) => image(`${baseUrl}${LIGHTNING_SPRITE_DIR}${file}`)),
     ),
-  ]).then(([flames, cracks, seams, dice, stones, lightning]) => ({
+    Promise.all(katanaFxSprites().map(({ file }) => image(`${baseUrl}${KATANA_FX_DIR}${file}`))),
+  ]).then(([flames, cracks, seams, dice, stones, lightning, katana]) => ({
     flames,
     cracks,
     seams,
     dice,
     stones,
     lightning,
+    katana,
   }));
   const loads = Promise.all([
     Promise.all(CAT_SPRITES.map(({ file }) => image(`${baseUrl}${CAT_SPRITE_DIR}${file}`))),

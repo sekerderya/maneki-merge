@@ -4,7 +4,7 @@ import { MENU_ART, MENU_SPRITE_DIR } from '../../config/menuSprites';
 import { SHOP_ART, SHOP_SPRITE_DIR } from '../../config/shopSprites';
 import { SHOP_BALANCE_COUNT_MS } from '../../config/view';
 import { isBlessingCard, UPGRADE_IDS, UPGRADES } from '../../config/upgrades';
-import type { UpgradeId } from '../../config/upgrades';
+import type { ShopSection, UpgradeId } from '../../config/upgrades';
 import { formatNumber } from '../../core/format';
 import { shopCard } from '../../core/shop';
 import type { UpgradeLevels } from '../../core/upgrades';
@@ -14,6 +14,22 @@ import { button, el } from '../dom';
 import { pickArt } from '../pickArt';
 import { artImage, setUiArtProperties } from '../uiArt';
 import { ICON_CHECK, ICON_CLOSE, pickIcon, UPGRADE_ICONS } from '../icons';
+
+/** The headings over the blessing cards and the weapon cards (GAME_DESIGN §2.2, §10). */
+const SECTION_HEADINGS: Readonly<
+  Partial<Record<ShopSection, { title: string; desc: string; testid: string }>>
+> = {
+  blessing: {
+    title: 'Blessings',
+    desc: 'How far each blessing can go in a run',
+    testid: 'shop-blessings',
+  },
+  weapon: {
+    title: 'Weapons',
+    desc: 'Each level opens one more of its picks for every run',
+    testid: 'shop-weapons',
+  },
+};
 
 export interface ShopActions {
   onBuy(id: UpgradeId): void;
@@ -95,15 +111,19 @@ export function createShopPanel(
   const list = el('div', 'shop-list');
   list.dataset['scrollable'] = '';
   const cards = new Map<UpgradeId, CardParts>();
+  let section: ShopSection = 'upgrade';
   for (const id of UPGRADE_IDS) {
-    if (isBlessingCard(id) && !list.querySelector('.shop-section')) {
-      const section = el('div', 'shop-section');
-      section.dataset['testid'] = 'shop-blessings';
-      section.append(
-        el('h3', 'shop-section-title', 'Blessings'),
-        el('p', 'shop-section-desc', 'How far each blessing can go in a run'),
+    // Each section after the upgrades opens with its heading.
+    const heading = SECTION_HEADINGS[UPGRADES[id].section];
+    if (UPGRADES[id].section !== section && heading) {
+      section = UPGRADES[id].section;
+      const header = el('div', 'shop-section');
+      header.dataset['testid'] = heading.testid;
+      header.append(
+        el('h3', 'shop-section-title', heading.title),
+        el('p', 'shop-section-desc', heading.desc),
       );
-      list.append(section);
+      list.append(header);
     }
     const card = createCard(id, art, () => actions.onBuy(id), clipButton);
     cards.set(id, card);

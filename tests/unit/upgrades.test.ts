@@ -40,7 +40,27 @@ describe('deriveStats (GAME_DESIGN §10)', () => {
         joker: 0,
         lightning: 0,
       },
+      pickCaps: {
+        goldenCats: 1,
+        bigDrops: 1,
+        moreMagnets: 0,
+        hanabi: 0,
+        joker: 0,
+        lightning: 0,
+        katana: 0,
+        quickKatana: 0,
+        wideBlade: 0,
+        moreBlades: 0,
+      },
     });
+  });
+
+  it("opens the Katana's picks one by one with its card's levels (GAME_DESIGN §15.16)", () => {
+    const caps = (katana: number) => deriveStats(levels({ katana })).pickCaps;
+    expect(caps(1)).toMatchObject({ katana: 1, quickKatana: 0, wideBlade: 0, moreBlades: 0 });
+    expect(caps(2)).toMatchObject({ katana: 1, quickKatana: 2, wideBlade: 0, moreBlades: 0 });
+    expect(caps(3)).toMatchObject({ katana: 1, quickKatana: 2, wideBlade: 2, moreBlades: 0 });
+    expect(caps(4)).toMatchObject({ katana: 1, quickKatana: 2, wideBlade: 2, moreBlades: 3 });
   });
 
   it('applies every formula at max level', () => {
@@ -91,18 +111,20 @@ describe('the cards (GAME_DESIGN §10)', () => {
     }
   });
 
-  it('sells a card for every blessing, after the upgrades', () => {
+  it('sells a card for every blessing after the upgrades, then the weapons', () => {
     expect(UPGRADE_IDS.filter((id) => UPGRADES[id].section === 'blessing')).toEqual([
       ...BLESSING_CARD_IDS,
     ]);
-    expect(UPGRADE_IDS.slice(-BLESSING_CARD_IDS.length)).toEqual([...BLESSING_CARD_IDS]);
+    expect(UPGRADE_IDS.slice(-BLESSING_CARD_IDS.length - 1, -1)).toEqual([...BLESSING_CARD_IDS]);
+    expect(UPGRADE_IDS.filter((id) => UPGRADES[id].section === 'weapon')).toEqual(['katana']);
   });
 
-  it('costs about 1M coins in all (the 8-hour pacing model), plus the late Lightning card', () => {
+  it('costs about 1M coins in all (the 8-hour pacing model), plus the late Lightning and Katana', () => {
     const cost = (id: UpgradeId): number => UPGRADES[id].prices.reduce((a, b) => a + b, 0);
     const total = UPGRADE_IDS.reduce((sum, id) => sum + cost(id), 0);
-    expect(total - cost('lightning')).toBe(1_021_200);
+    expect(total - cost('lightning') - cost('katana')).toBe(1_021_200);
     expect(cost('lightning')).toBe(225_000);
+    expect(cost('katana')).toBe(177_000);
   });
 });
 

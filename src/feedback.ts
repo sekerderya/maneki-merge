@@ -16,7 +16,10 @@ export interface FeedbackOutputs {
 /** Subscribes a run's events; returns the matching unsubscribe function. */
 export function connectRunFeedback(events: EventBus<GameEvents>, out: FeedbackOutputs): () => void {
   const offs = [
-    events.on('catDropped', () => out.play('drop')),
+    // The katana leaves the paw with its own sound (`katanaDropped`).
+    events.on('catDropped', (e) => {
+      if (e.kind !== 'katana') out.play('drop');
+    }),
     events.on('merged', (e) => {
       // Lower for bigger cats: every stage sounds the same.
       out.play('merge', e.newSize);
@@ -50,6 +53,13 @@ export function connectRunFeedback(events: EventBus<GameEvents>, out: FeedbackOu
     events.on('lightningStruck', () => {
       out.play('thunder');
       out.vibrate('jackpot');
+    }),
+    // The Katana (GAME_DESIGN §15.16): a steel ring as it leaves the paw, a slice for each cut
+    // (its cats pop with coins too).
+    events.on('katanaDropped', () => out.play('shing')),
+    events.on('katanaCut', () => {
+      out.play('slice');
+      out.vibrate('tick');
     }),
     events.on('boulderBroken', () => {
       out.play('crunch');

@@ -2,7 +2,7 @@
  * Typed event bus. The run emits, and the presentation layers (HUD, FX, audio, haptics, save)
  * listen; `game` and `ui` only talk to each other through it (TECH_SPEC §3).
  */
-import type { DiceRoll, PickId, PickKind, WindDirection } from '../config/picks';
+import type { BladeLine, DiceRoll, PickId, PickKind, WindDirection } from '../config/picks';
 import type { UpgradeId } from '../config/upgrades';
 import type { DropKind } from './dropQueue';
 
@@ -71,7 +71,7 @@ export interface WorldPoint {
  */
 export interface GameEvents {
   runStarted: { readonly seed: number; readonly stage: number };
-  /** A ball left the dropper: a cat, a boulder, a hanabi, a joker or a lightning ball. */
+  /** A ball left the dropper: a cat, a boulder, a hanabi, a joker, a lightning ball or a katana. */
   catDropped: {
     readonly kind: Exclude<DropKind, 'magnet'>;
     readonly tier: number;
@@ -101,7 +101,7 @@ export interface GameEvents {
     readonly id: number;
     readonly tier: number;
     readonly at: WorldPoint;
-    readonly reason: 'hits' | 'hanabi' | 'lightning' | 'cashOut' | 'luckySave';
+    readonly reason: 'hits' | 'hanabi' | 'lightning' | 'katana' | 'cashOut' | 'luckySave';
   };
   /**
    * A hanabi went off (GAME_DESIGN §15.6): the small cats within `reach` of `at` pop
@@ -131,6 +131,30 @@ export interface GameEvents {
     /** How many balls it struck. */
     readonly count: number;
   };
+  /**
+   * A katana left the paw at `x` (GAME_DESIGN §15.16): its blades fall along `blades` (the first
+   * straight down) over `fallMs` (RunController.katana), cutting as they go (`katanaCut`).
+   */
+  katanaDropped: {
+    readonly x: number;
+    readonly blades: readonly BladeLine[];
+    readonly fallMs: number;
+  };
+  /**
+   * The blade `blade` of the katana cut the ball `id` at `at`, along `angle` (radians, the
+   * blade's way down, 0 = to the right): a cat pops (`catPopped`, reason `katana`), a boulder breaks
+   * (`boulderBroken`); this comes first, so the scene can split its sprite.
+   */
+  katanaCut: {
+    readonly id: number;
+    readonly kind: 'cat' | 'boulder';
+    readonly tier: number;
+    readonly at: WorldPoint;
+    readonly angle: number;
+    readonly blade: number;
+  };
+  /** The katana's points reached the ends of their lines: it sticks in the floor and fades. */
+  katanaLanded: { readonly blades: readonly BladeLine[] };
   /**
    * A hanabi, a joker or a lightning ball vanished without doing anything (a stage clear's pops, a
    * Lucky Save). It pays nothing.
@@ -179,7 +203,7 @@ export interface GameEvents {
   };
   /**
    * A single cat popped into coins: its value (half of C(t)), at a stage clear, a Lucky Save, a
-   * hanabi's blast or a lightning strike.
+   * hanabi's blast, a lightning strike or a katana's cut.
    */
   catPopped: {
     /** The cat's id (BallView.id), so the scene can pop the cat's own sprite. */
@@ -187,7 +211,7 @@ export interface GameEvents {
     readonly tier: number;
     readonly at: WorldPoint;
     readonly coins: number;
-    readonly reason: 'cashOut' | 'luckySave' | 'hanabi' | 'lightning';
+    readonly reason: 'cashOut' | 'luckySave' | 'hanabi' | 'lightning' | 'katana';
   };
   scoreChanged: { readonly score: number };
   runCoinsChanged: { readonly coins: number };

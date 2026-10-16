@@ -73,6 +73,22 @@ export class AimGuide {
    * ghost of a cat of `radius` landing at `landY`.
    */
   draw(x: number, fromY: number, toY: number, landY: number, radius: number): void {
+    this.dots(x, fromY, toY);
+    const key = ringTexture(this.scene.textures, radius, AIM_LINE_WIDTH);
+    if (key !== this.ghostKey) {
+      this.ghostKey = key;
+      this.ghost.setTexture(key);
+    }
+    this.ghost.setPosition(x, landY).setVisible(true);
+  }
+
+  /** Only the dotted line from `fromY` down to `toY`: the katana's cut (GAME_DESIGN §15.16). */
+  line(x: number, fromY: number, toY: number): void {
+    this.dots(x, fromY, toY);
+    this.ghost.setVisible(false);
+  }
+
+  private dots(x: number, fromY: number, toY: number): void {
     const count = toY > fromY ? Math.ceil((toY - fromY) / AIM_DOT_SPACING) : 0;
     const needed = Math.ceil(count / COLUMN_DOTS);
     for (let i = 0; i < Math.max(needed, this.columns.length); i++) {
@@ -88,12 +104,6 @@ export class AimGuide {
       }
       column.image.setPosition(x, fromY + i * COLUMN_DOTS * AIM_DOT_SPACING).setVisible(true);
     }
-    const key = ringTexture(this.scene.textures, radius, AIM_LINE_WIDTH);
-    if (key !== this.ghostKey) {
-      this.ghostKey = key;
-      this.ghost.setTexture(key);
-    }
-    this.ghost.setPosition(x, landY).setVisible(true);
   }
 
   hide(): void {

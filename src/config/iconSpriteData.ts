@@ -23,16 +23,34 @@ export const ICON_SPRITE_DATA: Readonly<Record<string, CatSprite>> = {
     radius: 190.95,
     color: '#f0d9ac',
   },
+  katana: {
+    file: 'katana.webp',
+    side: 400,
+    radius: 198.34,
+    color: '#f5d781',
+  },
   luckyPaw: {
     file: 'luckyPaw.webp',
     side: 400,
     radius: 193.96,
     color: '#eedaac',
   },
+  moreBlades: {
+    file: 'moreBlades.webp',
+    side: 400,
+    radius: 198.18,
+    color: '#f3d076',
+  },
   secondChance: {
     file: 'secondChance.webp',
     side: 400,
     radius: 198.29,
     color: '#f6db8a',
+  },
+  wideBlade: {
+    file: 'wideBlade.webp',
+    side: 400,
+    radius: 198.13,
+    color: '#f9f1dc',
   },
 };

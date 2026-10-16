@@ -103,6 +103,7 @@ describe('the lightning ball in the queue (GAME_DESIGN §15.1)', () => {
     hanabiChance: 0,
     jokerChance: 0,
     lightningChance: 1,
+    katanaChance: 0,
     boulderSize: 2,
     boulderHits: 1,
   };
@@ -130,13 +131,19 @@ describe('the lightning ball in the queue (GAME_DESIGN §15.1)', () => {
       rng: new Rng(5),
       specialRng: new Rng(6),
       stage: 2,
-      odds: { ...odds, lightningChance: 0, jokerChance: 0.3, boulderChance: 0.2 },
+      odds: { ...odds, lightningChance: 0, katanaChance: 0, jokerChance: 0.3, boulderChance: 0.2 },
     });
     const withIt = new DropQueue({
       rng: new Rng(5),
       specialRng: new Rng(6),
       stage: 2,
-      odds: { ...odds, lightningChance: 0.1, jokerChance: 0.3, boulderChance: 0.2 },
+      odds: {
+        ...odds,
+        lightningChance: 0.1,
+        katanaChance: 0,
+        jokerChance: 0.3,
+        boulderChance: 0.2,
+      },
     });
     for (let i = 0; i < 60; i++) {
       const a = plain.take();

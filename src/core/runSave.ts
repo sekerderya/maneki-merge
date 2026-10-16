@@ -11,7 +11,7 @@
  */
 import { RUN_SAVE_KEY } from '../config/app';
 import { PICK_IDS } from '../config/picks';
-import type { PickId, PickKind, WindDirection } from '../config/picks';
+import type { BladeLine, PickId, PickKind, WindDirection } from '../config/picks';
 import { UPGRADE_IDS, UPGRADES } from '../config/upgrades';
 import type { UpgradeId } from '../config/upgrades';
 import type { DropKind } from './dropQueue';
@@ -68,8 +68,8 @@ export interface DangerSnapshot {
  */
 export interface SavedBall {
   readonly id: number;
-  /** Any kind but the magnet, which never goes into the jar. */
-  readonly kind: Exclude<DropKind, 'magnet'>;
+  /** Any kind but the magnet and the katana, which never go into the jar as balls. */
+  readonly kind: Exclude<DropKind, 'magnet' | 'katana'>;
   readonly tier: number;
   readonly golden: boolean;
   readonly hitsLeft: number;
@@ -171,6 +171,11 @@ export interface RunSnapshot {
    */
   readonly lightning?: LightningSnapshot | null;
   /**
+   * A katana falling (GAME_DESIGN §15.16): where it was dropped, its blades' lines and the steps it
+   * has fallen so far; null or missing when none.
+   */
+  readonly katana?: KatanaSnapshot | null;
+  /**
    * The stage whose bonus ball (GAME_DESIGN §2.7) was taken from an ad; missing (before v0.54, or
    * none taken yet) is 0.
    */
@@ -181,6 +186,12 @@ export interface RunSnapshot {
   readonly economy: EconomySnapshot;
   readonly danger: DangerSnapshot;
   readonly world: WorldSnapshot;
+}
+
+export interface KatanaSnapshot {
+  readonly x: number;
+  readonly blades: readonly BladeLine[];
+  readonly elapsedSteps: number;
 }
 
 export interface LightningSnapshot {
@@ -265,6 +276,7 @@ function runSnapshot(value: unknown): RunSnapshot {
     ...(r['curseRng'] === undefined ? {} : { curseRng: rngState(r['curseRng'], 'curseRng') }),
     ...(r['diceRng'] === undefined ? {} : { diceRng: rngState(r['diceRng'], 'diceRng') }),
     ...(r['lightning'] === undefined ? {} : { lightning: lightning(r['lightning']) }),
+    ...(r['katana'] === undefined ? {} : { katana: katana(r['katana']) }),
     ...(r['adBallStage'] === undefined
       ? {}
       : { adBallStage: count(r['adBallStage'], 'adBallStage') }),
@@ -279,7 +291,7 @@ function runSnapshot(value: unknown): RunSnapshot {
 }
 
 const PICK_KINDS = ['trial', 'blessing', 'rule'] as const;
-const DROP_KINDS = ['cat', 'magnet', 'boulder', 'hanabi', 'joker', 'lightning'] as const;
+const DROP_KINDS = ['cat', 'magnet', 'boulder', 'hanabi', 'joker', 'lightning', 'katana'] as const;
 const BALL_KINDS = ['cat', 'boulder', 'hanabi', 'joker', 'lightning'] as const;
 
 function waits(value: unknown): [number, number, number, number][] {
@@ -309,6 +321,22 @@ function lightning(value: unknown): LightningSnapshot | null {
     id: count(l['id'], 'lightning.id'),
     targets: list(l['targets'], 'lightning.targets').map((id) => count(id, 'lightning.targets')),
     elapsedSteps: count(l['elapsedSteps'], 'lightning.elapsedSteps'),
+  };
+}
+
+function katana(value: unknown): KatanaSnapshot | null {
+  if (value === null) return null;
+  const k = record(value, 'katana');
+  const blades = list(k['blades'], 'katana.blades').map((blade) => {
+    const b = record(blade, 'katana.blades');
+    const at = (key: string): number => finite(b[key], `katana.blades.${key}`);
+    return { x0: at('x0'), y0: at('y0'), x1: at('x1'), y1: at('y1') };
+  });
+  if (blades.length === 0) throw new InvalidRunSave('katana.blades');
+  return {
+    x: finite(k['x'], 'katana.x'),
+    blades,
+    elapsedSteps: count(k['elapsedSteps'], 'katana.elapsedSteps'),
   };
 }
 

@@ -39,6 +39,7 @@ import {
   DROPPER_POP_IN_MS,
   GOLDEN_GLOW_SCALE,
   HANABI_BLAST_SPARKS,
+  KATANA_FX,
   REDUCED_MOTION_PARTICLES,
   SELECT_RING_GAP,
   SELECT_RING_PERIOD_MS,
@@ -66,6 +67,9 @@ import { CurseFx } from './fx/CurseFx';
 import { DiceFx } from './fx/DiceFx';
 import { KintsugiFx } from './fx/KintsugiFx';
 import { LastCatFx } from './fx/LastCatFx';
+import { KatanaFx } from './fx/KatanaFx';
+import { katanaArtFrames, katanaStandIns } from './fx/katanaFrames';
+import { KATANA_ART } from '../config/katanaSprites';
 import { LightningFx } from './fx/LightningFx';
 import { lightningArtFrames, lightningStandIns } from './fx/lightningFrames';
 import { LIGHTNING_ART } from '../config/lightningSprites';
@@ -141,6 +145,8 @@ export class GameScene extends Phaser.Scene {
   private dice!: DiceFx;
   /** A lightning ball's strike and its waiting arcs (GAME_DESIGN §15.15). */
   private lightning!: LightningFx;
+  /** The Katana: in the paw, falling, its cuts and its landing (GAME_DESIGN §15.16). */
+  private katana!: KatanaFx;
   private aimGuide!: AimGuide;
   private selectRing!: Phaser.GameObjects.Image;
   private dropperGlow!: Phaser.GameObjects.Image;
@@ -272,6 +278,23 @@ export class GameScene extends Phaser.Scene {
     this.lightning = new LightningFx(this, storm, this.sparks, bolts, (count) =>
       this.particles(count),
     );
+    // The owner's katana with the art skin, once it is in; else the stand-ins.
+    const sword = art?.specials.katana ?? null;
+    const katanaImages = art?.fx.katana ?? [];
+    const katanaFrames =
+      KATANA_ART && sword && katanaImages.length > 0
+        ? katanaArtFrames(this.textures, KATANA_ART, sword, katanaImages)
+        : katanaStandIns(this.textures);
+    this.katana = new KatanaFx(
+      this,
+      bodies,
+      dropper,
+      storm,
+      this.balls,
+      this.sparks,
+      katanaFrames,
+      (count) => this.particles(count),
+    );
     this.selectRing = this.add.image(0, 0, '__WHITE').setTint(SELECT_RING).setVisible(false);
     fx.add(this.selectRing);
     this.countdown = this.add
@@ -301,6 +324,7 @@ export class GameScene extends Phaser.Scene {
       this.curse.restore();
       this.dice.restore();
       this.lightning.restore();
+      this.katana.restore();
       restoreRingTextures(this.textures);
     });
 
@@ -392,6 +416,11 @@ export class GameScene extends Phaser.Scene {
     on('catPopped', (e) => {
       const { x, y } = e.at;
       const radius = run.radiusOf(e.tier);
+      // A katana's cut split the cat already (`katanaCut`): only its payout is left.
+      if (e.reason === 'katana') {
+        this.fx.payout(this.nowMs, x, y, e.tier, radius, e.coins);
+        return;
+      }
       const list = e.reason === 'lightning' ? this.struck : this.popped;
       list.push({ id: e.id, tier: e.tier, radius, x, y, coins: e.coins });
     });
@@ -402,6 +431,10 @@ export class GameScene extends Phaser.Scene {
     });
     on('boulderBroken', (e) => {
       const { x, y } = e.at;
+      if (e.reason === 'katana') {
+        this.sparks.mergeBurst(x, y, this.particles(BOULDER_BREAK_CHIPS), BOULDER_CHIPS);
+        return;
+      }
       const list = e.reason === 'lightning' ? this.struck : this.popped;
       list.push({ id: e.id, tier: e.tier, radius: run.radiusOf(e.tier), x, y, coins: null });
       this.sparks.mergeBurst(x, y, this.particles(BOULDER_BREAK_CHIPS), BOULDER_CHIPS);
@@ -423,6 +456,18 @@ export class GameScene extends Phaser.Scene {
       this.lightning.discharge(this.nowMs, this.struck);
       const { x, y } = e.at;
       this.struck.push({ id: e.id, tier: e.tier, radius: run.radiusOf(e.tier), x, y, coins: null });
+    });
+    // The Katana (GAME_DESIGN §15.16): a swoosh as it leaves the paw; each ball it cuts splits in
+    // two; its points strike the floor with a small jolt.
+    on('katanaDropped', (e) => {
+      this.katana.dropped(this.nowMs, e.x, run.geometry.dropY);
+    });
+    on('katanaCut', (e) => {
+      this.katana.cut(this.nowMs, e.id, e.angle, e.at.x, e.at.y, run.radiusOf(e.tier));
+    });
+    on('katanaLanded', (e) => {
+      this.katana.landed(this.nowMs, e.blades);
+      this.addShake(SHAKE.katana, SHAKE.katanaMs);
     });
     // Heavy Drop's fireball lands (GAME_DESIGN §15.9): fire sparks under it and a small shake.
     on('heavyLanded', (e) => {
@@ -574,6 +619,7 @@ export class GameScene extends Phaser.Scene {
     this.curse?.clear();
     this.dice?.clear();
     this.lightning?.clear();
+    this.katana?.clear();
     this.lastCat?.clear();
   }
 
@@ -640,6 +686,7 @@ export class GameScene extends Phaser.Scene {
       reducedMotion(),
       alpha,
     );
+    this.katana.update(this.nowMs, run.katana, alpha);
     this.pops.update(this.nowMs);
     this.fx.update(this.nowMs);
   }
@@ -650,7 +697,7 @@ export class GameScene extends Phaser.Scene {
    */
   private dropFrame(item: Drop, stage: number): SkinFrame {
     if (item.kind === 'magnet') return this.special.magnet();
-    if (item.kind === 'cat') return this.skin.body(item.tier);
+    if (item.kind === 'cat' || item.kind === 'katana') return this.skin.body(item.tier);
     const { kind, tier, hits } = item;
     return this.balls.frameOf({ kind, tier, size: tierSize(tier, stage), hitsLeft: hits });
   }
@@ -691,6 +738,15 @@ export class GameScene extends Phaser.Scene {
 
     const t = Math.min(1, (this.nowMs - this.popInFromMs) / DROPPER_POP_IN_MS);
     const pop = backOut(t) * (shown / radius);
+    // The katana hangs from the paw by its hilt, and its aim guide is its cut, down to the floor.
+    if (item.kind === 'katana') {
+      this.dropperBody.setVisible(false);
+      this.dropperNumber.setVisible(false);
+      const top = geo.dropY - PAW_GRIP * shown;
+      this.katana.hold(x, top, pop);
+      this.aimGuide.line(x, top + KATANA_FX.heldLength * pop + AIM_DOT_SPACING, 0);
+      return;
+    }
     const body = this.dropFrame(item, run.stage);
     this.dropperBody
       .setTexture(body.key, body.frame)

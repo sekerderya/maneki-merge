@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CAT_SPRITE_DIR, CAT_SPRITES } from '../../src/config/catSprites';
+import { iconSprite } from '../../src/config/iconSprites';
 import { PICK_IDS } from '../../src/config/picks';
 import type { PickId } from '../../src/config/picks';
 import { PICK_SPRITE_DIR, pickPicture } from '../../src/config/pickSprites';
@@ -7,6 +8,9 @@ import { DROP_SIZES } from '../../src/config/stages';
 import { SPECIAL_ART, SPECIAL_SPRITE_DIR } from '../../src/config/specialSprites';
 import { PICK_BALL_SHARE, PICK_PICTURE_SHARE, pickArt } from '../../src/ui/pickArt';
 import type { PickArt } from '../../src/ui/pickArt';
+
+/** The Katana's picks: they show icon-kit icons, not a ball (GAME_DESIGN §15.16). */
+const KATANA_PICKS: readonly PickId[] = ['katana', 'moreBlades', 'quickKatana', 'wideBlade'];
 
 const special = (sprite: { file: string }): string => `${SPECIAL_SPRITE_DIR}${sprite.file}`;
 
@@ -63,8 +67,17 @@ describe("a pick card's icon is the game's own art (GAME_DESIGN §15.5)", () => 
 
   it("has art for every pick, but the lightning ball's until its image comes", () => {
     for (const id of PICK_IDS) {
+      if (KATANA_PICKS.includes(id)) continue;
       if (id === 'lightning' && !SPECIAL_ART.lightning) expect(pickArt(id, 0)).toBeNull();
       else expect(artOf(id, 0).path).toMatch(/.webp$/);
     }
+  });
+
+  it("shows the Katana's icon-kit icons (Quick Katana the Katana's), not a ball", () => {
+    for (const id of KATANA_PICKS) expect(pickArt(id, 0)).toBeNull();
+    expect(iconSprite('katana')?.file).toBe('katana.webp');
+    expect(iconSprite('quickKatana')).toBe(iconSprite('katana'));
+    expect(iconSprite('moreBlades')?.file).toBe('moreBlades.webp');
+    expect(iconSprite('wideBlade')?.file).toBe('wideBlade.webp');
   });
 });

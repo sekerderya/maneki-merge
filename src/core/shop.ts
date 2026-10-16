@@ -1,5 +1,12 @@
 /** What each shop card shows (GAME_DESIGN §2.2): level, price state and "current → next" value. */
-import { isBlessingCard, UPGRADE_IDS, UPGRADES } from '../config/upgrades';
+import { PICKS } from '../config/picks';
+import {
+  isBlessingCard,
+  isWeaponCard,
+  UPGRADE_IDS,
+  UPGRADES,
+  WEAPON_CARD_OPENS,
+} from '../config/upgrades';
 import type { ShopSection, UpgradeId } from '../config/upgrades';
 import { dropWeights } from './dropQueue';
 import { roundStable } from './math';
@@ -72,6 +79,11 @@ export function shopCards(levels: UpgradeLevels, coins: number, bestStage: numbe
  */
 export function upgradeValue(id: UpgradeId, level: number): string {
   if (isBlessingCard(id)) return pickValue(id, { ...defaultPickLevels(), [id]: level }, 0);
+  // A weapon card names the pick its last level opened ("–" before the first).
+  if (isWeaponCard(id)) {
+    const opened = WEAPON_CARD_OPENS[id][level - 1];
+    return opened ? PICKS[opened].name : '–';
+  }
   const stats = deriveStats({ ...defaultUpgradeLevels(), [id]: level });
   switch (id) {
     case 'luckyPaw':

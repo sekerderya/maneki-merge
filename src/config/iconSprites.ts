@@ -9,9 +9,12 @@ import { ICON_SPRITE_DATA } from './iconSpriteData';
 /** Where the sprites live, relative to the app's base URL. */
 export const ICON_SPRITE_DIR = 'assets/icons/';
 
+/** Ids that show another id's icon: Quick Katana's card shows the Katana's (the owner's call). */
+const ICON_ALIASES: Readonly<Record<string, string>> = { quickKatana: 'katana' };
+
 /** The icon for `id`, or null when the art has none yet (the code-drawn icon stays). */
 export function iconSprite(id: string): CatSprite | null {
-  return ICON_SPRITE_DATA[id] ?? null;
+  return ICON_SPRITE_DATA[ICON_ALIASES[id] ?? id] ?? null;
 }
 
 /** Every icon, for preloading. */

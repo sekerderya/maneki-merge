@@ -36,7 +36,7 @@ const EMPTY_LINE = 2 * 255;
 /** Transparent margin around a sprite, px. */
 const MARGIN = 2;
 
-interface BoltData {
+export interface BoltData {
   readonly file: string;
   readonly width: number;
   readonly height: number;
@@ -47,7 +47,7 @@ interface BoltData {
   readonly band: number;
 }
 
-interface RoundData {
+export interface RoundData {
   readonly file: string;
   readonly side: number;
   readonly radius: number;
@@ -97,7 +97,7 @@ export async function buildLightning(): Promise<void> {
 }
 
 /** Light on black → straight alpha: alpha from the brightest channel, the colour un-blended. */
-function lightToAlpha(image: Rgba): Rgba {
+export function lightToAlpha(image: Rgba): Rgba {
   const data = new Uint8ClampedArray(image.data);
   for (let i = 0; i < data.length; i += 4) {
     const r = data[i] ?? 0;
@@ -118,7 +118,7 @@ function lightToAlpha(image: Rgba): Rgba {
 }
 
 /** The pieces of a sheet laid out in rows or columns, split at empty bands, each trimmed. */
-function bands(image: Rgba, along: 'rows' | 'columns'): Rgba[] {
+export function bands(image: Rgba, along: 'rows' | 'columns'): Rgba[] {
   const { data, width, height } = image;
   const count = along === 'rows' ? height : width;
   const sums = new Float64Array(count);
@@ -147,7 +147,7 @@ function bands(image: Rgba, along: 'rows' | 'columns'): Rgba[] {
 }
 
 /** A `cols` × `rows` grid of equal cells, left to right and top to bottom, each trimmed. */
-function grid(image: Rgba, cols: number, rows: number): Rgba[] {
+export function grid(image: Rgba, cols: number, rows: number): Rgba[] {
   const w = Math.floor(image.width / cols);
   const h = Math.floor(image.height / rows);
   const cells: Rgba[] = [];
@@ -195,7 +195,11 @@ function mean(points: readonly (readonly [number, number])[]): [number, number] 
  * A bolt and its ends. `across`: from the core's left end to its right end (a chain bolt, an
  * arc); `down`: from where the core leaves the top to the flash at its tip (a sky bolt).
  */
-async function saveBolt(image: Rgba, file: string, way: 'across' | 'down'): Promise<BoltData> {
+export async function saveBolt(
+  image: Rgba,
+  file: string,
+  way: 'across' | 'down',
+): Promise<BoltData> {
   const core = corePixels(image);
   const ends = way === 'across' ? acrossEnds(core) : downEnds(core);
   await saveWebp(image, join(OUT_DIR, file));
@@ -251,7 +255,7 @@ async function zapPieces(zap: Rgba) {
  * distance of its core from the centre (a ring's line); `edge`, how far its outermost core reaches
  * (the crackles' rim).
  */
-async function saveRound(
+export async function saveRound(
   image: Rgba,
   file: string,
   measure: 'reach' | 'line' | 'edge',

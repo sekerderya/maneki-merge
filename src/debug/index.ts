@@ -59,8 +59,8 @@ export interface GameStateSnapshot {
   /** The dropper holds a ready magnet (GAME_DESIGN §15.2). */
   readonly canTake: boolean;
   /**
-   * What the dropper holds and what comes next: 'cat', 'magnet', 'boulder', 'hanabi', 'joker' or
-   * 'lightning'.
+   * What the dropper holds and what comes next: 'cat', 'magnet', 'boulder', 'hanabi', 'joker',
+   * 'lightning' or 'katana'.
    */
   readonly current: string | null;
   readonly next: string | null;
@@ -91,6 +91,12 @@ export interface GameStateSnapshot {
   readonly lightning: {
     readonly id: number;
     readonly targets: readonly number[];
+    readonly elapsedMs: number;
+  } | null;
+  /** A katana falling (GAME_DESIGN §15.16): where it was dropped, its blades and how far it is. */
+  readonly katana: {
+    readonly x: number;
+    readonly blades: number;
     readonly elapsedMs: number;
   } | null;
   readonly ticks: number;
@@ -144,8 +150,11 @@ export interface GameHooks {
   take(id?: number): boolean;
   /** Chooses an option of the waiting pick (its first by default). */
   choose(id?: PickId): boolean;
-  /** Puts a magnet, a boulder, a hanabi, a joker, a lightning ball or a golden cat in the dropper. */
-  give(kind: 'magnet' | 'boulder' | 'hanabi' | 'joker' | 'lightning' | 'golden'): void;
+  /**
+   * Puts a magnet, a boulder, a hanabi, a joker, a lightning ball, a katana or a golden cat in the
+   * dropper.
+   */
+  give(kind: 'magnet' | 'boulder' | 'hanabi' | 'joker' | 'lightning' | 'katana' | 'golden'): void;
   /** Puts a cat of `tier` (golden if asked) in the dropper; ignored if the stage can't hold it. */
   giveCat(tier: number, golden?: boolean): void;
   /** Sets a trial's, rule's (0 or 1) or blessing's level for this run. */
@@ -268,6 +277,13 @@ export function installDebugHooks(ctx: DebugContext): GameHooks {
               id: run.lightning.id,
               targets: [...run.lightning.targets],
               elapsedMs: run.lightning.elapsedMs,
+            }
+          : null,
+        katana: run?.katana
+          ? {
+              x: run.katana.x,
+              blades: run.katana.blades.length,
+              elapsedMs: run.katana.elapsedMs,
             }
           : null,
         ticks: run?.ticks ?? 0,
@@ -579,6 +595,7 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
       action('Hanabi', () => hooks.give('hanabi')),
       action('Joker', () => hooks.give('joker')),
       action('Lightning', () => hooks.give('lightning')),
+      action('Katana', () => hooks.give('katana')),
       action('Picks', () => hooks.offerPicks()),
       action('Rule pick', () => hooks.offerPicks(true)),
     ),

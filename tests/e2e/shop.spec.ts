@@ -37,9 +37,11 @@ test('buying with debug coins: prices, states, gates, feedback and persistence',
   await page.getByTestId('upgrades').click();
   const shop = page.getByTestId('shop');
   await expect(shop).toBeVisible();
-  // The four upgrades, the blessings' heading and the six blessing cards (v0.36, Lightning v0.42).
-  await expect(shop.locator('.shop-card')).toHaveCount(10);
+  // The four upgrades, the blessings' heading and the six blessing cards (v0.36, Lightning v0.42),
+  // then the weapons' heading and the Katana's card (v0.55).
+  await expect(shop.locator('.shop-card')).toHaveCount(11);
   await expect(page.getByTestId('shop-blessings')).toContainText('Blessings');
+  await expect(page.getByTestId('shop-weapons')).toContainText('Weapons');
   await expect(page.getByTestId('shop-balance')).toHaveText('700');
 
   // Lucky Paw 0 → 1 for 150.
@@ -159,6 +161,7 @@ test('a save from before v0.36 starts over, keeping its settings', async ({ page
     'hanabi',
     'joker',
     'lightning',
+    'katana',
   ]);
   expect(errors).toEqual([]);
 });
@@ -204,7 +207,7 @@ for (const [width, height] of [
     });
     expect(issues).toEqual([]);
     // The last card scrolls into view.
-    const last = page.getByTestId('shop-card-lightning');
+    const last = page.getByTestId('shop-card-katana');
     await last.scrollIntoViewIfNeeded();
     await expect(last).toBeInViewport({ ratio: 1 });
   });

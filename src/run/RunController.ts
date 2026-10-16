@@ -3,9 +3,9 @@
  * payouts, the combo timer, stage clears and the expansion timeline, the danger line, Lucky Saves
  * and game over; and the special balls, trials and blessings of GAME_DESIGN §15 (magnets taking a
  * ball out of the jar, boulders breaking, golden cats, hanabi going off, joker cats merging with any
- * cat, lightning balls striking every cat of a size, the picks at every stage clear, cursed cats
- * turning to stone, Copycat's NEXT and Dice's rolls). The game scene renders it and forwards
- * input; the HUD, FX, audio and save listen to its events.
+ * cat, lightning balls striking every cat of a size, katanas cutting the small cats in a line, the
+ * picks at every stage clear, cursed cats turning to stone, Copycat's NEXT and Dice's rolls). The
+ * game scene renders it and forwards input; the HUD, FX, audio and save listen to its events.
  *
  * Time comes in fixed ticks of PHYSICS_STEP_MS. `update(frameMs)` only decides how many ticks a
  * frame runs, and every timer counts ticks, so a run is a pure function of its seed and of the
@@ -13,9 +13,9 @@
  *
  * Tick pipeline while playing: physics step → merges (payouts and events, oldest first, each with
  * its echo, a lifted curse's bonus) → Copycat's NEXT → boulder hits → porcelain cracks → hanabi
- * blasts → a lightning strike → a curse whose cat is gone ends → combo expiry → stage clear → drop
- * ready → danger. A lightning strike then holds time still: the next ticks step nothing (no
- * physics, cooldown, combo or danger) until the struck balls pop.
+ * blasts → a katana's cuts → a lightning strike → a curse whose cat is gone ends → combo expiry →
+ * stage clear → drop ready → danger. A lightning strike then holds time still: the next ticks step
+ * nothing (no physics, cooldown, combo or danger) until the struck balls pop.
  * The stage clear goes first, so making the stage's last cat saves the jar even on the step the
  * danger timer would run out. A drop first counts down a curse (or turns its cat to stone), then
  * may begin the next one.
@@ -45,6 +45,8 @@ import {
   HUBRIS_PAIR_WAIT_MS,
   HUBRIS_TOUCH_GRACE_MS,
   JOKER_SIZE,
+  KATANA_FALL_MS,
+  KATANA_SIZE,
   LATE_CLEARS_FROM,
   LIGHTNING_HOLD_MS,
   LIGHTNING_SIZE,
@@ -56,7 +58,14 @@ import {
   SPAWN_START_RADIUS_SHARE,
   WIND_ACCEL_PER_LEVEL,
 } from '../config/picks';
-import type { DiceRoll, ForcedDice, PickId, PickKind, WindDirection } from '../config/picks';
+import type {
+  BladeLine,
+  DiceRoll,
+  ForcedDice,
+  PickId,
+  PickKind,
+  WindDirection,
+} from '../config/picks';
 import { AD_BALL_AFTER_DROPS } from '../config/ads';
 import { LUCKY_GIFT_FACTOR } from '../config/economy';
 import {
@@ -89,19 +98,26 @@ import {
   drawOffer,
   dropOdds,
   heavyDropStrength,
+  katanaGrace,
   openOptions,
 } from '../core/picks';
 import type { PickLevels } from '../core/picks';
 import { nextStage, stageProgress } from '../core/progression';
 import type { StageProgress } from '../core/progression';
 import { Rng } from '../core/rng';
-import type { ExpansionSnapshot, LightningSnapshot, RunSnapshot } from '../core/runSave';
+import type {
+  ExpansionSnapshot,
+  KatanaSnapshot,
+  LightningSnapshot,
+  RunSnapshot,
+} from '../core/runSave';
 import { defaultUpgradeLevels, deriveStats } from '../core/upgrades';
 import type { DerivedStats, UpgradeLevels } from '../core/upgrades';
 import type { Ball, BallKind, BallView } from '../physics/balls';
 import { DangerMonitor, isOverLine, luckySaveVictims } from '../physics/danger';
 import { clampDropX, dropStartY } from '../physics/geometry';
 import { fuseBurntOut, hanabiBlast } from '../physics/hanabi';
+import { katanaBlades, katanaCuts } from '../physics/katana';
 import { strikeTargets } from '../physics/lightning';
 import type { JarGeometry } from '../physics/geometry';
 import { MergeResolver } from '../physics/merges';
@@ -160,6 +176,23 @@ export interface LightningView {
   readonly targets: readonly number[];
   readonly elapsedMs: number;
   readonly holdMs: number;
+}
+
+/**
+ * A katana falling (GAME_DESIGN §15.16): dropped at `x`, its points run along `blades` over
+ * `fallMs`; they are `elapsedMs` in.
+ */
+export interface KatanaView {
+  readonly x: number;
+  readonly blades: readonly BladeLine[];
+  readonly elapsedMs: number;
+  readonly fallMs: number;
+}
+
+interface Slash {
+  readonly x: number;
+  readonly blades: readonly BladeLine[];
+  elapsedSteps: number;
 }
 
 interface Strike {
@@ -226,6 +259,7 @@ const ZOOM_STEPS = stepsFor(EXPANSION_ZOOM_MS);
 const EXPANSION_STEPS = stepsFor(EXPANSION_DURATION_MS);
 const TAKE_STEPS = stepsFor(MAGNET_TAKE_MS);
 const STRIKE_STEPS = stepsFor(LIGHTNING_HOLD_MS);
+const KATANA_STEPS = stepsFor(KATANA_FALL_MS);
 /**
  * The special balls' rolls and the picks' draws use their own generators, seeded from the run seed
  * with these salts, so the tiers a seed drops never depend on the picks.
@@ -317,6 +351,8 @@ export class RunController {
   private curseDue = CURSE_FIRST_DROP;
   /** A lightning strike holding time still, or null. */
   private strike: Strike | null = null;
+  /** A katana falling, or null. */
+  private slash: Slash | null = null;
   /** Debug and the scenes: what the next dice show, first one first. */
   private forcedDice: ForcedDice[] = [];
   /** Dice: one draw per merge that may roll (MergeRules.dice). */
@@ -511,6 +547,18 @@ export class RunController {
     };
   }
 
+  /** The katana falling (GAME_DESIGN §15.16), or null. */
+  get katana(): KatanaView | null {
+    const slash = this.slash;
+    if (!slash) return null;
+    return {
+      x: slash.x,
+      blades: slash.blades,
+      elapsedMs: slash.elapsedSteps * PHYSICS_STEP_MS,
+      fallMs: KATANA_STEPS * PHYSICS_STEP_MS,
+    };
+  }
+
   /**
    * The biggest cat size the stage has had in its jar so far, dropped or merged (0 before the
    * first drop): the goal strip shows the cats up to it as made (GAME_DESIGN §2.3). It never goes
@@ -609,6 +657,10 @@ export class RunController {
     const geo = this.world.geometry;
     const radius = this.radiusOf(item.tier);
     const at = clampDropX(x, radius, geo);
+    if (kind === 'katana') {
+      this.dropKatana(at, dropStartY(radius, geo), item.tier);
+      return true;
+    }
     // Heavy Drop (GAME_DESIGN §15.9): it leaves the paw already falling, as the wind tilts it.
     const vy = HEAVY_DROP_START_SPEED[this.heavyDropLevel] ?? 0;
     this.world.addBall({
@@ -628,6 +680,23 @@ export class RunController {
     if (kind === 'cat') this.reachSize(this.world.sizeOf(item.tier));
     this.curseIfDue();
     return true;
+  }
+
+  /**
+   * A katana leaves the paw at `x` (GAME_DESIGN §15.16): its blades start falling from `startY`
+   * (More Blades adds the diagonals and the one across), cutting from the next tick on.
+   */
+  private dropKatana(x: number, startY: number, tier: number): void {
+    // Only one falls at a time; the cooldown is longer than a fall, but a debug drop may not be.
+    if (this.slash) this.cutKatana(this.slash, KATANA_STEPS);
+    const blades = katanaBlades(x, startY, this.levels.moreBlades, this.world.geometry);
+    this.slash = { x, blades, elapsedSteps: 0 };
+    this.dropAllowedAt = this.world.steps + COOLDOWN_STEPS;
+    this.dropAnnounced = false;
+    this.echoUsed = false;
+    this.events.emit('catDropped', { kind: 'katana', tier, golden: false, x });
+    this.events.emit('katanaDropped', { x, blades, fallMs: KATANA_STEPS * PHYSICS_STEP_MS });
+    this.curseIfDue();
   }
 
   /**
@@ -762,9 +831,12 @@ export class RunController {
 
   /**
    * Puts a magnet, a boulder (with the current trials' size and hits), a hanabi, a joker, a
-   * lightning ball or a golden cat (of the stage's smallest tier) in the dropper instead of its ball.
+   * lightning ball, a katana or a golden cat (of the stage's smallest tier) in the dropper instead of
+   * its ball.
    */
-  giveSpecial(kind: 'magnet' | 'boulder' | 'hanabi' | 'joker' | 'lightning' | 'golden'): void {
+  giveSpecial(
+    kind: 'magnet' | 'boulder' | 'hanabi' | 'joker' | 'lightning' | 'katana' | 'golden',
+  ): void {
     if (this.runState === 'over') return;
     const first = stageInfo(this.world.stage).firstTier;
     const odds = this.odds();
@@ -779,17 +851,10 @@ export class RunController {
     this.announceDropIfReady();
   }
 
-  /** A magnet, a hanabi, a joker or a lightning ball of its size at the current stage. */
-  private specialDrop(kind: 'magnet' | 'hanabi' | 'joker' | 'lightning'): Drop {
+  /** A magnet, a hanabi, a joker, a lightning ball or a katana of its size at the current stage. */
+  private specialDrop(kind: 'magnet' | 'hanabi' | 'joker' | 'lightning' | 'katana'): Drop {
     const first = stageInfo(this.world.stage).firstTier;
-    const size =
-      kind === 'magnet'
-        ? MAGNET_SIZE
-        : kind === 'hanabi'
-          ? HANABI_SIZE
-          : kind === 'joker'
-            ? JOKER_SIZE
-            : LIGHTNING_SIZE;
+    const size = SPECIAL_SIZES[kind];
     return { kind, tier: first + size - 1, golden: false, hits: 0 };
   }
 
@@ -972,6 +1037,15 @@ export class RunController {
         targets: [...this.strike.ids],
         elapsedSteps: this.strike.elapsedSteps,
       },
+      ...(this.slash
+        ? {
+            katana: {
+              x: this.slash.x,
+              blades: this.slash.blades.map((blade) => ({ ...blade })),
+              elapsedSteps: this.slash.elapsedSteps,
+            },
+          }
+        : {}),
       ...(this.adBallStage > 0 ? { adBallStage: this.adBallStage } : {}),
       ...(this.lastChanceUsed ? { lastChanceUsed: true } : {}),
       queue: this.queue.snapshot(),
@@ -1004,6 +1078,9 @@ export class RunController {
     const strike = this.strike;
     h.number(strike?.bolt.id ?? 0).number(strike?.elapsedSteps ?? 0);
     for (const id of strike?.ids ?? []) h.number(id);
+    const slash = this.slash;
+    h.number(slash?.x ?? 0).number(slash?.elapsedSteps ?? -1);
+    for (const b of slash?.blades ?? []) h.number(b.x0).number(b.y0).number(b.x1).number(b.y1);
     const waiting = this.queue.waiting;
     for (const item of waiting
       ? [this.queue.current, this.queue.next, waiting]
@@ -1069,6 +1146,7 @@ export class RunController {
       this.curseTotal = Math.max(dropsLeft, total ?? this.curseDrops());
     }
     if (saved.lightning) this.strike = restoreStrike(saved.lightning, this.world.balls);
+    if (saved.katana) this.slash = restoreSlash(saved.katana);
     for (const id of PICK_IDS) this.levels[id] = Math.min(PICKS[id].maxLevel, saved.levels[id]);
     // A run saved before Batch 18 has no wind yet: the seed's.
     this.wind = saved.windDirection ?? this.wind;
@@ -1175,6 +1253,7 @@ export class RunController {
     this.hitBoulders(this.merges.hits);
     this.crackPorcelain(this.merges.cracks, now);
     this.fireHanabi(now);
+    if (this.slash) this.cutKatana(this.slash, this.slash.elapsedSteps + 1);
     // A lightning ball that touched a cat or a boulder strikes; a stage clear sweeps it away instead.
     const struck = !cleared && this.strikeLightning();
     this.curseGone();
@@ -1380,6 +1459,36 @@ export class RunController {
       lit.push(...blast.chain);
     }
     if (paid) this.events.emit('runCoinsChanged', { coins: this.economy.coins });
+  }
+
+  /**
+   * The katana falls on to `steps` (GAME_DESIGN §15.16): every small cat its blades have reached
+   * pops into its value (coins, no score, no combo) and every boulder they have reached breaks,
+   * paying nothing. At the end of the fall it is gone.
+   */
+  private cutKatana(slash: Slash, steps: number): void {
+    slash.elapsedSteps = Math.min(steps, KATANA_STEPS);
+    const t = slash.elapsedSteps / KATANA_STEPS;
+    const cuts = katanaCuts(slash.blades, t, this.world.balls, katanaGrace(this.levels));
+    for (const { ball, blade } of [...cuts.cats, ...cuts.boulders]) {
+      const line = slash.blades[blade] as BladeLine;
+      const at = { x: ball.x, y: ball.y };
+      const kind = ball.kind === 'boulder' ? 'boulder' : 'cat';
+      const angle = Math.atan2(line.y1 - line.y0, line.x1 - line.x0);
+      this.events.emit('katanaCut', { id: ball.id, kind, tier: ball.tier, at, angle, blade });
+      this.world.removeBall(ball);
+      if (kind === 'boulder') {
+        this.events.emit('boulderBroken', { id: ball.id, tier: ball.tier, at, reason: 'katana' });
+        continue;
+      }
+      const { coins } = this.economy.pop(ball.tier);
+      this.bankCoins(coins);
+      this.events.emit('catPopped', { id: ball.id, tier: ball.tier, at, coins, reason: 'katana' });
+    }
+    if (cuts.cats.length > 0) this.events.emit('runCoinsChanged', { coins: this.economy.coins });
+    if (slash.elapsedSteps < KATANA_STEPS) return;
+    this.slash = null;
+    this.events.emit('katanaLanded', { blades: slash.blades });
   }
 
   /**
@@ -1589,8 +1698,9 @@ export class RunController {
    */
   private clearStage(last: Ball, picks = true): void {
     const stage = this.world.stage;
-    // A debug clear during a lightning strike sweeps it away with the rest.
+    // A debug clear during a lightning strike sweeps it away with the rest, and a falling katana.
     this.strike = null;
+    this.slash = null;
     this.pop(
       this.world.balls.filter((ball) => ball !== last),
       'cashOut',
@@ -1656,6 +1766,7 @@ export class RunController {
   private gameOver(): void {
     this.runState = 'over';
     this.strike = null;
+    this.slash = null;
     this.expansionState = null;
     this.offer = null;
     this.world.pause();
@@ -1714,8 +1825,8 @@ export class RunController {
 
   /** The options a pick of `kind` may offer now, the trials from this clear's pool. */
   private openNow(kind: PickKind): PickId[] {
-    const { bigCatchTilt, blessingCaps } = this.stats;
-    return openOptions(kind, this.levels, bigCatchTilt, blessingCaps, this.trialPool);
+    const { bigCatchTilt, pickCaps } = this.stats;
+    return openOptions(kind, this.levels, bigCatchTilt, pickCaps, this.trialPool);
   }
 
   /**
@@ -1735,9 +1846,9 @@ export class RunController {
    * pick is left.
    */
   private offerNextPick(): boolean {
-    const { bigCatchTilt, blessingCaps } = this.stats;
+    const { bigCatchTilt, pickCaps } = this.stats;
     const draw = (kind: PickKind): PickId[] =>
-      drawOffer(kind, this.levels, bigCatchTilt, this.pickRng, blessingCaps, this.trialPool);
+      drawOffer(kind, this.levels, bigCatchTilt, this.pickRng, pickCaps, this.trialPool);
     for (let kind = this.pickQueue.shift(); kind; kind = this.pickQueue.shift()) {
       let options = draw(kind);
       if (options.length === 0 && kind === 'rule') {
@@ -1892,6 +2003,24 @@ export class RunController {
     if (this.world.stage < this.debugTargetStage) this.debugClear();
     else this.debugTargetStage = 0;
   }
+}
+
+/** The size each special ball has in the paw, as a tier of the current stage. */
+const SPECIAL_SIZES = {
+  magnet: MAGNET_SIZE,
+  hanabi: HANABI_SIZE,
+  joker: JOKER_SIZE,
+  lightning: LIGHTNING_SIZE,
+  katana: KATANA_SIZE,
+} as const;
+
+/** A saved falling katana: it goes on falling where it was. */
+function restoreSlash(saved: KatanaSnapshot): Slash {
+  return {
+    x: saved.x,
+    blades: saved.blades.map((blade) => ({ ...blade })),
+    elapsedSteps: Math.min(saved.elapsedSteps, KATANA_STEPS - 1),
+  };
 }
 
 /**

@@ -1,7 +1,9 @@
 /** Upgrade levels, derived stats, prices and purchases (GAME_DESIGN §10). Pure functions. */
 import { COMBO_BONUS_MAX_STEPS } from '../config/economy';
-import { BLESSING_CARD_IDS, UPGRADE_IDS, UPGRADES } from '../config/upgrades';
-import type { BlessingCardId, UpgradeId } from '../config/upgrades';
+import { PICKS } from '../config/picks';
+import type { PickId } from '../config/picks';
+import { BLESSING_CARD_IDS, UPGRADE_IDS, UPGRADES, WEAPON_CARD_OPENS } from '../config/upgrades';
+import type { BlessingCardId, UpgradeId, WeaponCardId } from '../config/upgrades';
 
 export type UpgradeLevels = Readonly<Record<UpgradeId, number>>;
 
@@ -17,6 +19,11 @@ export interface DerivedStats {
   readonly luckySaves: number;
   /** The highest level each blessing can reach in a run: its card's shop level. */
   readonly blessingCaps: Readonly<Record<BlessingCardId, number>>;
+  /**
+   * The highest level each capped pick can reach in a run: the blessings' (`blessingCaps`), and
+   * each weapon's picks, 0 until a level of its card opens one, then its own max level.
+   */
+  readonly pickCaps: Readonly<Partial<Record<PickId, number>>>;
 }
 
 /** A fresh profile's levels: every card at its start level. */
@@ -41,12 +48,19 @@ export function deriveStats(levels: UpgradeLevels): DerivedStats {
   const perLevel = (id: UpgradeId): number => UPGRADES[id].perLevel * levels[id];
   const blessingCaps = {} as Record<BlessingCardId, number>;
   for (const id of BLESSING_CARD_IDS) blessingCaps[id] = levels[id];
+  const pickCaps: Partial<Record<PickId, number>> = { ...blessingCaps };
+  for (const card of Object.keys(WEAPON_CARD_OPENS) as WeaponCardId[]) {
+    WEAPON_CARD_OPENS[card].forEach((pick, i) => {
+      pickCaps[pick] = levels[card] > i ? PICKS[pick].maxLevel : 0;
+    });
+  }
   return {
     coinMultiplier: 1 + perLevel('luckyPaw'),
     bigCatchTilt: perLevel('bigCatch'),
     comboCharmLevel: levels.comboCharm,
     luckySaves: perLevel('secondChance'),
     blessingCaps,
+    pickCaps,
   };
 }
 

@@ -131,7 +131,17 @@ export const UPGRADE_ICONS: Readonly<Record<Exclude<UpgradeId, BlessingCardId>, 
   secondChance: svg(
     '<path d="M12 20.5S3.5 15.2 3.5 9.2A4.4 4.4 0 0 1 12 7a4.4 4.4 0 0 1 8.5 2.2c0 6-8.5 11.3-8.5 11.3z" fill="currentColor"/>',
   ),
+  katana: katanaGlyph(),
 };
+
+/** A katana pointing down to the lower left: a blade, a guard and a hilt. */
+function katanaGlyph(): string {
+  return svg(
+    '<path d="M4 20.5L15 9.5l1.6 1.6L5.6 22z" fill="currentColor"/>' +
+      '<path d="M13.6 8.1l4.3 4.3" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>' +
+      '<path d="M17 9.5l3.2-3.2" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>',
+  );
+}
 
 /**
  * The special balls as DOM icons (the NEXT bubble, GAME_DESIGN §15), like the canvas ones: the
@@ -172,6 +182,15 @@ export const JOKER_SVG = svg(
     '<circle cx="50" cy="50" r="30" fill="none" stroke-width="9" stroke="#58a8ff" stroke-dasharray="31.4 157" stroke-dashoffset="-125.6" transform="rotate(-90 50 50)"/>' +
     '<circle cx="50" cy="50" r="30" fill="none" stroke-width="9" stroke="#a77bff" stroke-dasharray="31.4 157" stroke-dashoffset="-157.0" transform="rotate(-90 50 50)"/>' +
     '<path d="M50 31l5.3 11.6 12.7 1.4-9.4 8.6 2.6 12.5L50 58.8l-11.2 6.3 2.6-12.5-9.4-8.6 12.7-1.4z" fill="#f2b83b" stroke="#3b2620" stroke-width="2.5" stroke-linejoin="round"/>',
+  '0 0 100 100',
+);
+
+/** The katana (GAME_DESIGN §15.16) with `?skin=vector`: a cream disc with a blade pointing down. */
+export const KATANA_SVG = svg(
+  '<circle cx="50" cy="50" r="46" fill="#fff4e2" stroke="#3b2620" stroke-width="5"/>' +
+    '<path d="M45 30h10v42l-5 12-5-12z" fill="#dfe8f2" stroke="#3b2620" stroke-width="3" stroke-linejoin="round"/>' +
+    '<rect x="36" y="25" width="28" height="6" rx="3" fill="#e2b33f" stroke="#3b2620" stroke-width="2.5"/>' +
+    '<rect x="45.5" y="10" width="9" height="15" rx="2" fill="#d9483b" stroke="#3b2620" stroke-width="2.5"/>',
   '0 0 100 100',
 );
 
@@ -246,6 +265,15 @@ const PICK_ICONS: Readonly<Record<GlyphPick, string>> = {
     '<path d="M12 9V2.5M12 15v6.5M9 12H2.5M15 12h6.5M9.9 9.9L5.3 5.3M14.1 14.1l4.6 4.6M14.1 9.9l4.6-4.6M9.9 14.1l-4.6 4.6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
   ),
   lightning: svg('<path d="M14.5 2L5.5 13.5h6L8.5 22l10-12.5h-6z" fill="currentColor"/>'),
+  katana: katanaGlyph(),
+  moreBlades: svg(
+    '<path d="M12 3v15M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>',
+  ),
+  quickKatana: katanaGlyph(),
+  wideBlade: svg(
+    '<path d="M9.5 3h5v13l-2.5 5-2.5-5z" fill="currentColor"/>' +
+      '<path d="M6 12H2.5M18 12h3.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
+  ),
   joker: svg(
     '<circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.4"/>' +
       '<path d="M12 7.2l1.5 3.1 3.4.4-2.5 2.3.7 3.4-3.1-1.7-3.1 1.7.7-3.4-2.5-2.3 3.4-.4z" fill="currentColor"/>',

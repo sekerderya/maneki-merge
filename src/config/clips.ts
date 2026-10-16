@@ -90,7 +90,12 @@ export function pickClip(id: PickId, windLeft = false): ClipId | null {
     case 'quickCurse':
     case 'moreCurses':
       return 'curse';
+    // The Katana's clip comes once its look is in the game.
     case 'bigDrops':
+    case 'katana':
+    case 'moreBlades':
+    case 'quickKatana':
+    case 'wideBlade':
       return null;
   }
 }
@@ -111,6 +116,7 @@ export function upgradeClip(id: UpgradeId): ClipId | null {
       return pickClip(id);
     case 'luckyPaw':
     case 'bigCatch':
+    case 'katana':
       return null;
   }
 }

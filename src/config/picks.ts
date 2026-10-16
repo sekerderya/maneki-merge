@@ -68,6 +68,35 @@ export const LIGHTNING_FREE_DROPS = 20;
 export const LIGHTNING_HOLD_MS = 450;
 
 /**
+ * The Katana (GAME_DESIGN §15.16), the first weapon: dropped from the paw, it falls point down,
+ * straight, through everything, in KATANA_FALL_MS from the paw to the floor (Heavy Drop's 0.24 s
+ * fall). Every cat up to KATANA_MAX_CUT_SIZE whose body its blade crosses, give or take
+ * KATANA_GRACE[Wide Blade level] world units, pops into its value as the blade reaches it, and every
+ * boulder it crosses breaks at once, whatever its bands; everything else lets it through. It isn't a
+ * ball: it never pushes, rests or counts for the danger line. In the paw it takes a size-1 ball's
+ * place (KATANA_SIZE), so it can be aimed close to the walls. None comes in a stage's first
+ * KATANA_FREE_DROPS drops: an empty jar has nothing to cut.
+ */
+export const KATANA_SIZE = 1;
+export const KATANA_FREE_DROPS = 20;
+export const KATANA_FALL_MS = 240;
+export const KATANA_MAX_CUT_SIZE = 4;
+/** By Wide Blade level: how far past a cat's edge the blade still cuts it (start values). */
+export const KATANA_GRACE = [8, 33, 58] as const;
+/** Wide Blade's card names the cut's width: index = level. */
+export const KATANA_WIDTH_NAMES = ['Thin', 'Wide', 'Broad'] as const;
+/** The Katana's chance per queued item, and what each Quick Katana level adds (start values). */
+export const KATANA_CHANCE = 0.0225;
+export const KATANA_CHANCE_PER_LEVEL = 0.0225;
+/** A katana blade's path in world units: from (x0, y0), where it starts, to (x1, y1), where its point ends. */
+export interface BladeLine {
+  readonly x0: number;
+  readonly y0: number;
+  readonly x1: number;
+  readonly y1: number;
+}
+
+/**
  * Big Drops adds this many tilt levels to the drop weights (GAME_DESIGN §8), up to
  * MAX_DROP_TILT_LEVEL in all with Big Catch: there the smallest drop is almost gone (1, 17, 33,
  * 49%). Until v0.39 (every shop effect 1.5 times as strong, the owner's call): 2 per level, up to 10
@@ -211,6 +240,10 @@ export const BLESSING_IDS = [
   'hanabi',
   'joker',
   'lightning',
+  'katana',
+  'moreBlades',
+  'quickKatana',
+  'wideBlade',
 ] as const;
 export const PICK_IDS = [...TRIAL_IDS, ...BLESSING_IDS, ...RULE_IDS] as const;
 
@@ -467,6 +500,48 @@ export const PICKS: Readonly<Record<PickId, PickDef>> = {
     maxLevel: 5,
     // Rarer than a hanabi or a joker: it clears a whole size, where the player aims it.
     perLevel: 0.015,
+  },
+  // The Katana (GAME_DESIGN §15.16): taking it once opens it; its upgrades are picks of their own
+  // that need it (the owner's call), each opened by a level of its shop card (config/upgrades.ts).
+  katana: {
+    id: 'katana',
+    kind: 'blessing',
+    name: 'Katana',
+    description: 'Cuts every small cat in a straight line down',
+    statLabel: 'Katanas',
+    maxLevel: 1,
+    perLevel: KATANA_CHANCE,
+  },
+  moreBlades: {
+    id: 'moreBlades',
+    kind: 'blessing',
+    name: 'More Blades',
+    description: 'One more katana in every cut',
+    statLabel: 'Blades',
+    // A diagonal from the top corner on the aim's side, the other diagonal (an X), then one across.
+    maxLevel: 3,
+    perLevel: 1,
+    requires: 'katana',
+  },
+  quickKatana: {
+    id: 'quickKatana',
+    kind: 'blessing',
+    name: 'Quick Katana',
+    description: 'Katanas come more often',
+    statLabel: 'Katanas',
+    maxLevel: 2,
+    perLevel: KATANA_CHANCE_PER_LEVEL,
+    requires: 'katana',
+  },
+  wideBlade: {
+    id: 'wideBlade',
+    kind: 'blessing',
+    name: 'Wide Blade',
+    description: 'The katana cuts a wider line',
+    statLabel: 'Cut',
+    maxLevel: KATANA_GRACE.length - 1,
+    perLevel: 1,
+    requires: 'katana',
   },
 };
 

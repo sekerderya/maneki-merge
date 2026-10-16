@@ -1,10 +1,12 @@
 /**
- * What the shop sells (GAME_DESIGN §10): permanent upgrades, and blessing cards that set how far
- * each blessing can go in a run (v0.36). Derived stats: core/upgrades.ts.
+ * What the shop sells (GAME_DESIGN §10): permanent upgrades, blessing cards that set how far each
+ * blessing can go in a run (v0.36), and weapon cards whose levels open a weapon's picks one by one
+ * (the Katana, GAME_DESIGN §15.16). Derived stats: core/upgrades.ts.
  */
 import { PICKS } from './picks';
+import type { PickId } from './picks';
 
-/** Shop order: the upgrades, then the blessings. */
+/** Shop order: the upgrades, the blessings, then the weapons. */
 export const UPGRADE_IDS = [
   'luckyPaw',
   'bigCatch',
@@ -16,6 +18,7 @@ export const UPGRADE_IDS = [
   'hanabi',
   'joker',
   'lightning',
+  'katana',
 ] as const;
 
 export type UpgradeId = (typeof UPGRADE_IDS)[number];
@@ -32,8 +35,18 @@ export const BLESSING_CARD_IDS = [
 
 export type BlessingCardId = (typeof BLESSING_CARD_IDS)[number];
 
-/** The shop's two sections (GAME_DESIGN §2.2). */
-export type ShopSection = 'upgrade' | 'blessing';
+/**
+ * The weapon cards (GAME_DESIGN §10): each level opens one more of the weapon's picks for every run,
+ * in this order, each up to its own max level.
+ */
+export const WEAPON_CARD_OPENS = {
+  katana: ['katana', 'quickKatana', 'wideBlade', 'moreBlades'],
+} as const satisfies Readonly<Record<string, readonly PickId[]>>;
+
+export type WeaponCardId = keyof typeof WEAPON_CARD_OPENS;
+
+/** The shop's sections (GAME_DESIGN §2.2). */
+export type ShopSection = 'upgrade' | 'blessing' | 'weapon';
 
 export interface UpgradeDef {
   readonly id: UpgradeId;
@@ -197,7 +210,26 @@ export const UPGRADES: Readonly<Record<UpgradeId, UpgradeDef>> = {
     prices: [15_000, 25_000, 40_000, 60_000, 85_000],
     perLevel: 1,
   },
+  katana: {
+    id: 'katana',
+    section: 'weapon',
+    name: PICKS.katana.name,
+    description: 'Weapon: cuts every small cat in a straight line down',
+    statLabel: 'Opens',
+    startLevel: 0,
+    maxLevel: WEAPON_CARD_OPENS.katana.length,
+    // The first weapon (the owner's call, 2026-10-16): from the second jar's end, its first level
+    // a little dearer than Lightning's; each level opens one more of its picks. 177K in all.
+    gate: 10,
+    prices: [20_000, 32_000, 50_000, 75_000],
+    perLevel: 1,
+  },
 };
+
+/** True for the weapon cards. */
+export function isWeaponCard(id: UpgradeId): id is WeaponCardId {
+  return UPGRADES[id].section === 'weapon';
+}
 
 /** True for the blessing cards. */
 export function isBlessingCard(id: UpgradeId): id is BlessingCardId {
