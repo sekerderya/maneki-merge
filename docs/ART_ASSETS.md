@@ -3131,6 +3131,25 @@ came out a straight, broad knife with a long hilt (blade about twice the hilt): 
 wide blade and not a katana's shape. The prompt above starts from the game's katana instead and
 only widens its blade.
 
+**Second round (2026-10-16), two generations of the prompt above, neither taken:** one came out the
+straight broad knife again (blade about 94 px wide on the 1024 px image, no curve, a long hilt);
+the other kept the katana's curve and angled tip but its blade is only about 70 px wide, thinner
+than the first try (about 90 px) that the owner found too thin, and its arrows are small. The
+tool turns a wide blade into a knife when asked for a width in multiples, so the fix is an edit
+of the second one in its own chat, sized against its own guard:
+
+```text
+Keep this picture exactly as it is: the same red ball, the same katana with the same hilt, guard,
+curve and angled tip, the same place and length. Change only two things:
+1. Make the katana's blade much wider: nearly as wide as its gold guard, about twice as wide as it
+   is now, along its whole length. Keep the blade's gentle curve, its single cutting edge with the
+   wavy white temper line and its angled katana tip: it must stay clearly a katana, never a
+   straight knife, a cleaver or a dagger.
+2. Make the two gold arrows about one and a half times as big, still pointing outward on each side
+   of the blade at its middle, with a small gap to the blade and to the ball's edge.
+Everything stays inside the ball's circle. Nothing else changes.
+```
+
 ## 5. Icon kit (every new icon)
 
 > Read this before writing a prompt for any new icon: an upgrade, a trial or blessing card, a
