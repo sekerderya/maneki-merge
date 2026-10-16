@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.56.3] - 2026-10-17
+
+### Changed
+
+- **Quick Frog's card shows its own picture**, the owner's art: the round frog with a small wooden hourglass of gold sand (docs/ART_ASSETS.md §4.22, picture 3). Long Stay and Big Gulp show the calm frog until theirs come.
+
 ## [0.56.2] - 2026-10-16
 
 ### Changed

@@ -3375,6 +3375,10 @@ circle around them, no medallion, no ground, no water, no glow, no sparkles, not
 Square 1:1.
 ```
 
+**Arrived (2026-10-17, v0.56.3):** from the first generation, with the rounder frog attached, copied in
+as `picks/quickFrog.jpg`. Every check passes; its hourglass is a little bigger than asked (about
+40% of the frog's height) and still reads at 48 px.
+
 **4. Long Stay** (`picks/longStay.png`): the frog stays for more meals. Attach the frog sheet:
 
 ```text
