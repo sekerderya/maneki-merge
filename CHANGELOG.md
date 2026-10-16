@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.55.3] - 2026-10-16
+
+### Changed
+
+- **No Weapons section in the Upgrades screen** (the owner's call): the Katana's card is the last of the blessings, with the red katana ball as its icon, like the other special balls. Its levels still open its picks one by one.
+- **The Katana and Quick Katana pick cards show the red katana ball**; More Blades and Wide Blade keep their icons.
+
 ## [0.55.2] - 2026-10-16
 
 ### Added
