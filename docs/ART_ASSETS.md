@@ -119,7 +119,7 @@ narrower than their canvas: Claude crops the empty space.
 | 42  | 18 goal    | `hud/goal-slot.png`                        | The goal's round slot: cream disc, flat gold ring                   | 1:1, 1024×1024    |
 | 43  | 19 time    | `scene/background…-sunset.png`             | The five jar backgrounds at sunset, edits of the day ones (§4.20)   | 9:16              |
 | 44  | 19 time    | `scene/background…-night.png`              | The five jar backgrounds at night                                   | 9:16              |
-| 45  | 20 katana  | `specials/katana.png`                      | The katana, point down, gold paw-print guard and bell (§4.21)       | 2:3, 1024×1536    |
+| 45  | 20 katana  | `specials/katana.png`                      | The katana, point down, long and slender, no bell (§4.21)           | 2:3, 1024×1536    |
 | 46  | 20 katana  | `fx/slashes.png`                           | Sheet on black: four straight sword-slash streaks, end to end       | 3:2, 1536×1024    |
 | 47  | 20 katana  | `fx/cut.png`                               | Sheet on black: cut flash, glint, sparks, swoosh, strike, flash     | 3:2, 1536×1024    |
 | 48  | 20 katana  | `icons/katana.png` … `icons/wideBlade.png` | The four Katana pick icons (icon kit, §5)                           | 1:1, 1024×1024    |
@@ -2799,16 +2799,19 @@ readable at small sizes.
 Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow
 under the object. No text, no letters, no numbers, no kanji, no watermark.
 
-A cute chunky katana for a Suika-style merge game with a lucky-cat (maneki-neko) theme, in the
-same drawing style as the attached cats and ball. Strictly front view, perfectly vertical and
-centred: the hilt at the top, the point at the bottom, filling about 90% of the canvas height.
-Chibi proportions so it reads at small sizes: a short, broad, almost straight blade (only a hint
-of a curve), about three times as long as the hilt, in polished silver steel with a cool pale-blue
-sheen, a soft wavy white temper line along its cutting edge and one long glossy highlight; a round
-gold guard (tsuba) with a small paw print cut out of it; a short hilt wrapped in vermilion cord in
-a diamond pattern over cream; and, hanging from the end of the hilt on a short red cord, a small
-round gold maneki-neko bell. No scabbard. No glow, no sparkles and no motion lines around it (the
-game adds them). Nothing touches the edge of the image. Portrait 2:3.
+A katana for a Suika-style merge game with a lucky-cat (maneki-neko) theme, in the same cute
+drawing style as the attached cats and ball, but with a real katana's long, slender proportions:
+clearly a Japanese long sword, NOT a dagger, knife or tanto. Strictly side view, perfectly
+vertical and centred: the hilt at the top, the point at the bottom, filling about 92% of the
+canvas height. The blade is long and narrow, about four times as long as the hilt and no wider
+than the hilt, single-edged, with a gentle even curve along its whole length and the katana's
+angled tip (kissaki); polished silver steel with a cool pale-blue sheen, a soft wavy white temper
+line along its cutting edge and one long glossy highlight. At the top of the blade a small gold
+collar (habaki) with a tiny paw print on it, then a small oval gold guard (tsuba) seen edge-on as a
+thin flat disc, then a hilt wrapped in vermilion cord in a diamond pattern over cream, ending in a
+plain gold cap. Nothing hangs from the hilt: no bell, no cord, no tassel. No scabbard. No glow, no
+sparkles and no motion lines around it (the game adds them). Nothing touches the edge of the image.
+Portrait 2:3.
 ```
 
 **The effect sheets.** Attach the game screenshot `docs/screenshots/v0.26.0/390-1-hud.png` and the
@@ -2887,8 +2890,8 @@ under the icon. No text, no letters, no numbers, no kanji, no watermark, no sign
 One round icon for the mobile game "Maneki Merge", drawn exactly like the attached icons: a
 perfect circle, centred, filling about 80% of the canvas, with a cream face inside a gold rim and
 the same thick dark-brown outline round it. Inside, big and centred: the attached katana, lying
-diagonally across the face, its hilt with the gold paw-print guard, the vermilion cord and the
-little gold bell at the upper right, its point at the lower left. It stands for a sword that cuts
+diagonally across the face, its gold guard and vermilion hilt at the upper right, its point at
+the lower left. It stands for a sword that cuts
 the small cats in a straight line. Nothing sticks out of the circle. Square 1:1.
 ```
 
@@ -2942,7 +2945,8 @@ cut. Nothing sticks out of the circle. Square 1:1.
 ```
 
 Checks for these: the katana follows the general checklist (§2): perfectly vertical with the point
-straight down (the cut line runs along it), the paw-print guard and the bell clear at 48 px, no
+straight down (the cut line runs along it), a long slender katana, not a dagger (blade about four times the hilt), nothing hanging from the
+hilt, no
 glow or lines round it, nothing touching the edge. The effect sheets: pure black everywhere around
 the pieces, no outlines, nothing touching another piece or the image's edge, every piece white at
 its core with a steel-blue glow and a faint pink edge; each slash streak straight, the full width
