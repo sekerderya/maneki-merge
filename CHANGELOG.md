@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.56.4] - 2026-10-17
+
+### Changed
+
+- **Long Stay's card shows its own picture**, the owner's art: the round frog settled on a red zabuton cushion beside a steaming cup of green tea (docs/ART_ASSETS.md §4.22). Only Big Gulp still shows the calm frog.
+
 ## [0.56.3] - 2026-10-17
 
 ### Changed

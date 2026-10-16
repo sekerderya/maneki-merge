@@ -3379,6 +3379,9 @@ Square 1:1.
 as `picks/quickFrog.jpg`. Every check passes; its hourglass is a little bigger than asked (about
 40% of the frog's height) and still reads at 48 px.
 
+Big Gulp's prompt below asks for a plain coin too ("no symbols"): Long Stay's first try drew a 円
+on it.
+
 **4. Long Stay** (`picks/longStay.png`): the frog stays for more meals. Attach the frog sheet:
 
 ```text
@@ -3401,6 +3404,36 @@ picture of two things:
 The rice balls do not cover the frog's face. Nothing touches the edge of the image. No frame, no
 circle around them, no medallion, no ground, no plate, no water, no glow, no sparkles, nothing
 else. Square 1:1.
+```
+
+**Long Stay, second idea (2026-10-17, v0.56.4), taken.** The onigiri above came out right but the
+owner found it said nothing about staying (and its coin carried a 円). The picture in the game is
+the frog settled on a red zabuton with a steaming cup of green tea, from this prompt (the round frog
+attached), copied in as `picks/longStay.jpg`. Its eyes came out closed in happy curves, like the
+asleep pose; the owner kept it as it is.
+
+```text
+Style: match the attached image exactly. Polished casual mobile-game art, cute chibi kawaii
+illustration, thick warm dark-brown outlines (never black) of even weight, soft pastel cel shading
+with gentle gradients and one small glossy highlight, light from the upper left, clean crisp
+vector-like edges, readable at 48 px.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow.
+No text, no letters, no numbers, no kanji, no symbols, no watermark, no signature.
+
+Draw a brand-new picture; the attached image only shows what the frog looks like. A small game
+picture of a frog settling in for a long stay:
+1. The frog from the top left of the attached sheet, exactly as it is there: the same round
+   leaf-green frog with its cream-yellow belly, rosy cheeks, big eyes on top and the red cord
+   collar with its small plain gold coin (the coin has no marks or letters on it). Same round
+   shape. Its smile is a little wider and happier, eyes half closed in contentment. It fills about
+   65% of the canvas width, a little left of the centre.
+2. Under the frog, the frog sitting snugly on it, a plump square vermilion-red zabuton floor
+   cushion with a gold tassel at one corner, seen from slightly above, a little wider than the frog.
+3. Beside the cushion at the lower right, a small round cream teacup of green tea without a handle,
+   with two soft curls of steam rising from it, about a quarter of the frog's height.
+The teacup does not cover the frog. Nothing touches the edge of the image. No frame, no circle
+around them, no medallion, no floor, no table, no water, no glow, no sparkles, nothing else.
+Square 1:1.
 ```
 
 **5. Big Gulp** (`picks/bigGulp.png`): two cats at each meal. Attach the frog sheet and the
