@@ -25,17 +25,17 @@ Think of **Vampire Survivors' split between weapons and passive items**:
 
 ## 2. Systems the owner decided on
 
-| System                                     | Status                                         | Notes                                                                                                                                                                               |
-| ------------------------------------------ | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Weapon slots                               | **Decided**                                    | A run holds a limited number of different weapons. The number is open (see §7).                                                                                                     |
-| Passive slots                              | **Decided**                                    | Same, for passives. Number open.                                                                                                                                                    |
-| Skip                                       | **Decided**                                    | Skip a pick. Proposal: a skipped blessing pick pays the Lucky gift (GAME_DESIGN §15.5), which exists already.                                                                       |
-| Banish                                     | **Decided**                                    | Take an option out of this run's pool.                                                                                                                                              |
-| Reroll                                     | **Decided**                                    | Draw the pick's options again. (This reverses the old "no rerolls" call from 2026-10-08.)                                                                                           |
-| Evolutions                                 | **Decided** (the owner had it in mind already) | A maxed weapon plus a given passive turns into an evolved weapon, as in Vampire Survivors. The recipes in §5 are proposals.                                                         |
-| Varied weapon upgrades                     | **Decided**                                    | Each weapon's levels improve it in its own way, not just "+chance". Example the owner gave: Katana's multishot (§3.1).                                                              |
-| Seal (banish for good)                     | Proposed, not discussed                        | Vampire Survivors' Seal: shut a weapon out of the pool for every future run, so the player shapes their pool as more weapons open.                                                  |
-| Where skip/banish/reroll charges come from | Proposed, not discussed                        | Shop cards that raise each one's charges per run (e.g. Reroll 1 → 3), as Vampire Survivors sells them in its power-up shop. Coins would get a new use once the 8-hour shop is done. |
+| System                                     | Status                                         | Notes                                                                                                                                                                                                                        |
+| ------------------------------------------ | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Weapon slots                               | **Decided**                                    | A run holds a limited number of different weapons. The number is open (see §7).                                                                                                                                              |
+| Passive slots                              | **Decided**                                    | Same, for passives. Number open.                                                                                                                                                                                             |
+| Skip                                       | **Decided**                                    | Skip a pick. Proposal: a skipped blessing pick pays the Lucky gift (GAME_DESIGN §15.5), which exists already.                                                                                                                |
+| Banish                                     | **Decided**                                    | Take an option out of this run's pool.                                                                                                                                                                                       |
+| Reroll                                     | **Decided**                                    | Draw the pick's options again. (This reverses the old "no rerolls" call from 2026-10-08.)                                                                                                                                    |
+| Evolutions                                 | **Decided** (the owner had it in mind already) | A maxed weapon plus a given passive turns into an evolved weapon, as in Vampire Survivors. The recipes in §5 are proposals.                                                                                                  |
+| Varied weapon upgrades                     | **Decided**                                    | Each weapon improves in its own ways, not just "+chance". The first pick unlocks the weapon; its upgrades (e.g. Katana's multishot, chance, width) are separate pick options that need it, and can show side by side (§3.1). |
+| Seal (banish for good)                     | Proposed, not discussed                        | Vampire Survivors' Seal: shut a weapon out of the pool for every future run, so the player shapes their pool as more weapons open.                                                                                           |
+| Where skip/banish/reroll charges come from | Proposed, not discussed                        | Shop cards that raise each one's charges per run (e.g. Reroll 1 → 3), as Vampire Survivors sells them in its power-up shop. Coins would get a new use once the 8-hour shop is done.                                          |
 
 Still true from before: **no rarities**, **no second currency**, no XP levels (picks come only at
 stage clears). Unlocks keep going through shop cards gated by best stage (GAME_DESIGN §10): a
@@ -46,14 +46,45 @@ the steady stream of unlocks the owner wants.
 
 ### 3.1 Katana: decided
 
-- Dropped from the paw like any special ball. From the point where it is dropped it **cuts
-  straight down, vertically: every cat of sizes 1–4 in that line is cut** (pops into its value,
-  like a hanabi's pops, presumably; confirm).
-- **Big cats don't stop it** (the owner's call: the cut goes through the whole column).
-- **Upgrades: multishot.** The owner's example: with multishot upgraded it also cuts **diagonally
-  from the two corners, in an X**. Only an example; how the levels go is to be designed later.
-- Open: how wide the cut is, whether it cuts as it falls or all at once when it lands, the look and
-  the sound, the levels' path, the shop gate and price.
+Settled with the owner on 2026-10-16 (second session). Numbers marked "start" are to be measured
+with the bot before building.
+
+- **The fall.** Dropped from the paw like any special ball, the katana falls point down, fast
+  (about Heavy Drop's 0.24 s from the paw to the floor), straight down the aim line, through
+  everything. It cuts each ball as the blade reaches it (so the cuts run from the top down), then
+  sticks in the floor for a moment and fades. It is not a body: it never pushes, rests or counts for
+  the danger line.
+- **What it cuts:** every cat of **sizes 1–4** whose body the blade crosses, plus a small grace
+  (start: 8 world units each side). A cut cat **pops into its value** (coins, no score, no combo),
+  as a hanabi's pops do. Golden cats too (plain value). A cursed cat of sizes 1–4 is cut like any
+  other (its curse just ends with it, no special handling).
+- **Boulders:** the blade breaks every boulder it crosses **at once**, whatever its size and bands
+  (the owner's call), paying nothing.
+- **Passes through untouched:** cats of size 5 and up (the owner's call: big cats don't stop it),
+  hanabi (not lit: the owner's call), jokers and lightning balls.
+- **Wind and Heavy Drop don't touch it**: a straight line is what it is. The aim guide is the
+  cut line.
+- **Look:** a cut cat splits in two along the cut, the halves slide apart and fade (the code splits
+  the cat's own art, no new drawing); a steel flash along the blade's path. **Sound:** a steel
+  "shing" on the drop and a short slice per cut (procedural).
+- **Queue:** like a hanabi, none in a stage's first 20 drops, and a queued katana becomes a cat at
+  a stage clear.
+- **In-run upgrades (the owner's call):** not one blessing with levels. Picking **Katana** once
+  unlocks it (it can start to come); its upgrades are **separate pick options** that need Katana
+  (like Quick Curse needs Cursed Bell), so one blessing pick can show two Katana upgrades side by
+  side. The owner's three: **one more katana** (multishot), **comes more often** (chance) and **a
+  wider blade** (the cut's width). Their levels and the multishot's shapes: §3.1.1.
+- **Multishot shape** (the owner's example, kept): the extra blades cut **diagonally from the jar's
+  two top corners, in an X**, fixed, whatever the aim (option A; option B, an X crossing on the aim
+  line, was not picked).
+- **Shop card:** opens at best stage 10. Prices start at 20K, 32K, 50K, 75K, 105K (to be fitted to
+  the card's levels, §3.1.1), checked with the meta bot.
+
+#### 3.1.1 Still open
+
+- What each multishot level adds (the X as one level or one diagonal per level; a horizontal blade
+  later?), how many levels each upgrade has, and their numbers.
+- What the shop card's levels do now that the run has several Katana options.
 
 ### 3.2 The merge zone (was "Koban"): liked, details to discuss
 
