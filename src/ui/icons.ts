@@ -132,7 +132,20 @@ export const UPGRADE_ICONS: Readonly<Record<Exclude<UpgradeId, BlessingCardId>, 
     '<path d="M12 20.5S3.5 15.2 3.5 9.2A4.4 4.4 0 0 1 12 7a4.4 4.4 0 0 1 8.5 2.2c0 6-8.5 11.3-8.5 11.3z" fill="currentColor"/>',
   ),
   katana: katanaGlyph(),
+  frog: frogGlyph(),
 };
+
+/** A frog's round face: two eyes on top and a smile. */
+function frogGlyph(): string {
+  return svg(
+    '<circle cx="12" cy="14" r="8" fill="currentColor"/>' +
+      '<circle cx="7.5" cy="6.5" r="3.2" fill="currentColor"/>' +
+      '<circle cx="16.5" cy="6.5" r="3.2" fill="currentColor"/>' +
+      '<circle cx="7.5" cy="6.5" r="1.3" fill="#fff8ee"/>' +
+      '<circle cx="16.5" cy="6.5" r="1.3" fill="#fff8ee"/>' +
+      '<path d="M8.5 15.5q3.5 3 7 0" fill="none" stroke="#fff8ee" stroke-width="1.6" stroke-linecap="round"/>',
+  );
+}
 
 /** A katana pointing down to the lower left: a blade, a guard and a hilt. */
 function katanaGlyph(): string {
@@ -191,6 +204,17 @@ export const KATANA_SVG = svg(
     '<path d="M45 30h10v42l-5 12-5-12z" fill="#dfe8f2" stroke="#3b2620" stroke-width="3" stroke-linejoin="round"/>' +
     '<rect x="36" y="25" width="28" height="6" rx="3" fill="#e2b33f" stroke="#3b2620" stroke-width="2.5"/>' +
     '<rect x="45.5" y="10" width="9" height="15" rx="2" fill="#d9483b" stroke="#3b2620" stroke-width="2.5"/>',
+  '0 0 100 100',
+);
+
+/** The frog (GAME_DESIGN §15.17) with `?skin=vector`: a green ball with its eyes on top. */
+export const FROG_SVG = svg(
+  '<circle cx="50" cy="54" r="42" fill="#9fd27a" stroke="#3b2620" stroke-width="5"/>' +
+    '<ellipse cx="50" cy="68" rx="24" ry="18" fill="#f7efb4"/>' +
+    '<circle cx="31" cy="24" r="12" fill="#9fd27a" stroke="#3b2620" stroke-width="4"/>' +
+    '<circle cx="69" cy="24" r="12" fill="#9fd27a" stroke="#3b2620" stroke-width="4"/>' +
+    '<circle cx="31" cy="24" r="5" fill="#3b2620"/><circle cx="69" cy="24" r="5" fill="#3b2620"/>' +
+    '<path d="M40 44q10 8 20 0" fill="none" stroke="#3b2620" stroke-width="3.5" stroke-linecap="round"/>',
   '0 0 100 100',
 );
 
@@ -270,6 +294,15 @@ const PICK_ICONS: Readonly<Record<GlyphPick, string>> = {
     '<path d="M12 3v15M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>',
   ),
   quickKatana: katanaGlyph(),
+  frog: frogGlyph(),
+  quickFrog: frogGlyph(),
+  longStay: svg(
+    '<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.2"/>' +
+      '<path d="M12 7v5l3.5 2.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
+  ),
+  bigGulp: svg(
+    '<circle cx="8" cy="12" r="5" fill="currentColor"/><circle cx="17" cy="12" r="4" fill="currentColor"/>',
+  ),
   wideBlade: svg(
     '<path d="M9.5 3h5v13l-2.5 5-2.5-5z" fill="currentColor"/>' +
       '<path d="M6 12H2.5M18 12h3.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',

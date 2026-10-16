@@ -60,7 +60,7 @@ export interface GameStateSnapshot {
   readonly canTake: boolean;
   /**
    * What the dropper holds and what comes next: 'cat', 'magnet', 'boulder', 'hanabi', 'joker',
-   * 'lightning' or 'katana'.
+   * 'lightning', 'katana' or 'frog'.
    */
   readonly current: string | null;
   readonly next: string | null;
@@ -151,10 +151,12 @@ export interface GameHooks {
   /** Chooses an option of the waiting pick (its first by default). */
   choose(id?: PickId): boolean;
   /**
-   * Puts a magnet, a boulder, a hanabi, a joker, a lightning ball, a katana or a golden cat in the
-   * dropper.
+   * Puts a magnet, a boulder, a hanabi, a joker, a lightning ball, a katana, a frog or a golden cat
+   * in the dropper.
    */
-  give(kind: 'magnet' | 'boulder' | 'hanabi' | 'joker' | 'lightning' | 'katana' | 'golden'): void;
+  give(
+    kind: 'magnet' | 'boulder' | 'hanabi' | 'joker' | 'lightning' | 'katana' | 'frog' | 'golden',
+  ): void;
   /** Puts a cat of `tier` (golden if asked) in the dropper; ignored if the stage can't hold it. */
   giveCat(tier: number, golden?: boolean): void;
   /** Sets a trial's, rule's (0 or 1) or blessing's level for this run. */
@@ -596,6 +598,7 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
       action('Joker', () => hooks.give('joker')),
       action('Lightning', () => hooks.give('lightning')),
       action('Katana', () => hooks.give('katana')),
+      action('Frog', () => hooks.give('frog')),
       action('Picks', () => hooks.offerPicks()),
       action('Rule pick', () => hooks.offerPicks(true)),
     ),

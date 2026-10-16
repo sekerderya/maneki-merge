@@ -104,6 +104,8 @@ describe('the lightning ball in the queue (GAME_DESIGN §15.1)', () => {
     jokerChance: 0,
     lightningChance: 1,
     katanaChance: 0,
+    frogChance: 0,
+    frogMeals: 5,
     boulderSize: 2,
     boulderHits: 1,
   };

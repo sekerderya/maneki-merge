@@ -242,9 +242,11 @@ describe('upgrades (GAME_DESIGN §10)', () => {
     ['lightning', 'Lightning', 0, 5, 8, [15_000, 25_000, 40_000, 60_000, 85_000]],
     // The first weapon (GAME_DESIGN §15.16): each level opens one of its picks.
     ['katana', 'Katana', 0, 4, 10, [20_000, 32_000, 50_000, 75_000]],
+    // The second weapon (GAME_DESIGN §15.17).
+    ['frog', 'Frog', 0, 4, 13, [22_000, 35_000, 55_000, 80_000]],
   ];
 
-  it('lists the 4 upgrades, then the 6 blessing cards and the Katana, in shop order', () => {
+  it('lists the 4 upgrades, then the 6 blessing cards, the Katana and the Frog, in shop order', () => {
     expect([...UPGRADE_IDS]).toEqual(TABLE.map(([id]) => id));
   });
 

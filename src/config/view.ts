@@ -389,6 +389,26 @@ export const LIGHTNING_FX = {
   arcMs: 140,
 } as const;
 /**
+ * The Frog's look (GAME_DESIGN §15.17), in world units (as shares of the frog's radius) and ms. As a
+ * ball leaves the paw the frog opens its mouth and its tongue shoots to the cat in `outMs`, then
+ * pulls it back into the mouth in `backMs`, the cat shrinking to `catTo` of its size; the frog
+ * gulps for `gulpMs`. After its last meal it falls asleep for `sleepMs`, then shrinks away in
+ * `goneMs` with a puff of sparks. The mouth is `mouth` of the radius above the frog's centre
+ * (turning with it); the tongue is `thickness` of the radius thick.
+ */
+export const FROG_FX = {
+  outMs: 110,
+  backMs: 170,
+  gulpMs: 320,
+  sleepMs: 420,
+  goneMs: 260,
+  catTo: 0.25,
+  mouth: 0.2,
+  thickness: 0.3,
+  puffSparks: 10,
+} as const;
+
+/**
  * The Katana's look (GAME_DESIGN §15.16), in world units and ms. The sword is `length` long as it
  * falls (in the paw it is a ball, SpecialSkin); behind it a streak of light `streakBand` wide runs from where
  * its blade started to its point, and fades over `streakFadeMs` once it lands. The point sticks in

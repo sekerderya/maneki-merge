@@ -4,7 +4,8 @@
  * (GAME_DESIGN §15.3), which never merges and breaks after `hitsLeft` merges next to it, a hanabi
  * (§15.6), which goes off a moment after it lands, a joker cat (§15.7), which merges with the
  * first cat it touches, or a lightning ball (§15.15), which strikes the first cat or boulder it
- * touches and every ball like it. The tier
+ * touches and every ball like it, or a frog (§15.17), which swallows the smallest cat at every
+ * drop until its meals run out. The tier
  * is the cat's number (a boulder's is the tier of its size); the size (its place in the current
  * stage, 1–10) sets its radius and density. Contacts use the exact circle (circleCollision.ts);
  * the body's polygon only feeds matter-js's broadphase bounds.
@@ -24,8 +25,8 @@ import type { CircleShape } from './circleCollision';
 /** matter-js velocities are per base tick of 1000/60 ms; config speeds are per second. */
 export const MATTER_TICKS_PER_SECOND = 60;
 
-/** A ball is a cat, a boulder, a hanabi, a joker cat or a lightning ball. */
-export type BallKind = 'cat' | 'boulder' | 'hanabi' | 'joker' | 'lightning';
+/** A ball is a cat, a boulder, a hanabi, a joker cat, a lightning ball or a frog. */
+export type BallKind = 'cat' | 'boulder' | 'hanabi' | 'joker' | 'lightning' | 'frog';
 
 /** What rendering and game rules may read about a ball. */
 export interface BallView {
@@ -34,7 +35,7 @@ export interface BallView {
   readonly tier: number;
   /** A golden cat skips a tier when it merges (GAME_DESIGN §15.4). */
   readonly golden: boolean;
-  /** The merges a boulder still needs to break; 0 for a cat. */
+  /** The merges a boulder still needs to break, a frog's meals left; 0 for the others. */
   readonly hitsLeft: number;
   /** The cat's size at the current stage (1–9). */
   readonly size: number;
@@ -75,7 +76,7 @@ export interface BallSpec {
   readonly kind?: BallKind;
   readonly tier: number;
   readonly golden?: boolean;
-  /** A boulder's merges to break (at least 1). */
+  /** A boulder's merges to break, a frog's meals (at least 1). */
   readonly hits?: number;
   /** 1–10: the tier's place in the world's stage (the world works it out). */
   readonly size: number;
@@ -222,9 +223,10 @@ function setCircleMass(body: Matter.Body, size: number, radius: number): void {
 export function createBall(id: number, spec: BallSpec): Ball {
   if (!isTier(spec.tier)) throw new RangeError(`Unknown tier: ${spec.tier}`);
   const kind = spec.kind ?? 'cat';
-  const hits = kind === 'boulder' ? (spec.hits ?? 1) : 0;
-  if (kind === 'boulder' && !(Number.isInteger(hits) && hits >= 1)) {
-    throw new RangeError(`Invalid boulder hits: ${spec.hits}`);
+  const counted = kind === 'boulder' || kind === 'frog';
+  const hits = counted ? (spec.hits ?? 1) : 0;
+  if (counted && !(Number.isInteger(hits) && hits >= 1)) {
+    throw new RangeError(`Invalid ${kind} hits: ${spec.hits}`);
   }
   if (!isSize(spec.size)) throw new RangeError(`Tier ${spec.tier} has no size here: ${spec.size}`);
   if (!Number.isFinite(spec.x) || !Number.isFinite(spec.y)) {

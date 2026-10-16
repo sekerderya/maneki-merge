@@ -8,6 +8,7 @@
 import { PRELOAD_TIMEOUT_MS } from '../config/platform';
 import { CAT_ART_LOAD_TIMEOUT_MS, CAT_SPRITE_DIR, CAT_SPRITES } from '../config/catSprites';
 import { DOOR_ART, DOOR_SPRITE_DIR } from '../config/doorSprites';
+import { FROG_ART, FROG_POSE_DIR, FROG_TONGUE_DIR } from '../config/frogSprites';
 import { FX_ART, FX_SPRITE_DIR } from '../config/fxSprites';
 import { HUD_BADGE_ART, HUD_SPRITE_DIR } from '../config/hudSprites';
 import { ICON_SPRITE_DIR, iconSprites } from '../config/iconSprites';
@@ -61,6 +62,10 @@ export interface SpecialImages {
   /** The Katana's ball in the paw and its sword (docs/ART_ASSETS.md §4.21), null until they come. */
   readonly katanaBall: HTMLImageElement | null;
   readonly katanaSword: HTMLImageElement | null;
+  /** The Frog's poses, calm, open, gulp and sleepy (docs/ART_ASSETS.md §4.22), empty until they come. */
+  readonly frog: readonly HTMLImageElement[];
+  /** The Frog's tongue: its band and its tip, null until they come. */
+  readonly frogTongue: { readonly band: HTMLImageElement; readonly tip: HTMLImageElement } | null;
   /** With 0, 1, 2 and 3 iron bands. */
   readonly boulders: readonly HTMLImageElement[];
 }
@@ -123,15 +128,28 @@ export function loadArt(baseUrl: string): Promise<ArtImages> {
     Promise.all(SPECIAL_ART.boulders.map(({ file }) => special(file))),
     SPECIAL_ART.katana ? special(SPECIAL_ART.katana.file) : null,
     KATANA_ART ? image(`${baseUrl}${KATANA_SWORD_DIR}${KATANA_ART.katana.file}`) : null,
-  ]).then(([magnet, hanabi, joker, lightning, boulders, katanaBall, katanaSword]) => ({
-    magnet,
-    hanabi,
-    joker,
-    lightning,
-    boulders,
-    katanaBall,
-    katanaSword,
-  }));
+    Promise.all(
+      (FROG_ART.poses ?? []).map(({ file }) => image(`${baseUrl}${FROG_POSE_DIR}${file}`)),
+    ),
+    FROG_ART.band && FROG_ART.tip
+      ? Promise.all([
+          image(`${baseUrl}${FROG_TONGUE_DIR}${FROG_ART.band.file}`),
+          image(`${baseUrl}${FROG_TONGUE_DIR}${FROG_ART.tip.file}`),
+        ]).then(([band, tip]) => ({ band, tip }))
+      : null,
+  ]).then(
+    ([magnet, hanabi, joker, lightning, boulders, katanaBall, katanaSword, frog, frogTongue]) => ({
+      magnet,
+      hanabi,
+      joker,
+      lightning,
+      boulders,
+      katanaBall,
+      katanaSword,
+      frog,
+      frogTongue,
+    }),
+  );
   const fxList = (list: readonly { file: string }[]): Promise<HTMLImageElement[]> =>
     Promise.all(list.map(({ file }) => image(`${baseUrl}${FX_SPRITE_DIR}${file}`)));
   const fx = Promise.all([

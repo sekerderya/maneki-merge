@@ -1,7 +1,7 @@
 /**
  * What the shop sells (GAME_DESIGN §10): permanent upgrades, blessing cards that set how far each
- * blessing can go in a run (v0.36), among them the Katana's, whose levels open its picks one by one
- * (the Katana, GAME_DESIGN §15.16). Derived stats: core/upgrades.ts.
+ * blessing can go in a run (v0.36), among them the weapons' (the Katana's, GAME_DESIGN §15.16, and
+ * the Frog's, §15.17), whose levels open their picks one by one. Derived stats: core/upgrades.ts.
  */
 import { PICKS } from './picks';
 import type { PickId } from './picks';
@@ -19,6 +19,7 @@ export const UPGRADE_IDS = [
   'joker',
   'lightning',
   'katana',
+  'frog',
 ] as const;
 
 export type UpgradeId = (typeof UPGRADE_IDS)[number];
@@ -42,6 +43,7 @@ export type BlessingCardId = (typeof BLESSING_CARD_IDS)[number];
  */
 export const WEAPON_CARD_OPENS = {
   katana: ['katana', 'quickKatana', 'wideBlade', 'moreBlades'],
+  frog: ['frog', 'quickFrog', 'longStay', 'bigGulp'],
 } as const satisfies Readonly<Record<string, readonly PickId[]>>;
 
 export type WeaponCardId = keyof typeof WEAPON_CARD_OPENS;
@@ -223,6 +225,20 @@ export const UPGRADES: Readonly<Record<UpgradeId, UpgradeDef>> = {
     // a little dearer than Lightning's; each level opens one more of its picks. 177K in all.
     gate: 10,
     prices: [20_000, 32_000, 50_000, 75_000],
+    perLevel: 1,
+  },
+  frog: {
+    id: 'frog',
+    section: 'blessing',
+    name: PICKS.frog.name,
+    description: 'Blessing: swallows the smallest cat at every drop',
+    statLabel: 'Opens',
+    startLevel: 0,
+    maxLevel: WEAPON_CARD_OPENS.frog.length,
+    // The second weapon (the owner's call, 2026-10-16): three stages after the Katana, its prices
+    // a little above the Katana's; each level opens one more of its picks. 192K in all.
+    gate: 13,
+    prices: [22_000, 35_000, 55_000, 80_000],
     perLevel: 1,
   },
 };

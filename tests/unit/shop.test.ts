@@ -11,12 +11,12 @@ const levels = (overrides: Partial<Record<UpgradeId, number>> = {}): UpgradeLeve
 });
 
 describe('shop cards (GAME_DESIGN §2.2)', () => {
-  it('lists every card in shop order: the upgrades, then the blessings (the Katana last)', () => {
+  it('lists every card in shop order: the upgrades, then the blessings (the weapons last)', () => {
     const cards = shopCards(levels(), 0, 1);
     expect(cards.map((c) => c.id)).toEqual([...UPGRADE_IDS]);
     expect(cards.map((c) => c.section)).toEqual([
       ...Array<string>(4).fill('upgrade'),
-      ...Array<string>(7).fill('blessing'),
+      ...Array<string>(8).fill('blessing'),
     ]);
     for (const card of cards) {
       expect(card.name).toBe(UPGRADES[card.id].name);
@@ -37,6 +37,20 @@ describe('shop cards (GAME_DESIGN §2.2)', () => {
     expect(shopCard('katana', levels(), 1e6, 10)).toMatchObject({
       state: 'affordable',
       price: 20_000,
+    });
+  });
+
+  it("names the pick each level of the Frog's card opens, from stage 13 (GAME_DESIGN §10)", () => {
+    const at = (frog: number) => shopCard('frog', levels({ frog }), 0, 13);
+    expect(at(0)).toMatchObject({ statLabel: 'Opens', current: '–', next: 'Frog' });
+    expect(at(1)).toMatchObject({ current: 'Frog', next: 'Quick Frog' });
+    expect(at(2)).toMatchObject({ current: 'Quick Frog', next: 'Long Stay' });
+    expect(at(3)).toMatchObject({ current: 'Long Stay', next: 'Big Gulp' });
+    expect(at(4)).toMatchObject({ current: 'Big Gulp', next: null, state: 'max' });
+    expect(shopCard('frog', levels(), 1e6, 12).state).toBe('locked');
+    expect(shopCard('frog', levels(), 1e6, 13)).toMatchObject({
+      state: 'affordable',
+      price: 22_000,
     });
   });
 

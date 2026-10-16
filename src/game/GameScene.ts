@@ -66,6 +66,7 @@ import { CurseFx } from './fx/CurseFx';
 import { DiceFx } from './fx/DiceFx';
 import { KintsugiFx } from './fx/KintsugiFx';
 import { LastCatFx } from './fx/LastCatFx';
+import { FrogFx } from './fx/FrogFx';
 import { KatanaFx } from './fx/KatanaFx';
 import { katanaArtFrames, katanaStandIns } from './fx/katanaFrames';
 import { KATANA_ART } from '../config/katanaSprites';
@@ -146,6 +147,8 @@ export class GameScene extends Phaser.Scene {
   private lightning!: LightningFx;
   /** The Katana: in the paw, falling, its cuts and its landing (GAME_DESIGN §15.16). */
   private katana!: KatanaFx;
+  /** The Frog: its tongue, its faces and its leaving (GAME_DESIGN §15.17). */
+  private frog!: FrogFx;
   private aimGuide!: AimGuide;
   private selectRing!: Phaser.GameObjects.Image;
   private dropperGlow!: Phaser.GameObjects.Image;
@@ -294,6 +297,15 @@ export class GameScene extends Phaser.Scene {
       katanaFrames,
       (count) => this.particles(count),
     );
+    this.frog = new FrogFx(
+      this,
+      numbers,
+      this.balls,
+      this.special,
+      this.sparks,
+      art?.specials.frogTongue ?? null,
+      (count) => this.particles(count),
+    );
     this.selectRing = this.add.image(0, 0, '__WHITE').setTint(SELECT_RING).setVisible(false);
     fx.add(this.selectRing);
     this.countdown = this.add
@@ -324,6 +336,7 @@ export class GameScene extends Phaser.Scene {
       this.dice.restore();
       this.lightning.restore();
       this.katana.restore();
+      this.frog.restore();
       restoreRingTextures(this.textures);
     });
 
@@ -415,8 +428,9 @@ export class GameScene extends Phaser.Scene {
     on('catPopped', (e) => {
       const { x, y } = e.at;
       const radius = run.radiusOf(e.tier);
-      // A katana's cut split the cat already (`katanaCut`): only its payout is left.
-      if (e.reason === 'katana') {
+      // A katana's cut split the cat already (`katanaCut`), a frog's tongue took it
+      // (`frogSwallowed`): only its payout is left.
+      if (e.reason === 'katana' || e.reason === 'frog') {
         this.fx.payout(this.nowMs, x, y, e.tier, radius, e.coins);
         return;
       }
@@ -474,6 +488,14 @@ export class GameScene extends Phaser.Scene {
       const ball = run.balls.find((b) => b.id === e.id);
       this.fall.landing(e.at.x, e.at.y + (ball?.radius ?? 0));
       this.addShake(SHAKE.heavy, SHAKE.heavyMs);
+    });
+    // The Frog (GAME_DESIGN §15.17): its tongue pulls the cat in; after its last meal it goes.
+    on('frogSwallowed', (e) => {
+      this.frog.swallowed(this.nowMs, e.id, e.cat, e.at.x, e.at.y);
+    });
+    on('frogLeft', (e) => {
+      const size = tierSize(e.tier, run.stage);
+      this.frog.left(this.nowMs, e.id, e.at.x, e.at.y, run.radiusOf(e.tier), size);
     });
     on('specialPopped', (e) => {
       const { x, y } = e.at;
@@ -619,6 +641,7 @@ export class GameScene extends Phaser.Scene {
     this.dice?.clear();
     this.lightning?.clear();
     this.katana?.clear();
+    this.frog?.clear();
     this.lastCat?.clear();
   }
 
@@ -686,20 +709,21 @@ export class GameScene extends Phaser.Scene {
       alpha,
     );
     this.katana.update(this.nowMs, run.katana, alpha);
+    this.frog.update(this.nowMs, run.balls, alpha);
     this.pops.update(this.nowMs);
     this.fx.update(this.nowMs);
   }
 
   /**
-   * The texture of the dropper's ball: a cat, a boulder, a hanabi, a joker, a lightning ball or the
-   * magnet.
+   * The texture of the dropper's ball: a cat, a boulder, a hanabi, a joker, a lightning ball, the
+   * katana's ball, a frog or the magnet.
    */
   private dropFrame(item: Drop, stage: number): SkinFrame {
     if (item.kind === 'magnet') return this.special.magnet();
     if (item.kind === 'cat') return this.skin.body(item.tier);
     if (item.kind === 'katana') return this.special.katana(tierSize(item.tier, stage));
     const { kind, tier, hits } = item;
-    return this.balls.frameOf({ kind, tier, size: tierSize(tier, stage), hitsLeft: hits });
+    return this.balls.frameOf({ id: -1, kind, tier, size: tierSize(tier, stage), hitsLeft: hits });
   }
 
   private renderDropper(run: RunController): void {

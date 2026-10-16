@@ -231,6 +231,10 @@ const SMART_BLESSINGS: readonly PickId[] = [
   'moreBlades',
   'wideBlade',
   'quickKatana',
+  'frog',
+  'bigGulp',
+  'longStay',
+  'quickFrog',
   'hanabi',
   'moreMagnets',
 ];
@@ -285,7 +289,7 @@ const SMART_STEP = 8;
  * cat of its tier or next to one, never onto a smaller cat, low, and where its size belongs (big
  * cats left, small ones right); a joker onto the biggest cat it can reach; a hanabi among small
  * cats and boulders; a lightning ball onto the boulders, else onto the small size (1–4) that
- * clutters the jar most; a boulder low and out of the way. Then it aims into the wind.
+ * clutters the jar most; a boulder or a frog low and out of the way. Then it aims into the wind.
  */
 function smartX(run: RunController): number {
   const { halfWidth, dropY } = run.geometry;

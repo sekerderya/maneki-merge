@@ -61,6 +61,13 @@ export function connectRunFeedback(events: EventBus<GameEvents>, out: FeedbackOu
       out.play('slice');
       out.vibrate('tick');
     }),
+    // The Frog (GAME_DESIGN §15.17): its tongue for each cat it swallows (the coin comes with the
+    // cat's pop), a croak as it goes.
+    events.on('frogSwallowed', () => {
+      out.play('tongue');
+      out.vibrate('tick');
+    }),
+    events.on('frogLeft', () => out.play('croak')),
     events.on('boulderBroken', () => {
       out.play('crunch');
       out.vibrate('tick');

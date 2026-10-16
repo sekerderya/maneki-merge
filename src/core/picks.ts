@@ -12,6 +12,9 @@ import {
   CURSE_INTERVALS,
   DICE_FIZZLE_CHANCE,
   DICE_LUCKY_CHANCE,
+  FROG_BITES,
+  FROG_CHANCE,
+  FROG_MEALS,
   HEAVY_DROP_FALL_TIMES,
   HEAVY_DROP_RULE_LEVEL,
   HUBRIS_PAIR_WAIT_MS,
@@ -79,6 +82,25 @@ export function katanaGrace(levels: PickLevels): number {
   return KATANA_GRACE[Math.min(levels.wideBlade, KATANA_GRACE.length - 1)] as number;
 }
 
+/**
+ * The Frog's chance per queued item (GAME_DESIGN §15.17): none until it is taken, then FROG_CHANCE
+ * and more with each Quick Frog level.
+ */
+export function frogChance(levels: PickLevels): number {
+  if (levels.frog <= 0) return 0;
+  return FROG_CHANCE + PICKS.quickFrog.perLevel * levels.quickFrog;
+}
+
+/** The meals a frog makes before it leaves: Long Stay's level. */
+export function frogMeals(levels: PickLevels): number {
+  return FROG_MEALS[Math.min(levels.longStay, FROG_MEALS.length - 1)] as number;
+}
+
+/** The cats a frog swallows at each meal: Big Gulp's level. */
+export function frogBites(levels: PickLevels): number {
+  return FROG_BITES[Math.min(levels.bigGulp, FROG_BITES.length - 1)] as number;
+}
+
 /** What the queue rolls at `stage` with these pick levels (GAME_DESIGN §15.1). */
 export function dropOdds(levels: PickLevels, stage: number, bigCatchTilt: number): DropOdds {
   return {
@@ -90,6 +112,8 @@ export function dropOdds(levels: PickLevels, stage: number, bigCatchTilt: number
     jokerChance: PICKS.joker.perLevel * levels.joker,
     lightningChance: PICKS.lightning.perLevel * levels.lightning,
     katanaChance: katanaChance(levels),
+    frogChance: frogChance(levels),
+    frogMeals: frogMeals(levels),
     boulderSize: BOULDER_BASE_SIZE + PICKS.bigBoulders.perLevel * levels.bigBoulders,
     boulderHits: BOULDER_BASE_HITS + PICKS.ironBands.perLevel * levels.ironBands,
   };
@@ -244,6 +268,13 @@ export function pickValue(id: PickId, levels: PickLevels, bigCatchTilt: number):
       return String(1 + levels.moreBlades);
     case 'wideBlade':
       return KATANA_WIDTH_NAMES[levels.wideBlade] ?? '';
+    case 'frog':
+    case 'quickFrog':
+      return percent(odds.frogChance);
+    case 'longStay':
+      return String(odds.frogMeals);
+    case 'bigGulp':
+      return String(frogBites(levels));
     case 'wind':
       return WIND_NAMES[levels.wind] ?? '';
     case 'heavyDrop':

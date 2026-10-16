@@ -291,8 +291,17 @@ function runSnapshot(value: unknown): RunSnapshot {
 }
 
 const PICK_KINDS = ['trial', 'blessing', 'rule'] as const;
-const DROP_KINDS = ['cat', 'magnet', 'boulder', 'hanabi', 'joker', 'lightning', 'katana'] as const;
-const BALL_KINDS = ['cat', 'boulder', 'hanabi', 'joker', 'lightning'] as const;
+const DROP_KINDS = [
+  'cat',
+  'magnet',
+  'boulder',
+  'hanabi',
+  'joker',
+  'lightning',
+  'katana',
+  'frog',
+] as const;
+const BALL_KINDS = ['cat', 'boulder', 'hanabi', 'joker', 'lightning', 'frog'] as const;
 
 function waits(value: unknown): [number, number, number, number][] {
   return list(value, 'hubrisWaits').map((entry) => {

@@ -58,6 +58,11 @@ describe('the trials, rules and blessings (GAME_DESIGN §15.5)', () => {
     ['moreBlades', 'blessing', 'More Blades', 3, 1],
     ['quickKatana', 'blessing', 'Quick Katana', 2, 0.0225],
     ['wideBlade', 'blessing', 'Wide Blade', 2, 1],
+    // The Frog (GAME_DESIGN §15.17): taken once, then its three upgrades of its own.
+    ['frog', 'blessing', 'Frog', 1, 0.0225],
+    ['quickFrog', 'blessing', 'Quick Frog', 2, 0.0225],
+    ['longStay', 'blessing', 'Long Stay', 2, 2],
+    ['bigGulp', 'blessing', 'Big Gulp', 1, 1],
     ['hubris', 'rule', 'Hubris', 1, 1],
     ['echo', 'rule', 'Echo', 1, 1],
     ['copycat', 'rule', 'Copycat', 1, 1],
@@ -66,7 +71,7 @@ describe('the trials, rules and blessings (GAME_DESIGN §15.5)', () => {
     ['heavyDrop', 'rule', 'Heavy Drop', 1, 5],
   ];
 
-  it('lists eight trials, ten blessings and five rules, in card order', () => {
+  it('lists eight trials, fourteen blessings and five rules, in card order', () => {
     expect([...PICK_IDS]).toEqual(TABLE.map(([id]) => id));
     expect(pickIds('trial')).toEqual(TRIAL_IDS);
     expect(pickIds('blessing')).toEqual(BLESSING_IDS);
@@ -187,6 +192,8 @@ describe('dropOdds (GAME_DESIGN §15.1)', () => {
       jokerChance: 0,
       lightningChance: 0,
       katanaChance: 0,
+      frogChance: 0,
+      frogMeals: 5,
       boulderSize: 2,
       boulderHits: 1,
     });
@@ -204,6 +211,8 @@ describe('dropOdds (GAME_DESIGN §15.1)', () => {
     expect(odds.jokerChance).toBeCloseTo(0.1125, 12);
     expect(odds.lightningChance).toBeCloseTo(0.075, 12);
     expect(odds.katanaChance).toBeCloseTo(0.0675, 12);
+    expect(odds.frogChance).toBeCloseTo(0.0675, 12);
+    expect(odds.frogMeals).toBe(9);
     expect(odds.boulderSize).toBe(6);
     expect(odds.boulderHits).toBe(4);
     expect(odds.tiltLevel).toBe(13);
@@ -315,9 +324,19 @@ describe('the cards', () => {
     expect(together).toBeGreaterThan(0);
   });
 
+  it("offers the Frog's upgrades only once it is taken (GAME_DESIGN §15.17)", () => {
+    for (const id of ['quickFrog', 'longStay', 'bigGulp'] as const) {
+      expect(PICKS[id].requires).toBe('frog');
+      expect(pickOpen(id, levels(), 0)).toBe(false);
+      expect(pickOpen(id, levels({ frog: 1 }), 0)).toBe(true);
+    }
+    expect(pickOpen('frog', levels({ frog: 1 }), 0)).toBe(false);
+  });
+
   it('leaves maxed options out, and offers nothing when every one is maxed', () => {
     const katana = { katana: 1, moreBlades: 3, quickKatana: 2, wideBlade: 2 };
-    const maxed = { goldenCats: 5, hanabi: 5, joker: 5, lightning: 5, ...katana };
+    const frog = { frog: 1, quickFrog: 2, longStay: 2, bigGulp: 1 };
+    const maxed = { goldenCats: 5, hanabi: 5, joker: 5, lightning: 5, ...katana, ...frog };
     const some = drawOffer('blessing', levels(maxed), 0, new Rng(1));
     expect([...some].sort()).toEqual(['bigDrops', 'moreMagnets']);
     const none = levels(Object.fromEntries(TRIAL_IDS.map((id) => [id, PICKS[id].maxLevel])));
@@ -334,6 +353,7 @@ describe('the cards', () => {
       joker: 0,
       lightning: 0,
       katana: 0,
+      frog: 0,
     };
     const first = drawOffer('blessing', levels(), 0, new Rng(1), fresh);
     expect([...first].sort()).toEqual(['bigDrops', 'goldenCats']);
@@ -378,6 +398,12 @@ describe('the cards', () => {
     ['moreBlades', { katana: 1, moreBlades: 2 }, 0, '3', '4'],
     ['wideBlade', { katana: 1 }, 0, 'Thin', 'Wide'],
     ['wideBlade', { katana: 1, wideBlade: 1 }, 0, 'Wide', 'Broad'],
+    ['frog', {}, 0, '0%', '2.25%'],
+    ['quickFrog', { frog: 1 }, 0, '2.25%', '4.5%'],
+    ['quickFrog', { frog: 1, quickFrog: 1 }, 0, '4.5%', '6.75%'],
+    ['longStay', { frog: 1 }, 0, '5', '7'],
+    ['longStay', { frog: 1, longStay: 1 }, 0, '7', '9'],
+    ['bigGulp', { frog: 1 }, 0, '1', '2'],
     ['wind', {}, 0, 'Calm', 'Breeze'],
     ['wind', { wind: 4 }, 0, 'Gale', 'Storm'],
     // The rule: the fall of the old trial's last level.

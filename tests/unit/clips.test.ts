@@ -35,11 +35,15 @@ describe('how-it-works clips (docs/plans/batch-21.md)', () => {
       hanabi: 'hanabi',
       joker: 'joker',
       lightning: 'lightning',
-      // The Katana's clip comes once its look is in the game.
+      // The Katana's and the Frog's clips come once their looks are in the game.
       katana: null,
       moreBlades: null,
       quickKatana: null,
       wideBlade: null,
+      frog: null,
+      quickFrog: null,
+      longStay: null,
+      bigGulp: null,
       hubris: 'hubris',
       echo: 'echo',
       copycat: 'copycat',
@@ -59,6 +63,7 @@ describe('how-it-works clips (docs/plans/batch-21.md)', () => {
       joker: 'joker',
       lightning: 'lightning',
       katana: null,
+      frog: null,
     });
     // Every clip opens from some card, or plays on the boulders' card at stage 2.
     const used = new Set<ClipId | null>([...Object.values(picks), ...Object.values(shop)]);

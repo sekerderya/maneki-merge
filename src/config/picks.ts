@@ -88,6 +88,24 @@ export const KATANA_WIDTH_NAMES = ['Thin', 'Wide', 'Broad'] as const;
 /** The Katana's chance per queued item, and what each Quick Katana level adds (start values). */
 export const KATANA_CHANCE = 0.0225;
 export const KATANA_CHANCE_PER_LEVEL = 0.0225;
+/**
+ * The Frog (GAME_DESIGN §15.17), the second weapon: a ball of FROG_SIZE that never merges and rolls
+ * like the others. Each time a ball leaves the paw after it, its tongue swallows the jar's smallest
+ * landed cat (between equals, the nearest), FROG_BITES[Big Gulp level] of them, each paying its
+ * value (coins, no score, no combo); after FROG_MEALS[Long Stay level] such meals it falls asleep
+ * and is gone. It doesn't count for the danger line. None comes in a stage's first FROG_FREE_DROPS
+ * drops: an empty jar has nothing to swallow.
+ */
+export const FROG_SIZE = 3;
+export const FROG_FREE_DROPS = 20;
+/** By Long Stay level: the meals a frog makes before it leaves. */
+export const FROG_MEALS = [5, 7, 9] as const;
+/** By Big Gulp level: the cats it swallows at each meal. */
+export const FROG_BITES = [1, 2] as const;
+/** The Frog's chance per queued item, and what each Quick Frog level adds (start values). */
+export const FROG_CHANCE = 0.0225;
+export const FROG_CHANCE_PER_LEVEL = 0.0225;
+
 /** A katana blade's path in world units: from (x0, y0), where it starts, to (x1, y1), where its point ends. */
 export interface BladeLine {
   readonly x0: number;
@@ -244,6 +262,10 @@ export const BLESSING_IDS = [
   'moreBlades',
   'quickKatana',
   'wideBlade',
+  'frog',
+  'quickFrog',
+  'longStay',
+  'bigGulp',
 ] as const;
 export const PICK_IDS = [...TRIAL_IDS, ...BLESSING_IDS, ...RULE_IDS] as const;
 
@@ -542,6 +564,47 @@ export const PICKS: Readonly<Record<PickId, PickDef>> = {
     maxLevel: KATANA_GRACE.length - 1,
     perLevel: 1,
     requires: 'katana',
+  },
+  // The Frog (GAME_DESIGN §15.17), the second weapon, built like the Katana: taking it once opens
+  // it; its upgrades are picks of their own that need it, each opened by a level of its shop card.
+  frog: {
+    id: 'frog',
+    kind: 'blessing',
+    name: 'Frog',
+    description: 'Swallows the smallest cat at every drop',
+    statLabel: 'Frogs',
+    maxLevel: 1,
+    perLevel: FROG_CHANCE,
+  },
+  quickFrog: {
+    id: 'quickFrog',
+    kind: 'blessing',
+    name: 'Quick Frog',
+    description: 'Frogs come more often',
+    statLabel: 'Frogs',
+    maxLevel: 2,
+    perLevel: FROG_CHANCE_PER_LEVEL,
+    requires: 'frog',
+  },
+  longStay: {
+    id: 'longStay',
+    kind: 'blessing',
+    name: 'Long Stay',
+    description: 'The frog stays for more meals',
+    statLabel: 'Meals',
+    maxLevel: FROG_MEALS.length - 1,
+    perLevel: 2,
+    requires: 'frog',
+  },
+  bigGulp: {
+    id: 'bigGulp',
+    kind: 'blessing',
+    name: 'Big Gulp',
+    description: 'The frog swallows two cats at a time',
+    statLabel: 'Cats per meal',
+    maxLevel: FROG_BITES.length - 1,
+    perLevel: 1,
+    requires: 'frog',
   },
 };
 

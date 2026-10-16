@@ -11,7 +11,7 @@
  * pool when the effect ends (`recycle`). A freshly merged cat bumps up and settles (`bump`); an
  * echo cat and a cursed cat's boulder fade in (`fadeIn`). A cracked cat (Porcelain, GAME_DESIGN
  * §15.10) shows the skin's crack lines over it, one of two patterns turned by its id, rolling
- * with it.
+ * with it. A frog (§15.17) shows the face its effect sets (`setFrogPose`), calm by default.
  */
 import type Phaser from 'phaser';
 import {
@@ -25,6 +25,7 @@ import {
   MERGE_BUMP_MS,
   MERGE_BUMP_SCALE,
 } from '../config/view';
+import type { FrogPose } from '../config/frogSprites';
 import type { BallView } from '../physics/balls';
 import type { BallSkin, SkinFrame } from './skins/BallSkin';
 import type { SpecialSkin } from './skins/SpecialSkin';
@@ -36,6 +37,8 @@ const PARKED_TEXTURE = '__DEFAULT';
 export interface CatSprite {
   id: number;
   tier: number;
+  /** The ball's size at the stage when its texture was set. */
+  size: number;
   /** A boulder's merges left when its texture was set (0 for a cat). */
   hits: number;
   seen: number;
@@ -71,6 +74,8 @@ export class BallRenderer {
   private readonly bumps = new Map<number, number>();
   /** Each fading-in ball (an echo, a cat's stone): when, from which alpha and how long, by id. */
   private readonly fades = new Map<number, { start: number; from: number; ms: number }>();
+  /** The face each frog shows, by id, when it isn't calm. */
+  private readonly frogPoses = new Map<number, FrogPose>();
   private frame = 0;
   private revision: number;
 
@@ -90,7 +95,7 @@ export class BallRenderer {
   }
 
   /** The body frame of a ball: its cat look, its boulder with the bands it has left, … */
-  frameOf(ball: Pick<BallView, 'kind' | 'tier' | 'size' | 'hitsLeft'>): SkinFrame {
+  frameOf(ball: Pick<BallView, 'id' | 'kind' | 'tier' | 'size' | 'hitsLeft'>): SkinFrame {
     switch (ball.kind) {
       case 'boulder':
         return this.special.boulder(ball.size, ball.hitsLeft);
@@ -100,6 +105,8 @@ export class BallRenderer {
         return this.special.joker(ball.size);
       case 'lightning':
         return this.special.lightning(ball.size);
+      case 'frog':
+        return this.special.frog(ball.size, this.frogPoses.get(ball.id) ?? 'calm');
       case 'cat':
         return this.skin.body(ball.tier);
     }
@@ -167,6 +174,17 @@ export class BallRenderer {
     }
   }
 
+  /** The frog `id` shows the face of `pose` from now on (FrogFx). */
+  setFrogPose(id: number, pose: FrogPose): void {
+    if ((this.frogPoses.get(id) ?? 'calm') === pose) return;
+    if (pose === 'calm') this.frogPoses.delete(id);
+    else this.frogPoses.set(id, pose);
+    const sprite = this.live.get(id);
+    if (!sprite) return;
+    const body = this.special.frog(sprite.size, pose);
+    sprite.body.setTexture(body.key, body.frame);
+  }
+
   /** The merged cat `id` pops: a short scale bump on top of its growth. */
   bump(id: number, nowMs: number): void {
     this.bumps.set(id, nowMs);
@@ -228,6 +246,7 @@ export class BallRenderer {
   clear(): void {
     this.bumps.clear();
     this.fades.clear();
+    this.frogPoses.clear();
     for (const [id, sprite] of this.live) this.release(id, sprite);
   }
 
@@ -235,6 +254,7 @@ export class BallRenderer {
     const sprite = this.free.pop() ?? this.createSprite();
     sprite.id = ball.id;
     sprite.tier = ball.tier;
+    sprite.size = ball.size;
     sprite.hits = ball.hitsLeft;
     this.applyTextures(sprite, ball);
     sprite.body.setVisible(true);
@@ -269,6 +289,7 @@ export class BallRenderer {
     this.live.delete(id);
     this.bumps.delete(id);
     this.fades.delete(id);
+    this.frogPoses.delete(id);
     this.recycle(sprite);
   }
 
@@ -280,6 +301,6 @@ export class BallRenderer {
     this.bodies.add(body);
     this.numbers.add([number, crack]);
     this.glows.add(glow);
-    return { id: -1, tier: 1, hits: 0, seen: 0, body, number, glow, crack };
+    return { id: -1, tier: 1, size: 1, hits: 0, seen: 0, body, number, glow, crack };
   }
 }

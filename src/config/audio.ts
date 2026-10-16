@@ -28,6 +28,8 @@ export type SoundName =
   | 'clack'
   | 'thunder'
   | 'shing'
+  | 'tongue'
+  | 'croak'
   | 'slice';
 
 /** Everything goes through one master gain and a limiter, so stacked sounds never clip. */
@@ -90,6 +92,10 @@ export const SOUNDS: Readonly<Record<SoundName, SoundSpec>> = {
   // play a quick run of slices, not a pile).
   shing: { volume: 0.34, durationMs: 420, minIntervalMs: 200, maxVoices: 1 },
   slice: { volume: 0.26, durationMs: 140, minIntervalMs: 45, maxVoices: 2 },
+  // The Frog (GAME_DESIGN §15.17): its tongue snapping out and back with a cat, and a croak as it
+  // falls asleep and goes.
+  tongue: { volume: 0.32, durationMs: 260, minIntervalMs: 60, maxVoices: 2 },
+  croak: { volume: 0.3, durationMs: 420, minIntervalMs: 200, maxVoices: 1 },
 };
 
 /**

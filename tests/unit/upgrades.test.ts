@@ -51,6 +51,10 @@ describe('deriveStats (GAME_DESIGN §10)', () => {
         quickKatana: 0,
         wideBlade: 0,
         moreBlades: 0,
+        frog: 0,
+        quickFrog: 0,
+        longStay: 0,
+        bigGulp: 0,
       },
     });
   });
@@ -61,6 +65,14 @@ describe('deriveStats (GAME_DESIGN §10)', () => {
     expect(caps(2)).toMatchObject({ katana: 1, quickKatana: 2, wideBlade: 0, moreBlades: 0 });
     expect(caps(3)).toMatchObject({ katana: 1, quickKatana: 2, wideBlade: 2, moreBlades: 0 });
     expect(caps(4)).toMatchObject({ katana: 1, quickKatana: 2, wideBlade: 2, moreBlades: 3 });
+  });
+
+  it("opens the Frog's picks one by one with its card's levels (GAME_DESIGN §15.17)", () => {
+    const caps = (frog: number) => deriveStats(levels({ frog })).pickCaps;
+    expect(caps(1)).toMatchObject({ frog: 1, quickFrog: 0, longStay: 0, bigGulp: 0 });
+    expect(caps(2)).toMatchObject({ frog: 1, quickFrog: 2, longStay: 0, bigGulp: 0 });
+    expect(caps(3)).toMatchObject({ frog: 1, quickFrog: 2, longStay: 2, bigGulp: 0 });
+    expect(caps(4)).toMatchObject({ frog: 1, quickFrog: 2, longStay: 2, bigGulp: 1 });
   });
 
   it('applies every formula at max level', () => {
@@ -111,23 +123,27 @@ describe('the cards (GAME_DESIGN §10)', () => {
     }
   });
 
-  it('sells a card for every blessing after the upgrades, the Katana last among them', () => {
+  it('sells a card for every blessing after the upgrades, the weapons last among them', () => {
     expect(UPGRADE_IDS.filter((id) => UPGRADES[id].section === 'blessing')).toEqual([
       ...BLESSING_CARD_IDS,
       'katana',
+      'frog',
     ]);
-    expect(UPGRADE_IDS.slice(-BLESSING_CARD_IDS.length - 1)).toEqual([
+    expect(UPGRADE_IDS.slice(-BLESSING_CARD_IDS.length - 2)).toEqual([
       ...BLESSING_CARD_IDS,
       'katana',
+      'frog',
     ]);
   });
 
-  it('costs about 1M coins in all (the 8-hour pacing model), plus the late Lightning and Katana', () => {
+  it('costs about 1M coins in all (the 8-hour pacing model), plus the late Lightning and weapons', () => {
     const cost = (id: UpgradeId): number => UPGRADES[id].prices.reduce((a, b) => a + b, 0);
     const total = UPGRADE_IDS.reduce((sum, id) => sum + cost(id), 0);
-    expect(total - cost('lightning') - cost('katana')).toBe(1_021_200);
+    const late = cost('lightning') + cost('katana') + cost('frog');
+    expect(total - late).toBe(1_021_200);
     expect(cost('lightning')).toBe(225_000);
     expect(cost('katana')).toBe(177_000);
+    expect(cost('frog')).toBe(192_000);
   });
 });
 

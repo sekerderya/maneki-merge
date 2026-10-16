@@ -3,7 +3,8 @@
  * payouts, the combo timer, stage clears and the expansion timeline, the danger line, Lucky Saves
  * and game over; and the special balls, trials and blessings of GAME_DESIGN §15 (magnets taking a
  * ball out of the jar, boulders breaking, golden cats, hanabi going off, joker cats merging with any
- * cat, lightning balls striking every cat of a size, katanas cutting the small cats in a line, the
+ * cat, lightning balls striking every cat of a size, katanas cutting the small cats in a line, frogs
+ * swallowing the smallest cat at every drop, the
  * picks at every stage clear, cursed cats turning to stone, Copycat's NEXT and Dice's rolls). The
  * game scene renders it and forwards input; the HUD, FX, audio and save listen to its events.
  *
@@ -18,7 +19,7 @@
  * nothing (no physics, cooldown, combo or danger) until the struck balls pop.
  * The stage clear goes first, so making the stage's last cat saves the jar even on the step the
  * danger timer would run out. A drop first counts down a curse (or turns its cat to stone), then
- * may begin the next one.
+ * may begin the next one, and every frog in the jar makes a meal.
  */
 import {
   HEAVY_DROP_GRAVITY_BONUS,
@@ -45,6 +46,7 @@ import {
   HUBRIS_PAIR_WAIT_MS,
   HUBRIS_TOUCH_GRACE_MS,
   JOKER_SIZE,
+  FROG_SIZE,
   KATANA_FALL_MS,
   KATANA_SIZE,
   LATE_CLEARS_FROM,
@@ -98,6 +100,8 @@ import {
   drawOffer,
   dropOdds,
   heavyDropStrength,
+  frogBites,
+  frogMeals,
   katanaGrace,
   openOptions,
 } from '../core/picks';
@@ -117,6 +121,7 @@ import type { Ball, BallKind, BallView } from '../physics/balls';
 import { DangerMonitor, isOverLine, luckySaveVictims } from '../physics/danger';
 import { clampDropX, dropStartY } from '../physics/geometry';
 import { fuseBurntOut, hanabiBlast } from '../physics/hanabi';
+import { frogMeal } from '../physics/frog';
 import { katanaBlades, katanaCuts } from '../physics/katana';
 import { strikeTargets } from '../physics/lightning';
 import type { JarGeometry } from '../physics/geometry';
@@ -653,6 +658,8 @@ export class RunController {
     if (!this.canDrop || !Number.isFinite(x) || kind === 'magnet') return false;
     // A cursed cat's bell counts the drop first; at 0 the cat turns to stone before the ball goes.
     this.countCurse();
+    // The frogs in the jar eat as the ball leaves the paw; a frog dropped now waits for the next.
+    this.feedFrogs();
     const item = this.queue.take(this.wantedTiers());
     const geo = this.world.geometry;
     const radius = this.radiusOf(item.tier);
@@ -697,6 +704,47 @@ export class RunController {
     this.events.emit('catDropped', { kind: 'katana', tier, golden: false, x });
     this.events.emit('katanaDropped', { x, blades, fallMs: KATANA_STEPS * PHYSICS_STEP_MS });
     this.curseIfDue();
+  }
+
+  /**
+   * A ball leaves the paw (GAME_DESIGN §15.17): every frog in the jar, oldest first, swallows the
+   * smallest landed cats (`frogMeal`, Big Gulp's count), each popping into its value (coins, no
+   * score, no combo). A meal counts once, whatever it swallowed; a jar with no landed cat feeds
+   * nothing. A frog that made its last meal falls asleep and is gone.
+   */
+  private feedFrogs(): void {
+    const frogs = this.world.balls.filter((ball) => ball.kind === 'frog');
+    if (frogs.length === 0) return;
+    const bites = frogBites(this.levels);
+    let paid = false;
+    for (const frog of frogs) {
+      const meal = frogMeal(frog, this.world.balls, bites);
+      if (meal.length === 0) continue;
+      frog.hitsLeft--;
+      for (const cat of meal) {
+        const at = { x: cat.x, y: cat.y };
+        this.world.removeBall(cat);
+        const { coins } = this.economy.pop(cat.tier);
+        this.bankCoins(coins);
+        paid = true;
+        const mealsLeft = frog.hitsLeft;
+        this.events.emit('frogSwallowed', {
+          id: frog.id,
+          cat: cat.id,
+          tier: cat.tier,
+          at,
+          mealsLeft,
+        });
+        this.events.emit('catPopped', { id: cat.id, tier: cat.tier, at, coins, reason: 'frog' });
+      }
+      if (frog.hitsLeft > 0) continue;
+      const at = { x: frog.x, y: frog.y };
+      this.world.removeBall(frog);
+      this.events.emit('frogLeft', { id: frog.id, tier: frog.tier, at });
+    }
+    if (!paid) return;
+    this.events.emit('runCoinsChanged', { coins: this.economy.coins });
+    this.curseGone();
   }
 
   /**
@@ -831,11 +879,11 @@ export class RunController {
 
   /**
    * Puts a magnet, a boulder (with the current trials' size and hits), a hanabi, a joker, a
-   * lightning ball, a katana or a golden cat (of the stage's smallest tier) in the dropper instead of
-   * its ball.
+   * lightning ball, a katana, a frog or a golden cat (of the stage's smallest tier) in the dropper
+   * instead of its ball.
    */
   giveSpecial(
-    kind: 'magnet' | 'boulder' | 'hanabi' | 'joker' | 'lightning' | 'katana' | 'golden',
+    kind: 'magnet' | 'boulder' | 'hanabi' | 'joker' | 'lightning' | 'katana' | 'frog' | 'golden',
   ): void {
     if (this.runState === 'over') return;
     const first = stageInfo(this.world.stage).firstTier;
@@ -851,11 +899,15 @@ export class RunController {
     this.announceDropIfReady();
   }
 
-  /** A magnet, a hanabi, a joker, a lightning ball or a katana of its size at the current stage. */
-  private specialDrop(kind: 'magnet' | 'hanabi' | 'joker' | 'lightning' | 'katana'): Drop {
+  /**
+   * A magnet, a hanabi, a joker, a lightning ball, a katana or a frog (with Long Stay's meals) of its
+   * size at the current stage.
+   */
+  private specialDrop(kind: 'magnet' | 'hanabi' | 'joker' | 'lightning' | 'katana' | 'frog'): Drop {
     const first = stageInfo(this.world.stage).firstTier;
     const size = SPECIAL_SIZES[kind];
-    return { kind, tier: first + size - 1, golden: false, hits: 0 };
+    const hits = kind === 'frog' ? frogMeals(this.levels) : 0;
+    return { kind, tier: first + size - 1, golden: false, hits };
   }
 
   /**
@@ -1780,7 +1832,7 @@ export class RunController {
 
   /**
    * Pops cats into their value in coins (stage clear, Lucky Save): no score, no combo. Boulders
-   * crumble, hanabi, jokers and lightning balls vanish; they pay nothing.
+   * crumble, hanabi, jokers, lightning balls and frogs vanish; they pay nothing.
    */
   private pop(balls: readonly Ball[], reason: 'cashOut' | 'luckySave'): void {
     if (balls.length === 0) return;
@@ -2012,6 +2064,7 @@ const SPECIAL_SIZES = {
   joker: JOKER_SIZE,
   lightning: LIGHTNING_SIZE,
   katana: KATANA_SIZE,
+  frog: FROG_SIZE,
 } as const;
 
 /** A saved falling katana: it goes on falling where it was. */

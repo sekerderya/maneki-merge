@@ -7,6 +7,7 @@
  */
 import { CAT_SPRITE_DIR, CAT_SPRITES } from '../config/catSprites';
 import type { CatSprite } from '../config/catSprites';
+import { FROG_POSE_DIR, frogSprite } from '../config/frogSprites';
 import { PICK_SPRITE_DIR, pickPicture } from '../config/pickSprites';
 import { DROP_SIZES } from '../config/stages';
 import type { PickId } from '../config/picks';
@@ -98,5 +99,13 @@ export function pickArt(id: PickId, level: number): PickArt | null {
     case 'moreBlades':
     case 'wideBlade':
       return SPECIAL_ART.katana && special(SPECIAL_ART.katana);
+    // The Frog's family shows the calm frog until its own pictures come.
+    case 'frog':
+    case 'quickFrog':
+    case 'longStay':
+    case 'bigGulp': {
+      const frog = frogSprite();
+      return frog && ball(FROG_POSE_DIR, frog);
+    }
   }
 }

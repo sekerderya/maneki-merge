@@ -7,7 +7,16 @@ import { SPECIAL_ART, SPECIAL_SPRITE_DIR, boulderSprite } from '../config/specia
 import { darken } from '../core/color';
 import type { Drop } from '../core/dropQueue';
 import { el } from './dom';
-import { boulderSvg, HANABI_SVG, JOKER_SVG, KATANA_SVG, LIGHTNING_SVG, MAGNET_SVG } from './icons';
+import { frogSprite } from '../config/frogSprites';
+import {
+  boulderSvg,
+  FROG_SVG,
+  HANABI_SVG,
+  JOKER_SVG,
+  KATANA_SVG,
+  LIGHTNING_SVG,
+  MAGNET_SVG,
+} from './icons';
 
 /** Which art DOM icons use; `?skin=` switches them along with the game. */
 export type IconSkin = 'art' | 'vector' | 'placeholder';
@@ -64,8 +73,8 @@ export function catIcon(tier: number): HTMLElement {
 
 /**
  * A ball from the dropper's queue as a DOM icon (the HUD's NEXT, GAME_DESIGN §15.1): a cat (a
- * golden one glows), the magnet, a boulder with its bands, a hanabi, a joker, a lightning ball or a
- * katana.
+ * golden one glows), the magnet, a boulder with its bands, a hanabi, a joker, a lightning ball, a
+ * katana or a frog.
  */
 export function paintDropIcon(icon: HTMLElement, drop: Drop): void {
   icon.classList.toggle('is-golden', drop.golden);
@@ -86,7 +95,9 @@ export function paintDropIcon(icon: HTMLElement, drop: Drop): void {
       ? null
       : drop.kind === 'boulder'
         ? boulderSprite(drop.hits - 1)
-        : SPECIAL_ART[drop.kind];
+        : drop.kind === 'frog'
+          ? frogSprite()
+          : SPECIAL_ART[drop.kind];
   if (sprite) {
     paintSpecialArt(icon, sprite);
     return;
@@ -103,7 +114,9 @@ export function paintDropIcon(icon: HTMLElement, drop: Drop): void {
             ? LIGHTNING_SVG
             : drop.kind === 'katana'
               ? KATANA_SVG
-              : boulderSvg(Math.max(0, drop.hits - 1));
+              : drop.kind === 'frog'
+                ? FROG_SVG
+                : boulderSvg(Math.max(0, drop.hits - 1));
 }
 
 export function paintCatIcon(icon: HTMLElement, tier: number): void {

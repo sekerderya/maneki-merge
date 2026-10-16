@@ -6,13 +6,16 @@
  * merge they need; with `?skin=placeholder` a grey circle showing the merges left), the hanabi
  * (a navy ball with a firework burst and a fuse), the joker (a white ball with a rainbow ring
  * and a gold star) and the lightning ball (a violet ball with a yellow bolt; its stand-in with the
- * art skin too until the owner's image comes). The gold glow behind golden cats is always drawn
+ * art skin too until the owner's image comes), the katana's ball and the frog (a green ball with two
+ * eyes on top, until its art comes). The gold glow behind golden cats is always drawn
  * in code. Like the cats, each texture is drawn at CAT_PX_PER_UNIT for the radius of its size,
  * with the outline's outer edge on the physics radius, and is shared by every stage. Textures are
  * drawn the first time they are asked for.
  */
 import type Phaser from 'phaser';
 import { CAT_OUTLINE_MIN, CAT_OUTLINE_RATIO } from '../../config/catSprites';
+import { FROG_POSES, frogSprite } from '../../config/frogSprites';
+import type { FrogPose } from '../../config/frogSprites';
 import type { CatSprite } from '../../config/catSprites';
 import { MAGNET_SIZE } from '../../config/picks';
 import {
@@ -22,6 +25,9 @@ import {
   BOULDER_LIGHT,
   BOULDER_RIVET,
   BOULDER_STONE,
+  FROG_BELLY,
+  FROG_GREEN,
+  FROG_MOUTH,
   GOLDEN_GLOW,
   HANABI_BALL,
   HANABI_BURST,
@@ -128,6 +134,19 @@ export class SpecialSkin {
     const sprite = SPECIAL_ART.katana;
     return this.frame(`special-katana-${size}`, (canvas) =>
       image && sprite ? drawArt(canvas, image, sprite, radius) : drawKatana(canvas, radius),
+    );
+  }
+
+  /**
+   * The frog of `size` (GAME_DESIGN §15.17) with the face of `pose`: the owner's image once it is
+   * in, else a green ball with its eyes on top.
+   */
+  frog(size: number, pose: FrogPose = 'calm'): SkinFrame {
+    const radius = sizeRadius(size);
+    const image = this.art?.frog[FROG_POSES.indexOf(pose)] ?? null;
+    const sprite = frogSprite(pose);
+    return this.frame(`special-frog-${size}-${pose}`, (canvas) =>
+      image && sprite ? drawArt(canvas, image, sprite, radius) : drawFrog(canvas, radius, pose),
     );
   }
 
@@ -447,6 +466,45 @@ function drawKatana(canvas: HTMLCanvasElement, radius: number): void {
     [-0.08, -0.7],
   ]);
   ctx.restore();
+}
+
+/** The frog's stand-in: a green disc, a cream belly, two eyes on top and its face for `pose`. */
+function drawFrog(canvas: HTMLCanvasElement, radius: number, pose: FrogPose): void {
+  const [ctx, c, r] = disc(canvas, radius);
+  const line = outlinePx(radius);
+  outlinedCircle(ctx, c, r, line, FROG_GREEN);
+  ctx.lineWidth = line * 0.6;
+  ctx.strokeStyle = SPECIAL_INK;
+  ctx.beginPath();
+  ctx.ellipse(c, c + 0.3 * r, 0.55 * r, 0.42 * r, 0, 0, 2 * Math.PI);
+  ctx.fillStyle = FROG_BELLY;
+  ctx.fill();
+  const eyes = pose === 'gulp' || pose === 'sleepy';
+  for (const side of [-1, 1]) {
+    const x = c + side * 0.4 * r;
+    const y = c - 0.55 * r;
+    ctx.beginPath();
+    if (eyes) {
+      ctx.moveTo(x - 0.14 * r, y);
+      ctx.quadraticCurveTo(x, y + (pose === 'sleepy' ? 0.1 : -0.1) * r, x + 0.14 * r, y);
+      ctx.stroke();
+    } else {
+      ctx.arc(x, y, 0.12 * r, 0, 2 * Math.PI);
+      ctx.fillStyle = SPECIAL_INK;
+      ctx.fill();
+    }
+  }
+  ctx.beginPath();
+  if (pose === 'open') {
+    ctx.ellipse(c, c - 0.18 * r, 0.22 * r, 0.16 * r, 0, 0, 2 * Math.PI);
+    ctx.fillStyle = FROG_MOUTH;
+    ctx.fill();
+    ctx.stroke();
+  } else {
+    ctx.moveTo(c - 0.2 * r, c - 0.22 * r);
+    ctx.quadraticCurveTo(c, c - 0.1 * r, c + 0.2 * r, c - 0.22 * r);
+    ctx.stroke();
+  }
 }
 
 function drawGlow(canvas: HTMLCanvasElement): void {

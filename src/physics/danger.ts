@@ -14,8 +14,12 @@ export function isOverLine(cat: BallView, rimY: number): boolean {
   return cat.y - cat.radius < rimY;
 }
 
-/** Landed, and the landing grace is over. Half a step of slack absorbs floating-point noise. */
+/**
+ * Landed, and the landing grace is over. Half a step of slack absorbs floating-point noise. A frog
+ * never counts (GAME_DESIGN §15.17).
+ */
 export function countsForDanger(cat: BallView, nowMs: number): boolean {
+  if (cat.kind === 'frog') return false;
   return cat.landedMs >= 0 && nowMs - cat.landedMs >= LANDING_GRACE_MS - PHYSICS_STEP_MS / 2;
 }
 
@@ -88,7 +92,8 @@ export class DangerMonitor {
 /**
  * The balls a Lucky Save pops (GAME_DESIGN §6): every landed ball over the line (boulders too,
  * §15.3), plus the `count` smallest of the other landed cats (smaller tier first, then older
- * first; boulders don't count among them). A ball still falling from the dropper is left alone.
+ * first; boulders don't count among them). A ball still falling from the dropper is left alone, and
+ * so is a frog, which doesn't count for the line (§15.17).
  * Returned oldest first.
  */
 export function luckySaveVictims<T extends BallView>(
@@ -99,7 +104,7 @@ export function luckySaveVictims<T extends BallView>(
   const over: T[] = [];
   const rest: T[] = [];
   for (const cat of cats) {
-    if (cat.landedMs < 0) continue;
+    if (cat.landedMs < 0 || cat.kind === 'frog') continue;
     if (isOverLine(cat, rimY)) over.push(cat);
     else if (cat.kind === 'cat') rest.push(cat);
   }

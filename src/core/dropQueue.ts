@@ -2,6 +2,9 @@
 import {
   BOULDER_BASE_HITS,
   BOULDER_BASE_SIZE,
+  FROG_FREE_DROPS,
+  FROG_MEALS,
+  FROG_SIZE,
   HANABI_FREE_DROPS,
   HANABI_SIZE,
   JOKER_SIZE,
@@ -25,10 +28,12 @@ import type { QueueSnapshot } from './runSave';
 /**
  * A cat, a magnet (takes a ball out of the jar, GAME_DESIGN §15.2), a boulder (§15.3), a hanabi
  * (pops the small cats around it, §15.6), a joker cat (merges with any cat, §15.7) or a lightning
- * ball (strikes every cat of the size it touches, §15.15) or a katana (cuts every small cat in a
- * line, §15.16; it never goes into the jar as a ball).
+ * ball (strikes every cat of the size it touches, §15.15), a katana (cuts every small cat in a
+ * line, §15.16; it never goes into the jar as a ball) or a frog (swallows the smallest cat at every
+ * drop, §15.17).
  */
-export type DropKind = 'cat' | 'magnet' | 'boulder' | 'hanabi' | 'joker' | 'lightning' | 'katana';
+export type DropKind =
+  'cat' | 'magnet' | 'boulder' | 'hanabi' | 'joker' | 'lightning' | 'katana' | 'frog';
 
 export interface Drop {
   readonly kind: DropKind;
@@ -40,7 +45,7 @@ export interface Drop {
   readonly tier: number;
   /** A golden cat skips a tier when it merges (GAME_DESIGN §15.4). Only cats are golden. */
   readonly golden: boolean;
-  /** The merges a boulder still needs to break; 0 for cats and magnets. */
+  /** The merges a boulder still needs to break, a frog's meals; 0 for the others. */
   readonly hits: number;
 }
 
@@ -55,13 +60,22 @@ export interface DropOdds {
   readonly jokerChance: number;
   readonly lightningChance: number;
   readonly katanaChance: number;
+  readonly frogChance: number;
+  /** The meals a frog queued now makes before it leaves (Long Stay). */
+  readonly frogMeals: number;
   /** A boulder's size (1–9) and the merges it needs to break. */
   readonly boulderSize: number;
   readonly boulderHits: number;
 }
 
 /** The kinds a stage clear turns into a cat (`newStage`): they would have nothing to work on. */
-const EMPTY_JAR_TURNS: ReadonlySet<DropKind> = new Set(['magnet', 'hanabi', 'lightning', 'katana']);
+const EMPTY_JAR_TURNS: ReadonlySet<DropKind> = new Set([
+  'magnet',
+  'hanabi',
+  'lightning',
+  'katana',
+  'frog',
+]);
 
 /** No special balls, no tilt: a plain stage-1 queue. */
 export const PLAIN_ODDS: DropOdds = {
@@ -73,6 +87,8 @@ export const PLAIN_ODDS: DropOdds = {
   jokerChance: 0,
   lightningChance: 0,
   katanaChance: 0,
+  frogChance: 0,
+  frogMeals: FROG_MEALS[0],
   boulderSize: BOULDER_BASE_SIZE,
   boulderHits: BOULDER_BASE_HITS,
 };
@@ -107,7 +123,7 @@ export interface DropQueueOptions {
  * rolls its tier, kind and golden once; the first two items of a run are cats of the pool's
  * smallest tier. No magnet is queued before MAGNET_FREE_DROPS balls were dropped in the stage, no
  * hanabi before HANABI_FREE_DROPS, no lightning ball before LIGHTNING_FREE_DROPS, no katana before
- * KATANA_FREE_DROPS. With Copycat
+ * KATANA_FREE_DROPS, no frog before FROG_FREE_DROPS. With Copycat
  * (GAME_DESIGN §15.13) a merge turns the cat in NEXT to its size (`copyNext`); the cats queued
  * after it roll as usual.
  */
@@ -237,8 +253,8 @@ export class DropQueue {
 
   /**
    * A stage was cleared and the jar is empty (GAME_DESIGN §15.1): the drop count starts again, and
-   * a queued magnet, hanabi, lightning ball or katana becomes a cat of the pool's smallest tier,
-   * since it would have nothing to take, pop, strike or cut. A cut-in one (the bonus ball,
+   * a queued magnet, hanabi, lightning ball, katana or frog becomes a cat of the pool's smallest
+   * tier, since it would have nothing to take, pop, strike, cut or swallow. A cut-in one (the bonus ball,
    * GAME_DESIGN §2.7) isn't lost: it swaps places with the ball waiting behind it, and comes after
    * the stage's first drop.
    */
@@ -303,8 +319,9 @@ export class DropQueue {
     const hanabiChance = this.stageDrops >= HANABI_FREE_DROPS ? odds.hanabiChance : 0;
     const lightningChance = this.stageDrops >= LIGHTNING_FREE_DROPS ? odds.lightningChance : 0;
     const katanaChance = this.stageDrops >= KATANA_FREE_DROPS ? odds.katanaChance : 0;
-    // One roll picks the kind: magnet, boulder, hanabi, joker, lightning, katana, then cat, in that
-    // order (a new kind goes last, so a seed's other kinds stay where they were).
+    const frogChance = this.stageDrops >= FROG_FREE_DROPS ? odds.frogChance : 0;
+    // One roll picks the kind: magnet, boulder, hanabi, joker, lightning, katana, frog, then cat, in
+    // that order (a new kind goes last, so a seed's other kinds stay where they were).
     let below = magnetChance;
     if (kindRoll < below) {
       return { kind: 'magnet', tier: first + MAGNET_SIZE - 1, golden: false, hits: 0 };
@@ -329,6 +346,10 @@ export class DropQueue {
     below += katanaChance;
     if (kindRoll < below) {
       return { kind: 'katana', tier: first + KATANA_SIZE - 1, golden: false, hits: 0 };
+    }
+    below += frogChance;
+    if (kindRoll < below) {
+      return { kind: 'frog', tier: first + FROG_SIZE - 1, golden: false, hits: odds.frogMeals };
     }
     return { kind: 'cat', tier, golden: goldenRoll < odds.goldenChance, hits: 0 };
   }

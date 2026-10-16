@@ -6,7 +6,8 @@
  * tools/buildSpecials.ts, the Upgrades screen by tools/buildShop.ts and the icon kit by
  * tools/buildIcons.ts, the pick cards' pictures by tools/buildPicks.ts, the effect sheets by
  * tools/buildFx.ts, the Lightning blessing's sheets of light by tools/buildLightning.ts, the
- * Katana's sword and sheets by tools/buildKatana.ts and the
+ * Katana's sword and sheets by tools/buildKatana.ts, the Frog's poses and tongue by
+ * tools/buildFrog.ts and the
  * loading screen's bar by tools/buildLoading.ts, the app icon by tools/buildAppIcon.ts. Cats,
  * special balls and icons go through tools/artBall.ts.
  *
@@ -24,6 +25,7 @@ import { buildAppIcon } from './buildAppIcon.ts';
 import { findSource } from './artImage.ts';
 import { buildClouds } from './buildClouds.ts';
 import { buildDoors } from './buildDoors.ts';
+import { buildFrog } from './buildFrog.ts';
 import { buildFx } from './buildFx.ts';
 import { buildHud } from './buildHud.ts';
 import { buildIcons } from './buildIcons.ts';
@@ -70,6 +72,7 @@ async function main(): Promise<void> {
   await buildFx();
   await buildLightning();
   await buildKatana();
+  await buildFrog();
   await buildClouds();
   await buildLoading();
   await buildAppIcon();

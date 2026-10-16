@@ -71,7 +71,10 @@ export interface WorldPoint {
  */
 export interface GameEvents {
   runStarted: { readonly seed: number; readonly stage: number };
-  /** A ball left the dropper: a cat, a boulder, a hanabi, a joker, a lightning ball or a katana. */
+  /**
+   * A ball left the dropper: a cat, a boulder, a hanabi, a joker, a lightning ball, a katana or a
+   * frog.
+   */
   catDropped: {
     readonly kind: Exclude<DropKind, 'magnet'>;
     readonly tier: number;
@@ -156,12 +159,26 @@ export interface GameEvents {
   /** The katana's points reached the ends of their lines: it sticks in the floor and fades. */
   katanaLanded: { readonly blades: readonly BladeLine[] };
   /**
-   * A hanabi, a joker or a lightning ball vanished without doing anything (a stage clear's pops, a
-   * Lucky Save). It pays nothing.
+   * The frog `id` (GAME_DESIGN §15.17) swallowed the cat `cat` at `at` as a ball left the paw: its
+   * tongue pulls the cat in (`catPopped`, reason `frog`, follows with the payout; this comes first,
+   * so the scene can take the cat's sprite). `mealsLeft`: the frog's meals after this one.
+   */
+  frogSwallowed: {
+    readonly id: number;
+    readonly cat: number;
+    readonly tier: number;
+    readonly at: WorldPoint;
+    readonly mealsLeft: number;
+  };
+  /** The frog `id` made its last meal: it falls asleep and is gone. */
+  frogLeft: { readonly id: number; readonly tier: number; readonly at: WorldPoint };
+  /**
+   * A hanabi, a joker, a lightning ball or a frog vanished without doing anything (a stage clear's
+   * pops, a Lucky Save). It pays nothing.
    */
   specialPopped: {
     readonly id: number;
-    readonly kind: 'hanabi' | 'joker' | 'lightning';
+    readonly kind: 'hanabi' | 'joker' | 'lightning' | 'frog';
     readonly tier: number;
     readonly at: WorldPoint;
     readonly reason: 'cashOut' | 'luckySave';
@@ -203,7 +220,7 @@ export interface GameEvents {
   };
   /**
    * A single cat popped into coins: its value (half of C(t)), at a stage clear, a Lucky Save, a
-   * hanabi's blast, a lightning strike or a katana's cut.
+   * hanabi's blast, a lightning strike, a katana's cut or a frog's meal.
    */
   catPopped: {
     /** The cat's id (BallView.id), so the scene can pop the cat's own sprite. */
@@ -211,7 +228,7 @@ export interface GameEvents {
     readonly tier: number;
     readonly at: WorldPoint;
     readonly coins: number;
-    readonly reason: 'cashOut' | 'luckySave' | 'hanabi' | 'lightning' | 'katana';
+    readonly reason: 'cashOut' | 'luckySave' | 'hanabi' | 'lightning' | 'katana' | 'frog';
   };
   scoreChanged: { readonly score: number };
   runCoinsChanged: { readonly coins: number };

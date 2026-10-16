@@ -288,6 +288,41 @@ export const RECIPES: Readonly<Record<SoundName, Recipe>> = {
     noise(v, { filter: 'highpass', from: 3800, to: 6400, attack: 0.002, decay: 0.07, gain: 0.8 });
     tone(v, { from: 4186, to: 3136, glide: 0.06, decay: 0.07, gain: 0.3 });
   },
+  // A frog's tongue (GAME_DESIGN §15.17): a wet snap out, then a low gulp as it pulls the cat in.
+  tongue(v) {
+    noise(v, {
+      filter: 'bandpass',
+      from: 1800,
+      to: 700,
+      q: 2,
+      attack: 0.004,
+      decay: 0.07,
+      gain: 0.6,
+    });
+    tone(v, { from: 520, to: 180, glide: 0.12, delay: 0.1, attack: 0.01, decay: 0.12, gain: 0.7 });
+  },
+  // The frog falls asleep and goes: two soft, low croaks.
+  croak(v) {
+    tone(v, {
+      type: 'square',
+      from: 150,
+      to: 120,
+      glide: 0.1,
+      attack: 0.01,
+      decay: 0.12,
+      gain: 0.25,
+    });
+    tone(v, {
+      type: 'square',
+      from: 140,
+      to: 110,
+      glide: 0.12,
+      delay: 0.17,
+      attack: 0.01,
+      decay: 0.16,
+      gain: 0.22,
+    });
+  },
   // Two rising notes and a ching.
   purchase(v) {
     const hz = 659.25;
