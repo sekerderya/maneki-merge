@@ -2919,7 +2919,9 @@ every sword, hilt and point included, lies inside the cream face with a clear ga
 They cross in a star, all with their hilts up and their points down: one straight up and down in
 the middle, and two crossing it diagonally in an X, their hilts at the upper left and upper right,
 their points at the lower right and lower left. It stands for more blades in every cut. Nothing
-sticks out of the circle: no hilt, no point. Square 1:1.
+sticks out of the circle: no hilt, no point. The gold rim is one single closed ring of even width
+all the way round, like the attached icons: no second ring, no extra arc, no gap at the bottom.
+Square 1:1.
 ```
 
 ```text
