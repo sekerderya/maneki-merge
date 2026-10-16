@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.55.6] - 2026-10-16
+
+### Changed
+
+- **Wide Blade's card shows its own picture**, the owner's art (the owner's pick of two): the red katana ball with one broad, heavy katana standing on it and a gold arrow on each side (docs/ART_ASSETS.md §4.21, picture 10). Every Katana card now shows the katana ball: the plain ball for the Katana, the ball with an hourglass, with three katanas or with a broad blade for its upgrades. The icon-kit icons of v0.55.0 are no longer shown or preloaded.
+
 ## [0.55.5] - 2026-10-16
 
 ### Changed

@@ -3196,6 +3196,13 @@ circle with a clear gap to its edge. Nothing sticks out of the circle. No frame,
 or rim, no medallion, no ground, no glow, no sparkles, no motion lines, nothing else. Square 1:1.
 ```
 
+**Arrived (2026-10-16, v0.55.6):** the fresh try with only the ball attached, saved from Gemini
+as `.jfif` and copied in as `picks/wideBlade.jpg`. Its blade is about 120–130 px wide, thick
+enough, with a katana's curved back and angled tip; its temper line is drawn bold enough to look a
+little like a saw edge and its hilt is short. Shown side by side with the thin katana at card size,
+the owner took it as it is. The Katana family is complete: the icon-kit icons 4–6 stay in
+`art-source/icons/` but no card shows them.
+
 ## 5. Icon kit (every new icon)
 
 > Read this before writing a prompt for any new icon: an upgrade, a trial or blessing card, a
