@@ -28,6 +28,14 @@ export interface PickArt {
 export const PICK_BALL_SHARE = 0.62;
 /** A picture fits in a square of this share of its medallion's width. */
 export const PICK_PICTURE_SHARE = 0.72;
+/**
+ * Pictures drawn bigger than the others, by this factor: their subject is small in its square, and
+ * may reach a little over the medallion's rim (the owner's call, v0.56.6).
+ */
+export const PICK_PICTURE_SCALE: Readonly<Partial<Record<PickId, number>>> = {
+  longStay: 1.4,
+  bigGulp: 1.4,
+};
 
 /**
  * The art for a card of `id` whose level is `level` now, or null while its ball's art hasn't come
@@ -39,7 +47,7 @@ export function pickArt(id: PickId, level: number): PickArt | null {
     const narrow = Math.min(1, picture.width / picture.height);
     return {
       path: `${PICK_SPRITE_DIR}${picture.file}`,
-      width: PICK_PICTURE_SHARE * narrow,
+      width: PICK_PICTURE_SHARE * narrow * (PICK_PICTURE_SCALE[id] ?? 1),
       golden: false,
       picture: true,
     };
