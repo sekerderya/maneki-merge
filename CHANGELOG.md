@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.55.2] - 2026-10-16
+
+### Added
+
+- **The katana's ball is the owner's art**: crimson lacquer with gold waves and the katana across it, in the paw and in NEXT (docs/ART_ASSETS.md §4.21, image 7).
+
 ## [0.55.1] - 2026-10-16
 
 ### Changed

@@ -2988,6 +2988,10 @@ scabbard, nothing hanging from the hilt. Nothing sticks out of the circle. No gl
 around it (the game adds them). Square 1:1.
 ```
 
+**The ball arrived (2026-10-16, v0.55.2)** from the first generation, again saved from Gemini as
+`.jfif` and copied in as `specials/katana-ball.jpg`: a closed circle, nothing outside it. Its
+sword's hilt is plain red, without the diamond wrap; at the ball's size it doesn't show.
+
 **Arrived (2026-10-16, v0.55.0):** all six (the katana, both sheets and the Katana, More Blades and
 Wide Blade icons), generated with Gemini and saved from it as `.jfif` (JPEG), so they sit in
 `art-source/` as `.jpg`. They came in 3:4 and 4:3 rather than 9:16 and 16:9; every piece is whole,
