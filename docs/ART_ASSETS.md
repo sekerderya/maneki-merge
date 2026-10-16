@@ -128,7 +128,7 @@ so the exact pixel size doesn't matter.
 | 45  | 20 katana  | `specials/katana.png`                      | The katana, point down, long and slender, no bell (§4.21)           | 9:16              |
 | 46  | 20 katana  | `fx/slashes.png`                           | Sheet on black: four straight sword-slash streaks, end to end       | 16:9              |
 | 47  | 20 katana  | `fx/cut.png`                               | Sheet on black: cut flash, glint, sparks, swoosh, strike, flash     | 4:3               |
-| 48  | 20 katana  | `icons/katana.png` … `icons/wideBlade.png` | The four Katana pick icons (icon kit, §5)                           | 1:1, 1024×1024    |
+| 48  | 20 katana  | `icons/katana.png` … `icons/wideBlade.png` | The three Katana pick icons (icon kit, §5)                          | 1:1, 1024×1024    |
 
 How the pieces go into the game:
 
@@ -2787,9 +2787,9 @@ How it plays (the art below is made for it):
 3. Each cat it crosses gets a **cut flash**, splits in two and pops in a **burst of sparks**.
 4. The point hits the floor with a **strike burst** and a **soft flash**; the katana fades.
 
-Seven images: the katana on white, two effect sheets on **black** (the effects are light, like
-Lightning's, §4.16: no outlines, and the game turns the black into transparency), and four pick
-icons from the icon kit (§5). One image per request, in a new chat each time. Make the katana
+Six images: the katana on white, two effect sheets on **black** (the effects are light, like
+Lightning's, §4.16: no outlines, and the game turns the black into transparency), and three pick
+icons from the icon kit (§5); Quick Katana's card shows the Katana icon (the owner's call). One image per request, in a new chat each time. Make the katana
 first: the icons are drawn from it.
 
 **1. The katana** (`specials/katana.png`, portrait 9:16). Attach the lineup sheet
@@ -2880,8 +2880,8 @@ image.
 Landscape 4:3.
 ```
 
-**4–7. The pick icons** (`icons/katana.png`, `icons/moreBlades.png`, `icons/quickKatana.png`,
-`icons/wideBlade.png`, square 1:1). The icon kit (§5) with the gold rim, since they are blessings.
+**4–6. The pick icons** (`icons/katana.png`, `icons/moreBlades.png`, `icons/wideBlade.png`, square
+1:1; Quick Katana's card uses `icons/katana.png`, the owner's call). The icon kit (§5) with the gold rim, since they are blessings.
 Attach the icon sheet (`art-source/ui/upgrade-icons.webp`) and the katana
 (`art-source/specials/katana.png`) to each:
 
@@ -2924,25 +2924,6 @@ sticks out of the circle: no hilt, no point. The rim exactly like the attached i
 closed ring of even width all the way round (no second ring, no extra arc, no gap), a wide gold
 band with the thick dark-brown outline only on its outside, and only a thin light-tan line, never
 a dark-brown one, where the gold meets the cream face. Square 1:1.
-```
-
-```text
-Style: match the attached icons exactly. Polished casual mobile-game art, cute chibi kawaii
-illustration, thick warm dark-brown outlines (never black) of even weight, soft pastel cel shading
-with gentle gradients and one small glossy highlight, light from the upper left, clean crisp
-vector-like edges, readable at 48 px.
-Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow
-under the icon. No text, no letters, no numbers, no kanji, no watermark, no signature.
-
-One round icon for the mobile game "Maneki Merge", drawn exactly like the attached icons: a
-perfect circle, centred, filling about 80% of the canvas, with a cream face inside a gold rim and
-the same thick dark-brown outline round it.
-Inside, centred: the attached katana falling point down, tilted a little, with two paler, fading
-copies of it trailing just above and behind it, overlapping it, and three short speed lines, as if
-katanas keep coming one after another. Each keeps a real katana's long, slender shape (the blade
-about three times as long as the hilt, never a dagger), sized so that all of it, every hilt and
-point included, lies inside the cream face with a small gap to the gold rim. It stands for katanas
-coming more often. Nothing sticks out of the circle. Square 1:1.
 ```
 
 ```text

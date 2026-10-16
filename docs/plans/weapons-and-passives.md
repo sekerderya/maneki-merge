@@ -94,7 +94,8 @@ The owner took these as proposed (2026-10-16). Chances and widths are start valu
 - **Shop card "Katana"**, gate best stage 10, four levels, each opening one option for every run:
   Lv 1 Katana (20K), Lv 2 Quick Katana (32K), Lv 3 Wide Blade (50K), Lv 4 More Blades (75K), 177K in
   all; checked with the meta bot before shipping.
-- Art: docs/ART_ASSETS.md §4.21 (the katana, the cut flash sheet and the four pick icons).
+- Art: docs/ART_ASSETS.md §4.21 (the katana, the two effect sheets and three pick icons; Quick Katana's
+  card shows the Katana icon, the owner's call).
 
 ### 3.2 The merge zone (was "Koban"): liked, details to discuss
 
