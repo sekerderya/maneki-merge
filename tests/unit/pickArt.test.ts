@@ -9,9 +9,6 @@ import { SPECIAL_ART, SPECIAL_SPRITE_DIR } from '../../src/config/specialSprites
 import { PICK_BALL_SHARE, PICK_PICTURE_SHARE, pickArt } from '../../src/ui/pickArt';
 import type { PickArt } from '../../src/ui/pickArt';
 
-/** The Katana's upgrades with icon-kit icons until their pictures come (GAME_DESIGN §15.16). */
-const KATANA_ICONS: readonly PickId[] = ['wideBlade'];
-
 const special = (sprite: { file: string }): string => `${SPECIAL_SPRITE_DIR}${sprite.file}`;
 
 /** A card that has its art. */
@@ -67,30 +64,28 @@ describe("a pick card's icon is the game's own art (GAME_DESIGN §15.5)", () => 
 
   it("has art for every pick, but the lightning ball's until its image comes", () => {
     for (const id of PICK_IDS) {
-      if (KATANA_ICONS.includes(id)) continue;
       if (id === 'lightning' && !SPECIAL_ART.lightning) expect(pickArt(id, 0)).toBeNull();
       else expect(artOf(id, 0).path).toMatch(/.webp$/);
     }
   });
 
-  it("shows the katana ball for the Katana, its family's pictures for its upgrades, else icons", () => {
+  it("shows the katana ball for the Katana and its family's pictures for its upgrades", () => {
     expect(iconSprite('katana')).toBeNull();
     expect(artOf('katana', 0).path).toBe(`${SPECIAL_SPRITE_DIR}katana-ball.webp`);
-    // The ball with an hourglass and with three katanas (docs/ART_ASSETS.md §4.21, pictures 8–9):
-    // a picture replaces the pick's icon.
-    for (const id of ['quickKatana', 'moreBlades'] as const) {
+    // The ball with an hourglass, three katanas and a broad blade (docs/ART_ASSETS.md §4.21,
+    // pictures 8–10): a picture replaces the pick's icon.
+    for (const id of ['quickKatana', 'moreBlades', 'wideBlade'] as const) {
       expect(iconSprite(id)).toBeNull();
       expect(artOf(id, 0).path).toBe(`${PICK_SPRITE_DIR}${id}.webp`);
       expect(artOf(id, 0).picture).toBe(true);
     }
-    for (const id of KATANA_ICONS) expect(pickArt(id, 0)).toBeNull();
-    expect(iconSprite('wideBlade')?.file).toBe('wideBlade.webp');
   });
 
   it('preloads only the icons that show', () => {
     const files = iconSprites().map((sprite) => sprite.file);
-    expect(files).toContain('wideBlade.webp');
-    expect(files).not.toContain('katana.webp');
-    expect(files).not.toContain('moreBlades.webp');
+    expect(files).toContain('luckyPaw.webp');
+    for (const file of ['katana.webp', 'moreBlades.webp', 'wideBlade.webp']) {
+      expect(files).not.toContain(file);
+    }
   });
 });

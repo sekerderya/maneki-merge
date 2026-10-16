@@ -70,6 +70,11 @@ export const PICK_SPRITE_DATA: Readonly<Record<string, PickPicture>> = {
     width: 240,
     height: 240,
   },
+  wideBlade: {
+    file: 'wideBlade.webp',
+    width: 240,
+    height: 240,
+  },
   wind: {
     file: 'wind.webp',
     width: 240,
