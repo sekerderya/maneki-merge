@@ -2920,9 +2920,10 @@ every sword, hilt and point included, lies inside the cream face with a clear ga
 They cross in a star, all with their hilts up and their points down: one straight up and down in
 the middle, and two crossing it diagonally in an X, their hilts at the upper left and upper right,
 their points at the lower right and lower left. It stands for more blades in every cut. Nothing
-sticks out of the circle: no hilt, no point. The gold rim is one single closed ring of even width
-all the way round, like the attached icons: no second ring, no extra arc, no gap at the bottom.
-Square 1:1.
+sticks out of the circle: no hilt, no point. The rim exactly like the attached icons: one single
+closed ring of even width all the way round (no second ring, no extra arc, no gap), a wide gold
+band with the thick dark-brown outline only on its outside, and only a thin light-tan line, never
+a dark-brown one, where the gold meets the cream face. Square 1:1.
 ```
 
 ```text
@@ -2988,6 +2989,9 @@ approved Upgrades mockup (`ui/upgrade-icons.png`, §4.9):
 
 - a perfect circle: a cream face (#fff6e7) inside a gold rim, with the game's thick warm dark-brown
   outline round it (never black);
+- the rim as in the reference sheet: a wide gold band, the dark-brown outline only on its outside,
+  and a thin light-tan line (never dark brown) where it meets the cream face; when a generated icon
+  gets a thinner rim or a dark inner line, ask for this in words (the first More Blades icon did);
 - inside, one subject, big and centred, filling most of the face: a Japanese lucky charm or a piece
   of the game (a paw, a koban, a tai fish, an omamori, a daruma, the game's own balls);
 - the game's cel shading: soft pastel gradients, one small glossy highlight, light from the upper
