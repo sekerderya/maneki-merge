@@ -148,11 +148,11 @@ now live in GAME_DESIGN §15.17, which wins over this section.
 - (A separate frog pitch, "Kaeru hops across the pile three times popping a cat per hop", was not
   picked; the owner's frog is the turret above.)
 
-- **Open after the build (v0.56):** the smart bot (GAME_DESIGN §15.17) finds that frogs eating
-  faster than the paw drops stall runs (every pick together: 0 of 30 runs cleared three stages, all
-  30 out of time, none lost). Options to put to the owner, measured before choosing: one frog in the
-  jar at a time; a frog eats only sizes 1–2; a frog skips a cat that has a partner of its size in the
-  jar; Big Gulp's second cat only every other meal; lower Quick Frog.
+- **Settled after the build (v0.56.1):** the smart bot (GAME_DESIGN §15.17) found that frogs eating
+  faster than the paw drops stalled runs (every pick together: 0 of 30 runs cleared three stages, all
+  30 out of time, none lost). Four limits were measured (one frog at a time, sizes 1–2 only, a cat
+  with no partner of its size, a meal every second drop); only sizes 1–2 never stalled, and the owner
+  picked it. Not measured: a frog that eats only while the jar is crowded.
 - **Lesson (the owner, 2026-10-16):** give every art prompt the build needs (the card pictures too)
   before starting the code, so the owner can generate while the build runs.
 

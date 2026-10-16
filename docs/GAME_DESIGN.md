@@ -900,24 +900,24 @@ A weapon that cuts every small cat in a straight line.
 
 > The owner's design (2026-10-16, docs/plans/weapons-and-passives.md §3.4), built in v0.56: the second weapon. Its look is the owner's art (docs/ART_ASSETS.md §4.22); with `?skin=vector` or `placeholder` the game draws plain stand-ins. Its chances and meals are starting values.
 
-A weapon that stays in the jar and eats the smallest cats.
+A weapon that stays in the jar and eats the small cats.
 
 - **Picks:** taking **Frog** once (a blessing pick) opens it: frogs start to come, 2.25% per queued item. Its upgrades are blessing picks of their own that need it, like the Katana's (§15.16): **Quick Frog** (+2.25% per level, 2 levels, up to 6.75%), **Long Stay** (+2 meals per level, 2 levels: 5, 7, 9) and **Big Gulp** (two cats at each meal, 1 level). Each needs a level of the Frog's shop card (§10). Their cards show the calm frog until their own pictures come (docs/ART_ASSETS.md §4.22).
 - **The drop:** none comes in a stage's first 20 drops, and a queued one becomes a cat at a stage clear (§15.1). It is a ball of **size 3**, dropped from the paw like the others (the wind and Heavy Drop move it like any ball). In the jar it **rolls like the other balls** (the owner's call: it isn't kept upright), never merges and **doesn't count for the danger line**: it never ends a run, even over the line, and a Lucky Save leaves it alone. The magnet can take it; it keeps its meals.
-- **The meals:** each time a ball leaves the paw (a cat, a special ball or a katana; not the frog's own drop), every frog in the jar, oldest first, makes a meal: its tongue swallows the jar's **smallest landed cat**, the nearest to it between cats of one size, through anything in the way (Big Gulp: the two smallest). A ball still falling from the paw isn't in the jar yet. A swallowed cat **pops into its value** (§5: coins, no score, no combo), golden ones at their plain value; a cursed one is swallowed like any other and its curse just ends. A meal counts once, whatever it swallowed; a jar with no landed cat feeds nothing and costs no meal.
+- **The meals:** each time a ball leaves the paw (a cat, a special ball or a katana; not the frog's own drop), every frog in the jar, oldest first, makes a meal: its tongue swallows the jar's **smallest landed cat of sizes 1–2** (v0.56.1, the owner's pick; v0.56.0 ate any size), the nearest to it between cats of one size, through anything in the way (Big Gulp: the two smallest). Bigger cats are left alone, so frogs never empty the jar of what its big cats are made from. A ball still falling from the paw isn't in the jar yet. A swallowed cat **pops into its value** (§5: coins, no score, no combo), golden ones at their plain value; a cursed one is swallowed like any other and its curse just ends. A meal counts once, whatever it swallowed; a jar with no landed cat of sizes 1–2 feeds nothing and costs no meal.
 - **Leaving:** after its last meal (5; Long Stay 7 or 9) the frog falls asleep and is gone. A stage clear's pops take it too, paying nothing. A run saved with a frog in the jar keeps its meals left (`hitsLeft`, like a boulder's bands).
 - **Look** (§12): the owner's four poses of one frog (calm in the paw, in NEXT, on its cards and at rest; mouth open; gulping; asleep). As a ball leaves the paw the frog opens its mouth, its tongue (the owner's band and round tip, stretched from the mouth, which turns with the rolling frog) shoots out to the cat in 0.11 s and pulls it back in 0.17 s, the cat's own picture riding on the tip and shrinking into the mouth, with a wet snap and a gulp and the cat's "+coins"; the frog gulps for 0.32 s. After its last meal it sleeps where it is for 0.42 s, then shrinks away in a puff of sparks with two soft croaks.
-- **Measured** (v0.56, the smart bot, 30 seeds of three stages from a fresh profile, 15 minutes at most; it drops a frog low and out of the way): the Frog alone helps about as much as one or two levels of Hanabi, and never makes a run end; but frogs that eat faster than the paw drops (Quick Frog 2, and above all every pick together: up to about 1.2 cats a drop) empty the jar of the small cats the big ones are made from, so runs stall without losing. **Open with the owner:** how to keep the eating below the dropping (docs/plans/weapons-and-passives.md §3.4).
+- **Measured** (the smart bot, 30 seeds of three stages from a fresh profile, 15 minutes at most; it drops a frog low and out of the way; cleared / out of time / lost). In v0.56.0, eating any size, the Frog alone helped, but frogs that ate faster than the paw dropped (Quick Frog 2, and above all every pick together: up to about 1.2 cats a drop) emptied the jar of the small cats the big ones are made from, so runs stalled without losing. Four limits were measured for the owner; only "sizes 1–2" never stalls, at the cost of a weaker frog (the owner's pick, v0.56.1). Thirty seeds swing a few runs either way.
 
-  | Picks (the rest at 0)                               | Cleared | Out of time | Lost | Median run |
-  | --------------------------------------------------- | ------: | ----------: | ---: | ---------: |
-  | none                                                |      13 |           0 |   17 |      266 s |
-  | Frog                                                |      19 |           0 |   11 |      321 s |
-  | Frog, Quick Frog 2                                  |      14 |          11 |    5 |      669 s |
-  | Frog, Long Stay 2                                   |      17 |           0 |   13 |      342 s |
-  | Frog, Big Gulp                                      |      15 |           3 |   12 |      490 s |
-  | Frog, Quick Frog 2, Long Stay 2, Big Gulp           |       0 |          30 |    0 |      900 s |
-  | Katana, Quick Katana 2, Wide Blade 2, More Blades 3 |      25 |           0 |    5 |      360 s |
+  | Limit (v0.56.1: sizes 1–2)              | Frog        | Frog, Quick Frog 2 | Frog, Big Gulp | Every pick  |
+  | --------------------------------------- | ----------- | ------------------ | -------------- | ----------- |
+  | none (v0.56.0)                          | 19 / 0 / 11 | 14 / 11 / 5        | 15 / 3 / 12    | 0 / 30 / 0  |
+  | one frog at a time                      | 19 / 0 / 11 | 26 / 0 / 4         | 18 / 2 / 10    | 0 / 30 / 0  |
+  | **sizes 1–2 only**                      | 9 / 0 / 21  | 16 / 0 / 14        | 18 / 0 / 12    | 14 / 0 / 16 |
+  | a cat with no partner of its size (1–4) | 5 / 0 / 25  | 20 / 0 / 10        | 18 / 0 / 12    | 12 / 9 / 9  |
+  | a meal every second drop                | 17 / 0 / 13 | 22 / 2 / 6         | 20 / 0 / 10    | 0 / 30 / 0  |
+
+  With no picks: 13 / 0 / 17; the Katana with every pick: 25 / 0 / 5. In v0.56.0 Long Stay 2 alone gave 17 / 0 / 13.
 
 ### 15.18 Notes for building it
 

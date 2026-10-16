@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.56.1] - 2026-10-16
+
+### Changed
+
+- **Frogs eat only cats of sizes 1–2** (GAME_DESIGN §15.17), the owner's pick: with every Frog pick, frogs ate faster than the paw dropped and emptied the jar of the small cats the big ones are made from, so runs stalled (the smart bot: 0 of 30 runs cleared three stages, all 30 out of time). Of four limits measured (one frog at a time, sizes 1–2, a cat with no partner of its size, a meal every second drop), only sizes 1–2 never stalls: with every pick 14 cleared, 0 out of time, 16 lost. A jar with no small landed cat feeds a frog nothing and costs no meal. The cards say "a small cat".
+
 ## [0.56.0] - 2026-10-16
 
 The Frog, the second weapon (GAME_DESIGN §15.17; the owner's design, docs/plans/weapons-and-passives.md §3.4): a frog that sits in the jar and, each time a ball leaves the paw, swallows the smallest cat with its tongue.
