@@ -53,7 +53,7 @@ export async function buildSpecials(): Promise<void> {
 
   await writeFile(DATA_FILE, dataModule({ magnet, hanabi, joker, lightning, katana, boulders }));
   console.log(
-    `Specials: magnet, hanabi, joker${lightning ? ', lightning' : ''} and ` +
+    `Specials: magnet, hanabi, joker${lightning ? ', lightning' : ''}${katana ? ', katana' : ''} and ` +
       `${boulders.length} boulders; wrote ${DATA_FILE}`,
   );
 }
