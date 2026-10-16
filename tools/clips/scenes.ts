@@ -241,6 +241,71 @@ export const SCENES: readonly ClipScene[] = [
       await scene.advance(2400);
     },
   },
+  {
+    // The aim sweeps over the jar, its rings showing what each line would cut; dropped beside the
+    // 6, the sword cuts the 1 resting on it and the boulder under the 1, and leaves the 6 alone.
+    id: 'katana',
+    seed: 26,
+    async setup(scene) {
+      await scene.play();
+      await setPick(scene, 'katana', 1);
+      await scene.place(6, atWall(-1, 6));
+      await boulder(scene, -50, 2, 1);
+      await scene.place(3, 60);
+      await scene.place(5, atWall(1, 5));
+      await scene.advance(1500);
+      // A 1 rolls onto the 6 and the boulder; a 2 into the valley between the 3 and the 5.
+      await scene.game((g) => g.spawnTier(g.state().firstTier, -2));
+      await scene.game((g) => g.spawnTier(g.state().firstTier + 1, 128));
+      await scene.advance(2000);
+      await scene.game((g) => g.give('katana'));
+      await scene.advance(300);
+    },
+    async play(scene) {
+      await scene.advance(400);
+      await scene.dragDrop(-64, { ms: 800, via: [90], holdMs: 500 });
+      await scene.advance(2600);
+    },
+  },
+  {
+    // A frog dropped into the jar eats the smallest cat (sizes 1–2) at every drop: five meals,
+    // then it falls asleep and goes. The big cats are left alone.
+    id: 'frog',
+    seed: 27,
+    async setup(scene) {
+      await scene.play();
+      await setPick(scene, 'frog', 1);
+      // Five small cats across the floor, with room on the right for the frog.
+      await scene.place(1, atWall(-1, 1));
+      await scene.place(2, -150);
+      await scene.place(1, -40);
+      await scene.place(2, 90);
+      await scene.place(1, atWall(1, 1));
+      await scene.advance(1500);
+      await scene.game((g) => g.give('frog'));
+      await scene.advance(300);
+    },
+    async play(scene) {
+      await scene.advance(400);
+      await scene.dragDrop(180, { ms: 500, then: () => give(scene, 3) });
+      await scene.advance(900);
+      // Five quick drops of 3s and a 4, which the frog doesn't eat: a meal at each.
+      const drops = [-150, -150, 20, 20, -150];
+      const next = [3, 3, 3, 4];
+      for (const [i, x] of drops.entries()) {
+        const size = next[i];
+        await scene.tapDrop(x, {
+          ms: 320,
+          then: async () => {
+            if (size) await give(scene, size);
+          },
+        });
+        await scene.advance(200);
+      }
+      await scene.showPointer(false);
+      await scene.advance(2200);
+    },
+  },
   ...([1, -1] as const).map((direction): ClipScene => ({
     id: direction === 1 ? 'windRight' : 'windLeft',
     seed: 16,

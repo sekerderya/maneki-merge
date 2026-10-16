@@ -47,6 +47,8 @@ export interface WorldPoint {
 export interface DropOptions {
   /** How long the finger takes to get there. */
   readonly ms?: number;
+  /** World xs a drag passes through first, each reached in `ms` (to sweep the aim). */
+  readonly via?: readonly number[];
   /** A drag's pause before letting go. */
   readonly holdMs?: number;
   /** Runs right after the release. */
@@ -447,21 +449,24 @@ export class Scene {
 
   /**
    * Aims and drops like a finger: the pointer appears over the jar where the paw aims, presses,
-   * drags to world x `toX` over `ms` (the paw follows), waits `holdMs`, and lets go. `then`
-   * runs right after the release, in the drop's cooldown (to put the next ball in the paw unseen).
+   * drags to world x `toX` over `ms` (the paw follows; through each of `via` first, `ms` each),
+   * waits `holdMs`, and lets go. `then` runs right after the release, in the drop's cooldown (to
+   * put the next ball in the paw unseen).
    */
   async dragDrop(toX: number, options: DropOptions = {}): Promise<void> {
-    const { ms = 600, holdMs = 200, then } = options;
+    const { ms = 600, holdMs = 200, then, via = [] } = options;
     const y = await this.dragY();
     const from = await this.screen({ x: this.aimX, y: 0 });
-    const to = await this.screen({ x: toX, y: 0 });
     await this.pointerAtPoint(from.x, y);
     await this.showPointer(true, 180);
     await this.animate(100, (t) => {
       this.pointerPress = 1 - 0.14 * t;
     });
     await this.page.mouse.down();
-    await this.pointerTo(to.x, y, ms, true);
+    for (const x of [...via, toX]) {
+      const to = await this.screen({ x, y: 0 });
+      await this.pointerTo(to.x, y, ms, true);
+    }
     await this.advance(holdMs);
     await this.page.mouse.up();
     this.aimX = toX;

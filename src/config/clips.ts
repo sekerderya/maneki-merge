@@ -16,6 +16,8 @@ export const CLIP_IDS = [
   'hanabi',
   'joker',
   'lightning',
+  'katana',
+  'frog',
   'windRight',
   'windLeft',
   'heavyDrop',
@@ -46,6 +48,9 @@ export const CLIP_CAPTIONS: Readonly<Record<ClipId, string>> = {
   joker: 'The joker merges with the first cat it touches and makes it one size bigger.',
   lightning:
     'It strikes the first cat it touches and every cat of that size: they all pop into coins.',
+  katana:
+    'It cuts down its red line: cats of sizes 1–4 pop into coins, boulders break. Bigger cats let it through.',
+  frog: 'Each drop, the frog eats the smallest cat (sizes 1–2) for coins. After its last meal it sleeps and goes.',
   windRight: 'The wind pushes falling cats sideways, more at every level. Landed cats stay put.',
   windLeft: 'The wind pushes falling cats sideways, more at every level. Landed cats stay put.',
   heavyDrop: 'Cats shoot out of the paw, fall faster and knock aside the cat they land on.',
@@ -90,16 +95,17 @@ export function pickClip(id: PickId, windLeft = false): ClipId | null {
     case 'quickCurse':
     case 'moreCurses':
       return 'curse';
-    // The Katana's and the Frog's clips come once their looks are in the game.
-    case 'bigDrops':
     case 'katana':
     case 'moreBlades':
     case 'quickKatana':
     case 'wideBlade':
+      return 'katana';
     case 'frog':
     case 'quickFrog':
     case 'longStay':
     case 'bigGulp':
+      return 'frog';
+    case 'bigDrops':
       return null;
   }
 }
@@ -117,11 +123,11 @@ export function upgradeClip(id: UpgradeId): ClipId | null {
     case 'joker':
     case 'bigDrops':
     case 'lightning':
+    case 'katana':
+    case 'frog':
       return pickClip(id);
     case 'luckyPaw':
     case 'bigCatch':
-    case 'katana':
-    case 'frog':
       return null;
   }
 }
