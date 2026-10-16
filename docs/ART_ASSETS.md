@@ -129,6 +129,7 @@ so the exact pixel size doesn't matter.
 | 46  | 20 katana  | `fx/slashes.png`                           | Sheet on black: four straight sword-slash streaks, end to end       | 16:9              |
 | 47  | 20 katana  | `fx/cut.png`                               | Sheet on black: cut flash, glint, sparks, swoosh, strike, flash     | 4:3               |
 | 48  | 20 katana  | `icons/katana.png` … `icons/wideBlade.png` | The three Katana pick icons (icon kit, §5)                          | 1:1, 1024×1024    |
+| 49  | 20 katana  | `specials/katana-ball.png`                 | The katana's ball in the paw and NEXT (v0.55.1, §4.21)              | 1:1, 1024×1024    |
 
 How the pieces go into the game:
 
@@ -2781,13 +2782,15 @@ more katanas fall at once: diagonals from the jar's top corners (an X), then a h
 
 How it plays (the art below is made for it):
 
-1. In the paw and in NEXT the **katana** shows (in NEXT turned on its side to fit the bubble).
-2. Dropped, a **swoosh** flashes at the paw with a steel "shing", and the katana shoots down. A
+1. In the paw and in NEXT the **katana's ball** shows, round like the other special balls (v0.55.1,
+   the owner's call: v0.55.0 hung the sword itself in the paw).
+2. Dropped, a **swoosh** flashes at the paw with a steel "shing", and the katana shoots out of the
+   ball, straight down. A
    **slash streak** stretches behind it along its path, with **glints** running along the line.
 3. Each cat it crosses gets a **cut flash**, splits in two and pops in a **burst of sparks**.
 4. The point hits the floor with a **strike burst** and a **soft flash**; the katana fades.
 
-Six images: the katana on white, two effect sheets on **black** (the effects are light, like
+Seven images (the ball since v0.55.1): the katana and its ball on white, two effect sheets on **black** (the effects are light, like
 Lightning's, §4.16: no outlines, and the game turns the black into transparency), and three pick
 icons from the icon kit (§5); Quick Katana's card shows the Katana icon (the owner's call). One image per request, in a new chat each time. Make the katana
 first: the icons are drawn from it.
@@ -2959,6 +2962,31 @@ Blades still read as katanas at 48 px.
 `art-source/icons/`. The art pipeline (`npm run art`) cuts the katana's white like the balls', turns
 the effect sheets' black into transparency, splits the pieces and measures each streak's two ends,
 and fits the icons. Until they arrive the game shows plain stand-ins.
+
+**7. The katana's ball** (`specials/katana-ball.png`, square 1:1; asked for in v0.55.1). Attach the
+lineup sheet (`art-source/style/lineup.webp`), the hanabi (`art-source/specials/hanabi.jpg`), the
+lightning ball (`art-source/specials/lightning.jpg`) and the katana (`art-source/specials/katana.jpg`),
+so it comes out a sibling of the other special balls, with the same sword:
+
+```text
+Style: match the attached images exactly (the game's cat lineup, two of its special balls and its
+katana). Polished casual mobile-game art, cute chibi kawaii illustration, thick warm dark-brown
+outlines (never black) of even weight, soft pastel cel shading with gentle gradients and one small
+glossy highlight, light from the upper left, clean crisp vector-like edges, readable at small sizes.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow
+under the object. No text, no letters, no numbers, no kanji, no watermark.
+
+A katana ball for a Suika-style merge game, the same size and drawing style as the cats in the
+attached lineup and the attached firework and thunder balls: strictly front view, its outline a
+perfect circle, centred, filling about 80% of the canvas. The ball is glossy deep crimson-red
+lacquer (urushi) with a faint pattern of small gold wave arcs (seigaiha) over it, clearly a
+different colour from the attached navy firework ball and violet thunder ball. Across its front,
+big and bold, lies the attached katana, shortened to fit: diagonally, its gold guard and vermilion
+hilt at the upper right, its gleaming silver blade pointing to the lower left, the whole sword
+inside the circle with a small gap to the ball's edge, with its own dark-brown outline. No
+scabbard, nothing hanging from the hilt. Nothing sticks out of the circle. No glow and no sparkles
+around it (the game adds them). Square 1:1.
+```
 
 **Arrived (2026-10-16, v0.55.0):** all six (the katana, both sheets and the Katana, More Blades and
 Wide Blade icons), generated with Gemini and saved from it as `.jfif` (JPEG), so they sit in

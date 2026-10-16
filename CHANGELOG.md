@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.55.1] - 2026-10-16
+
+### Changed
+
+- **The katana is a ball in the paw and in NEXT**, like the other special balls (the owner's call); dropped, the sword shoots out of it and falls as before. Until the owner's picture of the ball comes (docs/ART_ASSETS.md §4.21, image 7) it is a cream ball with a sword across it. It is now size 2 like the others (size 1 before).
+
 ## [0.55.0] - 2026-10-16
 
 The Katana, the first weapon (GAME_DESIGN §15.16; the owner's design, docs/plans/weapons-and-passives.md §3.1): dropped from the paw it falls straight down through everything and cuts every small cat in its line into coins. Its upgrades are picks of their own, and a new Weapons section of the shop opens them one by one.
