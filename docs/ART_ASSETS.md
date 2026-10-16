@@ -3330,6 +3330,14 @@ their quarters; only the face changes:
 No glow, no sparkles, no motion lines, no lily pad, no water, nothing else. Square 1:1.
 ```
 
+**Second round (2026-10-16, v0.56.2), taken:** the edit came out a little rounder: measured on the
+calm pose, the body is widest at 56% of its height (62% before; a circle under the eyes would be
+about 57%) and 70% as wide at 90% of its height as at its widest (76% before; a circle about 64%), so
+its bottom is still a little full. The fresh "round ball" try (one calm frog, the katana ball
+attached for its circle) came out a perfect circle but looked like a sticker, not the game's frog;
+the owner preferred the edit, and it is in as `specials/frog.jpg`. In the game the extra at the
+bottom is a few pixels at most.
+
 The game was built (v0.56) on this first sheet, pear-shaped as it is: the rounder sheet replaces it
 in `art-source/specials/frog` and `npm run art` takes it in, with no code change. Since the owner's
 call the frog rolls like the other balls, so a round body matters even more.

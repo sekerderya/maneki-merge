@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.56.2] - 2026-10-16
+
+### Changed
+
+- **A rounder frog**, the owner's second sheet (docs/ART_ASSETS.md §4.22): the same frog and four faces, its body less wide at the bottom, so it sits better on its round physics body as it rolls.
+
 ## [0.56.1] - 2026-10-16
 
 ### Changed
