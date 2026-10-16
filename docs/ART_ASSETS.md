@@ -3040,6 +3040,9 @@ Checks: the ball is the attached one (crimson, gold waves, the same diagonal kat
 circle); the hourglass is small, wooden, upright, with gold sand, at the lower right in front of
 the ball and clear of the sword; no bell, no purple, no flames; plain white around.
 
+**Arrived (2026-10-16, v0.55.4):** from the first generation, saved from Gemini as `.jfif` and copied in as
+`picks/quickKatana.jpg`. Every check passes; on the card the hourglass still reads at 48 px.
+
 ## 5. Icon kit (every new icon)
 
 > Read this before writing a prompt for any new icon: an upgrade, a trial or blessing card, a

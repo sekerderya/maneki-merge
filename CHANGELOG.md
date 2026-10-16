@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.55.4] - 2026-10-16
+
+### Changed
+
+- **Quick Katana's card shows its own picture**, the owner's art: the red katana ball with a small wooden hourglass of gold sand (docs/ART_ASSETS.md §4.21, picture 8). It is the first of the Katana family's pictures: every Katana pick shows the ball with one small addition, like the boulder and curse families; More Blades and Wide Blade keep their icons until theirs come.
+
 ## [0.55.3] - 2026-10-16
 
 ### Changed
