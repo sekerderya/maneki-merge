@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.56.8] - 2026-10-17
+
+### Added
+
+- **How-it-works clips for the Katana and the Frog** (GAME_DESIGN §2.5): their shop cards and every one of their picks (Quick Katana, Wide Blade, More Blades; Quick Frog, Long Stay, Big Gulp) now have the clip button. The Katana's clip sweeps the aim over the jar, its red rings showing what each line would cut, then cuts a 1 and the boulder under it and leaves the 6 beside them alone. The Frog's clip drops a frog, and at each of the next five drops it eats the smallest cat until it falls asleep and goes; the bigger cats dropped meanwhile are left alone.
+
+### Technical
+
+- Scenes `katana` and `frog` in `tools/clips/scenes.ts`; `dragDrop`'s new `via` option sweeps the aim through world xs before the drop.
+
 ## [0.56.7] - 2026-10-17
 
 ### Changed

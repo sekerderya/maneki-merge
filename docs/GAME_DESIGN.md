@@ -65,7 +65,7 @@ Layout: everything sits where it is in the mockup, on a stage of the mockup's si
 - The price button has four states: affordable (gold, "Buy" over the coin and the price), not enough coins (faded grey and disabled, "Need N more" in red where "Buy" was), MAX (faded, a check and "MAX"), and **locked** (v0.36: faded and disabled, "Reach" over a small torii and "Stage N", the stage that opens the card; the card's icon and value are faded too). With `?skin=vector` the shop keeps the code-drawn sheet of v0.14 (no pips either).
 - Buying gives feedback: a sound (from M9), a card pulse, and the balance counting down. The purchase is saved at once. The panel scrolls vertically if needed.
 - The UPGRADES dot on the menu shows only for a card that is open and affordable.
-- Combo Charm, Second Chance and the Golden Cats, More Magnets, Hanabi and Joker Cat cards have a clip button on their icon that shows what they do (§2.5, v0.38).
+- Combo Charm, Second Chance and the Golden Cats, More Magnets, Hanabi, Joker Cat, Lightning, Katana and Frog cards have a clip button on their icon that shows what they do (§2.5, v0.38; the Katana's and the Frog's since v0.56.8).
 - Closing: the close button, a tap on the dimmed menu above the panel, or the back button.
 
 ### 2.4 Settings panel (over the main menu)
@@ -101,6 +101,8 @@ A card whose effect can't be guessed from its line has a small round **clip butt
 | Hanabi                      | Hanabi (shop, blessing)               | the burst popping small cats into coins and pushing a 6                  |
 | Joker                       | Joker Cat (shop, blessing)            | the joker making a 4 into a 5                                            |
 | Lightning                   | Lightning (shop, blessing; v0.42.1)   | the ball landing on a 3 and chaining to the other two, all three popping |
+| Katana (v0.56.8)            | Katana (shop) and its four picks      | the aim's rings, then a cut through a 1 and a boulder, a 6 left alone    |
+| Frog (v0.56.8)              | Frog (shop) and its four picks        | five drops, five small cats eaten, then the frog asleep and gone         |
 | Wind (two clips)            | Wind                                  | falling cats drifting the run's way (the clip blows like the card says)  |
 | Heavy Drop                  | Heavy Drop                            | the fireball knocking a cat aside                                        |
 | Porcelain                   | Porcelain                             | a crack, then a break into two smaller cats                              |
