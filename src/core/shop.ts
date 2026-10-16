@@ -78,12 +78,12 @@ export function shopCards(levels: UpgradeLevels, coins: number, bestStage: numbe
  * blessing card shows its blessing at the highest level a run can reach, without Big Catch.
  */
 export function upgradeValue(id: UpgradeId, level: number): string {
-  if (isBlessingCard(id)) return pickValue(id, { ...defaultPickLevels(), [id]: level }, 0);
   // A weapon card names the pick its last level opened ("–" before the first).
   if (isWeaponCard(id)) {
     const opened = WEAPON_CARD_OPENS[id][level - 1];
     return opened ? PICKS[opened].name : '–';
   }
+  if (isBlessingCard(id)) return pickValue(id, { ...defaultPickLevels(), [id]: level }, 0);
   const stats = deriveStats({ ...defaultUpgradeLevels(), [id]: level });
   switch (id) {
     case 'luckyPaw':

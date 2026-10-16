@@ -90,10 +90,12 @@ export function pickArt(id: PickId, level: number): PickArt | null {
       return cat(3, false);
     case 'echo':
       return cat(4, false);
-    // The Katana's picks show their icon-kit icons (config/iconSprites.ts), or their glyph.
+    // The Katana and Quick Katana show its ball (the owner's call, v0.55.3), More Blades and Wide
+    // Blade their icon-kit icons (config/iconSprites.ts).
     case 'katana':
-    case 'moreBlades':
     case 'quickKatana':
+      return SPECIAL_ART.katana && special(SPECIAL_ART.katana);
+    case 'moreBlades':
     case 'wideBlade':
       return null;
   }

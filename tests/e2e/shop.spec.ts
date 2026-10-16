@@ -37,11 +37,10 @@ test('buying with debug coins: prices, states, gates, feedback and persistence',
   await page.getByTestId('upgrades').click();
   const shop = page.getByTestId('shop');
   await expect(shop).toBeVisible();
-  // The four upgrades, the blessings' heading and the six blessing cards (v0.36, Lightning v0.42),
-  // then the weapons' heading and the Katana's card (v0.55).
+  // The four upgrades, the blessings' heading and the seven blessing cards (v0.36, Lightning v0.42,
+  // the Katana v0.55).
   await expect(shop.locator('.shop-card')).toHaveCount(11);
   await expect(page.getByTestId('shop-blessings')).toContainText('Blessings');
-  await expect(page.getByTestId('shop-weapons')).toContainText('Weapons');
   await expect(page.getByTestId('shop-balance')).toHaveText('700');
 
   // Lucky Paw 0 → 1 for 150.

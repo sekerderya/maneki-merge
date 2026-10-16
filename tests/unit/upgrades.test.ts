@@ -111,12 +111,15 @@ describe('the cards (GAME_DESIGN §10)', () => {
     }
   });
 
-  it('sells a card for every blessing after the upgrades, then the weapons', () => {
+  it('sells a card for every blessing after the upgrades, the Katana last among them', () => {
     expect(UPGRADE_IDS.filter((id) => UPGRADES[id].section === 'blessing')).toEqual([
       ...BLESSING_CARD_IDS,
+      'katana',
     ]);
-    expect(UPGRADE_IDS.slice(-BLESSING_CARD_IDS.length - 1, -1)).toEqual([...BLESSING_CARD_IDS]);
-    expect(UPGRADE_IDS.filter((id) => UPGRADES[id].section === 'weapon')).toEqual(['katana']);
+    expect(UPGRADE_IDS.slice(-BLESSING_CARD_IDS.length - 1)).toEqual([
+      ...BLESSING_CARD_IDS,
+      'katana',
+    ]);
   });
 
   it('costs about 1M coins in all (the 8-hour pacing model), plus the late Lightning and Katana', () => {

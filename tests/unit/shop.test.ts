@@ -11,13 +11,12 @@ const levels = (overrides: Partial<Record<UpgradeId, number>> = {}): UpgradeLeve
 });
 
 describe('shop cards (GAME_DESIGN §2.2)', () => {
-  it('lists every card in shop order: the upgrades, the blessings, then the weapons', () => {
+  it('lists every card in shop order: the upgrades, then the blessings (the Katana last)', () => {
     const cards = shopCards(levels(), 0, 1);
     expect(cards.map((c) => c.id)).toEqual([...UPGRADE_IDS]);
     expect(cards.map((c) => c.section)).toEqual([
       ...Array<string>(4).fill('upgrade'),
-      ...Array<string>(6).fill('blessing'),
-      'weapon',
+      ...Array<string>(7).fill('blessing'),
     ]);
     for (const card of cards) {
       expect(card.name).toBe(UPGRADES[card.id].name);

@@ -244,7 +244,7 @@ describe('upgrades (GAME_DESIGN §10)', () => {
     ['katana', 'Katana', 0, 4, 10, [20_000, 32_000, 50_000, 75_000]],
   ];
 
-  it('lists the 4 upgrades, the 6 blessing cards, then the weapon, in shop order', () => {
+  it('lists the 4 upgrades, then the 6 blessing cards and the Katana, in shop order', () => {
     expect([...UPGRADE_IDS]).toEqual(TABLE.map(([id]) => id));
   });
 

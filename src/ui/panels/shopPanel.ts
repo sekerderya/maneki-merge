@@ -15,7 +15,7 @@ import { pickArt } from '../pickArt';
 import { artImage, setUiArtProperties } from '../uiArt';
 import { ICON_CHECK, ICON_CLOSE, pickIcon, UPGRADE_ICONS } from '../icons';
 
-/** The headings over the blessing cards and the weapon cards (GAME_DESIGN §2.2, §10). */
+/** The heading over the blessing cards (GAME_DESIGN §2.2, §10). */
 const SECTION_HEADINGS: Readonly<
   Partial<Record<ShopSection, { title: string; desc: string; testid: string }>>
 > = {
@@ -23,11 +23,6 @@ const SECTION_HEADINGS: Readonly<
     title: 'Blessings',
     desc: 'How far each blessing can go in a run',
     testid: 'shop-blessings',
-  },
-  weapon: {
-    title: 'Weapons',
-    desc: 'Each level opens one more of its picks for every run',
-    testid: 'shop-weapons',
   },
 };
 

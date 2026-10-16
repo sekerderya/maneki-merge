@@ -9,12 +9,16 @@ import { ICON_SPRITE_DATA } from './iconSpriteData';
 /** Where the sprites live, relative to the app's base URL. */
 export const ICON_SPRITE_DIR = 'assets/icons/';
 
-/** Ids that show another id's icon: Quick Katana's card shows the Katana's (the owner's call). */
-const ICON_ALIASES: Readonly<Record<string, string>> = { quickKatana: 'katana' };
+/**
+ * Ids whose cards show their ball instead of an icon (ui/pickArt.ts): the Katana's (v0.55.3, the
+ * owner's call; its icon-kit icon from v0.55.0 is no longer shown).
+ */
+const BALL_CARDS: ReadonlySet<string> = new Set(['katana', 'quickKatana']);
 
 /** The icon for `id`, or null when the art has none yet (the code-drawn icon stays). */
 export function iconSprite(id: string): CatSprite | null {
-  return ICON_SPRITE_DATA[ICON_ALIASES[id] ?? id] ?? null;
+  if (BALL_CARDS.has(id)) return null;
+  return ICON_SPRITE_DATA[id] ?? null;
 }
 
 /** Every icon, for preloading. */

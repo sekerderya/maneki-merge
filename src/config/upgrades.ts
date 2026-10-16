@@ -1,12 +1,12 @@
 /**
  * What the shop sells (GAME_DESIGN §10): permanent upgrades, blessing cards that set how far each
- * blessing can go in a run (v0.36), and weapon cards whose levels open a weapon's picks one by one
+ * blessing can go in a run (v0.36), among them the Katana's, whose levels open its picks one by one
  * (the Katana, GAME_DESIGN §15.16). Derived stats: core/upgrades.ts.
  */
 import { PICKS } from './picks';
 import type { PickId } from './picks';
 
-/** Shop order: the upgrades, the blessings, then the weapons. */
+/** Shop order: the upgrades, then the blessings. */
 export const UPGRADE_IDS = [
   'luckyPaw',
   'bigCatch',
@@ -36,7 +36,8 @@ export const BLESSING_CARD_IDS = [
 export type BlessingCardId = (typeof BLESSING_CARD_IDS)[number];
 
 /**
- * The weapon cards (GAME_DESIGN §10): each level opens one more of the weapon's picks for every run,
+ * The weapon cards (GAME_DESIGN §10), shown among the blessings: each level opens one more of the
+ * weapon's picks for every run,
  * in this order, each up to its own max level.
  */
 export const WEAPON_CARD_OPENS = {
@@ -46,7 +47,7 @@ export const WEAPON_CARD_OPENS = {
 export type WeaponCardId = keyof typeof WEAPON_CARD_OPENS;
 
 /** The shop's sections (GAME_DESIGN §2.2). */
-export type ShopSection = 'upgrade' | 'blessing' | 'weapon';
+export type ShopSection = 'upgrade' | 'blessing';
 
 export interface UpgradeDef {
   readonly id: UpgradeId;
@@ -212,9 +213,9 @@ export const UPGRADES: Readonly<Record<UpgradeId, UpgradeDef>> = {
   },
   katana: {
     id: 'katana',
-    section: 'weapon',
+    section: 'blessing',
     name: PICKS.katana.name,
-    description: 'Weapon: cuts every small cat in a straight line down',
+    description: 'Blessing: cuts every small cat in a straight line down',
     statLabel: 'Opens',
     startLevel: 0,
     maxLevel: WEAPON_CARD_OPENS.katana.length,
@@ -228,7 +229,7 @@ export const UPGRADES: Readonly<Record<UpgradeId, UpgradeDef>> = {
 
 /** True for the weapon cards. */
 export function isWeaponCard(id: UpgradeId): id is WeaponCardId {
-  return UPGRADES[id].section === 'weapon';
+  return id in WEAPON_CARD_OPENS;
 }
 
 /** True for the blessing cards. */
