@@ -30,7 +30,7 @@ test('a shop card plays its clip; the new dot goes for good; the popup closes th
   await openShop(page);
   const shop = page.getByTestId('shop');
   // Only the cards whose effect can't be guessed have a clip.
-  await expect(shop.locator('.clip-btn')).toHaveCount(7);
+  await expect(shop.locator('.clip-btn')).toHaveCount(9);
   await expect(page.getByTestId('shop-card-luckyPaw').locator('.clip-btn')).toHaveCount(0);
   const combo = page.getByTestId('clip-btn-combo');
   await expect(combo.locator('.clip-dot')).toBeVisible();
@@ -107,7 +107,7 @@ test('a pick card plays its clip without being chosen; "How to play" brings the 
   await page.getByTestId('setting-tips').click();
   await page.getByTestId('settings-close').click();
   await page.getByTestId('upgrades').click();
-  await expect(page.getByTestId('shop').locator('.clip-dot:visible')).toHaveCount(7);
+  await expect(page.getByTestId('shop').locator('.clip-dot:visible')).toHaveCount(9);
   expect(errors).toEqual([]);
 });
 
