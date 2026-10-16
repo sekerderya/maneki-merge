@@ -1,6 +1,6 @@
 /**
- * The Katana (GAME_DESIGN §15.16) on screen. In the paw the sword hangs point down (`hold`). Dropped,
- * a swoosh flashes at the paw and the sword shoots down its line, drawn from the run's fall
+ * The Katana (GAME_DESIGN §15.16) on screen, once it leaves the paw (in the paw and NEXT it is a ball,
+ * SpecialSkin). Dropped, a swoosh flashes at the paw and the sword shoots out of the ball, down its line, drawn from the run's fall
  * (RunController.katana) so a pause freezes it, with a streak of light from where its blade started
  * to its point and a glint on the point; More Blades' swords come in along their own lines. Every
  * ball it cuts splits in two along the cut (`cut`): the halves of the ball's own sprite slide apart
@@ -58,8 +58,6 @@ interface Burst {
 /** Swords that reached the ends of their lines and stick there. */
 interface Landing {
   readonly blades: readonly BladeLine[];
-  /** The first sword's point when it left the paw (it is drawn from there). */
-  readonly startTipY: number;
   readonly startMs: number;
 }
 
@@ -75,10 +73,6 @@ export class KatanaFx {
   private readonly spareHalves: Phaser.GameObjects.Image[] = [];
   private readonly bursts: Burst[] = [];
   private readonly landings: Landing[] = [];
-  /** The sword in the paw this frame: where its hilt's end is and how big it is, or null. */
-  private held: { x: number; topY: number; scale: number } | null = null;
-  /** The falling first sword's point when it left the paw. */
-  private startTipY = 0;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -95,20 +89,8 @@ export class KatanaFx {
     private readonly particles: (count: number) => number,
   ) {}
 
-  /** The sword hangs in the paw this frame, its hilt's end at (x, topY), `scale` of its size. */
-  hold(x: number, topY: number, scale: number): void {
-    this.held = { x, topY, scale };
-  }
-
-  /** Where the held sword's point is now (where the falling one starts from). */
-  private heldTipY(): number {
-    const held = this.held;
-    return held ? held.topY + KATANA_FX.heldLength * held.scale : 0;
-  }
-
-  /** The katana left the paw at (x, y): a swoosh there. */
+  /** The katana left the paw at (x, y): a swoosh there, where the ball was. */
   dropped(nowMs: number, x: number, y: number): void {
-    this.startTipY = this.held ? this.heldTipY() : y;
     const frame = this.frames.swoosh;
     this.burst(frame, x, y, 0, KATANA_FX.swooshSize, 0.5, nowMs, KATANA_FX.swooshMs, 0.7);
   }
@@ -132,7 +114,7 @@ export class KatanaFx {
 
   /** The points reached the ends of their lines: each strikes the floor or a wall and sticks. */
   landed(nowMs: number, blades: readonly BladeLine[]): void {
-    this.landings.push({ blades, startTipY: this.startTipY, startMs: nowMs });
+    this.landings.push({ blades, startMs: nowMs });
     const fx = KATANA_FX;
     for (const blade of blades) {
       const { x1, y1 } = blade;
@@ -153,22 +135,10 @@ export class KatanaFx {
     }
   }
 
-  /** Draws the frame: the held sword, the falling ones (`view`), the landed ones and the lights. */
+  /** Draws the frame: the falling swords (`view`), the landed ones and the lights. */
   update(nowMs: number, view: KatanaView | null, alpha: number): void {
     this.usedSwords = 0;
     this.usedLights = 0;
-    const held = this.held;
-    if (held) {
-      this.sword(
-        held.x,
-        held.topY + KATANA_FX.heldLength * held.scale,
-        0,
-        1,
-        KATANA_FX.heldLength * held.scale,
-        1,
-      );
-    }
-    this.held = null;
     if (view) this.drawFall(view, alpha);
     this.drawLandings(nowMs);
     this.drawHalves(nowMs);
@@ -187,7 +157,6 @@ export class KatanaFx {
   }
 
   clear(): void {
-    this.held = null;
     this.landings.length = 0;
     this.bursts.length = 0;
     for (const half of this.halves) this.spareHalves.push(half.image.setVisible(false));
@@ -195,31 +164,21 @@ export class KatanaFx {
     for (const image of [...this.swords, ...this.lights]) image.setVisible(false);
   }
 
-  /** The falling swords, between the run's last two ticks. */
+  /**
+   * The falling swords, between the run's last two ticks: each comes in along its line, the first
+   * out of the ball in the paw, fading in over its first moments.
+   */
   private drawFall(view: KatanaView, alpha: number): void {
     const elapsed = Math.max(0, view.elapsedMs - PHYSICS_STEP_MS * (1 - alpha));
     const t = Math.min(1, elapsed / view.fallMs);
-    view.blades.forEach((blade, i) => {
-      const enter = i === 0 ? 1 : Math.min(1, elapsed / KATANA_FX.enterMs);
-      const tip = this.tipAt(blade, i, t, this.startTipY);
-      const startY = i === 0 ? Math.min(this.startTipY, blade.y0) : blade.y0;
-      this.streak(blade.x0, startY, tip.x, tip.y, KATANA_FX.streakAlpha * enter);
+    const enter = Math.min(1, elapsed / KATANA_FX.enterMs);
+    for (const blade of view.blades) {
+      const tip = bladePoint(blade, t);
+      this.streak(blade.x0, blade.y0, tip.x, tip.y, KATANA_FX.streakAlpha * enter);
       const { dx, dy } = direction(blade);
       this.sword(tip.x, tip.y, dx, dy, KATANA_FX.length, enter);
       this.light(this.frames.glint, tip.x, tip.y, 0, KATANA_FX.glintSize, 0.5, enter);
-    });
-  }
-
-  /** The point of blade `i` at `t`: the first sword comes from where it hung in the paw. */
-  private tipAt(
-    blade: BladeLine,
-    i: number,
-    t: number,
-    startTipY: number,
-  ): { x: number; y: number } {
-    if (i > 0) return bladePoint(blade, t);
-    const y0 = Math.max(startTipY, blade.y0);
-    return { x: blade.x0, y: y0 + (blade.y1 - y0) * t };
+    }
   }
 
   /** Landed swords stick in the floor and fade; their streaks fade first. */
@@ -234,12 +193,12 @@ export class KatanaFx {
       }
       const stick = Math.min(1, (fx.stickMs - age) / fx.fadeMs);
       const streak = Math.max(0, 1 - age / fx.streakFadeMs);
-      landing.blades.forEach((blade, i) => {
-        const startY = i === 0 ? Math.min(landing.startTipY, blade.y0) : blade.y0;
-        if (streak > 0) this.streak(blade.x0, startY, blade.x1, blade.y1, fx.streakAlpha * streak);
+      for (const blade of landing.blades) {
+        if (streak > 0)
+          this.streak(blade.x0, blade.y0, blade.x1, blade.y1, fx.streakAlpha * streak);
         const { dx, dy } = direction(blade);
         this.sword(blade.x1, blade.y1, dx, dy, fx.length, stick);
-      });
+      }
     }
   }
 

@@ -29,6 +29,7 @@ export const SPECIAL_SPRITE_DATA: SpecialSprites = {
     radius: 392.71,
     color: '#44407d',
   },
+  katana: null,
   boulders: [
     {
       file: 'boulder-0.webp',

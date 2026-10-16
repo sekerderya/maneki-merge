@@ -390,17 +390,16 @@ export const LIGHTNING_FX = {
 } as const;
 /**
  * The Katana's look (GAME_DESIGN §15.16), in world units and ms. The sword is `length` long as it
- * falls and `heldLength` in the paw; behind it a streak of light `streakBand` wide runs from where
+ * falls (in the paw it is a ball, SpecialSkin); behind it a streak of light `streakBand` wide runs from where
  * its blade started to its point, and fades over `streakFadeMs` once it lands. The point sticks in
- * the floor for `stickMs`, its last `fadeMs` fading. A blade that doesn't start at the paw (More
- * Blades) fades in over `enterMs`. A cut cat splits in two along the cut: each half slides
+ * the floor for `stickMs`, its last `fadeMs` fading. Every sword fades in over `enterMs` as it
+ * comes out of the ball (More Blades' at the jar's corners and side). A cut cat splits in two along the cut: each half slides
  * `splitDistance` radii away and turns `splitTurn` radians over `splitMs`, fading, under a cut
  * flash `flashScale` radii long. The paw lets go with a swoosh, and the point strikes the floor
  * with a burst of sparks and a soft flash.
  */
 export const KATANA_FX = {
   length: 330,
-  heldLength: 230,
   streakBand: 44,
   streakAlpha: 0.9,
   streakFadeMs: 260,

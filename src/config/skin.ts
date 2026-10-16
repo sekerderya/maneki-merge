@@ -126,5 +126,9 @@ export const KATANA_CORE = '#ffffff';
 export const KATANA_GLOW = '#a9d2f2';
 export const KATANA_HAZE = 'rgba(255, 190, 215, 0.5)';
 export const KATANA_SPARKS = 0xdcefff;
+/** The katana's stand-in ball (`?skin=vector`, or before its art): steel, a gold guard, a red hilt. */
+export const KATANA_STEEL = '#dfe8f2';
+export const KATANA_GUARD = '#e2b33f';
+export const KATANA_HILT = '#d9483b';
 /** The magnet's selection ring round the chosen ball. */
 export const SELECT_RING = 0xf2b83b;

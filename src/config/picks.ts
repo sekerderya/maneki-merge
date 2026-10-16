@@ -73,11 +73,11 @@ export const LIGHTNING_HOLD_MS = 450;
  * fall). Every cat up to KATANA_MAX_CUT_SIZE whose body its blade crosses, give or take
  * KATANA_GRACE[Wide Blade level] world units, pops into its value as the blade reaches it, and every
  * boulder it crosses breaks at once, whatever its bands; everything else lets it through. It isn't a
- * ball: it never pushes, rests or counts for the danger line. In the paw it takes a size-1 ball's
- * place (KATANA_SIZE), so it can be aimed close to the walls. None comes in a stage's first
+ * ball: it never pushes, rests or counts for the danger line. In the paw and NEXT it is a ball of
+ * KATANA_SIZE, like the other special balls (v0.55.1, the owner's call). None comes in a stage's first
  * KATANA_FREE_DROPS drops: an empty jar has nothing to cut.
  */
-export const KATANA_SIZE = 1;
+export const KATANA_SIZE = 2;
 export const KATANA_FREE_DROPS = 20;
 export const KATANA_FALL_MS = 240;
 export const KATANA_MAX_CUT_SIZE = 4;

@@ -58,8 +58,9 @@ export interface SpecialImages {
   readonly joker: HTMLImageElement;
   /** Null until the owner's image comes (docs/ART_ASSETS.md §4.16). */
   readonly lightning: HTMLImageElement | null;
-  /** The Katana's sword (docs/ART_ASSETS.md §4.21), null until it comes. */
-  readonly katana: HTMLImageElement | null;
+  /** The Katana's ball in the paw and its sword (docs/ART_ASSETS.md §4.21), null until they come. */
+  readonly katanaBall: HTMLImageElement | null;
+  readonly katanaSword: HTMLImageElement | null;
   /** With 0, 1, 2 and 3 iron bands. */
   readonly boulders: readonly HTMLImageElement[];
 }
@@ -120,14 +121,16 @@ export function loadArt(baseUrl: string): Promise<ArtImages> {
     special(SPECIAL_ART.joker.file),
     SPECIAL_ART.lightning ? special(SPECIAL_ART.lightning.file) : null,
     Promise.all(SPECIAL_ART.boulders.map(({ file }) => special(file))),
+    SPECIAL_ART.katana ? special(SPECIAL_ART.katana.file) : null,
     KATANA_ART ? image(`${baseUrl}${KATANA_SWORD_DIR}${KATANA_ART.katana.file}`) : null,
-  ]).then(([magnet, hanabi, joker, lightning, boulders, katana]) => ({
+  ]).then(([magnet, hanabi, joker, lightning, boulders, katanaBall, katanaSword]) => ({
     magnet,
     hanabi,
     joker,
     lightning,
     boulders,
-    katana,
+    katanaBall,
+    katanaSword,
   }));
   const fxList = (list: readonly { file: string }[]): Promise<HTMLImageElement[]> =>
     Promise.all(list.map(({ file }) => image(`${baseUrl}${FX_SPRITE_DIR}${file}`)));

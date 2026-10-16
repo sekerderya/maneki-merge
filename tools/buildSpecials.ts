@@ -1,7 +1,7 @@
 /**
  * The special balls part of the art pipeline (TECH_SPEC §14, docs/ART_ASSETS.md phase 7): the
- * magnet, the hanabi, the joker cat, the boulder sheet and the lightning ball (phase 15, null
- * until its image is in) from `art-source/specials/`, written to `public/assets/specials/` with
+ * magnet, the hanabi, the joker cat, the boulder sheet, the lightning ball (phase 15) and the
+ * katana's ball (phase 20; each null until its image is in) from `art-source/specials/`, written to `public/assets/specials/` with
  * their measurements in `src/config/specialSpriteData.ts`.
  *
  * Each ball goes through tools/artBall.ts like a cat. The boulder sheet is a 2×2 grid of the same
@@ -21,6 +21,7 @@ interface SpecialData {
   hanabi: BallSprite;
   joker: BallSprite;
   lightning: BallSprite | null;
+  katana: BallSprite | null;
   boulders: BallSprite[];
 }
 
@@ -35,6 +36,10 @@ export async function buildSpecials(): Promise<void> {
   const lightning = lightningSource
     ? await buildBall(lightningSource, OUT_DIR, 'lightning.webp')
     : null;
+  // The katana's ball (v0.55.1, docs/ART_ASSETS.md §4.21) until its image comes: a stand-in. The
+  // sword itself (`specials/katana`) is tools/buildKatana.ts's.
+  const katanaSource = await source('katana-ball').catch(() => null);
+  const katana = katanaSource ? await buildBall(katanaSource, OUT_DIR, 'katana-ball.webp') : null;
 
   // Top left, top right, bottom left, bottom right: 0, 1, 2 and 3 bands.
   const sheet = await loadRgba(await source('boulders'));
@@ -46,7 +51,7 @@ export async function buildSpecials(): Promise<void> {
     boulders.push(await buildBall(quarter, OUT_DIR, `boulder-${bands}.webp`));
   }
 
-  await writeFile(DATA_FILE, dataModule({ magnet, hanabi, joker, lightning, boulders }));
+  await writeFile(DATA_FILE, dataModule({ magnet, hanabi, joker, lightning, katana, boulders }));
   console.log(
     `Specials: magnet, hanabi, joker${lightning ? ', lightning' : ''} and ` +
       `${boulders.length} boulders; wrote ${DATA_FILE}`,

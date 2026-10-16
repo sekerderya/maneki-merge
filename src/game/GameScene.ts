@@ -39,7 +39,6 @@ import {
   DROPPER_POP_IN_MS,
   GOLDEN_GLOW_SCALE,
   HANABI_BLAST_SPARKS,
-  KATANA_FX,
   REDUCED_MOTION_PARTICLES,
   SELECT_RING_GAP,
   SELECT_RING_PERIOD_MS,
@@ -279,7 +278,7 @@ export class GameScene extends Phaser.Scene {
       this.particles(count),
     );
     // The owner's katana with the art skin, once it is in; else the stand-ins.
-    const sword = art?.specials.katana ?? null;
+    const sword = art?.specials.katanaSword ?? null;
     const katanaImages = art?.fx.katana ?? [];
     const katanaFrames =
       KATANA_ART && sword && katanaImages.length > 0
@@ -697,7 +696,8 @@ export class GameScene extends Phaser.Scene {
    */
   private dropFrame(item: Drop, stage: number): SkinFrame {
     if (item.kind === 'magnet') return this.special.magnet();
-    if (item.kind === 'cat' || item.kind === 'katana') return this.skin.body(item.tier);
+    if (item.kind === 'cat') return this.skin.body(item.tier);
+    if (item.kind === 'katana') return this.special.katana(tierSize(item.tier, stage));
     const { kind, tier, hits } = item;
     return this.balls.frameOf({ kind, tier, size: tierSize(tier, stage), hitsLeft: hits });
   }
@@ -738,15 +738,6 @@ export class GameScene extends Phaser.Scene {
 
     const t = Math.min(1, (this.nowMs - this.popInFromMs) / DROPPER_POP_IN_MS);
     const pop = backOut(t) * (shown / radius);
-    // The katana hangs from the paw by its hilt, and its aim guide is its cut, down to the floor.
-    if (item.kind === 'katana') {
-      this.dropperBody.setVisible(false);
-      this.dropperNumber.setVisible(false);
-      const top = geo.dropY - PAW_GRIP * shown;
-      this.katana.hold(x, top, pop);
-      this.aimGuide.line(x, top + KATANA_FX.heldLength * pop + AIM_DOT_SPACING, 0);
-      return;
-    }
     const body = this.dropFrame(item, run.stage);
     this.dropperBody
       .setTexture(body.key, body.frame)
@@ -770,6 +761,11 @@ export class GameScene extends Phaser.Scene {
     }
     // The magnet is used on a ball in the jar, not dropped: no aim guide.
     if (item.kind === 'magnet') return;
+    // The katana's aim guide is its cut, straight down to the floor (GAME_DESIGN §15.16).
+    if (item.kind === 'katana') {
+      this.aimGuide.line(x, geo.dropY + shown + AIM_DOT_SPACING, 0);
+      return;
+    }
 
     // Aim guide: a dotted line from the ball down to where it first touches something, and a
     // faint ghost of the ball there, at its true size.

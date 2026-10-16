@@ -14,6 +14,11 @@ export interface SpecialSprites {
   readonly joker: CatSprite;
   /** Null until the owner's image comes (docs/ART_ASSETS.md §4.16): the code draws a stand-in. */
   readonly lightning: CatSprite | null;
+  /**
+   * The katana's ball in the paw and NEXT (GAME_DESIGN §15.16, docs/ART_ASSETS.md §4.21), null until
+   * its image comes. The sword that flies out of it is config/katanaSprites.ts's.
+   */
+  readonly katana: CatSprite | null;
   /** The same stone with 0, 1, 2 and 3 iron bands (one per extra merge it needs). */
   readonly boulders: readonly CatSprite[];
 }
@@ -33,6 +38,13 @@ export function boulderSprite(bands: number): CatSprite {
 
 /** Every special sprite, for preloading. */
 export function specialSprites(): CatSprite[] {
-  const { magnet, hanabi, joker, lightning, boulders } = SPECIAL_ART;
-  return [magnet, hanabi, joker, ...(lightning ? [lightning] : []), ...boulders];
+  const { magnet, hanabi, joker, lightning, katana, boulders } = SPECIAL_ART;
+  return [
+    magnet,
+    hanabi,
+    joker,
+    ...(lightning ? [lightning] : []),
+    ...(katana ? [katana] : []),
+    ...boulders,
+  ];
 }

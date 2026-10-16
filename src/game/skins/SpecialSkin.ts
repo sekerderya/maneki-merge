@@ -29,6 +29,9 @@ import {
   JOKER_BALL,
   JOKER_RAINBOW,
   JOKER_STAR,
+  KATANA_GUARD,
+  KATANA_HILT,
+  KATANA_STEEL,
   LIGHTNING_BALL,
   LIGHTNING_BOLT,
   MAGNET_DISC,
@@ -112,6 +115,19 @@ export class SpecialSkin {
     const sprite = SPECIAL_ART.lightning;
     return this.frame(`special-lightning-${size}`, (canvas) =>
       image && sprite ? drawArt(canvas, image, sprite, radius) : drawLightning(canvas, radius),
+    );
+  }
+
+  /**
+   * The katana's ball (GAME_DESIGN §15.16), in the paw: the owner's image once it is in, else a
+   * cream ball with a sword across it.
+   */
+  katana(size: number): SkinFrame {
+    const radius = sizeRadius(size);
+    const image = this.art?.katanaBall ?? null;
+    const sprite = SPECIAL_ART.katana;
+    return this.frame(`special-katana-${size}`, (canvas) =>
+      image && sprite ? drawArt(canvas, image, sprite, radius) : drawKatana(canvas, radius),
     );
   }
 
@@ -389,6 +405,48 @@ function drawLightning(canvas: HTMLCanvasElement, radius: number): void {
   ctx.lineJoin = 'round';
   ctx.strokeStyle = SPECIAL_INK;
   ctx.stroke();
+}
+
+/** The katana's stand-in ball: a cream disc with a sword pointing down to the lower left. */
+function drawKatana(canvas: HTMLCanvasElement, radius: number): void {
+  const [ctx, c, r] = disc(canvas, radius);
+  const line = outlinePx(radius);
+  outlinedCircle(ctx, c, r, line, MAGNET_DISC);
+  ctx.save();
+  ctx.translate(c, c);
+  ctx.rotate(Math.PI / 4);
+  ctx.lineWidth = line * 0.6;
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = SPECIAL_INK;
+  const shape = (color: string, points: readonly (readonly [number, number])[]): void => {
+    ctx.beginPath();
+    for (const [x, y] of points) ctx.lineTo(x * r, y * r);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.stroke();
+  };
+  // The blade, the guard and the hilt, from the point up.
+  shape(KATANA_STEEL, [
+    [0, 0.72],
+    [-0.09, 0.52],
+    [-0.09, -0.2],
+    [0.09, -0.2],
+    [0.09, 0.52],
+  ]);
+  shape(KATANA_GUARD, [
+    [-0.24, -0.2],
+    [0.24, -0.2],
+    [0.24, -0.3],
+    [-0.24, -0.3],
+  ]);
+  shape(KATANA_HILT, [
+    [-0.08, -0.3],
+    [0.08, -0.3],
+    [0.08, -0.7],
+    [-0.08, -0.7],
+  ]);
+  ctx.restore();
 }
 
 function drawGlow(canvas: HTMLCanvasElement): void {
