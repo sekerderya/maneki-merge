@@ -57,68 +57,72 @@ the background 2× (the tool's upscale, or the free Upscayl app) to 2048×3072, 
 whole screen; the rest is sharp enough at the generated size. Rug, paw, logo and banner are
 narrower than their canvas: Claude crops the empty space.
 
-| #   | Phase      | File (in `art-source/`)                   | What                                                                | Generate          |
-| --- | ---------- | ----------------------------------------- | ------------------------------------------------------------------- | ----------------- |
-| 0   | 0 style    | `style/lineup.png`                        | The 9 cats on one sheet (style lock, not used in game)              | 1:1, 1024×1024    |
-| 1   | 1 cats     | `cats/size-01.png` … `size-09.png`        | One cat per size (GAME_DESIGN §4)                                   | 1:1, 1024×1024    |
-| 2   | 2 scene    | `scene/background.png`                    | Shrine garden behind and around the jar                             | 2:3, 1024×1536 ×2 |
-| 2a  | 9 jars     | `scene/background-2` … `-5`               | The grown jars' backgrounds, a bigger place each (§4.10)            | 9:16              |
-| 2b  | 10 clouds  | `transition/clouds.jpg`                   | Sheet: the clouds for the growth transition (§4.11)                 | 3:2, 1536×1024    |
-| 3   | 2 scene    | `scene/jar.png`                           | Empty bamboo-framed glass jar, front view                           | 2:3, 1024×1536    |
-| 4   | 2 scene    | `scene/rug.png`                           | Mint rug the jar stands on                                          | 3:2, 1536×1024    |
-| 5   | 2 scene    | `scene/paw.png`                           | Calico dropper arm hanging from the top                             | 2:3, 1024×1536    |
-| 5a  | 2 scene    | `scene/noren-mockup.webp`                 | Game screen with the noren, design reference (done)                 | –                 |
-| 5b  | 2 scene    | `scene/noren.jpg`                         | Noren curtain over the jar (v0.22–v0.24; gone in v0.25)             | 3:2, 1536×1024    |
-| 6   | 3 HUD      | `hud/hud-kit.png`                         | Sheet: card, sunken well, pause button, NEXT bubble, …              | 1:1, 1024×1024    |
-| 7   | 3 HUD      | `hud/icons.png`                           | Sheet: coin, paw badge, sparkle, petals, puff                       | 1:1, 1024×1024    |
-| 7a  | 3 HUD      | `hud/score-card.png`                      | The whole score card, blank, copied from `ref-score.png`            | 3:2, 1536×1024    |
-| 7b  | 3 HUD      | `hud/next-bubble.png`                     | The round NEXT bubble, empty, copied from `ref-next.png`            | 1:1, 1024×1024    |
-| 7c  | 3 HUD      | `hud/xp-empty`, `hud/xp-full`             | XP card, an edit of the score card (v0.25 only)                     | 4:3, 1024×768     |
-| 7b  | 4 menu     | `menu/mockup.jpg`                         | Whole main-menu screen, design reference (done)                     | 2:3, 1024×1536    |
-| 7c  | 4 menu     | `menu/background.png`                     | Menu garden, the mockup without UI, logo and cat                    | 2:3, 1024×1536    |
-| 8   | 4 menu     | `menu/logo.png`                           | "Maneki Merge" logo (the only image with text)                      | 3:2, 1536×1024    |
-| 9   | 4 menu     | `menu/hero.png`                           | Big golden maneki-neko on a pink cushion                            | 1:1, 1024×1024    |
-| 9b  | 4 menu     | `menu/buttons.png`                        | Sheet: blank PLAY, UPGRADES, record card, gear, coin pill           | 3:2, 1536×1024    |
-| 9c  | 4 menu     | `menu/menu-icons.png`                     | Sheet: torii, paw badge, arrow, coin, sparkles, petals              | 1:1, 1024×1024    |
-| 9d  | 4 menu     | `menu/record-card.png`                    | One empty record card with its sunken well                          | 3:2, 1536×1024    |
-| 9e  | 4 menu     | `menu/torii.png`                          | Chunky torii for the BEST STAGE card (v0.42.8)                      | 1:1, 1024×1024    |
-| 10  | 4 menu     | `menu/ui-kit.png`                         | Sheet: PLAY, secondary button, panel, card, close, gear             | 3:2, 1536×1024    |
-| 11  | 4 menu     | `menu/upgrade-icons.png`                  | Sheet: 5 upgrade icons                                              | 3:2, 1536×1024    |
-| 12  | 4 menu     | `menu/settings-icons.png`                 | Sheet: sound, haptics, reduce motion, how to play                   | 1:1, 1024×1024    |
-| 13  | 4 menu     | `menu/banner.png`                         | Blank ribbon banner for "The shrine grows!" etc.                    | 3:2, 1536×1024    |
-| 14  | 5 app      | `app-icon.jpg`                            | App icon: the golden cat from the chest up, full bleed (§4.6)       | 1:1, 1024×1024    |
-| 15  | 6 doors    | `doors/picture.png`                       | Stage-door picture, cut into four strips by the game                | 9:16              |
-| 16  | 6 doors    | `doors/panel.png`                         | One empty door frame, laid over each strip                          | 2:3, 1024×1536    |
-| 17  | 7 specials | `specials/magnet.png`                     | The magnet token (in the paw and NEXT)                              | 1:1, 1024×1024    |
-| 18  | 7 specials | `specials/hanabi.png`                     | The firework ball                                                   | 1:1, 1024×1024    |
-| 19  | 7 specials | `specials/joker.png`                      | The joker cat, a rainbow maneki-neko in a jester hat                | 1:1, 1024×1024    |
-| 20  | 7 specials | `specials/boulders.png`                   | Sheet: the boulder with 0, 1, 2 and 3 iron bands                    | 1:1, 1024×1024    |
-| 21  | 8 screens  | `ui/upgrades-mockup.png`                  | Whole Upgrades screen, design reference (approved)                  | 9:16 or 2:3       |
-| 21a | 8 screens  | `ui/upgrade-icons.png`                    | Sheet: the four upgrade icons, the icon kit's style (§5)            | 1:1, 1024×1024    |
-| 21b | 8 screens  | `ui/upgrade-pieces.png`                   | Sheet: empty card, Buy button, title card, close button             | 3:2, 1536×1024    |
-| 22  | 8 screens  | `ui/trial-mockup.png`                     | Trial pick over the shut doors, design reference                    | 9:16 or 2:3       |
-| 23  | 8 screens  | `ui/blessing-mockup.png`                  | Blessing pick, an edit of the trial mockup                          | 9:16 or 2:3       |
-| 24  | 11 trials  | `fx/fireball.png`                         | Sheet: Heavy Drop's small and big fireball flames (§4.12)           | 3:2, 1536×1024    |
-| 25  | 11 trials  | `fx/porcelain.png`                        | Sheet: 2 crack patterns, 2 gold kintsugi seams                      | 1:1, 1024×1024    |
-| 26  | 11 trials  | `picks/wind.png` … `picks/echo.png`       | Card pictures: Wind, Heavy Drop, Porcelain, Hubris, Echo            | 1:1, 1024×1024    |
-| 27  | 12 trials  | `fx/stone.png`                            | Sheet: 4 stone patterns, a cursed cat turning to stone (§4.13)      | 1:1, 1024×1024    |
-| 28  | 12 trials  | `fx/dice.png`                             | Sheet: the lucky gold die, the cracked grey die                     | 3:2, 1536×1024    |
-| 29  | 12 trials  | `picks/cursedBell.png` … `picks/dice.png` | Card pictures: Cursed Bell, Quick Curse, More Curses, Copycat, Dice | 1:1, 1024×1024    |
-| 30  | 13 panels  | `ui/settings-mockup.png`                  | Settings panel, today's layout restyled, design reference (§4.14)   | 9:16              |
-| 31  | 13 panels  | `ui/pause-mockup.png`                     | Pause panel, today's layout restyled, design reference              | 9:16              |
-| 32  | 13 panels  | `ui/gameover-mockup.png`                  | Game Over panel, today's layout restyled, design reference          | 9:16              |
-| 33  | 15 bolt    | `specials/lightning.png`                  | The lightning ball, a little storm with a yellow bolt (§4.16)       | 1:1, 1024×1024    |
-| 34  | 15 bolt    | `fx/bolts.png`                            | Sheet on black: six chain bolts, end to end on their rows           | 3:2, 1536×1024    |
-| 35  | 15 bolt    | `fx/skybolts.png`                         | Sheet on black: three bolts striking down from the sky              | 2:3, 1024×1536    |
-| 36  | 15 bolt    | `fx/zap.png`                              | Sheet on black: impact flash, shock ring, sparks, three small arcs  | 3:2, 1536×1024    |
-| 37  | 15 bolt    | `fx/shock.png`                            | Sheet on black: four electric crackle patterns over a struck cat    | 1:1, 1024×1024    |
-| 38  | 16 loading | `loading/bar.jpg`                         | The loading bar: the score card, long, with an empty well (§4.17)   | 3:2, 1536×1024    |
-| 39  | 16 loading | `loading/bar-full.jpg`                    | The same bar, an edit with the well full of gold                    | 3:2, 1536×1024    |
-| 40  | 17 Play    | `store/feature-graphic.png`               | Google Play's feature graphic: the logo and the cats, wide (§4.18)  | 3:2, 1536×1024    |
-| 41  | 18 goal    | `ui/goal-strip-mockup*.png`               | Play screen with the stage goal strip, two states (§4.19)           | 9:16              |
-| 42  | 18 goal    | `hud/goal-slot.png`                       | The goal's round slot: cream disc, flat gold ring                   | 1:1, 1024×1024    |
-| 43  | 19 time    | `scene/background…-sunset.png`            | The five jar backgrounds at sunset, edits of the day ones (§4.20)   | 9:16              |
-| 44  | 19 time    | `scene/background…-night.png`             | The five jar backgrounds at night                                   | 9:16              |
+| #   | Phase      | File (in `art-source/`)                    | What                                                                | Generate          |
+| --- | ---------- | ------------------------------------------ | ------------------------------------------------------------------- | ----------------- |
+| 0   | 0 style    | `style/lineup.png`                         | The 9 cats on one sheet (style lock, not used in game)              | 1:1, 1024×1024    |
+| 1   | 1 cats     | `cats/size-01.png` … `size-09.png`         | One cat per size (GAME_DESIGN §4)                                   | 1:1, 1024×1024    |
+| 2   | 2 scene    | `scene/background.png`                     | Shrine garden behind and around the jar                             | 2:3, 1024×1536 ×2 |
+| 2a  | 9 jars     | `scene/background-2` … `-5`                | The grown jars' backgrounds, a bigger place each (§4.10)            | 9:16              |
+| 2b  | 10 clouds  | `transition/clouds.jpg`                    | Sheet: the clouds for the growth transition (§4.11)                 | 3:2, 1536×1024    |
+| 3   | 2 scene    | `scene/jar.png`                            | Empty bamboo-framed glass jar, front view                           | 2:3, 1024×1536    |
+| 4   | 2 scene    | `scene/rug.png`                            | Mint rug the jar stands on                                          | 3:2, 1536×1024    |
+| 5   | 2 scene    | `scene/paw.png`                            | Calico dropper arm hanging from the top                             | 2:3, 1024×1536    |
+| 5a  | 2 scene    | `scene/noren-mockup.webp`                  | Game screen with the noren, design reference (done)                 | –                 |
+| 5b  | 2 scene    | `scene/noren.jpg`                          | Noren curtain over the jar (v0.22–v0.24; gone in v0.25)             | 3:2, 1536×1024    |
+| 6   | 3 HUD      | `hud/hud-kit.png`                          | Sheet: card, sunken well, pause button, NEXT bubble, …              | 1:1, 1024×1024    |
+| 7   | 3 HUD      | `hud/icons.png`                            | Sheet: coin, paw badge, sparkle, petals, puff                       | 1:1, 1024×1024    |
+| 7a  | 3 HUD      | `hud/score-card.png`                       | The whole score card, blank, copied from `ref-score.png`            | 3:2, 1536×1024    |
+| 7b  | 3 HUD      | `hud/next-bubble.png`                      | The round NEXT bubble, empty, copied from `ref-next.png`            | 1:1, 1024×1024    |
+| 7c  | 3 HUD      | `hud/xp-empty`, `hud/xp-full`              | XP card, an edit of the score card (v0.25 only)                     | 4:3, 1024×768     |
+| 7b  | 4 menu     | `menu/mockup.jpg`                          | Whole main-menu screen, design reference (done)                     | 2:3, 1024×1536    |
+| 7c  | 4 menu     | `menu/background.png`                      | Menu garden, the mockup without UI, logo and cat                    | 2:3, 1024×1536    |
+| 8   | 4 menu     | `menu/logo.png`                            | "Maneki Merge" logo (the only image with text)                      | 3:2, 1536×1024    |
+| 9   | 4 menu     | `menu/hero.png`                            | Big golden maneki-neko on a pink cushion                            | 1:1, 1024×1024    |
+| 9b  | 4 menu     | `menu/buttons.png`                         | Sheet: blank PLAY, UPGRADES, record card, gear, coin pill           | 3:2, 1536×1024    |
+| 9c  | 4 menu     | `menu/menu-icons.png`                      | Sheet: torii, paw badge, arrow, coin, sparkles, petals              | 1:1, 1024×1024    |
+| 9d  | 4 menu     | `menu/record-card.png`                     | One empty record card with its sunken well                          | 3:2, 1536×1024    |
+| 9e  | 4 menu     | `menu/torii.png`                           | Chunky torii for the BEST STAGE card (v0.42.8)                      | 1:1, 1024×1024    |
+| 10  | 4 menu     | `menu/ui-kit.png`                          | Sheet: PLAY, secondary button, panel, card, close, gear             | 3:2, 1536×1024    |
+| 11  | 4 menu     | `menu/upgrade-icons.png`                   | Sheet: 5 upgrade icons                                              | 3:2, 1536×1024    |
+| 12  | 4 menu     | `menu/settings-icons.png`                  | Sheet: sound, haptics, reduce motion, how to play                   | 1:1, 1024×1024    |
+| 13  | 4 menu     | `menu/banner.png`                          | Blank ribbon banner for "The shrine grows!" etc.                    | 3:2, 1536×1024    |
+| 14  | 5 app      | `app-icon.jpg`                             | App icon: the golden cat from the chest up, full bleed (§4.6)       | 1:1, 1024×1024    |
+| 15  | 6 doors    | `doors/picture.png`                        | Stage-door picture, cut into four strips by the game                | 9:16              |
+| 16  | 6 doors    | `doors/panel.png`                          | One empty door frame, laid over each strip                          | 2:3, 1024×1536    |
+| 17  | 7 specials | `specials/magnet.png`                      | The magnet token (in the paw and NEXT)                              | 1:1, 1024×1024    |
+| 18  | 7 specials | `specials/hanabi.png`                      | The firework ball                                                   | 1:1, 1024×1024    |
+| 19  | 7 specials | `specials/joker.png`                       | The joker cat, a rainbow maneki-neko in a jester hat                | 1:1, 1024×1024    |
+| 20  | 7 specials | `specials/boulders.png`                    | Sheet: the boulder with 0, 1, 2 and 3 iron bands                    | 1:1, 1024×1024    |
+| 21  | 8 screens  | `ui/upgrades-mockup.png`                   | Whole Upgrades screen, design reference (approved)                  | 9:16 or 2:3       |
+| 21a | 8 screens  | `ui/upgrade-icons.png`                     | Sheet: the four upgrade icons, the icon kit's style (§5)            | 1:1, 1024×1024    |
+| 21b | 8 screens  | `ui/upgrade-pieces.png`                    | Sheet: empty card, Buy button, title card, close button             | 3:2, 1536×1024    |
+| 22  | 8 screens  | `ui/trial-mockup.png`                      | Trial pick over the shut doors, design reference                    | 9:16 or 2:3       |
+| 23  | 8 screens  | `ui/blessing-mockup.png`                   | Blessing pick, an edit of the trial mockup                          | 9:16 or 2:3       |
+| 24  | 11 trials  | `fx/fireball.png`                          | Sheet: Heavy Drop's small and big fireball flames (§4.12)           | 3:2, 1536×1024    |
+| 25  | 11 trials  | `fx/porcelain.png`                         | Sheet: 2 crack patterns, 2 gold kintsugi seams                      | 1:1, 1024×1024    |
+| 26  | 11 trials  | `picks/wind.png` … `picks/echo.png`        | Card pictures: Wind, Heavy Drop, Porcelain, Hubris, Echo            | 1:1, 1024×1024    |
+| 27  | 12 trials  | `fx/stone.png`                             | Sheet: 4 stone patterns, a cursed cat turning to stone (§4.13)      | 1:1, 1024×1024    |
+| 28  | 12 trials  | `fx/dice.png`                              | Sheet: the lucky gold die, the cracked grey die                     | 3:2, 1536×1024    |
+| 29  | 12 trials  | `picks/cursedBell.png` … `picks/dice.png`  | Card pictures: Cursed Bell, Quick Curse, More Curses, Copycat, Dice | 1:1, 1024×1024    |
+| 30  | 13 panels  | `ui/settings-mockup.png`                   | Settings panel, today's layout restyled, design reference (§4.14)   | 9:16              |
+| 31  | 13 panels  | `ui/pause-mockup.png`                      | Pause panel, today's layout restyled, design reference              | 9:16              |
+| 32  | 13 panels  | `ui/gameover-mockup.png`                   | Game Over panel, today's layout restyled, design reference          | 9:16              |
+| 33  | 15 bolt    | `specials/lightning.png`                   | The lightning ball, a little storm with a yellow bolt (§4.16)       | 1:1, 1024×1024    |
+| 34  | 15 bolt    | `fx/bolts.png`                             | Sheet on black: six chain bolts, end to end on their rows           | 3:2, 1536×1024    |
+| 35  | 15 bolt    | `fx/skybolts.png`                          | Sheet on black: three bolts striking down from the sky              | 2:3, 1024×1536    |
+| 36  | 15 bolt    | `fx/zap.png`                               | Sheet on black: impact flash, shock ring, sparks, three small arcs  | 3:2, 1536×1024    |
+| 37  | 15 bolt    | `fx/shock.png`                             | Sheet on black: four electric crackle patterns over a struck cat    | 1:1, 1024×1024    |
+| 38  | 16 loading | `loading/bar.jpg`                          | The loading bar: the score card, long, with an empty well (§4.17)   | 3:2, 1536×1024    |
+| 39  | 16 loading | `loading/bar-full.jpg`                     | The same bar, an edit with the well full of gold                    | 3:2, 1536×1024    |
+| 40  | 17 Play    | `store/feature-graphic.png`                | Google Play's feature graphic: the logo and the cats, wide (§4.18)  | 3:2, 1536×1024    |
+| 41  | 18 goal    | `ui/goal-strip-mockup*.png`                | Play screen with the stage goal strip, two states (§4.19)           | 9:16              |
+| 42  | 18 goal    | `hud/goal-slot.png`                        | The goal's round slot: cream disc, flat gold ring                   | 1:1, 1024×1024    |
+| 43  | 19 time    | `scene/background…-sunset.png`             | The five jar backgrounds at sunset, edits of the day ones (§4.20)   | 9:16              |
+| 44  | 19 time    | `scene/background…-night.png`              | The five jar backgrounds at night                                   | 9:16              |
+| 45  | 20 katana  | `specials/katana.png`                      | The katana, point down, gold paw-print guard and bell (§4.21)       | 2:3, 1024×1536    |
+| 46  | 20 katana  | `fx/slashes.png`                           | Sheet on black: four straight sword-slash streaks, end to end       | 3:2, 1536×1024    |
+| 47  | 20 katana  | `fx/cut.png`                               | Sheet on black: cut flash, glint, sparks, swoosh, strike, flash     | 3:2, 1536×1024    |
+| 48  | 20 katana  | `icons/katana.png` … `icons/wideBlade.png` | The four Katana pick icons (icon kit, §5)                           | 1:1, 1024×1024    |
 
 How the pieces go into the game:
 
@@ -2760,6 +2764,195 @@ same size and shape as the attached picture. No text, no watermark, no signature
 **Done (2026-10-15):** the mended nights (the peak's came back bigger, 937 × 1679: fine, it is
 placed by its fit) and the new jar 2 sunset, with its pagoda, are in the game (v0.51.0). The menu
 shows jar 1's pictures. Phase 19 is done.
+
+### 4.21 Phase 20: the Katana (the first weapon)
+
+The Katana (docs/plans/weapons-and-passives.md §3.1) is the first weapon of the weapons-and-passives
+direction. Dropped from the paw, it falls point down, fast and dead straight, through everything in
+the jar, and cuts every cat of sizes 1–4 its blade crosses (and every boulder); each cut cat splits
+in two along the cut (the game splits the cat's own art) and pops into coins. With More Blades,
+more katanas fall at once: diagonals from the jar's top corners (an X), then a horizontal one.
+
+How it plays (the art below is made for it):
+
+1. In the paw and in NEXT the **katana** shows (in NEXT turned on its side to fit the bubble).
+2. Dropped, a **swoosh** flashes at the paw with a steel "shing", and the katana shoots down. A
+   **slash streak** stretches behind it along its path, with **glints** running along the line.
+3. Each cat it crosses gets a **cut flash**, splits in two and pops in a **burst of sparks**.
+4. The point hits the floor with a **strike burst** and a **soft flash**; the katana fades.
+
+Seven images: the katana on white, two effect sheets on **black** (the effects are light, like
+Lightning's, §4.16: no outlines, and the game turns the black into transparency), and four pick
+icons from the icon kit (§5). One image per request, in a new chat each time. Make the katana
+first: the icons are drawn from it.
+
+**1. The katana** (`specials/katana.png`, portrait 2:3). Attach the lineup sheet
+(`art-source/style/lineup.webp`), the game screenshot `docs/screenshots/v0.26.0/390-1-hud.png` and
+the hanabi (`art-source/specials/hanabi.jpg`):
+
+```text
+Style: match the attached images exactly (the game's cat lineup, a game screenshot and one of its
+special balls). Polished casual mobile-game art, cute chibi kawaii illustration, thick warm
+dark-brown outlines (never black) of even weight, soft pastel cel shading with gentle gradients
+and one small glossy highlight, light from the upper left, clean crisp vector-like edges,
+readable at small sizes.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow
+under the object. No text, no letters, no numbers, no kanji, no watermark.
+
+A cute chunky katana for a Suika-style merge game with a lucky-cat (maneki-neko) theme, in the
+same drawing style as the attached cats and ball. Strictly front view, perfectly vertical and
+centred: the hilt at the top, the point at the bottom, filling about 90% of the canvas height.
+Chibi proportions so it reads at small sizes: a short, broad, almost straight blade (only a hint
+of a curve), about three times as long as the hilt, in polished silver steel with a cool pale-blue
+sheen, a soft wavy white temper line along its cutting edge and one long glossy highlight; a round
+gold guard (tsuba) with a small paw print cut out of it; a short hilt wrapped in vermilion cord in
+a diamond pattern over cream; and, hanging from the end of the hilt on a short red cord, a small
+round gold maneki-neko bell. No scabbard. No glow, no sparkles and no motion lines around it (the
+game adds them). Nothing touches the edge of the image. Portrait 2:3.
+```
+
+**The effect sheets.** Attach the game screenshot `docs/screenshots/v0.26.0/390-1-hud.png` and the
+katana once you have it, so the steel's blue matches. Every prompt starts with the same style block
+(already inside each one below).
+
+**2. Slash streaks** (`fx/slashes.png`, landscape 3:2). The gleam the blade leaves along its path;
+the game stretches one along each katana's line (straight down, diagonal or across), so both ends
+must sit on the row's middle line:
+
+```text
+Style: a polished casual mobile-game visual effect for the cute pastel game in the attached
+screenshot: crisp, bright, clean shapes, readable at small sizes; glowing light with no outline.
+Plain flat solid pure black background (#000000) everywhere around the effects: no gradient, no
+stars, no clouds, no ground, no vignette, no texture, no frame. No text, no letters, no numbers,
+no kanji, no watermark, no signature.
+The colour of every effect: a thin white-hot core, a cool pale steel-blue glow round it, and a
+faint soft sakura-pink haze at the outer edge of the glow.
+
+A sheet of FOUR separate sword-slash streaks, stacked one above the other in four evenly spaced
+rows, with plain black between the rows: no streak touches another, and each streak with its glow
+stays inside its own row. Every streak runs straight from the far LEFT of its row to the far RIGHT
+(only a small black margin at each end), and both of its ends lie exactly on the row's middle
+line, so it can be stretched along a sword's path. Each is a perfectly straight, razor-thin line
+of light, brightest in the middle and tapering to fine points at both ends, like the gleam a
+katana leaves in the air:
+- row 1: bold, with a wide glow;
+- row 2: thinner and sharper, with a narrow glow;
+- row 3: like row 1, with three or four small four-pointed glint stars sitting on the line;
+- row 4: like row 2, with a few tiny sparks peeling off it and fading.
+Landscape 3:2.
+```
+
+**3. Cut pieces** (`fx/cut.png`, landscape 3:2). What goes off on a cut cat, along the blade, at
+the paw and where the point hits the floor:
+
+```text
+Style: a polished casual mobile-game visual effect for the cute pastel game in the attached
+screenshot: crisp, bright, clean shapes, readable at small sizes; glowing light with no outline.
+Plain flat solid pure black background (#000000) everywhere around the effects: no gradient, no
+stars, no clouds, no ground, no vignette, no texture, no frame. No text, no letters, no numbers,
+no kanji, no watermark, no signature.
+The colour of every effect: a thin white-hot core, a cool pale steel-blue glow round it, and a
+faint soft sakura-pink haze at the outer edge of the glow.
+
+A sheet of six separate sword-effect pieces in a 3×2 grid (three columns, two rows), each centred
+in its own cell with plain black all round it: nothing touches another piece or the edge of the
+image.
+- Top left: a cut flash: a short, perfectly straight, razor-thin diagonal line of light from lower
+  left to upper right, tapering at both ends, with a bright four-pointed star at its middle.
+- Top middle: a glint: one bright four-pointed star with long thin rays up, down, left and right,
+  and two shorter diagonal rays.
+- Top right: a burst of ten or so tiny sparks flying out from the centre, short bright streaks and
+  dots, the middle empty.
+- Bottom left: a sword swoosh: a crescent-shaped arc of light, thick in the middle and thinning to
+  sharp points at both ends, like a katana swung through the air.
+- Bottom middle: a strike burst: a fan of short bright sparks flying UP and outward from one point
+  at the bottom middle of its cell, as when a blade strikes stone.
+- Bottom right: a soft round flash: a small bright white disc fading smoothly into the blue glow.
+Landscape 3:2.
+```
+
+**4–7. The pick icons** (`icons/katana.png`, `icons/moreBlades.png`, `icons/quickKatana.png`,
+`icons/wideBlade.png`, square 1:1). The icon kit (§5) with the gold rim, since they are blessings.
+Attach the icon sheet (`art-source/ui/upgrade-icons.webp`) and the katana
+(`art-source/specials/katana.png`) to each:
+
+```text
+Style: match the attached icons exactly. Polished casual mobile-game art, cute chibi kawaii
+illustration, thick warm dark-brown outlines (never black) of even weight, soft pastel cel shading
+with gentle gradients and one small glossy highlight, light from the upper left, clean crisp
+vector-like edges, readable at 48 px.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow
+under the icon. No text, no letters, no numbers, no kanji, no watermark, no signature.
+
+One round icon for the mobile game "Maneki Merge", drawn exactly like the attached icons: a
+perfect circle, centred, filling about 80% of the canvas, with a cream face inside a gold rim and
+the same thick dark-brown outline round it. Inside, big and centred: the attached katana, lying
+diagonally across the face, its hilt with the gold paw-print guard, the vermilion cord and the
+little gold bell at the upper right, its point at the lower left. It stands for a sword that cuts
+the small cats in a straight line. Nothing sticks out of the circle. Square 1:1.
+```
+
+```text
+Style: match the attached icons exactly. Polished casual mobile-game art, cute chibi kawaii
+illustration, thick warm dark-brown outlines (never black) of even weight, soft pastel cel shading
+with gentle gradients and one small glossy highlight, light from the upper left, clean crisp
+vector-like edges, readable at 48 px.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow
+under the icon. No text, no letters, no numbers, no kanji, no watermark, no signature.
+
+One round icon for the mobile game "Maneki Merge", drawn exactly like the attached icons: a
+perfect circle, centred, filling about 80% of the canvas, with a cream face inside a gold rim and
+the same thick dark-brown outline round it. Inside, big and centred: three of the attached katanas
+crossed in a star, all with their hilts up and their points down: one straight up and down in the
+middle, and two crossing it diagonally in an X, their hilts at the upper left and upper right,
+their points at the lower right and lower left. Smaller than a single katana would be, so all
+three fit. It stands for more blades in every cut. Nothing sticks out of the circle. Square 1:1.
+```
+
+```text
+Style: match the attached icons exactly. Polished casual mobile-game art, cute chibi kawaii
+illustration, thick warm dark-brown outlines (never black) of even weight, soft pastel cel shading
+with gentle gradients and one small glossy highlight, light from the upper left, clean crisp
+vector-like edges, readable at 48 px.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow
+under the icon. No text, no letters, no numbers, no kanji, no watermark, no signature.
+
+One round icon for the mobile game "Maneki Merge", drawn exactly like the attached icons: a
+perfect circle, centred, filling about 80% of the canvas, with a cream face inside a gold rim and
+the same thick dark-brown outline round it. Inside, big and centred: the attached katana falling
+point down, tilted a little, with two paler, fading copies of it trailing just above it and three
+short speed lines, as if katanas keep coming one after another. It stands for katanas coming more
+often. Nothing sticks out of the circle. Square 1:1.
+```
+
+```text
+Style: match the attached icons exactly. Polished casual mobile-game art, cute chibi kawaii
+illustration, thick warm dark-brown outlines (never black) of even weight, soft pastel cel shading
+with gentle gradients and one small glossy highlight, light from the upper left, clean crisp
+vector-like edges, readable at 48 px.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow
+under the icon. No text, no letters, no numbers, no kanji, no watermark, no signature.
+
+One round icon for the mobile game "Maneki Merge", drawn exactly like the attached icons: a
+perfect circle, centred, filling about 80% of the canvas, with a cream face inside a gold rim and
+the same thick dark-brown outline round it. Inside, big and centred: the attached katana pointing
+straight down, but with an extra-broad gleaming blade, nearly twice as wide as usual, and one small
+chunky gold arrow on each side of the blade pointing outward, away from it. It stands for a wider
+cut. Nothing sticks out of the circle. Square 1:1.
+```
+
+Checks for these: the katana follows the general checklist (§2): perfectly vertical with the point
+straight down (the cut line runs along it), the paw-print guard and the bell clear at 48 px, no
+glow or lines round it, nothing touching the edge. The effect sheets: pure black everywhere around
+the pieces, no outlines, nothing touching another piece or the image's edge, every piece white at
+its core with a steel-blue glow and a faint pink edge; each slash streak straight, the full width
+of its row, both ends on the row's middle line. The icons: §5's list; the three katanas of More
+Blades still read as katanas at 48 px.
+
+**Into the game.** Tell Claude when they are in `art-source/specials/`, `art-source/fx/` and
+`art-source/icons/`. The art pipeline (`npm run art`) cuts the katana's white like the balls', turns
+the effect sheets' black into transparency, splits the pieces and measures each streak's two ends,
+and fits the icons. Until they arrive the game shows plain stand-ins.
 
 ## 5. Icon kit (every new icon)
 

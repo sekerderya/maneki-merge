@@ -77,14 +77,24 @@ with the bot before building.
 - **Multishot shape** (the owner's example, kept): the extra blades cut **diagonally from the jar's
   two top corners, in an X**, fixed, whatever the aim (option A; option B, an X crossing on the aim
   line, was not picked).
-- **Shop card:** opens at best stage 10. Prices start at 20K, 32K, 50K, 75K, 105K (to be fitted to
-  the card's levels, §3.1.1), checked with the meta bot.
+- **Shop card:** opens at best stage 10; its levels open the in-run options one by one (§3.1.1).
 
-#### 3.1.1 Still open
+#### 3.1.1 The upgrade set and the shop card (decided)
 
-- What each multishot level adds (the X as one level or one diagonal per level; a horizontal blade
-  later?), how many levels each upgrade has, and their numbers.
-- What the shop card's levels do now that the run has several Katana options.
+The owner took these as proposed (2026-10-16). Chances and widths are start values for the bot.
+
+| Pick option (UI name) | Effect                    | Levels | Values                                                                                                                         | Needs             |
+| --------------------- | ------------------------- | -----: | ------------------------------------------------------------------------------------------------------------------------------ | ----------------- |
+| **Katana**            | Katanas can come          |      1 | 2.25% per queued item                                                                                                          | its shop card ≥ 1 |
+| **More Blades**       | One more katana per level |      3 | 1: a diagonal from the top corner on the aim's side · 2: the other diagonal (the X) · 3: a horizontal blade across the jar (✳) | Katana            |
+| **Quick Katana**      | Katanas come more often   |      2 | 2.25% → 4.5% → 6.75%                                                                                                           | Katana            |
+| **Wide Blade**        | A wider cut               |      2 | grace ±8 → ±33 → ±58 world units                                                                                               | Katana            |
+
+- One weapon, 8 levels in all: the slot and pick budget (§7, question 1) has to take this in.
+- **Shop card "Katana"**, gate best stage 10, four levels, each opening one option for every run:
+  Lv 1 Katana (20K), Lv 2 Quick Katana (32K), Lv 3 Wide Blade (50K), Lv 4 More Blades (75K), 177K in
+  all; checked with the meta bot before shipping.
+- Art: docs/ART_ASSETS.md §4.21 (the katana, the cut flash sheet and the four pick icons).
 
 ### 3.2 The merge zone (was "Koban"): liked, details to discuss
 
