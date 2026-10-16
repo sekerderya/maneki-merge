@@ -57,6 +57,12 @@ the background 2× (the tool's upscale, or the free Upscayl app) to 2048×3072, 
 whole screen; the rest is sharp enough at the generated size. Rug, paw, logo and banner are
 narrower than their canvas: Claude crops the empty space.
 
+**The owner's image tool (since 2026-10-16) offers only five ratios: 1:1, 9:16, 3:4, 4:3 and 16:9.**
+Every new prompt asks for one of these. Older prompts below that say 2:3 or 3:2 map to them: a tall
+2:3 becomes 3:4 (or 9:16 for something long and thin, or a full-screen picture), a wide 3:2 becomes
+4:3 (or 16:9 for a sheet of long horizontal pieces). The art pipeline crops and fits whatever comes,
+so the exact pixel size doesn't matter.
+
 | #   | Phase      | File (in `art-source/`)                    | What                                                                | Generate          |
 | --- | ---------- | ------------------------------------------ | ------------------------------------------------------------------- | ----------------- |
 | 0   | 0 style    | `style/lineup.png`                         | The 9 cats on one sheet (style lock, not used in game)              | 1:1, 1024×1024    |
@@ -119,9 +125,9 @@ narrower than their canvas: Claude crops the empty space.
 | 42  | 18 goal    | `hud/goal-slot.png`                        | The goal's round slot: cream disc, flat gold ring                   | 1:1, 1024×1024    |
 | 43  | 19 time    | `scene/background…-sunset.png`             | The five jar backgrounds at sunset, edits of the day ones (§4.20)   | 9:16              |
 | 44  | 19 time    | `scene/background…-night.png`              | The five jar backgrounds at night                                   | 9:16              |
-| 45  | 20 katana  | `specials/katana.png`                      | The katana, point down, long and slender, no bell (§4.21)           | 2:3, 1024×1536    |
-| 46  | 20 katana  | `fx/slashes.png`                           | Sheet on black: four straight sword-slash streaks, end to end       | 3:2, 1536×1024    |
-| 47  | 20 katana  | `fx/cut.png`                               | Sheet on black: cut flash, glint, sparks, swoosh, strike, flash     | 3:2, 1536×1024    |
+| 45  | 20 katana  | `specials/katana.png`                      | The katana, point down, long and slender, no bell (§4.21)           | 9:16              |
+| 46  | 20 katana  | `fx/slashes.png`                           | Sheet on black: four straight sword-slash streaks, end to end       | 16:9              |
+| 47  | 20 katana  | `fx/cut.png`                               | Sheet on black: cut flash, glint, sparks, swoosh, strike, flash     | 4:3               |
 | 48  | 20 katana  | `icons/katana.png` … `icons/wideBlade.png` | The four Katana pick icons (icon kit, §5)                           | 1:1, 1024×1024    |
 
 How the pieces go into the game:
@@ -2786,7 +2792,7 @@ Lightning's, §4.16: no outlines, and the game turns the black into transparency
 icons from the icon kit (§5). One image per request, in a new chat each time. Make the katana
 first: the icons are drawn from it.
 
-**1. The katana** (`specials/katana.png`, portrait 2:3). Attach the lineup sheet
+**1. The katana** (`specials/katana.png`, portrait 9:16). Attach the lineup sheet
 (`art-source/style/lineup.webp`), the game screenshot `docs/screenshots/v0.26.0/390-1-hud.png` and
 the hanabi (`art-source/specials/hanabi.jpg`):
 
@@ -2811,14 +2817,14 @@ collar (habaki) with a tiny paw print on it, then a small oval gold guard (tsuba
 thin flat disc, then a hilt wrapped in vermilion cord in a diamond pattern over cream, ending in a
 plain gold cap. Nothing hangs from the hilt: no bell, no cord, no tassel. No scabbard. No glow, no
 sparkles and no motion lines around it (the game adds them). Nothing touches the edge of the image.
-Portrait 2:3.
+Portrait 9:16.
 ```
 
 **The effect sheets.** Attach the game screenshot `docs/screenshots/v0.26.0/390-1-hud.png` and the
 katana once you have it, so the steel's blue matches. Every prompt starts with the same style block
 (already inside each one below).
 
-**2. Slash streaks** (`fx/slashes.png`, landscape 3:2). The gleam the blade leaves along its path;
+**2. Slash streaks** (`fx/slashes.png`, landscape 16:9). The gleam the blade leaves along its path;
 the game stretches one along each katana's line (straight down, diagonal or across), so both ends
 must sit on the row's middle line:
 
@@ -2842,10 +2848,10 @@ katana leaves in the air:
 - row 2: thinner and sharper, with a narrow glow;
 - row 3: like row 1, with three or four small four-pointed glint stars sitting on the line;
 - row 4: like row 2, with a few tiny sparks peeling off it and fading.
-Landscape 3:2.
+Landscape 16:9.
 ```
 
-**3. Cut pieces** (`fx/cut.png`, landscape 3:2). What goes off on a cut cat, along the blade, at
+**3. Cut pieces** (`fx/cut.png`, landscape 4:3). What goes off on a cut cat, along the blade, at
 the paw and where the point hits the floor:
 
 ```text
@@ -2871,7 +2877,7 @@ image.
 - Bottom middle: a strike burst: a fan of short bright sparks flying UP and outward from one point
   at the bottom middle of its cell, as when a blade strikes stone.
 - Bottom right: a soft round flash: a small bright white disc fading smoothly into the blue glow.
-Landscape 3:2.
+Landscape 4:3.
 ```
 
 **4–7. The pick icons** (`icons/katana.png`, `icons/moreBlades.png`, `icons/quickKatana.png`,
