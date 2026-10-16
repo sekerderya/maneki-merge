@@ -3043,6 +3043,43 @@ the ball and clear of the sword; no bell, no purple, no flames; plain white arou
 **Arrived (2026-10-16, v0.55.4):** from the first generation, saved from Gemini as `.jfif` and copied in as
 `picks/quickKatana.jpg`. Every check passes; on the card the hourglass still reads at 48 px.
 
+**9. More Blades** (`picks/moreBlades.png`, square 1:1): more katanas in every cut. The ball like
+a round shield with two more katanas crossed behind it in an X, the classic crossed-swords emblem.
+Attach the katana's ball (`art-source/specials/katana-ball.jpg`) and the katana
+(`art-source/specials/katana.jpg`):
+
+```text
+Style: match the attached images exactly. Polished casual mobile-game art, cute chibi kawaii
+illustration, thick warm dark-brown outlines (never black) of even weight, soft pastel cel shading
+with gentle gradients and one small glossy highlight, light from the upper left, clean crisp
+vector-like edges, readable at 48 px.
+Plain flat solid white background (#FFFFFF), no gradient, no texture, no checkerboard, no shadow.
+No text, no letters, no numbers, no kanji, no watermark, no signature.
+
+Draw a brand-new picture; the attached images only show what the two things look like. A small
+game picture, like a round shield with two crossed swords behind it:
+1. In the centre, the first attached image, the katana ball, exactly as it is: a perfect circle of
+   glossy deep crimson-red lacquer with small gold wave arcs, and across its front the same katana,
+   its gold guard and red hilt at the upper right and its silver blade pointing to the lower left.
+   Same colours, same sword on the ball. The ball is about 55% of the canvas width.
+2. Behind the ball, two more katanas exactly like the second attached image (silver blade with a
+   wavy temper line, gold paw-print collar, small oval gold guard, vermilion cord-wrapped hilt with
+   a gold cap), crossed in a big X behind the ball's centre, both pointing down: one with its hilt
+   at the upper left and its point at the lower right, the other with its hilt at the upper right
+   and its point at the lower left. The ball covers the middle of both swords; their hilts and
+   guards stick out above the ball at the upper left and upper right, and their blades' ends stick
+   out below it at the lower right and lower left. Both are long, slender katanas, never daggers:
+   each one, from its cap to its point, is about as long as the canvas is wide.
+Everything fully visible with complete outlines, and nothing touches the edge of the image. No
+frame, no circle around them, no medallion, no ground, no glow, no sparkles, no motion lines,
+nothing else. Square 1:1.
+```
+
+Checks: the ball is the attached one, in front, with its own diagonal katana; exactly two more
+katanas, both behind the ball in an X, hilts up at the two upper corners, points down at the two
+lower corners, each long and slender like the attached katana (not a dagger), their hilts and
+points clearly outside the ball; nothing touches the image's edge; plain white around.
+
 ## 5. Icon kit (every new icon)
 
 > Read this before writing a prompt for any new icon: an upgrade, a trial or blessing card, a
