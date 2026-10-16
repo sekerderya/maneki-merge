@@ -3285,6 +3285,22 @@ mouth, nothing touching another pose or the edge. The tongue: the band straight 
 to edge, outlined only along its top and bottom; the tip round, open on its left; the same pink in
 both.
 
+**First round (2026-10-16).** The tongue was taken from the first generation (saved from Gemini as
+`.jfif`, copied in as `fx/frog-tongue.jpg`): its band came with outlined, rounded ends, so the
+pipeline uses only its even middle. The frog's design pleased the owner, but its body came out
+pear-shaped (wide at the bottom, flat feet below the circle); the owner wants it rounder. The next
+step is an edit of that sheet in the same chat:
+
+```text
+Keep this sheet exactly as it is: the same frog, the same four faces, colours, collar, coin, hands,
+feet and places. Change only the body's shape, in all four poses: make each frog much rounder, a
+perfect round ball, as tall as it is wide, with no flat bottom and no wide hips. The bottom of the
+body curves round just like its top; the little feet sit tucked against the lower front of the
+ball, inside its outline, not sticking out below it. Only the two eyes still bulge out above the
+top of the circle (and in the gulping pose the two puffed cheeks may bulge a little at the sides).
+All four bodies are the same size. Nothing else changes. Square 1:1.
+```
+
 The Frog's cards show the calm pose, as the Katana's show its ball. Its upgrades' card pictures
 (the frog with one small addition, like the Katana family's) come once the upgrades are settled.
 
