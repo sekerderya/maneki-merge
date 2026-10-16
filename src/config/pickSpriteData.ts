@@ -65,6 +65,11 @@ export const PICK_SPRITE_DATA: Readonly<Record<string, PickPicture>> = {
     width: 213,
     height: 240,
   },
+  quickFrog: {
+    file: 'quickFrog.webp',
+    width: 240,
+    height: 238,
+  },
   quickKatana: {
     file: 'quickKatana.webp',
     width: 240,
