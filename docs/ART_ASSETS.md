@@ -3088,10 +3088,9 @@ onto a back katana's guard. The design above keeps everything on the ball.
 at 240 px, where it looks as crisp as Quick Katana's on a 3× phone screen, so it was kept.
 
 **10. Wide Blade** (`picks/wideBlade.png`, square 1:1): a wider cut. Made like More Blades' picture,
-which came out right: the katana ball with the old Wide Blade icon's sword and arrows on its front
-instead of its one katana, everything on the ball. Attach the katana's ball
-(`art-source/specials/katana-ball.jpg`) and the old icon (`art-source/icons/wideBlade.jpg`, only for its
-sword and arrows):
+which came out right: the katana ball with a different sword on its front, everything on the ball.
+The sword is the game's own katana, thickened. Attach the katana's ball
+(`art-source/specials/katana-ball.jpg`) and the katana (`art-source/specials/katana.jpg`):
 
 ```text
 Style: match the attached images exactly. Polished casual mobile-game art, cute chibi kawaii
@@ -3105,24 +3104,32 @@ Draw a brand-new picture; the attached images only show what the two things look
 game picture of one ball: the first attached image, the katana ball, the same perfect circle of
 glossy deep crimson-red lacquer with small gold wave arcs and the same glossy highlight at the
 upper left, filling about 80% of the canvas. Only one thing changes: instead of the diagonal
-katana across its front, it carries the sword and the two arrows from the second attached image,
-in the same arrangement: one katana standing straight up and down in the middle of the ball, its
-gold guard and vermilion cord-wrapped hilt at the top and its point at the bottom, with an
-extra-broad gleaming silver blade, about twice as wide as a normal katana's; and one small chunky
-gold arrow on each side of the blade, at its middle, pointing outward, away from it, to the left
-and to the right. Take only the sword and the arrows from the second image: not its cream disc,
-not its gold rim. The katana is long, never a dagger: its blade is about three times as long as
-its hilt, and the whole sword reaches from near the top of the ball to near its bottom. The sword
-and the arrows lie on the red ball, each with its own dark-brown outline, and stay wholly inside
-the ball's circle with a clear gap of red between them and the ball's edge. Nothing sticks out of
-the circle: the outline of the picture is the ball's circle alone. No frame, no extra circle or
-rim, no medallion, no ground, no glow, no sparkles, no motion lines, nothing else. Square 1:1.
+katana across its front, it carries the second attached katana standing straight up and down in
+the middle of the ball, its hilt at the top and its point at the bottom, and made much thicker:
+its blade about three times as wide as the attached katana's, a big, heavy, broad blade. It stays
+a real katana in every other way: the same single-edged blade with its gentle even curve along
+the whole length, the same angled katana tip, the same soft wavy white temper line along its
+edge, the same gold paw-print collar, small oval gold guard and vermilion cord-wrapped hilt with a
+gold cap. Only the blade's width changes; it never becomes a straight knife, a cleaver or a
+dagger: the blade is about three times as long as the hilt, and the whole sword reaches from near
+the top of the ball to near its bottom. Beside the blade, at its middle, one small chunky gold
+arrow on each side, with a dark-brown outline, pointing outward, away from the blade: one to the
+left, one to the right. The sword and the arrows lie on the red ball, each with its own dark-brown
+outline, and stay wholly inside the ball's circle with a clear gap of red between them and the
+ball's edge. Nothing sticks out of the circle: the outline of the picture is the ball's circle
+alone. No frame, no extra circle or rim, no medallion, no ground, no glow, no sparkles, no motion
+lines, nothing else. Square 1:1.
 ```
 
 Checks: one red ball, the attached ball's colour, waves and highlight; on it one vertical katana,
-hilt up, its blade clearly broad yet long (blade about three times the hilt, not a dagger), and
-two gold arrows at the blade's sides pointing outward; all inside the circle; no cream disc, no
-gold rim, nothing outside the ball; plain white around.
+hilt up, clearly a katana (gentle curve, angled tip, temper line, blade about three times the
+hilt) with a clearly broad blade, never a straight knife; two gold arrows at the blade's sides
+pointing outward; all inside the circle; nothing outside the ball; plain white around.
+
+**First try (2026-10-16), rejected by the owner:** made from the old Wide Blade icon's sword, it
+came out a straight, broad knife with a long hilt (blade about twice the hilt): too thin for a
+wide blade and not a katana's shape. The prompt above starts from the game's katana instead and
+only widens its blade.
 
 ## 5. Icon kit (every new icon)
 
