@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CAT_SPRITE_DIR, CAT_SPRITES } from '../../src/config/catSprites';
-import { iconSprite } from '../../src/config/iconSprites';
+import { iconSprite, iconSprites } from '../../src/config/iconSprites';
 import { PICK_IDS } from '../../src/config/picks';
 import type { PickId } from '../../src/config/picks';
 import { PICK_SPRITE_DIR, pickPicture } from '../../src/config/pickSprites';
@@ -9,8 +9,8 @@ import { SPECIAL_ART, SPECIAL_SPRITE_DIR } from '../../src/config/specialSprites
 import { PICK_BALL_SHARE, PICK_PICTURE_SHARE, pickArt } from '../../src/ui/pickArt';
 import type { PickArt } from '../../src/ui/pickArt';
 
-/** The Katana's upgrades with icon-kit icons, not a ball (GAME_DESIGN §15.16). */
-const KATANA_ICONS: readonly PickId[] = ['moreBlades', 'wideBlade'];
+/** The Katana's upgrades with icon-kit icons until their pictures come (GAME_DESIGN §15.16). */
+const KATANA_ICONS: readonly PickId[] = ['wideBlade'];
 
 const special = (sprite: { file: string }): string => `${SPECIAL_SPRITE_DIR}${sprite.file}`;
 
@@ -73,14 +73,24 @@ describe("a pick card's icon is the game's own art (GAME_DESIGN §15.5)", () => 
     }
   });
 
-  it('shows the katana ball for the Katana, its family picture for Quick Katana, icons for the other two', () => {
-    for (const id of ['katana', 'quickKatana'] as const) expect(iconSprite(id)).toBeNull();
+  it("shows the katana ball for the Katana, its family's pictures for its upgrades, else icons", () => {
+    expect(iconSprite('katana')).toBeNull();
     expect(artOf('katana', 0).path).toBe(`${SPECIAL_SPRITE_DIR}katana-ball.webp`);
-    // The ball with an hourglass (docs/ART_ASSETS.md §4.21, picture 8).
-    expect(artOf('quickKatana', 0).path).toBe(`${PICK_SPRITE_DIR}quickKatana.webp`);
-    expect(artOf('quickKatana', 0).picture).toBe(true);
+    // The ball with an hourglass and with three katanas (docs/ART_ASSETS.md §4.21, pictures 8–9):
+    // a picture replaces the pick's icon.
+    for (const id of ['quickKatana', 'moreBlades'] as const) {
+      expect(iconSprite(id)).toBeNull();
+      expect(artOf(id, 0).path).toBe(`${PICK_SPRITE_DIR}${id}.webp`);
+      expect(artOf(id, 0).picture).toBe(true);
+    }
     for (const id of KATANA_ICONS) expect(pickArt(id, 0)).toBeNull();
-    expect(iconSprite('moreBlades')?.file).toBe('moreBlades.webp');
     expect(iconSprite('wideBlade')?.file).toBe('wideBlade.webp');
+  });
+
+  it('preloads only the icons that show', () => {
+    const files = iconSprites().map((sprite) => sprite.file);
+    expect(files).toContain('wideBlade.webp');
+    expect(files).not.toContain('katana.webp');
+    expect(files).not.toContain('moreBlades.webp');
   });
 });

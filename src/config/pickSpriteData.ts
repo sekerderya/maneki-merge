@@ -40,6 +40,11 @@ export const PICK_SPRITE_DATA: Readonly<Record<string, PickPicture>> = {
     width: 240,
     height: 231,
   },
+  moreBlades: {
+    file: 'moreBlades.webp',
+    width: 240,
+    height: 240,
+  },
   moreBoulders: {
     file: 'moreBoulders.webp',
     width: 240,
