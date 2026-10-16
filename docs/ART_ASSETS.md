@@ -3082,6 +3082,11 @@ like a shield. The tool drew the X at 45° both times, whatever the prompt asked
 katana ran parallel to the ball's own; in the first the ball's katana also grew out of the circle
 onto a back katana's guard. The design above keeps everything on the ball.
 
+**Arrived (2026-10-16, v0.55.5):** the third try, saved from Gemini as `.jfif` and copied in as
+`picks/moreBlades.jpg`. Every check passes. It is a little softer than the ball it was drawn from
+(an edit of an edit: its wave arcs and outlines measure about 30% less sharp), but the card shows it
+at 240 px, where it looks as crisp as Quick Katana's on a 3× phone screen, so it was kept.
+
 ## 5. Icon kit (every new icon)
 
 > Read this before writing a prompt for any new icon: an upgrade, a trial or blessing card, a

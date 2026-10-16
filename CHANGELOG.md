@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.55.5] - 2026-10-16
+
+### Changed
+
+- **More Blades' card shows its own picture**, the owner's art: the red katana ball with three crossed katanas on it (one straight down, two in an X) instead of its one (docs/ART_ASSETS.md §4.21, picture 9). Only Wide Blade still shows its icon until its picture comes.
+
+### Technical
+
+- A pick's own picture replaces its icon-kit icon (`iconSprite` returns null for it), and icons that no card shows any more (the Katana's and More Blades') are no longer preloaded.
+
 ## [0.55.4] - 2026-10-16
 
 ### Changed
