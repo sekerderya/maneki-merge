@@ -29,7 +29,7 @@ import type { QueueSnapshot } from './runSave';
  * A cat, a magnet (takes a ball out of the jar, GAME_DESIGN §15.2), a boulder (§15.3), a hanabi
  * (pops the small cats around it, §15.6), a joker cat (merges with any cat, §15.7) or a lightning
  * ball (strikes every cat of the size it touches, §15.15), a katana (cuts every small cat in a
- * line, §15.16; it never goes into the jar as a ball) or a frog (swallows the smallest cat at every
+ * line, §15.16; it never goes into the jar as a ball) or a frog (swallows a small cat at every
  * drop, §15.17).
  */
 export type DropKind =

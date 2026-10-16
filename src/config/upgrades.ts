@@ -231,7 +231,7 @@ export const UPGRADES: Readonly<Record<UpgradeId, UpgradeDef>> = {
     id: 'frog',
     section: 'blessing',
     name: PICKS.frog.name,
-    description: 'Blessing: swallows the smallest cat at every drop',
+    description: 'Blessing: swallows a small cat at every drop',
     statLabel: 'Opens',
     startLevel: 0,
     maxLevel: WEAPON_CARD_OPENS.frog.length,

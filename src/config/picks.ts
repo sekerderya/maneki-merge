@@ -91,12 +91,18 @@ export const KATANA_CHANCE_PER_LEVEL = 0.0225;
 /**
  * The Frog (GAME_DESIGN §15.17), the second weapon: a ball of FROG_SIZE that never merges and rolls
  * like the others. Each time a ball leaves the paw after it, its tongue swallows the jar's smallest
- * landed cat (between equals, the nearest), FROG_BITES[Big Gulp level] of them, each paying its
+ * landed cat of sizes 1–FROG_MAX_SIZE (between equals, the nearest), FROG_BITES[Big Gulp level] of
+ * them, each paying its
  * value (coins, no score, no combo); after FROG_MEALS[Long Stay level] such meals it falls asleep
  * and is gone. It doesn't count for the danger line. None comes in a stage's first FROG_FREE_DROPS
  * drops: an empty jar has nothing to swallow.
  */
 export const FROG_SIZE = 3;
+/**
+ * The biggest cat a frog eats (v0.56.1, the owner's pick of the measured limits): eating any size,
+ * frogs with every pick ate faster than the paw drops and runs stalled.
+ */
+export const FROG_MAX_SIZE = 2;
 export const FROG_FREE_DROPS = 20;
 /** By Long Stay level: the meals a frog makes before it leaves. */
 export const FROG_MEALS = [5, 7, 9] as const;
@@ -571,7 +577,7 @@ export const PICKS: Readonly<Record<PickId, PickDef>> = {
     id: 'frog',
     kind: 'blessing',
     name: 'Frog',
-    description: 'Swallows the smallest cat at every drop',
+    description: 'Swallows a small cat at every drop',
     statLabel: 'Frogs',
     maxLevel: 1,
     perLevel: FROG_CHANCE,
@@ -600,7 +606,7 @@ export const PICKS: Readonly<Record<PickId, PickDef>> = {
     id: 'bigGulp',
     kind: 'blessing',
     name: 'Big Gulp',
-    description: 'The frog swallows two cats at a time',
+    description: 'The frog swallows two small cats at a time',
     statLabel: 'Cats per meal',
     maxLevel: FROG_BITES.length - 1,
     perLevel: 1,

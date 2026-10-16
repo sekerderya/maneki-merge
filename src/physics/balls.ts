@@ -4,7 +4,7 @@
  * (GAME_DESIGN §15.3), which never merges and breaks after `hitsLeft` merges next to it, a hanabi
  * (§15.6), which goes off a moment after it lands, a joker cat (§15.7), which merges with the
  * first cat it touches, or a lightning ball (§15.15), which strikes the first cat or boulder it
- * touches and every ball like it, or a frog (§15.17), which swallows the smallest cat at every
+ * touches and every ball like it, or a frog (§15.17), which swallows a small cat at every
  * drop until its meals run out. The tier
  * is the cat's number (a boulder's is the tier of its size); the size (its place in the current
  * stage, 1–10) sets its radius and density. Contacts use the exact circle (circleCollision.ts);

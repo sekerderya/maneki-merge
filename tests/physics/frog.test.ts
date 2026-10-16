@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FROG_FREE_DROPS, FROG_MEALS, FROG_SIZE } from '../../src/config/picks';
+import { FROG_FREE_DROPS, FROG_MAX_SIZE, FROG_MEALS, FROG_SIZE } from '../../src/config/picks';
 import type { PickId } from '../../src/config/picks';
 import { sizeRadius } from '../../src/config/tiers';
 import { DropQueue, PLAIN_ODDS } from '../../src/core/dropQueue';
@@ -80,6 +80,13 @@ describe("the frog's meal (GAME_DESIGN §15.17)", () => {
     expect(frogMeal(frog, [frog], 2)).toEqual([]);
   });
 
+  it('never eats a cat bigger than size 2 (v0.56.1)', () => {
+    expect(FROG_MAX_SIZE).toBe(2);
+    const balls = [frog, ball(2, 3, 10), ball(3, 4, 20), ball(4, 2, 300)];
+    expect(frogMeal(frog, balls, 3).map((b) => b.id)).toEqual([4]);
+    expect(frogMeal(frog, [frog, ball(5, 3, 10)], 1)).toEqual([]);
+  });
+
   it('never counts for the danger line, nor goes with a Lucky Save', () => {
     const over = ball(8, 3, 0, { kind: 'frog', y: -2000, landedMs: 0 });
     expect(countsForDanger(over, 10_000)).toBe(false);
@@ -147,11 +154,12 @@ describe('a frog in a run (GAME_DESIGN §15.17)', () => {
     expect(run.score).toBe(0);
     expect(run.balls.map((b) => b.id)).not.toContain(small.id);
     expect(run.balls.find((b) => b.id === frog.id)?.hitsLeft).toBe(4);
-    // The cat just dropped is still falling: the next meal is the size 3.
+    // The cat just dropped is still falling and the size 3 is too big (GAME_DESIGN §15.17, v0.56.1):
+    // no meal, and none counted.
     dropAt(run, -250);
-    const eaten = of('frogSwallowed').map((m) => m.cat);
-    expect(eaten[1]).toBe(bigger.id);
-    expect(of('catPopped').every((p) => p.reason === 'frog')).toBe(true);
+    expect(of('frogSwallowed')).toHaveLength(1);
+    expect(run.balls.map((b) => b.id)).toContain(bigger.id);
+    expect(run.balls.find((b) => b.id === frog.id)?.hitsLeft).toBe(4);
   });
 
   it("doesn't eat at its own drop, and a jar with no landed cat feeds nothing", () => {

@@ -4,7 +4,7 @@
  * and game over; and the special balls, trials and blessings of GAME_DESIGN §15 (magnets taking a
  * ball out of the jar, boulders breaking, golden cats, hanabi going off, joker cats merging with any
  * cat, lightning balls striking every cat of a size, katanas cutting the small cats in a line, frogs
- * swallowing the smallest cat at every drop, the
+ * swallowing a small cat at every drop, the
  * picks at every stage clear, cursed cats turning to stone, Copycat's NEXT and Dice's rolls). The
  * game scene renders it and forwards input; the HUD, FX, audio and save listen to its events.
  *
@@ -708,9 +708,9 @@ export class RunController {
 
   /**
    * A ball leaves the paw (GAME_DESIGN §15.17): every frog in the jar, oldest first, swallows the
-   * smallest landed cats (`frogMeal`, Big Gulp's count), each popping into its value (coins, no
-   * score, no combo). A meal counts once, whatever it swallowed; a jar with no landed cat feeds
-   * nothing. A frog that made its last meal falls asleep and is gone.
+   * smallest landed cats of sizes 1–2 (`frogMeal`, Big Gulp's count), each popping into its value (coins, no
+   * score, no combo). A meal counts once, whatever it swallowed; a jar with no small landed cat
+   * feeds nothing. A frog that made its last meal falls asleep and is gone.
    */
   private feedFrogs(): void {
     const frogs = this.world.balls.filter((ball) => ball.kind === 'frog');
