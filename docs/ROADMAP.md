@@ -380,6 +380,12 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
   - [x] balance measured with the meta bot before and after (CHANGELOG 0.50.0, GAME_DESIGN §14)
 - [x] Sunset and night gardens (v0.51.0, GAME_DESIGN §7.3; art: docs/ART_ASSETS.md §4.20), the owner's idea, like Pokémon GO: every jar's background at sunset and at night, the owner's edits of the day ones, picked from the phone's clock as a run starts and as the jar grows; the menu shows jar 1's garden; a Day and night setting keeps the day. **Status:** done; the owner checks it on the phone
 - [x] The first stage's help (v0.52.0, GAME_DESIGN §8), the owner's idea, to make stage 1 a little quicker without it showing: during stage 1 the cat queued at each drop comes three times as often in a size that will be waiting on top of the jar for a partner; the smart bot clears stage 1 in 82% of runs instead of 69%, in 102 s instead of 117 s. **Status:** done; the owner checks it on the phone
+- [x] The Katana (v0.55.0, GAME_DESIGN §15.16; direction: docs/plans/weapons-and-passives.md §3.1; art: docs/ART_ASSETS.md §4.21), the first weapon of the weapons-and-passives direction, the owner's design. **Status:** done; the owner checks it on the phone, and tunes its chances and widths by playing:
+  - [x] the katana: dropped from the paw it falls straight down in 0.24 s through everything, cutting every cat of sizes 1–4 in its line into coins and breaking every boulder at once; big cats, hanabi, jokers and lightning balls let it through; wind and Heavy Drop don't touch it
+  - [x] its picks: Katana (opens it, 2.25%), Quick Katana (+2.25% ×2), Wide Blade (a wider cut ×2), More Blades (a diagonal, the X, one across), the upgrades needing the Katana and side by side on one pick at times
+  - [x] the Weapons section of the shop: the Katana's card from stage 10, each of its four levels opening one of its picks (20K, 32K, 50K, 75K)
+  - [x] the owner's art: the katana, its streaks and cut pieces, three icons (Quick Katana shows the Katana's); halves of each cut cat from its own art; shing and slice sounds
+  - [x] measured with the smart bot against Hanabi and Lightning
 
 ## M13: Final art integration
 

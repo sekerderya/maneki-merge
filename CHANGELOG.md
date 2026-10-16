@@ -2,6 +2,37 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.55.0] - 2026-10-16
+
+The Katana, the first weapon (GAME_DESIGN §15.16; the owner's design, docs/plans/weapons-and-passives.md §3.1): dropped from the paw it falls straight down through everything and cuts every small cat in its line into coins. Its upgrades are picks of their own, and a new Weapons section of the shop opens them one by one.
+
+### Added
+
+- **The katana:** it hangs from the paw point down, its aim guide the cut itself, straight to the floor. Dropped, it shoots down in 0.24 s, cutting each cat of sizes 1–4 in its line as the point reaches it: the cat splits in two along the cut and pops into its value (coins, no score, no combo). It breaks every boulder it crosses at once, whatever its bands; big cats, hanabi, jokers and lightning balls let it through. Wind and Heavy Drop don't touch it. Then it sticks in the floor a moment and fades.
+- **Its picks** (blessings): **Katana** (katanas start to come, 2.25%), then, once it is taken, **Quick Katana** (+2.25%, two levels), **Wide Blade** (a wider cut, two levels) and **More Blades** (a diagonal from the top corner on the aim's side, the other diagonal for an X, then one straight across). Two of them can show on one pick.
+- **Weapons in the shop:** the Katana's card opens at stage 10; each of its four levels opens one of its picks for every run (Katana 20K, Quick Katana 32K, Wide Blade 50K, More Blades 75K). Until a profile buys the first, every run plays as before.
+- **The owner's art:** the katana (in the paw, falling, in NEXT), its streaks of light, the cut flash, glint, sparks, swoosh and the strike on the floor, and the Katana, More Blades and Wide Blade icons. New sounds: a steel "shing" as it leaves the paw, a slice per cut.
+- Debug panel: a Katana button; `window.__game.give('katana')` and `state().katana`.
+
+### Decisions taken for the owner
+
+- The cut reaches a cat whose body the blade crosses, give or take 8 world units (Wide Blade 33 and 58), and a cat that rolls into the line before the point passes is cut too.
+- The blade across the jar (More Blades 3) runs through the middle of the jar from the aim's side; aimed exactly at the middle counts as the right.
+- A cut cat's halves are its own art cropped down the middle: the picture turns up to 45° to lie along the cut as it splits, under the flash.
+- The katana counts as a drop for the curse's bell and the cooldown, and a queued one becomes a cat at a stage clear, like a hanabi.
+- Quick Katana's card shows the Katana's icon (the owner's call); the Katana's card has no clip yet.
+
+### Measured
+
+- The smart bot, 30 seeds of three stages from a fresh profile (cleared / lost): no picks 13 / 17; Katana 11 / 19; with Quick Katana 2 23 / 7; with Wide Blade 2 16 / 14; with More Blades 3 16 / 14; with all of them 25 / 5, against Hanabi 5 23 / 7 and Lightning 5 26 / 4 (GAME_DESIGN §15.16).
+
+### Technical
+
+- Headless: `physics/katana.ts` (`katanaBlades`, `katanaCuts`), `RunController`'s fall (`katana` view, `dropKatana`, `cutKatana`, saved as `katana` in a run snapshot), events `katanaDropped`, `katanaCut`, `katanaLanded`, reason `katana` on `catPopped` / `boulderBroken`. The katana is rolled last, so every seed's other drops stay where they were.
+- Shop: section `weapon`, `WEAPON_CARD_OPENS`, `DerivedStats.pickCaps` (blessing caps plus the weapon's).
+- Art: `tools/buildKatana.ts` (the sword's two ends; the sheets through Lightning's helpers), `config/katanaSprites.ts`, `game/fx/KatanaFx.ts` and `katanaFrames.ts` (stand-ins without the art); the icon kit's aliases (`quickKatana` → `katana`).
+- Tests: `katana.test.ts` (14) and the picks, shop, upgrades, clips and icons tests for the new picks and card. The bot aims a katana down the line that cuts the most.
+
 ## [0.54.0] - 2026-10-15
 
 The rewarded ads in play (GAME_DESIGN §2.7, the owner's choices): a bonus ball once per stage, one more Lucky Save once per run, the run's coins doubled at Game Over. Only in the Google Play app and only while an ad is ready; offline, on the web and in a scene none of it shows.

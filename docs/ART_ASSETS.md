@@ -2960,6 +2960,13 @@ Blades still read as katanas at 48 px.
 the effect sheets' black into transparency, splits the pieces and measures each streak's two ends,
 and fits the icons. Until they arrive the game shows plain stand-ins.
 
+**Arrived (2026-10-16, v0.55.0):** all six (the katana, both sheets and the Katana, More Blades and
+Wide Blade icons), generated with Gemini and saved from it as `.jfif` (JPEG), so they sit in
+`art-source/` as `.jpg`. They came in 3:4 and 4:3 rather than 9:16 and 16:9; every piece is whole,
+so nothing was regenerated. The katana's point lies a little left of its hilt (the blade's curve):
+the game lays the hilt-to-point line along each cut. The first katana came out a dagger and the first
+icons with the sword over the rim or a doubled rim; the prompts above carry the fixes.
+
 ## 5. Icon kit (every new icon)
 
 > Read this before writing a prompt for any new icon: an upgrade, a trial or blessing card, a

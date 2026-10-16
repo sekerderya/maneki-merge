@@ -44,7 +44,11 @@ the steady stream of unlocks the owner wants.
 
 ## 3. Weapons
 
-### 3.1 Katana: decided
+### 3.1 Katana: built (v0.55.0)
+
+Built on 2026-10-16 as below; the rules now live in GAME_DESIGN §15.16, §15.5 and §10, which win
+over this section. Measured with the smart bot there (all of its picks: about as strong as Hanabi or
+Lightning at their top).
 
 Settled with the owner on 2026-10-16 (second session). Numbers marked "start" are to be measured
 with the bot before building.
