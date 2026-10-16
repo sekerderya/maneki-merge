@@ -27,6 +27,8 @@ async function buy(page: Page, id: string): Promise<void> {
 test('buying with debug coins: prices, states, gates, feedback and persistence', async ({
   page,
 }) => {
+  // Two full launches and many steps: about 28 s on a desktop's WebKit, over 30 s on CI's (v0.55.5).
+  test.setTimeout(60_000);
   const errors = watchConsole(page);
   await page.goto('./?debug=1');
   // Nothing affordable yet: no dot.
