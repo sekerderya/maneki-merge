@@ -65,7 +65,7 @@ test.describe('update badge', () => {
 test.describe('URL flags', () => {
   test('are parsed from the query string', async ({ page }) => {
     await page.goto(
-      './?debug=1&seed=1234&skin=placeholder&gravity=1.2&interp=0&scenes=1&time=sunset&ads=fake&consent=eea',
+      './?debug=1&seed=1234&skin=placeholder&gravity=1.2&interp=0&scenes=1&time=sunset&ads=fake&consent=eea&analytics=fake',
     );
     const flags = await page.evaluate(() => window.__game?.flags);
     expect(flags).toEqual({
@@ -79,6 +79,7 @@ test.describe('URL flags', () => {
       time: 'sunset',
       ads: 'fake',
       consent: 'eea',
+      analytics: 'fake',
     });
   });
 
