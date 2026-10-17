@@ -395,7 +395,7 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
 - [ ] Batch 24, Lucky Save, Lucky gift, automatic trials and a late-game start (plan: docs/plans/batch-24.md), the owner's requests after a player's-eye review of v0.56.8 (2026-10-17). **Status:** planned:
   - [ ] a Lucky Save keeps the cats of the two biggest sizes in the jar and pops everything else
   - [ ] the Lucky gift is a pick card behind the doors, chosen even when alone, and pays 50% more
-  - [ ] the trial pick goes: a random trial from the clear's pool comes by itself, shown on a small card with a ? button for its clip and Got it (details to approve with the owner first)
+  - [ ] the trial pick goes: a random trial from the clear's pool comes by itself, shown with its clip and Got it the first time in a profile, later as a short card that goes by itself after 3 s (details to approve with the owner first)
   - [ ] a faster and harder start for maxed profiles: options measured and proposed, built only after the owner's pick
 
 ## M13: Final art integration

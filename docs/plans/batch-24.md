@@ -122,6 +122,12 @@ says) with its own CHANGELOG entry, so the owner can test one change at a time o
 > for those who want to see exactly what it does, and a **Got it** button at the bottom. The
 > details are asked while building it, and the owner approves them.
 
+Then (2026-10-17, the owner's call, replacing the question-mark button above): the **first time in
+a profile** a trial or a trial's upgrade comes, the card shows its clip directly, so it needs no
+question-mark button; **every later time** a card with only the short line and the icons shows,
+with no buttons and no question mark, and goes by itself after 3 seconds. No HUD icons for the
+trials.
+
 ### 4.2 What stays the same (unless the owner says otherwise)
 
 - The **teaching order** (GAME_DESIGN §15.5, `TEACHING_CLEARS` in `src/config/picks.ts`): which
@@ -147,11 +153,23 @@ says) with its own CHANGELOG entry, so the owner can test one change at a time o
   factor in `src/config/picks.ts`, e.g. 2); the family of the previous automatic trial is left out
   when another family is open, so the same family never comes twice in a row. This keeps the boulder
   trials from piling up (more × bigger × bands, which the owner found impossible in Batch 18).
-- The trial card is new (see §4.4 for its open details): small, over the empty jar, with a short
-  exclaiming line, the trial's icon, a round **?** button at its top right that opens the trial's
-  clip (the existing clip popup, §2.5), and **Got it** at the bottom (the coral PLAY pill, ignoring
-  taps for its first 0.4 s like the intro cards). Time stays stopped until Got it, as with the
-  intro cards.
+- **Two trial cards (the owner's call, 2026-10-17):**
+  - **The first time in a profile** a trial comes: a card with the short line, the trial's clip
+    playing directly (looping, like the intro cards and the clip popup, §2.5) and **Got it** (the
+    coral PLAY pill, ignoring taps for its first 0.4 s). **No question-mark button**: the clip is
+    already shown. Time stays stopped until Got it, as with the intro cards. "Seen" is saved per
+    profile like the hints (GAME_DESIGN §11), and "How to play" in Settings brings these cards back
+    like the others (§2.4).
+  - **Every later time:** a small card with only the short line and the icon(s) that show the
+    change; **no buttons, no question mark, no clip**. It goes by itself after **3 s**
+    (`TRIAL_TOAST_MS` in `src/config/view.ts`). It shows over the empty jar as the doors open,
+    and time doesn't stop for it (the jar is empty then; ask the owner if unsure).
+  - **What counts as new:** each trial id is new once, and a trial's **upgrade** too. Read "upgrade"
+    as the follow-up trials (Quick Curse and More Curses after Cursed Bell) **and** a trial's next
+    level (Big Boulders level 2 after level 1)? That changes how often the full card shows: confirm
+    with the owner before building (the default if unanswered: each trial id once, the follow-ups
+    being ids of their own).
+  - **No HUD icons** for the trials (the owner turned them down).
 - The hazards' intro-card lines say "A trial can …" today (`src/config/introCards.ts`); they must
   be reworded now that trials come by themselves (propose new lines to the owner).
 
@@ -171,22 +189,10 @@ says) with its own CHANGELOG entry, so the owner can test one change at a time o
 3. **The card's look and place:** size (half the screen width?), position over the jar, the
    doors (no doors for the trial card, recommended, since there is nothing to choose), and
    whether it comes before or after the blessing pick's doors.
-4. **The ? button:** the icon kit's play medallion or a new question-mark medallion (art prompt
-   first); its clip is the trial's existing clip (`pickClip`).
-5. **A card at every stage gets tiring** (from clear 11 a trial comes at nearly every clear). The
-   owner asked for a proposal; recommended, to approve:
-   - **The first time per profile** a trial comes (saved like the hints, GAME_DESIGN §11): the full
-     card, time stopped, ? and Got it, as above.
-   - **Later times:** no Got it. A small toast (icon, the short line, the level, e.g. "Bigger
-     boulders · Lv 2") shows over the empty jar as the doors open and fades after about 3 s. The
-     new stage's jar is empty then, so nothing is missed while it shows and time need not stop. A
-     tap on the toast opens the full card (with ?).
-   - **Never lost:** every trial the run has sits as a small icon chip in a row in the HUD (the
-     place to agree with the owner: the left side under the score card holds the Play app's ad
-     bubble). The newest chip pulses for a few seconds; a tap on any chip pauses and opens its full
-     card with ? and its level. So a missed toast is always one tap away.
-6. **The rule pick** at the jar-growth clears: stays a choice (recommended, as written in §4.2)?
-7. **Balance:** the player could steer around the trials before; random trials may make runs
+4. **What counts as a trial's "upgrade"** for the first-time card (§4.3): the follow-ups only,
+   or every next level too?
+5. **The rule pick** at the jar-growth clears: stays a choice (recommended, as written in §4.2)?
+6. **Balance:** the player could steer around the trials before; random trials may make runs
    harder. Measure with the smart bot (fresh profile `--meta 30`, maxed
    `base --aim smart --upgrades max --stages 40 --cap 3600 --seeds 60`) before and after and show
    the owner the numbers; retune only with their call.
