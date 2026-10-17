@@ -6,7 +6,7 @@
  * its state; this file only connects them.
  */
 import { AD_BALL_NAMES } from './config/ads';
-import type { AdBallKind } from './config/ads';
+import type { AdBallKind, AdPlacement } from './config/ads';
 import { COMBO_BANNER_MIN } from './config/economy';
 import {
   BANNER_JAR_OFFSET,
@@ -39,10 +39,13 @@ import type { Profile, Records, Settings } from './core/profile';
 import type { RunSave } from './core/runSave';
 import { comboBonus } from './core/upgrades';
 import type { GameView } from './game';
-import type { RewardedAds } from './platform';
+import type { Analytics, RewardedAds } from './platform';
+import type { AdOutcome } from './platform/analytics';
 import { resumeProfileRun, startProfileRun } from './run/profileRun';
 import { startScenarioRun } from './run/scenario';
 import type { RunController } from './run/RunController';
+import { connectRunAnalytics } from './runAnalytics';
+import type { RunAnalytics, RunAnalyticsStart } from './runAnalytics';
 import type { BannerView } from './ui/banners/banner';
 import type { HintView } from './ui/banners/hint';
 import type { CoinFlyView } from './ui/fx/coinFly';
@@ -88,6 +91,8 @@ export interface SessionParts {
   };
   /** Sound effects and haptics for the run's events. */
   readonly feedback: FeedbackOutputs;
+  /** Play statistics (TECH_SPEC §17): runs, stages, coins, picks and the ads' cards; never a scene. */
+  readonly analytics: Analytics;
   /** A fixed seed (`?seed=`) for every run, or null for a fresh one each time. */
   readonly seed: number | null;
   /** Gravity for every run as a multiple of the normal one (`?gravity=`), or null for normal. */
@@ -139,6 +144,8 @@ export class GameSession {
   private adBusy = false;
   /** The coins Game Over's Double coins would pay once more; 0 when it can't (or did). */
   private doubleCoinsFor = 0;
+  /** The current run's statistics (none for a scene). */
+  private runStats: RunAnalytics | null = null;
 
   constructor(private readonly parts: SessionParts) {
     this.recordsBefore = parts.profile.records;
@@ -352,14 +359,17 @@ export class GameSession {
     this.holding = true;
     run.pause();
     this.refreshAds();
+    this.trackAd('specialBall', 'offered');
     const choice = await this.parts.adOffer.ask({
       title: `A free ${AD_BALL_NAMES[ball.kind as AdBallKind]}!`,
       line: 'Watch a short ad and it goes straight into your paw.',
       ball,
       decline: 'Not now',
     });
+    if (choice !== 'watch') this.trackAd('specialBall', 'declined');
     if (choice === 'watch' && this.current === run) {
       const result = await this.parts.ads.show('specialBall');
+      this.trackAd('specialBall', result);
       if (result === 'rewarded' && this.current === run && run.giveAdBall()) {
         this.parts.feedback.play('chime');
       }
@@ -381,15 +391,19 @@ export class GameSession {
     this.parts.banners.combo(0);
     this.adBusy = true;
     this.refreshAds();
+    this.trackAd('luckySave', 'offered');
     const choice = await this.parts.adOffer.ask({
       title: 'Out of room!',
       line: 'Watch a short ad for one more Lucky Save.',
       decline: 'No thanks',
     });
-    const rewarded =
-      choice === 'watch' &&
-      this.current === run &&
-      (await this.parts.ads.show('luckySave')) === 'rewarded';
+    if (choice !== 'watch') this.trackAd('luckySave', 'declined');
+    let rewarded = false;
+    if (choice === 'watch' && this.current === run) {
+      const result = await this.parts.ads.show('luckySave');
+      this.trackAd('luckySave', result);
+      rewarded = result === 'rewarded';
+    }
     this.adBusy = false;
     if (this.current !== run) return;
     if (rewarded) run.takeLastChance();
@@ -404,6 +418,7 @@ export class GameSession {
     this.adBusy = true;
     this.refreshAds();
     const result = await this.parts.ads.show('doubleCoins');
+    this.trackAd('doubleCoins', result);
     this.adBusy = false;
     if (result === 'rewarded' && this.doubleCoinsFor === coins && this.parts.gameOver.visible) {
       this.doubleCoinsFor = 0;
@@ -414,6 +429,11 @@ export class GameSession {
       this.parts.onProfileChange();
     }
     this.refreshAds();
+  }
+
+  /** A rewarded ad's card or ad, for the statistics. */
+  private trackAd(placement: AdPlacement, outcome: AdOutcome): void {
+    this.parts.analytics.track({ type: 'ad', placement, outcome });
   }
 
   /**
@@ -466,7 +486,7 @@ export class GameSession {
       events,
       gravityScale: this.parts.gravityScale ?? 1,
     });
-    this.play(run, events);
+    this.play(run, events, { fresh: true, runsPlayed: this.parts.profile.stats.runsPlayed });
     this.saveRun();
   }
 
@@ -481,7 +501,7 @@ export class GameSession {
     const events = new EventBus<GameEvents>();
     this.recordsBefore = this.parts.profile.records;
     const run = startScenarioRun(def, { events, gravityScale: this.parts.gravityScale ?? 1 });
-    this.play(run, events);
+    this.play(run, events, null);
   }
 
   /** Game Over's Play Again and the pause's Restart scene: the same scene again, or a new run. */
@@ -511,7 +531,7 @@ export class GameSession {
       return false;
     }
     this.recordsBefore = saved.recordsBefore;
-    this.play(run, events);
+    this.play(run, events, { fresh: false });
     const offer = run.pickOffer;
     if (offer) {
       this.parts.doors.closeNow();
@@ -534,6 +554,7 @@ export class GameSession {
   /** Clears what the last run left on screen. */
   private reset(): void {
     const { hint, banners, coins, pause, gameOver, picks, doors } = this.parts;
+    this.stopRunStats();
     this.parts.adOffer.decline();
     this.doubleCoinsFor = 0;
     this.heldPick = null;
@@ -564,11 +585,29 @@ export class GameSession {
     );
   }
 
-  /** Shows `run` and wires its events to the screen. */
-  private play(run: RunController, events: EventBus<GameEvents>): void {
+  /** Shows `run` and wires its events to the screen; `stats`: how it began, or null (a scene). */
+  private play(
+    run: RunController,
+    events: EventBus<GameEvents>,
+    stats: RunAnalyticsStart | null,
+  ): void {
     const { game, hud, hint, banners, profile } = this.parts;
     this.current = run;
     connectRunFeedback(events, this.parts.feedback);
+    if (stats) {
+      this.runStats = connectRunAnalytics(
+        events,
+        run,
+        this.parts.analytics,
+        {
+          fps: () => game.fps,
+          visible: () => document.visibilityState === 'visible',
+          setInterval: (fn, ms) => window.setInterval(fn, ms),
+          clearInterval: (handle) => window.clearInterval(handle),
+        },
+        stats,
+      );
+    }
 
     const showPreview = (): void => hud.setNext(run.next);
     hud.setScore(run.score);
@@ -814,6 +853,9 @@ export class GameSession {
 
   /** Leaves the game for the menu: the run ends (its coins are already banked). */
   endRun(): void {
+    // Back on the menu before the run was over: a quit (after game over it was already reported).
+    this.runStats?.quit();
+    this.stopRunStats();
     window.clearTimeout(this.hintTimer);
     this.parts.adOffer.decline();
     this.doubleCoinsFor = 0;
@@ -862,6 +904,11 @@ export class GameSession {
     const state = this.current?.state;
     if (state === 'playing' || state === 'expanding' || state === 'choosing') this.pauseRun();
     else if (this.holding && !this.parts.gameOver.visible) this.parts.pause.show();
+  }
+
+  private stopRunStats(): void {
+    this.runStats?.dispose();
+    this.runStats = null;
   }
 
   private onGameOver(e: GameEvents['gameOver']): void {

@@ -39,7 +39,14 @@ const sampleSave = (): SaveData => {
   s.upgrades.comboCharm = 1;
   s.records = { bestScore: 5678, bestStage: 3, highestTier: 9 };
   s.stats = { runsPlayed: 4, totalMerges: 321, totalCoinsEarned: 2000, jackpots: 1 };
-  s.settings = { sound: false, haptics: true, reduceMotion: true, dayNight: false };
+  s.settings = {
+    sound: false,
+    haptics: true,
+    reduceMotion: true,
+    dayNight: false,
+    statistics: true,
+    statisticsAsked: true,
+  };
   s.flags.hintsSeen.aim = true;
   return s;
 };
@@ -77,7 +84,14 @@ describe('defaultSave (GAME_DESIGN §11)', () => {
     expect(s.upgrades.luckyPaw).toBe(0);
     expect(s.records).toEqual({ bestScore: 0, bestStage: 1, highestTier: 0 });
     expect(s.stats).toEqual({ runsPlayed: 0, totalMerges: 0, totalCoinsEarned: 0, jackpots: 0 });
-    expect(s.settings).toEqual({ sound: true, haptics: true, reduceMotion: false, dayNight: true });
+    expect(s.settings).toEqual({
+      sound: true,
+      haptics: true,
+      reduceMotion: false,
+      dayNight: true,
+      statistics: false,
+      statisticsAsked: false,
+    });
     expect(s.flags.hintsSeen).toEqual({
       aim: false,
       merge: false,
@@ -240,6 +254,8 @@ describe('sanitize', () => {
       haptics: false,
       reduceMotion: false,
       dayNight: true,
+      statistics: false,
+      statisticsAsked: false,
     });
     expect(d.flags.hintsSeen).toEqual({
       aim: false,
@@ -266,6 +282,8 @@ describe('sanitize', () => {
       haptics: true,
       reduceMotion: false,
       dayNight: true,
+      statistics: false,
+      statisticsAsked: false,
     });
     const bad = sanitize({ settings: { reduceMotion: 'on' } });
     expect(bad.issues).toEqual(['settings.reduceMotion']);
@@ -280,6 +298,20 @@ describe('sanitize', () => {
     const bad = sanitize({ settings: { dayNight: 'night' } });
     expect(bad.issues).toEqual(['settings.dayNight']);
     expect(bad.data.settings.dayNight).toBe(true);
+  });
+
+  it('gives a save from before v0.57 the play statistics unanswered, without an issue', () => {
+    const result = sanitize({ settings: { sound: true, haptics: true, dayNight: true } });
+    expect(result.issues).toEqual([]);
+    expect(result.data.settings.statistics).toBe(false);
+    expect(result.data.settings.statisticsAsked).toBe(false);
+    const answered = sanitize({ settings: { statistics: true, statisticsAsked: true } });
+    expect(answered.data.settings.statistics).toBe(true);
+    expect(answered.data.settings.statisticsAsked).toBe(true);
+    const bad = sanitize({ settings: { statistics: 'yes', statisticsAsked: 1 } });
+    expect(bad.issues).toEqual(['settings.statistics', 'settings.statisticsAsked']);
+    expect(bad.data.settings.statistics).toBe(false);
+    expect(bad.data.settings.statisticsAsked).toBe(false);
   });
 
   it('keeps scores beyond 2^53 (later stages score in the quadrillions)', () => {
@@ -548,7 +580,14 @@ describe('v6 → v7: every profile starts over, keeping its settings (v0.36)', (
     expect(result.data).toEqual({
       ...defaultSave(),
       // A v6 save had no Day and night setting: it comes on (v0.51).
-      settings: { sound: false, haptics: true, reduceMotion: true, dayNight: true },
+      settings: {
+        sound: false,
+        haptics: true,
+        reduceMotion: true,
+        dayNight: true,
+        statistics: false,
+        statisticsAsked: false,
+      },
     });
   });
 

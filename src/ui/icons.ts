@@ -71,6 +71,11 @@ export const ICON_SHIELD = stroke(
   '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>',
 );
 
+/** Play statistics (GAME_DESIGN §2.8): three rising bars. */
+export const ICON_CHART = stroke(
+  '<path d="M4 20h16"/><path d="M7 16v-4"/><path d="M12 16V8"/><path d="M17 16V4"/>',
+);
+
 export const ICON_CHEVRON = stroke('<path d="m9 18 6-6-6-6"/>', 2.6);
 
 export const ICON_CHECK = stroke('<path d="M20 6 9 17l-5-5"/>', 3);

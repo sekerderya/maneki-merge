@@ -16,14 +16,21 @@ import { installDebugHooks } from './debug';
 import { createGame, loadArt, preloadImages } from './game';
 import type { SceneSkin } from './game/GameScene';
 import {
+  AnalyticsHub,
   BackStack,
   browserNetwork,
   controlledByServiceWorker,
+  CrashlyticsSink,
   detectInstallContext,
   FakeAds,
+  FakeAnalyticsSink,
+  FirebaseAnalyticsSink,
+  GameAnalyticsSink,
   Haptics,
   InstallPrompt,
+  loadFirebaseWeb,
   loadFonts,
+  loadGameAnalytics,
   NoAds,
   openStorage,
   readInstallEnvironment,
@@ -60,16 +67,24 @@ import { loadingScreen } from './ui/loadingScreen';
 import { createGameScreen } from './ui/screens/gameScreen';
 import { createMenuScreen } from './ui/screens/menuScreen';
 import type { InstallHint } from './ui/screens/menuScreen';
-import type { AdService, InstallContext, Network, ServiceWorkerControls } from './platform';
+import type {
+  AdService,
+  AnalyticsScreen,
+  AnalyticsSink,
+  InstallContext,
+  Network,
+  ServiceWorkerControls,
+} from './platform';
 import type { NativeApp } from './platform/native';
 import { AD_TESTING_DEVICES, AD_UNITS, TEST_AD_UNITS } from './config/ads';
 import { showFakeAd } from './ui/overlays/fakeAd';
 import { createAdOfferOverlay } from './ui/overlays/adOfferOverlay';
+import { createStatsConsentOverlay } from './ui/overlays/statsConsentOverlay';
 
 /**
  * Boot order (TECH_SPEC §3): the loading screen (fonts, every image, a new version's install; in the
  * Android app the ad consent) → save → UI → Phaser → service worker (on a first visit) → the
- * loading screen fades out.
+ * loading screen fades out → the play statistics card, once (TECH_SPEC §17).
  */
 async function boot(): Promise<void> {
   setupViewport();
@@ -79,6 +94,13 @@ async function boot(): Promise<void> {
   const native = __NATIVE_APP__ ? await startNative() : null;
   const flags = bootFlags(window.location.search, readStoredFlags(), native?.devApp ?? false);
   let skin: SceneSkin = flags.skin ?? 'art';
+  // Play statistics (TECH_SPEC §17): nothing is sent before the player's yes; until they answer,
+  // a few events (an error at boot, the first screen) wait.
+  const { analytics, fakeAnalytics } = createAnalytics(flags, native);
+  window.addEventListener('error', (event) => analytics.error(event.error ?? event.message));
+  window.addEventListener('unhandledrejection', (event) => analytics.error(event.reason));
+  const trackScreen = (screen: AnalyticsScreen): void =>
+    analytics.track({ type: 'screen', screen });
 
   // Updates (TECH_SPEC §9) go through the gate. On a launch after the first visit the service
   // worker registers now, so a new version installs and reloads the app on the loading screen; a
@@ -152,6 +174,8 @@ async function boot(): Promise<void> {
   // The gardens' time of day (GAME_DESIGN §7.3): the clock's, unless the setting keeps the day.
   const pickTime = (): TimeOfDay => flags.time ?? (profile.settings.dayNight ? clockTime() : 'day');
   if (storage.persistent) void requestPersistentStorage();
+  // The answer saved with the profile; a profile that hasn't answered gets the card after the loading.
+  if (profile.settings.statisticsAsked) analytics.setConsent(profile.settings.statistics);
   // The menu's Scenes button (GAME_DESIGN §2.6): `?scenes=1` or the tester reset (7 taps on the version) turn it on.
   const scenesSwitch = new ScenesSwitch(storage.adapter);
   if (flags.scenes !== null) scenesSwitch.set(flags.scenes);
@@ -177,7 +201,9 @@ async function boot(): Promise<void> {
   // A waiting update installs itself only while the menu is up with no panel over it.
   const syncUpdateGate = (): void => {
     const onMenu = (screens?.screen ?? 'menu') === 'menu';
-    gate.setMenuActive(onMenu && !shop.visible && !settingsPanel.visible && !scenes.visible);
+    gate.setMenuActive(
+      onMenu && !shop.visible && !settingsPanel.visible && !scenes.visible && !statsCard.visible,
+    );
   };
 
   const installContext = detectInstallContext(readInstallEnvironment());
@@ -248,7 +274,14 @@ async function boot(): Promise<void> {
     byId('overlays'),
     {
       onBuy: (id) => {
-        if (!profile.buy(id).ok) return;
+        const bought = profile.buy(id);
+        if (!bought.ok) return;
+        analytics.track({
+          type: 'coinsSpent',
+          upgrade: id,
+          level: bought.levels[id],
+          amount: bought.price,
+        });
         showProfile();
         shop.purchased(id);
         audio.play('purchase');
@@ -262,6 +295,7 @@ async function boot(): Promise<void> {
     if (shop.visible) return;
     showProfile();
     shop.show();
+    trackScreen('shop');
     syncUpdateGate();
     shopLayer = back.push(() => {
       shopLayer = null;
@@ -285,6 +319,7 @@ async function boot(): Promise<void> {
         session.setSetting(key, !session.settings[key]);
         if (key === 'haptics') haptics.play('tick');
         if (key === 'dayNight') menu.setTimeOfDay(pickTime());
+        if (key === 'statistics') answerStatistics(session.settings.statistics);
       },
       onReplayTips: () => {
         session.replayHints();
@@ -309,12 +344,14 @@ async function boot(): Promise<void> {
     skin === 'art',
   );
   settingsPanel.setHapticsSupported(haptics.supported);
+  settingsPanel.setStatisticsAvailable(analytics.available);
   settingsPanel.setPrivacyOptionsVisible(ads.privacyOptionsRequired);
   ads.onChange(() => settingsPanel.setPrivacyOptionsVisible(ads.privacyOptionsRequired));
   const openSettings = (): void => {
     if (settingsPanel.visible) return;
     showProfile();
     settingsPanel.show();
+    trackScreen('settings');
     syncUpdateGate();
     settingsLayer = back.push(() => {
       settingsLayer = null;
@@ -398,6 +435,8 @@ async function boot(): Promise<void> {
   };
   // A rewarded ad's card (GAME_DESIGN §2.7): over the game and the cards, under the pause.
   const adOffer = createAdOfferOverlay(overlays, skin === 'art');
+  // The play statistics card (GAME_DESIGN §2.8): over everything.
+  const statsCard = createStatsConsentOverlay(overlays, skin === 'art');
   const pause = createPauseOverlay(
     overlays,
     {
@@ -470,6 +509,7 @@ async function boot(): Promise<void> {
       play: (name, value) => audio.play(name, value),
       vibrate: (name) => haptics.play(name),
     },
+    analytics,
     seed: flags.seed,
     gravityScale: flags.gravity,
     onProfileChange: showProfile,
@@ -479,11 +519,26 @@ async function boot(): Promise<void> {
 
   const toggleSound = (): void => session.setSetting('sound', !session.settings.sound);
 
+  // The play statistics' answer (the card or Settings) is saved with the profile.
+  const answerStatistics = (yes: boolean): void => {
+    session.setSetting('statistics', yes);
+    session.setSetting('statisticsAsked', true);
+    analytics.setConsent(yes);
+  };
+  const askStatistics = async (): Promise<void> => {
+    const layer = back.push(() => statsCard.decline());
+    const yes = await statsCard.ask();
+    back.release(layer);
+    answerStatistics(yes);
+    syncUpdateGate();
+  };
+
   screens = new ScreenManager(
     { menu: byId('menu-screen'), game: byId('game-screen') },
     back,
     (screen) => {
       closeClip();
+      trackScreen(screen);
       // End (and save) the run first: back on the menu, a waiting update reloads the app soon.
       if (screen === 'menu') {
         session.endRun();
@@ -521,9 +576,11 @@ async function boot(): Promise<void> {
       }
       session.save();
       audio.suspend();
+      analytics.suspend();
     },
     onVisible: () => {
       audio.resume();
+      analytics.resume();
       // Back after a while on the menu: its garden catches up with the clock.
       if (screens?.screen === 'menu') menu.setTimeOfDay(pickTime());
     },
@@ -532,6 +589,8 @@ async function boot(): Promise<void> {
   if (!__NATIVE_APP__) sw ??= registerServiceWorker(gate);
   gate.finishLaunch();
   loading.hide();
+  // The play statistics card, once per profile, in a build that has a service (TECH_SPEC §17).
+  if (analytics.available && !profile.settings.statisticsAsked) void askStatistics();
   // Chrome may have kept the app out of the camera cutout while it launched (platform/displayCutout.ts).
   recheckCutout();
   window.setTimeout(recheckCutout, CUTOUT_RECHECK_MS);
@@ -545,6 +604,8 @@ async function boot(): Promise<void> {
       screen: () => screens?.screen ?? 'menu',
       simulateUpdateReady: () => gate.markReady(),
       ads,
+      analytics,
+      fakeAnalytics,
       nativeApp: native !== null,
       testDeviceId: native?.testDeviceId ?? null,
       storeFlag: (key, value) => {
@@ -553,6 +614,43 @@ async function boot(): Promise<void> {
       },
     });
   }
+}
+
+/**
+ * The play statistics' services for this build (TECH_SPEC §17), from the keys it was built with:
+ * GameAnalytics everywhere (its test game in debug, the dev app and the dev server), Firebase
+ * Analytics and Crashlytics through the Android app's native SDKs, Firebase Analytics through its
+ * JS SDK on the live web app. `?analytics=fake` keeps the events on the page instead.
+ */
+function createAnalytics(
+  flags: UrlFlags,
+  native: NativeApp | null,
+): { analytics: AnalyticsHub; fakeAnalytics: FakeAnalyticsSink | null } {
+  if (flags.analytics === 'fake') {
+    const fake = new FakeAnalyticsSink();
+    return { analytics: new AnalyticsHub([fake], 'fake'), fakeAnalytics: fake };
+  }
+  const keys = __ANALYTICS_KEYS__;
+  const test = flags.debug || (native?.devApp ?? false) || import.meta.env.DEV;
+  const sinks: AnalyticsSink[] = [];
+  const gameAnalytics = test ? keys.gameAnalyticsTest : keys.gameAnalytics;
+  if (gameAnalytics) {
+    const build = `${__NATIVE_APP__ ? 'android' : 'web'} ${__APP_VERSION__}`;
+    sinks.push(new GameAnalyticsSink(() => loadGameAnalytics(test), gameAnalytics, build));
+  }
+  if (native && keys.firebaseApp) {
+    // The dev app reports to its own Firebase app (`….dev`), apart from the Play app.
+    const { analytics, crashlytics } = native.firebase;
+    sinks.push(
+      new FirebaseAnalyticsSink(() => Promise.resolve(analytics)),
+      new CrashlyticsSink(() => Promise.resolve(crashlytics)),
+    );
+  } else if (!__NATIVE_APP__ && !test && keys.firebaseWeb) {
+    const config = keys.firebaseWeb;
+    sinks.push(new FirebaseAnalyticsSink(() => loadFirebaseWeb(config, import.meta.env.BASE_URL)));
+  }
+  const mode = sinks.length === 0 ? 'none' : test ? 'test' : 'live';
+  return { analytics: new AnalyticsHub(sinks, mode), fakeAnalytics: null };
 }
 
 const windowScheduler: Scheduler = {

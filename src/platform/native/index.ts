@@ -1,17 +1,20 @@
 /**
  * The Android app's native side (TECH_SPEC §16). Only the app's build loads it
  * (`if (__NATIVE_APP__) await import('./platform/native')` in main.ts), so the web bundle carries
- * no Capacitor or AdMob code.
+ * no Capacitor, AdMob or native Firebase code.
  */
 import { AdMob, RewardAdPluginEvents } from '@capacitor-community/admob';
 import type { AdmobConsentDebugGeography, MaxAdContentRating } from '@capacitor-community/admob';
 import { App } from '@capacitor/app';
+import { ConsentStatus, ConsentType, FirebaseAnalytics } from '@capacitor-firebase/analytics';
+import { FirebaseCrashlytics } from '@capacitor-firebase/crashlytics';
 import { registerPlugin } from '@capacitor/core';
 import { Network as NetworkPlugin } from '@capacitor/network';
 import { DEV_APP_ID_SUFFIX } from '../../config/ads';
 import type { Scheduler } from '../../core/profile';
 import { AdMobAds } from '../ads';
 import type { AdMobApi, AdMobSetup, AdService } from '../ads';
+import type { CrashlyticsApi, FirebaseAnalyticsApi } from '../analytics';
 import { pluginNetwork } from '../network';
 import type { Network } from '../network';
 
@@ -27,6 +30,15 @@ export interface NativeApp {
    * panel and the EEA consent test), or null.
    */
   readonly testDeviceId: string | null;
+  /**
+   * Firebase's native SDKs (TECH_SPEC §17), for the play statistics. They only work when the build
+   * had Firebase's config (`__ANALYTICS_KEYS__.firebaseApp`); the statistics switch them on only
+   * after the player's yes.
+   */
+  readonly firebase: {
+    readonly analytics: FirebaseAnalyticsApi;
+    readonly crashlytics: CrashlyticsApi;
+  };
 }
 
 /** The app's own small plugin (android/…/DevicePlugin.java). */
@@ -54,6 +66,7 @@ export async function startNativeApp(): Promise<NativeApp> {
     network,
     testDeviceId,
     createAds: (setup, timers) => new AdMobAds(adMobApi(), network, setup, timers),
+    firebase: { analytics: firebaseAnalyticsApi(), crashlytics: crashlyticsApi() },
   };
 }
 
@@ -102,5 +115,50 @@ function adMobApi(): AdMobApi {
           break;
       }
     },
+  };
+}
+
+/**
+ * Firebase Analytics' native SDK. The manifest starts it switched off; the yes switches it on with
+ * analytics storage granted and Google's ad signals denied (the statistics are not for ads).
+ */
+function firebaseAnalyticsApi(): FirebaseAnalyticsApi {
+  return {
+    setEnabled: async (on) => {
+      if (on) {
+        await FirebaseAnalytics.setConsent({
+          type: ConsentType.AnalyticsStorage,
+          status: ConsentStatus.Granted,
+        });
+        for (const type of [
+          ConsentType.AdStorage,
+          ConsentType.AdUserData,
+          ConsentType.AdPersonalization,
+        ]) {
+          await FirebaseAnalytics.setConsent({ type, status: ConsentStatus.Denied });
+        }
+      }
+      await FirebaseAnalytics.setEnabled({ enabled: on });
+    },
+    setScreen: (name) =>
+      FirebaseAnalytics.setCurrentScreen({ screenName: name, screenClassOverride: name }),
+    logEvent: (name, params) => FirebaseAnalytics.logEvent({ name, params: { ...params } }),
+  };
+}
+
+/** Crashlytics' native SDK; the manifest starts its collection switched off. */
+function crashlyticsApi(): CrashlyticsApi {
+  return {
+    setEnabled: (on) => FirebaseCrashlytics.setEnabled({ enabled: on }),
+    recordException: (message, frames) =>
+      FirebaseCrashlytics.recordException({
+        message,
+        stacktrace: frames.map((frame) => ({ ...frame })),
+      }),
+    log: (message) => FirebaseCrashlytics.log({ message }),
+    setCustomKey: (key, value) =>
+      FirebaseCrashlytics.setCustomKey(
+        typeof value === 'number' ? { key, value, type: 'long' } : { key, value, type: 'string' },
+      ),
   };
 }

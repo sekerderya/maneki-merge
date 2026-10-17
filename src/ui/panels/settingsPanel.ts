@@ -1,7 +1,5 @@
 import {
   ACCOUNT_RESET_TAPS,
-  PRIVACY_POLICY_PATH,
-  PRIVACY_POLICY_URL,
   TESTER_RESET_TAP_WINDOW_MS,
   TESTER_RESET_TAPS,
 } from '../../config/app';
@@ -9,6 +7,7 @@ import { SHOP_ART, SHOP_SPRITE_DIR } from '../../config/shopSprites';
 import { formatVersionLabel } from '../../core/version';
 import { button, el } from '../dom';
 import {
+  ICON_CHART,
   ICON_CHECK,
   ICON_CHEVRON,
   ICON_CLOSE,
@@ -19,10 +18,11 @@ import {
   ICON_SOUND_ON,
   ICON_VIBRATE,
 } from '../icons';
+import { privacyLink } from '../privacyLink';
 import { artImage, setUiArtProperties } from '../uiArt';
 
 /** The settings the panel switches (GAME_DESIGN §2.4); each one is a save setting. */
-export type SettingKey = 'sound' | 'haptics' | 'reduceMotion' | 'dayNight';
+export type SettingKey = 'sound' | 'haptics' | 'reduceMotion' | 'dayNight' | 'statistics';
 
 export interface SettingsActions {
   onToggle(key: SettingKey): void;
@@ -49,6 +49,8 @@ export interface SettingsView {
   setHapticsSupported(supported: boolean): void;
   /** "Privacy options" shows only in the Android app, while AdMob says it is needed. */
   setPrivacyOptionsVisible(visible: boolean): void;
+  /** "Play statistics" shows only where the build has a statistics service (TECH_SPEC §17). */
+  setStatisticsAvailable(available: boolean): void;
 }
 
 interface SwitchRow {
@@ -58,7 +60,7 @@ interface SwitchRow {
 
 /**
  * Settings panel over the main menu (GAME_DESIGN §2.4): sound effects, haptics, reduce motion,
- * day and night, "How to play" and the version. Each switch is a whole row, so the target is the full width.
+ * day and night, play statistics, "How to play" and the version. Each switch is a whole row, so the target is the full width.
  * With `art` (the art skin) it is the owner's approved mockup (docs/ART_ASSETS.md §4.14), built
  * from the Upgrades and menu pieces (panel-art.css): gold-rimmed icons, gold switches.
  */
@@ -80,6 +82,9 @@ export function createSettingsPanel(
   });
 
   const card = el('section', 'settings-card');
+  // Taller than a small phone's screen with every row (375 × 667): it scrolls under a finger, so
+  // the version and the privacy policy at its foot stay reachable.
+  card.dataset['scrollable'] = '';
   const header = el('header', 'settings-header');
   const close = button('icon-btn settings-close', '', art ? '' : ICON_CLOSE);
   if (art) close.append(artImage(`${SHOP_SPRITE_DIR}${SHOP_ART.close.file}`, 'settings-close-art'));
@@ -120,7 +125,14 @@ export function createSettingsPanel(
       'Less shake, fewer sparkles',
     ),
     dayNight: switchRow('dayNight', ICON_MOON, 'Day and night', 'The garden follows your clock'),
+    statistics: switchRow(
+      'statistics',
+      ICON_CHART,
+      'Play statistics',
+      'Anonymous stats and crash reports',
+    ),
   };
+  switches.statistics.row.hidden = true;
 
   const tips = rowParts(ICON_HELP, 'How to play', 'Show the first-run tips again');
   tips.dataset['testid'] = 'setting-tips';
@@ -166,17 +178,7 @@ export function createSettingsPanel(
       if (count === ACCOUNT_RESET_TAPS) actions.onAccountReset();
     }, TESTER_RESET_TAP_WINDOW_MS);
   });
-  // A new tab, so the menu stays as it is (Google Play wants the policy reachable in the app). The
-  // Android app opens the live page in the phone's browser: Capacitor sends every link off its
-  // own origin there, so the game never leaves the WebView.
-  const privacy = el('a', 'settings-privacy', 'Privacy policy');
-  if (__NATIVE_APP__) {
-    privacy.href = PRIVACY_POLICY_URL;
-  } else {
-    privacy.href = `${import.meta.env.BASE_URL}${PRIVACY_POLICY_PATH}`;
-    privacy.target = '_blank';
-  }
-  privacy.rel = 'noopener';
+  const privacy = privacyLink('settings-privacy');
   privacy.dataset['testid'] = 'privacy-link';
   footer.append(version, el('span', '', '·'), privacy);
 
@@ -211,6 +213,9 @@ export function createSettingsPanel(
     },
     setPrivacyOptionsVisible(visible) {
       privacyOptions.hidden = !visible;
+    },
+    setStatisticsAvailable(available) {
+      switches.statistics.row.hidden = !available;
     },
   };
 }

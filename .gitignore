@@ -22,6 +22,8 @@ android/app/build/
 android/app/src/main/assets/public/
 android/out/
 android/local.properties
+# Firebase's config: the Android workflow writes it from the GOOGLE_SERVICES_JSON secret
+android/app/google-services.json
 *.p12
 *.jks
 *.keystore

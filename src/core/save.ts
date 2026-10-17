@@ -34,7 +34,19 @@ export interface SaveData {
    * `dayNight` (v0.51, GAME_DESIGN §7.3, added without a version step: a save without it has it
    * on): the gardens follow the clock; off, they stay in the day.
    */
-  settings: { sound: boolean; haptics: boolean; reduceMotion: boolean; dayNight: boolean };
+  settings: {
+    sound: boolean;
+    haptics: boolean;
+    reduceMotion: boolean;
+    dayNight: boolean;
+    /**
+     * The play statistics (v0.57, GAME_DESIGN §2.8, TECH_SPEC §17, added without a version step: a
+     * save without them hasn't answered): `statistics` is the player's yes, `statisticsAsked` true
+     * once they answered the card (or switched the row in Settings). Nothing is sent before a yes.
+     */
+    statistics: boolean;
+    statisticsAsked: boolean;
+  };
   flags: {
     hintsSeen: Record<HintId, boolean>;
     /** The how-it-works clips opened at least once (v0.38): their buttons lose the new dot. */
@@ -59,7 +71,14 @@ export function defaultSave(): SaveData {
     upgrades,
     records: { bestScore: 0, bestStage: FIRST_STAGE, highestTier: 0 },
     stats: { runsPlayed: 0, totalMerges: 0, totalCoinsEarned: 0, jackpots: 0 },
-    settings: { sound: true, haptics: true, reduceMotion: false, dayNight: true },
+    settings: {
+      sound: true,
+      haptics: true,
+      reduceMotion: false,
+      dayNight: true,
+      statistics: false,
+      statisticsAsked: false,
+    },
     flags: { hintsSeen, clipsSeen },
   };
 }
@@ -330,6 +349,12 @@ export function sanitize(data: Record<string, unknown>): { data: SaveData; issue
   out.settings.haptics = r.bool(settings, 'settings.haptics', out.settings.haptics);
   out.settings.reduceMotion = r.bool(settings, 'settings.reduceMotion', out.settings.reduceMotion);
   out.settings.dayNight = r.bool(settings, 'settings.dayNight', out.settings.dayNight);
+  out.settings.statistics = r.bool(settings, 'settings.statistics', out.settings.statistics);
+  out.settings.statisticsAsked = r.bool(
+    settings,
+    'settings.statisticsAsked',
+    out.settings.statisticsAsked,
+  );
 
   const flags = r.section(data, 'flags');
   const hints = r.section(flags, 'flags.hintsSeen');

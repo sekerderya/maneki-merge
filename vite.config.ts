@@ -1,5 +1,6 @@
 import { execSync } from 'node:child_process';
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { loadEnv } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { defineConfig } from 'vitest/config';
 import {
@@ -27,6 +28,62 @@ function buildHash(): string {
   }
 }
 
+/** The Android app's two application IDs: Firebase's config must know both (TECH_SPEC §17). */
+const ANDROID_APP_IDS = [
+  'io.github.sekerderya.manekimerge',
+  'io.github.sekerderya.manekimerge.dev',
+];
+
+/**
+ * The play statistics' keys (TECH_SPEC §17) from the build's environment (CI: the repository
+ * secrets; locally: an untracked `.env.local`). A service without its keys is left out, and a
+ * build without any never asks the player.
+ */
+function analyticsKeys(env: Record<string, string>, nativeApp: boolean) {
+  const pair = (gameKey?: string, secretKey?: string) =>
+    gameKey && secretKey ? { gameKey, secretKey } : null;
+  return {
+    gameAnalytics: pair(env['GAMEANALYTICS_GAME_KEY'], env['GAMEANALYTICS_SECRET_KEY']),
+    gameAnalyticsTest: pair(
+      env['GAMEANALYTICS_TEST_GAME_KEY'],
+      env['GAMEANALYTICS_TEST_SECRET_KEY'],
+    ),
+    firebaseWeb: nativeApp ? null : firebaseWebConfig(env['FIREBASE_WEB_CONFIG']),
+    firebaseApp: nativeApp && firebaseAppConfigured(),
+  };
+}
+
+/** Firebase's web config, a JSON object of strings; null when unset or unreadable. */
+function firebaseWebConfig(json: string | undefined): Record<string, string> | null {
+  if (!json) return null;
+  try {
+    const config: unknown = JSON.parse(json);
+    const valid =
+      typeof config === 'object' &&
+      config !== null &&
+      Object.values(config).every((v) => typeof v === 'string') &&
+      'apiKey' in config &&
+      'appId' in config &&
+      'measurementId' in config;
+    if (valid) return config as Record<string, string>;
+  } catch {
+    // Reported below.
+  }
+  console.warn('FIREBASE_WEB_CONFIG is not a Firebase web config (JSON); Firebase is left out.');
+  return null;
+}
+
+/**
+ * Whether android/app/google-services.json is there for both app IDs: the Gradle build applies
+ * Firebase only then (android/app/build.gradle), so the page must agree.
+ */
+function firebaseAppConfigured(): boolean {
+  const file = new URL('./android/app/google-services.json', import.meta.url);
+  if (!existsSync(file)) return false;
+  const text = readFileSync(file, 'utf8');
+  return ANDROID_APP_IDS.every((id) => text.includes(`"${id}"`));
+}
+
 /** Every image the game shows, relative to public/: the loading screen loads them all. */
 function preloadImages(): string[] {
   const dirs = ['assets', 'clips'];
@@ -44,6 +101,8 @@ export default defineConfig(({ mode }) => {
   const nativeApp = mode === 'android';
   // GitHub Pages serves the app from /<repo-name>/. Override with BASE_PATH if needed.
   const base = nativeApp ? '/' : (process.env['BASE_PATH'] ?? '/maneki-merge/');
+  // Every variable, not only VITE_ ones: the keys go into `__ANALYTICS_KEYS__` alone.
+  const env = loadEnv(mode, process.cwd(), '');
   return {
     base,
     define: {
@@ -51,6 +110,7 @@ export default defineConfig(({ mode }) => {
       __BUILD_HASH__: JSON.stringify(buildHash()),
       __PRELOAD_IMAGES__: JSON.stringify(preloadImages()),
       __NATIVE_APP__: JSON.stringify(nativeApp),
+      __ANALYTICS_KEYS__: JSON.stringify(analyticsKeys(env, nativeApp)),
     },
     build: {
       target: 'es2022',

@@ -11,6 +11,8 @@ import type { UpgradeId } from '../config/upgrades';
 import type { UrlFlags } from '../core/urlFlags';
 import type { GameView } from '../game';
 import type { AdResult, AdService, AdsStatus } from '../platform';
+import type { AnalyticsEvent, AnalyticsHub, AnalyticsStatus } from '../platform/analytics';
+import type { FakeAnalyticsSink } from '../platform/analytics';
 import type { GameSession } from '../session';
 import { button, el } from '../ui/dom';
 import type { ScreenId } from '../ui/screenManager';
@@ -28,6 +30,9 @@ export interface DebugContext {
   simulateUpdateReady(): void;
   /** The rewarded ads (TECH_SPEC §16). */
   readonly ads: AdService;
+  /** The play statistics (TECH_SPEC §17), and the fake service with `?analytics=fake`. */
+  readonly analytics: AnalyticsHub;
+  readonly fakeAnalytics: FakeAnalyticsSink | null;
   /** The Android app's build, where AdMob's test ads can be chosen. */
   readonly nativeApp: boolean;
   /** The hashed ID AdMob knows this phone by (the dev app), or null. */
@@ -227,6 +232,11 @@ export interface GameHooks {
   };
   /** Shows a rewarded ad for the placement and resolves with its result. */
   showAd(placement: AdPlacement): Promise<AdResult>;
+  /**
+   * The play statistics (TECH_SPEC §17): their state, and with `?analytics=fake` every event the
+   * fake service got (sent after the yes).
+   */
+  analyticsState(): AnalyticsStatus & { readonly events: readonly AnalyticsEvent[] };
 }
 
 declare global {
@@ -474,6 +484,9 @@ export function installDebugHooks(ctx: DebugContext): GameHooks {
     showAd(placement) {
       return ctx.ads.show(placement);
     },
+    analyticsState() {
+      return { ...ctx.analytics.status(), events: [...(ctx.fakeAnalytics?.events ?? [])] };
+    },
   };
   window.__game = hooks;
   createDebugPanel(ctx, hooks);
@@ -496,6 +509,8 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
   const stats = el('pre', 'debug-stats');
   const adsText = el('pre', 'debug-stats');
   adsText.dataset['testid'] = 'debug-ads';
+  const statsText = el('pre', 'debug-stats');
+  statsText.dataset['testid'] = 'debug-analytics';
   const row = (...children: HTMLElement[]): HTMLElement => {
     const node = el('div', 'debug-row');
     node.append(...children);
@@ -643,6 +658,7 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
       }),
     ),
     ...adsRows(ctx, hooks, adsText),
+    ...analyticsRows(ctx, statsText),
   );
   panel.append(toggle, body);
   document.body.append(panel);
@@ -678,6 +694,7 @@ function createDebugPanel(ctx: DebugContext, hooks: GameHooks): void {
       `time ${clock(s.playMs)}  this stage ${clock(s.playMs - stageStartMs)}\n` +
       `stages ${recent || '-'}`;
     adsText.textContent = describeAds(hooks, ctx.testDeviceId, lastAd);
+    statsText.textContent = describeAnalytics(ctx.analytics.status());
   }, 250);
 }
 
@@ -756,4 +773,36 @@ function describeAds(hooks: GameHooks, device: string | null, last: string): str
   ];
   if (device) lines.push(`device ${device}`);
   return lines.join('\n');
+}
+
+/**
+ * The Statistics group (TECH_SPEC §17): the mode, the answer and each service; ask the card again
+ * (the next launch), send a test error, and fake statistics on or off.
+ */
+function analyticsRows(ctx: DebugContext, text: HTMLElement): HTMLElement[] {
+  const action = (label: string, fn: () => void): HTMLButtonElement => {
+    const btn = button('debug-btn', label);
+    btn.addEventListener('click', fn);
+    return btn;
+  };
+  const row = el('div', 'debug-row');
+  row.append(
+    action('Ask stats again', () => {
+      ctx.session.setSetting('statisticsAsked', false);
+      ctx.session.profile.flush();
+      window.location.reload();
+    }),
+    action('Stats test error', () => ctx.analytics.error(new Error('Debug panel test error'))),
+    ctx.fakeAnalytics
+      ? action('Real stats', () => ctx.storeFlag('analytics', null))
+      : action('Fake stats', () => ctx.storeFlag('analytics', 'fake')),
+  );
+  return [text, row];
+}
+
+function describeAnalytics(s: AnalyticsStatus): string {
+  return [
+    `stats ${s.mode} · ${s.consent} · sent ${s.sent} · waiting ${s.pending}`,
+    ...(s.sinks.length > 0 ? s.sinks : ['no services in this build']),
+  ].join('\n');
 }

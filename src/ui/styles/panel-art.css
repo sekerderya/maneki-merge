@@ -336,3 +336,14 @@
   text-align: center;
   white-space: normal;
 }
+
+/* The play statistics card (GAME_DESIGN §2.8): the ad card's pieces; its note in the cards' brown. */
+.stats-consent-overlay.is-art .ad-offer-ball .cat-icon {
+  --size: calc(120 * var(--u));
+}
+
+.stats-consent-overlay.is-art .stats-consent-note {
+  max-width: none;
+  color: #7a4a33;
+  font-size: calc(28 * var(--u));
+}

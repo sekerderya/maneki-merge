@@ -435,3 +435,23 @@
 .ad-offer-overlay .overlay-title {
   text-align: center;
 }
+
+/* The play statistics card (GAME_DESIGN §2.8): the ad card's look, over everything (the pause and
+   the clips too), with a small note and the privacy link under its buttons. */
+.stats-consent-overlay {
+  z-index: 300;
+}
+
+.stats-consent-note {
+  max-width: 260px;
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.stats-consent-privacy {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}

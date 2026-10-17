@@ -75,6 +75,9 @@ test('settings: switches persist, reduce motion marks the page, tips come back',
     haptics: true,
     reduceMotion: true,
     dayNight: true,
+    // A build without statistics keys never asks (TECH_SPEC §17).
+    statistics: false,
+    statisticsAsked: false,
   });
   const flags = data['flags'] as { hintsSeen: unknown; clipsSeen: Record<string, boolean> };
   expect(flags.hintsSeen).toEqual({

@@ -4,6 +4,21 @@
  */
 export { FakeAds, NoAds } from './ads';
 export type { AdPlacement, AdResult, AdService, AdsStatus, RewardedAds } from './ads';
+export {
+  AnalyticsHub,
+  CrashlyticsSink,
+  FakeAnalyticsSink,
+  FirebaseAnalyticsSink,
+  GameAnalyticsSink,
+} from './analytics';
+export type {
+  Analytics,
+  AnalyticsEvent,
+  AnalyticsScreen,
+  AnalyticsSink,
+  AnalyticsStatus,
+} from './analytics';
+export { loadFirebaseWeb, loadGameAnalytics } from './analyticsSdks';
 export { BackStack } from './backButton';
 export type { BackHandler } from './backButton';
 export { readStoredFlags, storeFlag } from './debugFlags';

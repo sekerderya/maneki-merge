@@ -54,6 +54,12 @@ export interface UrlFlags {
    * device). Null when absent or unknown.
    */
   readonly consent: 'eea' | null;
+  /**
+   * `?analytics=fake` (TECH_SPEC §17): the play statistics keep their events on the page instead
+   * of sending them (the debug panel, Playwright), and the statistics card asks as with keys. Null
+   * when absent or unknown: the build's own services.
+   */
+  readonly analytics: 'fake' | null;
 }
 
 const MAX_SEED = 0xffffffff;
@@ -72,6 +78,7 @@ export function parseUrlFlags(search: string): UrlFlags {
     time: parseTime(params.get('time')),
     ads: parseChoice(params.get('ads'), AD_MODES),
     consent: parseChoice(params.get('consent'), ['eea'] as const),
+    analytics: parseChoice(params.get('analytics'), ['fake'] as const),
   };
 }
 

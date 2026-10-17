@@ -15,10 +15,11 @@ describe('parseUrlFlags', () => {
       time: null,
       ads: null,
       consent: null,
+      analytics: null,
     });
   });
 
-  it('reads all ten flags, with or without the leading ?', () => {
+  it('reads all eleven flags, with or without the leading ?', () => {
     const expected = {
       debug: true,
       seed: 42,
@@ -30,9 +31,10 @@ describe('parseUrlFlags', () => {
       time: 'night',
       ads: 'fake',
       consent: 'eea',
+      analytics: 'fake',
     };
     const query =
-      'debug=1&seed=42&skin=placeholder&res=1.5&gravity=1.2&interp=0&scenes=1&time=night&ads=fake&consent=eea';
+      'debug=1&seed=42&skin=placeholder&res=1.5&gravity=1.2&interp=0&scenes=1&time=night&ads=fake&consent=eea&analytics=fake';
     expect(parseUrlFlags(`?${query}`)).toEqual(expected);
     expect(parseUrlFlags(query)).toEqual(expected);
   });
@@ -98,6 +100,7 @@ describe('parseUrlFlags', () => {
       time: null,
       ads: null,
       consent: null,
+      analytics: null,
     });
   });
 
@@ -169,6 +172,17 @@ describe('ads and consent flags (TECH_SPEC §16)', () => {
   });
 });
 
+describe('the play statistics flag (TECH_SPEC §17)', () => {
+  it.each([
+    ['?analytics=fake', 'fake'],
+    ['?analytics=FAKE', 'fake'],
+    ['?analytics=live', null],
+    ['', null],
+  ])('parses %s as analytics=%s', (search, analytics) => {
+    expect(parseUrlFlags(search).analytics).toBe(analytics);
+  });
+});
+
 describe('bootFlags', () => {
   it('reads only the page in a browser or the release app', () => {
     expect(bootFlags('?seed=7', 'ads=admob&consent=eea', false)).toMatchObject({
@@ -176,6 +190,7 @@ describe('bootFlags', () => {
       seed: 7,
       ads: null,
       consent: null,
+      analytics: null,
     });
   });
 

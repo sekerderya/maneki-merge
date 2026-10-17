@@ -40,11 +40,30 @@
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="@string/admob_app_id" />
+
+        <!-- Play statistics (docs/TECH_SPEC.md §17): Firebase Analytics and Crashlytics start
+             switched off; the game switches them on only after the player's yes. Analytics never
+             reads the advertising ID or sends ad signals, and the screens are the game's own. -->
+        <meta-data
+            android:name="firebase_analytics_collection_enabled"
+            android:value="false" />
+        <meta-data
+            android:name="firebase_crashlytics_collection_enabled"
+            android:value="false" />
+        <meta-data
+            android:name="google_analytics_adid_collection_enabled"
+            android:value="false" />
+        <meta-data
+            android:name="google_analytics_default_allow_ad_personalization_signals"
+            android:value="false" />
+        <meta-data
+            android:name="google_analytics_automatic_screen_reporting_enabled"
+            android:value="false" />
     </application>
 
     <!-- Permissions -->
 
-    <!-- AdMob loads ads with it; the game itself never needs the network. -->
+    <!-- AdMob and the play statistics send with it; the game itself never needs the network. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Haptics: the WebView's navigator.vibrate. -->
     <uses-permission android:name="android.permission.VIBRATE" />

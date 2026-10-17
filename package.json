@@ -1,6 +1,6 @@
 {
   "name": "maneki-merge",
-  "version": "0.56.9",
+  "version": "0.57.0",
   "private": true,
   "description": "Lucky-cat merge game with a growing jar. Offline PWA for iOS and Android.",
   "type": "module",
@@ -30,11 +30,15 @@
   },
   "dependencies": {
     "@capacitor-community/admob": "^8.2.1",
+    "@capacitor-firebase/analytics": "^8.5.2",
+    "@capacitor-firebase/crashlytics": "^8.5.2",
     "@capacitor/android": "^8.5.3",
     "@capacitor/app": "^8.1.2",
     "@capacitor/core": "^8.5.3",
     "@capacitor/network": "^8.0.1",
     "@fontsource/fredoka": "^5.3.0",
+    "firebase": "^12.19.0",
+    "gameanalytics": "^5.0.0",
     "matter-js": "0.20.0",
     "phaser": "^4.2.1"
   },

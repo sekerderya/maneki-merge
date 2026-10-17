@@ -181,6 +181,8 @@ test('settings, records, stats and hints persist', async ({ page }) => {
     haptics: false,
     reduceMotion: false,
     dayNight: true,
+    statistics: false,
+    statisticsAsked: false,
   });
   expect(saved.data.stats.runsPlayed).toBe(1);
   expect(saved.data.records.highestTier).toBe(6);
