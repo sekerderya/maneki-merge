@@ -104,29 +104,33 @@ free.)
 
 ### 5.3 App content (Policy → App content)
 
-| Section                                  | Answer                                                                                                                                                                                                                                                                                           |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Privacy policy                           | `https://sekerderya.github.io/maneki-merge/privacy.html` (also linked in the game's Settings). It has a section for the app's ads; read it before the release.                                                                                                                                   |
-| App access                               | All functionality is available without any access restrictions                                                                                                                                                                                                                                   |
-| Ads                                      | **Yes, the app contains ads** (Google AdMob)                                                                                                                                                                                                                                                     |
-| Content rating                           | Category: Game. No violence, sexuality, bad language, drugs or alcohol. Gambling: no (coins are earned by playing; they can't be bought, won by betting or cashed out). Users can't talk to each other or share anything; no location; no digital purchases. Expect an Everyone / PEGI 3 rating. |
-| Target audience                          | **13 and over** (13–15, 16–17, 18+). Under 13 would put the app in the Families program, whose ads need certified SDKs and stricter rules. The ads are limited to PG content and not tagged child-directed (TECH_SPEC §16).                                                                      |
-| Data safety                              | **Yes**, the app collects and shares data, through the Google Mobile Ads SDK only. Google's list for it: https://developers.google.com/admob/android/privacy/play-data-disclosure. See the table below.                                                                                          |
-| Advertising ID                           | **Yes**, the app uses it, for **Advertising or marketing** (the Mobile Ads SDK adds the `AD_ID` permission)                                                                                                                                                                                      |
-| Government, financial, health, news apps | None of these                                                                                                                                                                                                                                                                                    |
+| Section                                  | Answer                                                                                                                                                                                                                                                                                                                                                                            |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Privacy policy                           | `https://sekerderya.github.io/maneki-merge/privacy.html` (also linked in the game's Settings). It has a section for the app's ads; read it before the release.                                                                                                                                                                                                                    |
+| App access                               | All functionality is available without any access restrictions                                                                                                                                                                                                                                                                                                                    |
+| Ads                                      | **Yes, the app contains ads** (Google AdMob)                                                                                                                                                                                                                                                                                                                                      |
+| Content rating                           | Category: Game. No violence, sexuality, bad language, drugs or alcohol. Gambling: no (coins are earned by playing; they can't be bought, won by betting or cashed out). Users can't talk to each other or share anything; no location; no digital purchases. Expect an Everyone / PEGI 3 rating.                                                                                  |
+| Target audience                          | **13 and over** (13–15, 16–17, 18+). Under 13 would put the app in the Families program, whose ads need certified SDKs and stricter rules. The ads are limited to PG content and not tagged child-directed (TECH_SPEC §16).                                                                                                                                                       |
+| Data safety                              | **Yes**, the app collects and shares data: through the Google Mobile Ads SDK, and since v0.57 the play statistics (GameAnalytics, Firebase Analytics, Crashlytics), only after the player's yes. Google's lists: https://developers.google.com/admob/android/privacy/play-data-disclosure and https://firebase.google.com/docs/android/play-data-disclosure. See the table below. |
+| Advertising ID                           | **Yes**, the app uses it, for **Advertising or marketing** (the Mobile Ads SDK adds the `AD_ID` permission)                                                                                                                                                                                                                                                                       |
+| Government, financial, health, news apps | None of these                                                                                                                                                                                                                                                                                                                                                                     |
 
-The Data safety answers for AdMob (check them against Google's page above, which is updated with
-the SDK):
+The Data safety answers for AdMob and the play statistics (check them against Google's pages
+above, which are updated with the SDKs). "Shared" is AdMob's: the statistics services process the
+data for the developer, which Play doesn't count as sharing.
 
 | Data type                              | Collected | Shared | Purposes                                                                    |
 | -------------------------------------- | --------- | ------ | --------------------------------------------------------------------------- |
 | Location → Approximate location        | Yes       | Yes    | Advertising or marketing; Analytics; Fraud prevention, security, compliance |
 | App activity → App interactions        | Yes       | Yes    | Advertising or marketing; Analytics; Fraud prevention, security, compliance |
+| App info and performance → Crash logs  | Yes       | No     | Analytics (Crashlytics, v0.57)                                              |
 | App info and performance → Diagnostics | Yes       | Yes    | Advertising or marketing; Analytics; Fraud prevention, security, compliance |
 | Device or other IDs                    | Yes       | Yes    | Advertising or marketing; Analytics; Fraud prevention, security, compliance |
 
 Then: the data is encrypted in transit (yes); collection is not optional while ads load (the
-consent form covers it where the law asks); there is no account, so no deletion request.
+consent form covers it where the law asks), and crash logs are optional (the player's yes on the
+statistics card, Settings → Play statistics); there is no account, so the way to ask for deletion
+is the contact in the privacy policy.
 
 ### 5.4 Store listing (Grow users → Store presence → Main store listing)
 
@@ -233,6 +237,13 @@ On the dev APK first (Maneki Dev), then the release APK or the internal testing 
    **Bonus** bubble on the left; its card's Watch ad puts the ball straight into the paw and the
    cat comes back after it. Out of room with no Lucky Save left: "Out of room!" once per run.
    Game Over: **Double coins**. Airplane mode: none of them shows.
+10. The play statistics (v0.57, once §10 is done and a tag has built the app with them): the first
+    launch asks **Play statistics** after the loading (after Google's consent form where it shows);
+    **Yes, share**, play a stage, then GameAnalytics' test game (Realtime) and Firebase's Maneki
+    Dev app (Realtime) show the events within minutes. The debug panel's Statistics lines say
+    `test · granted` with each service `on`; **Stats test error**, then close and reopen the app:
+    Crashlytics shows a non-fatal "Debug panel test error". Settings → **Play statistics** OFF:
+    nothing more arrives.
 
 ## 9. AdMob (the owner's steps)
 
@@ -253,3 +264,43 @@ On the dev APK first (Maneki Dev), then the release APK or the internal testing 
    release app shows test ads on that phone too.
 5. Until the app is on Play and linked in AdMob (Apps → the app → App settings → link to Google
    Play), AdMob serves few or no real ads; the dev app's test ads always work.
+
+## 10. Play statistics: Firebase and GameAnalytics (the owner's steps)
+
+The game's side is done (v0.57, TECH_SPEC §17); it sends nothing until these accounts exist and
+their keys are in the repository's secrets. Both are free.
+
+1. **Firebase** (https://console.firebase.google.com, the same Google account as Play and AdMob):
+   1. **Add project** → name "Maneki Merge" → Google Analytics **on** → create an Analytics
+      account (or pick yours), country Turkey.
+   2. **Add app → Android**: package name `io.github.sekerderya.manekimerge`, nickname "Maneki
+      Merge". Skip its "Add the SDK" steps (they are done).
+   3. **Add app → Android** again: `io.github.sekerderya.manekimerge.dev`, nickname "Maneki Dev".
+      Both apps are needed: without the dev app the build leaves Firebase out.
+   4. Project settings (the gear) → General → Your apps → either Android app →
+      **google-services.json**: download it after adding both (one file holds both).
+   5. **Add app → Web** (`</>`): nickname "Maneki Merge web", no Firebase Hosting. Copy the
+      `firebaseConfig = { … }` it shows.
+   6. Build → **Crashlytics** → Get started / Enable (for the Android apps).
+   7. Optional: Analytics' data retention (Project settings → Integrations → Google Analytics →
+      the property's Admin → Data collection → Data retention) from 2 to 14 months.
+2. **GameAnalytics** (https://gameanalytics.com, sign up free): create a studio, then **two
+   games**, both for the web / HTML5 (the game uses its JavaScript SDK in the web app and in the
+   Android app): "Maneki Merge" (the live one) and "Maneki Merge Test" (debug, the dev app). In each
+   game's settings (Game settings → Keys) copy the **Game key** and the **Secret key**.
+3. **Send Claude** google-services.json, the web `firebaseConfig` and the four GameAnalytics keys.
+   They aren't passwords (the game carries them in its files), but the repository is public, so
+   they go into its secrets, not into the code. Claude sets them with `gh secret set`; or by hand
+   in GitHub → the repository → Settings → Secrets and variables → Actions → New repository secret:
+
+   | Secret                          | Value                                              |
+   | ------------------------------- | -------------------------------------------------- |
+   | `GOOGLE_SERVICES_JSON`          | the whole google-services.json file                |
+   | `FIREBASE_WEB_CONFIG`           | the web `firebaseConfig` as JSON (Claude converts) |
+   | `GAMEANALYTICS_GAME_KEY`        | "Maneki Merge"'s game key                          |
+   | `GAMEANALYTICS_SECRET_KEY`      | "Maneki Merge"'s secret key                        |
+   | `GAMEANALYTICS_TEST_GAME_KEY`   | "Maneki Merge Test"'s game key                     |
+   | `GAMEANALYTICS_TEST_SECRET_KEY` | "Maneki Merge Test"'s secret key                   |
+
+4. The next deploy (a push to main) puts them in the web app, the next tag in the Android app;
+   then the checks in §8 (10) and the Data safety answers in §5.3.

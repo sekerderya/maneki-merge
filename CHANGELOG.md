@@ -2,6 +2,29 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.57.0] - 2026-10-17
+
+### Added
+
+- **Play statistics** (M16, GAME_DESIGN §2.8, TECH_SPEC §17, the owner's request): GameAnalytics (where players get stuck and quit: each stage's start, clear and fail, play times, coins, picks, the ads' cards, the frame rate), Firebase Analytics (daily play time, retention, screens) and Firebase Crashlytics (crashes and errors, the Android app), in the web app and the Google Play app. **Nothing is sent before the player's yes**: after the first loading a card asks once ("Play statistics", Yes, share / No thanks), and Settings' new **Play statistics** row changes the answer. The game never waits for the network; offline the services send later.
+- Until the accounts exist (docs/PLAY_STORE.md §10) the builds have no keys, so nothing changes for players yet: no card, no Settings row.
+
+### Changed
+
+- **The Settings card scrolls under a finger** when it is taller than the screen (375×667 with every row), so the version and the privacy policy stay reachable.
+- **The privacy policy** says what the play statistics collect, which services get them and how to turn them off; Play's Data safety answers add crash logs (docs/PLAY_STORE.md §5.3).
+- CLAUDE.md's rule against analytics now reads: no analytics without the player's yes.
+
+### Technical
+
+- New dependencies: `gameanalytics` 5 (MIT), `firebase` 12, `@capacitor-firebase/analytics` and `@capacitor-firebase/crashlytics` 8.5 (Apache-2.0); the Crashlytics Gradle plugin 3.0.8. The SDKs load on the first yes (dynamic imports): the web app's first load grew about 14 KB.
+- `platform/analytics.ts` (`AnalyticsHub` and the services), `platform/analyticsSdks.ts`, `core/analytics.ts` (stage names, coin tally, frame-rate samples, stacks, the error filter), `config/analytics.ts`, `runAnalytics.ts`, `ui/overlays/statsConsentOverlay.ts`, `ui/privacyLink.ts`; `GameSession` takes `analytics`.
+- Save settings `statistics` and `statisticsAsked`, added without a version step.
+- Keys from the build's environment (`__ANALYTICS_KEYS__`): repository secrets in `deploy.yml` and `android.yml`, `google-services.json` written from a secret (git ignores it); Gradle and `vite.config.ts` apply Firebase only when it knows both apps.
+- The Android manifest starts Firebase Analytics and Crashlytics switched off, without the advertising ID, ad signals or automatic screens.
+- `?analytics=fake`, the debug panel's Statistics group (Ask stats again, Stats test error, fake on or off) and `window.__game.analyticsState()`.
+- TECH_SPEC §2's PWA row named `@vite-pwa/assets-generator`, which the project hasn't used since v0.42.11 (`tools/buildAppIcon.ts` with `sharp`): fixed.
+
 ## [0.56.9] - 2026-10-17
 
 ### Changed

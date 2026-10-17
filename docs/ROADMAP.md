@@ -20,6 +20,7 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
 | M13 | Final art integration                 | high               | yes       | in progress |
 | M14 | Release v1.0                          | medium (APK: high) | –         | in progress |
 | M15 | Android app on Capacitor, AdMob-ready | high               | –         | in progress |
+| M16 | Play statistics                       | high               | –         | in progress |
 
 ## Phone test checklist (owner, after every milestone)
 
@@ -459,3 +460,21 @@ Each milestone is one Claude Code session (model: Opus 5.5), started with the pr
 **Owner check:** install `maneki-merge-dev.apk` from the Android workflow's run (GitHub → Actions → Android → the run → maneki-merge-android) and go through docs/PLAY_STORE.md §8.
 
 **Acceptance:** the app plays offline from its first launch; online, the dev app's test ad gives `rewarded` and `closed` and the game comes back without the pause overlay; offline no ad is ready; the web app is unchanged.
+
+## M16: Play statistics
+
+**Effort:** high. The owner's request (2026-10-17): GameAnalytics for where players get stuck and quit (stage starts, clears and fails, play times), Firebase Analytics for daily play time, retention and screens, Firebase Crashlytics for crashes and errors, in the web app and the Android app (the game will end up as the Google Play app only). The CLAUDE.md rule against analytics now reads: nothing without the player's yes. Specs: GAME_DESIGN §2.8, TECH_SPEC §17, docs/PLAY_STORE.md §10.
+
+- [x] `gameanalytics`, `firebase`, `@capacitor-firebase/analytics` and `/crashlytics` (v0.57); the Crashlytics Gradle plugin, applied with Firebase's config only
+- [x] `platform/analytics.ts`: `AnalyticsHub` (consent, events waiting for the answer, services that can't start left out, never a throw into the game), the GameAnalytics, Firebase Analytics, Crashlytics and fake services; `platform/analyticsSdks.ts` (the web SDKs, loaded on the first yes); the native SDKs in `platform/native/`
+- [x] `runAnalytics.ts`: a run's start, stages, coins by source, frame rate and end (game over or quit); the ads' cards, the screens, purchases and errors; never a scene
+- [x] The statistics card after the first loading and Settings' **Play statistics** row; saved in the profile's settings without a version step
+- [x] Keys from repository secrets (`deploy.yml`, `android.yml`: `GAMEANALYTICS_*`, `FIREBASE_WEB_CONFIG`, `GOOGLE_SERVICES_JSON`); a build without them never asks
+- [x] The Android manifest starts Firebase's collection off, without the advertising ID or ad signals
+- [x] Debug: `?analytics=fake`, the debug panel's Statistics group, `window.__game.analyticsState()`
+- [x] Tests: `analytics.test.ts` (unit), `analytics.spec.ts` (E2E)
+- [x] Docs: privacy policy, Play's Data safety answers, the owner's steps (PLAY_STORE §10), CLAUDE.md
+- [ ] Owner: the Firebase project (two Android apps and a web app, Crashlytics on) and two GameAnalytics games (PLAY_STORE §10); then Claude sets the repository secrets
+- [ ] Owner, on the phone (PLAY_STORE §8, check 10): the card, the events in both dashboards, a test error in Crashlytics; Play Console's Data safety answers
+
+**Acceptance:** nothing is sent before the yes, and nothing after a no; a build without keys never asks; the first launch never waits for an SDK; the run, stage, coin, ad and error events reach GameAnalytics, Firebase Analytics and Crashlytics in the app, and GameAnalytics and Firebase Analytics on the web.

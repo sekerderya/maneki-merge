@@ -30,7 +30,7 @@ If code and docs disagree, the docs win unless the owner says otherwise. When a 
 
 ## Stack (changes need the owner's approval)
 
-TypeScript (strict) · Vite · Phaser 4 (rendering only) · matter-js (standalone, headless-capable physics) · vanilla DOM + CSS for all UI · vite-plugin-pwa (Workbox) · Vitest · Playwright · ESLint + Prettier · GitHub Actions → GitHub Pages · Capacitor 8 + `@capacitor-community/admob` for the Android app (the owner's call, 2026-10-15).
+TypeScript (strict) · Vite · Phaser 4 (rendering only) · matter-js (standalone, headless-capable physics) · vanilla DOM + CSS for all UI · vite-plugin-pwa (Workbox) · Vitest · Playwright · ESLint + Prettier · GitHub Actions → GitHub Pages · Capacitor 8 + `@capacitor-community/admob` for the Android app (the owner's call, 2026-10-15) · GameAnalytics + Firebase Analytics + Firebase Crashlytics for the play statistics (the owner's call, 2026-10-17; TECH_SPEC §17).
 
 ## Commands
 
@@ -49,7 +49,7 @@ TypeScript (strict) · Vite · Phaser 4 (rendering only) · matter-js (standalon
 
 - Layers (TECH_SPEC §3): `config` → `core` → `physics` → `run` are **headless**: no Phaser, no DOM, no `window`. They run in Node for tests and the simulator. An ESLint rule enforces this.
 - `game/` (Phaser) only renders the run and forwards input. `ui/` (DOM) only presents state and sends intents. Neither owns game rules.
-- Capacitor and AdMob code lives only in `src/platform/native/`, loaded with a dynamic `import()` behind `if (__NATIVE_APP__)`, so the web bundle never carries it. The game talks to ads only through `RewardedAds` (`platform/ads.ts`).
+- Capacitor and AdMob code lives only in `src/platform/native/`, loaded with a dynamic `import()` behind `if (__NATIVE_APP__)`, so the web bundle never carries it. The game talks to ads only through `RewardedAds` (`platform/ads.ts`), and to the play statistics only through `Analytics` (`platform/analytics.ts`, TECH_SPEC §17).
 - Every tunable number lives in `src/config/`. No magic numbers in systems.
 - All randomness goes through the seeded RNG (`src/core/rng.ts`). Never use `Math.random()` in game logic.
 - Ball visuals go through the `BallSkin` interface so placeholder art can be swapped for final art without touching gameplay.
@@ -57,7 +57,8 @@ TypeScript (strict) · Vite · Phaser 4 (rendering only) · matter-js (standalon
 
 ## Hard constraints
 
-- Fully offline after the first visit (the Android app from its first launch): no CDNs, no remote fonts, no analytics, no runtime network requests. The only network use is AdMob in the Android app, and the game never waits for it; without a connection no ad option shows.
+- Fully offline after the first visit (the Android app from its first launch): no CDNs, no remote fonts, no runtime network requests the game needs. The only network use is AdMob in the Android app and the play statistics (GameAnalytics, Firebase Analytics, Crashlytics; TECH_SPEC §17), and the game never waits for either; without a connection no ad option shows.
+- No analytics without the player's yes: the statistics card asks once, Settings changes it, and nothing is sent before a yes (the owner's call, 2026-10-17; until then the game had no analytics at all). Never send names, accounts, the advertising ID or anything typed. The services' keys stay out of the repository (repository secrets, TECH_SPEC §17).
 - An app update must never interrupt a run. Apply it from the main menu or on the next launch.
 - Portrait, mobile first: iOS Safari / home-screen app, Android Chrome / installed app, and the Google Play app. Respect safe areas.
 - Budgets: 60 fps with 150 balls on a mid-range phone; physics ≤ 4 ms per frame.
@@ -78,5 +79,5 @@ TypeScript (strict) · Vite · Phaser 4 (rendering only) · matter-js (standalon
 ## Debug and test hooks
 
 - `?debug=1` shows the debug panel: FPS, body count, add coins, set upgrade levels, jump to stage, set score, spawn tier, reset save. Allowed in production builds.
-- `?seed=<n>` makes a run deterministic. `?skin=placeholder` forces placeholder art. `?res=<n>` fixes the canvas resolution (0.5–2.5) and turns the adaptive resolution off, to see what a slow phone gets. `?gravity=<n>` scales the runs' gravity (0.5–2) to try fall speeds; `?interp=0` draws the balls at the latest physics step instead of between the last two. `?time=day|sunset|night` pins the gardens' time of day (GAME_DESIGN §7.3). `?scenes=1` shows the menu's Scenes button on this device, `?scenes=0` hides it (GAME_DESIGN §2.6). `?ads=fake` draws a test rewarded ad (any build), `?ads=admob` uses AdMob's test ads (the Android app's default); `?consent=eea` makes AdMob's consent check answer as in the EEA (TECH_SPEC §16). The Android dev app (Maneki Dev) has no address bar: it starts with `debug=1&ads=fake`, and its debug panel's Ads group switches these. Five quick taps on the version in Settings, then a pause, are the account reset: a new player's save (GAME_DESIGN §2.4). Seven quick taps are the tester reset: a fresh save with 1,000,000 coins, best stage 20 (every upgrade open) and the Scenes button on (GAME_DESIGN §2.4).
+- `?seed=<n>` makes a run deterministic. `?skin=placeholder` forces placeholder art. `?res=<n>` fixes the canvas resolution (0.5–2.5) and turns the adaptive resolution off, to see what a slow phone gets. `?gravity=<n>` scales the runs' gravity (0.5–2) to try fall speeds; `?interp=0` draws the balls at the latest physics step instead of between the last two. `?time=day|sunset|night` pins the gardens' time of day (GAME_DESIGN §7.3). `?scenes=1` shows the menu's Scenes button on this device, `?scenes=0` hides it (GAME_DESIGN §2.6). `?ads=fake` draws a test rewarded ad (any build), `?ads=admob` uses AdMob's test ads (the Android app's default); `?consent=eea` makes AdMob's consent check answer as in the EEA (TECH_SPEC §16). `?analytics=fake` keeps the play statistics' events on the page (the debug panel, `window.__game.analyticsState()`) and asks the statistics card as a build with keys would (TECH_SPEC §17). The Android dev app (Maneki Dev) has no address bar: it starts with `debug=1&ads=fake`, and its debug panel's Ads group switches these. Five quick taps on the version in Settings, then a pause, are the account reset: a new player's save (GAME_DESIGN §2.4). Seven quick taps are the tester reset: a fresh save with 1,000,000 coins, best stage 20 (every upgrade open) and the Scenes button on (GAME_DESIGN §2.4).
 - In debug mode, `window.__game` exposes state and helpers for Playwright (TECH_SPEC §11).
