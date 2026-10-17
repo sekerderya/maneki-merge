@@ -22,6 +22,7 @@ All notable changes to this project are documented here. Versions follow [Semant
 - Save settings `statistics` and `statisticsAsked`, added without a version step.
 - Keys from the build's environment (`__ANALYTICS_KEYS__`): repository secrets in `deploy.yml` and `android.yml`, `google-services.json` written from a secret (git ignores it); Gradle and `vite.config.ts` apply Firebase only when it knows both apps.
 - The Android manifest starts Firebase Analytics and Crashlytics switched off, without the advertising ID, ad signals or automatic screens.
+- Gradle's heap is 4 GB (`android/gradle.properties`): with Firebase's libraries the dev APK's dex merge ran out of the default 1.5 GB on the CI runner.
 - `?analytics=fake`, the debug panel's Statistics group (Ask stats again, Stats test error, fake on or off) and `window.__game.analyticsState()`.
 - TECH_SPEC §2's PWA row named `@vite-pwa/assets-generator`, which the project hasn't used since v0.42.11 (`tools/buildAppIcon.ts` with `sharp`): fixed.
 
