@@ -139,6 +139,14 @@ says) with its own CHANGELOG entry, so the owner can test one change at a time o
   grow the jar; also a rule pick with no rule left), the run instead **draws one open trial at
   random** from that clear's pool with the run's seeded pick generator (`pickRng`, never
   `Math.random()`), applies its level, and shows the **trial card** as the next stage opens.
+- **The draw is weighted by family (the owner's call, 2026-10-17).** The families: boulders
+  (More Boulders, Iron Bands, Big Boulders), curses (Cursed Bell, Quick Curse, More Curses), wind,
+  porcelain. First draw a family among those with an open trial in the clear's pool, then one open
+  trial of it, uniformly. The families are equally likely (so the boulders, with three trials, no
+  longer come three times as often as the wind); a family the run hasn't had yet weighs more (a
+  factor in `src/config/picks.ts`, e.g. 2); the family of the previous automatic trial is left out
+  when another family is open, so the same family never comes twice in a row. This keeps the boulder
+  trials from piling up (more × bigger × bands, which the owner found impossible in Batch 18).
 - The trial card is new (see §4.4 for its open details): small, over the empty jar, with a short
   exclaiming line, the trial's icon, a round **?** button at its top right that opens the trial's
   clip (the existing clip popup, §2.5), and **Got it** at the bottom (the coral PLAY pill, ignoring
@@ -165,8 +173,18 @@ says) with its own CHANGELOG entry, so the owner can test one change at a time o
    whether it comes before or after the blessing pick's doors.
 4. **The ? button:** the icon kit's play medallion or a new question-mark medallion (art prompt
    first); its clip is the trial's existing clip (`pickClip`).
-5. **Random how:** uniform among the open trials, or weighted (e.g. a trial the run hasn't had yet
-   first, so the run gets variety)?
+5. **A card at every stage gets tiring** (from clear 11 a trial comes at nearly every clear). The
+   owner asked for a proposal; recommended, to approve:
+   - **The first time per profile** a trial comes (saved like the hints, GAME_DESIGN §11): the full
+     card, time stopped, ? and Got it, as above.
+   - **Later times:** no Got it. A small toast (icon, the short line, the level, e.g. "Bigger
+     boulders · Lv 2") shows over the empty jar as the doors open and fades after about 3 s. The
+     new stage's jar is empty then, so nothing is missed while it shows and time need not stop. A
+     tap on the toast opens the full card (with ?).
+   - **Never lost:** every trial the run has sits as a small icon chip in a row in the HUD (the
+     place to agree with the owner: the left side under the score card holds the Play app's ad
+     bubble). The newest chip pulses for a few seconds; a tap on any chip pauses and opens its full
+     card with ? and its level. So a missed toast is always one tap away.
 6. **The rule pick** at the jar-growth clears: stays a choice (recommended, as written in §4.2)?
 7. **Balance:** the player could steer around the trials before; random trials may make runs
    harder. Measure with the smart bot (fresh profile `--meta 30`, maxed
