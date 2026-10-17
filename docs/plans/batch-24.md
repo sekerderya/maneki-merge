@@ -205,8 +205,9 @@ trials.
   apply the automatic trial, emit an event the UI shows as the trial card, and save the card as
   waiting with the run (like the intro cards) so a run closed under it comes back to it.
 - `src/core/picks.ts`: the draw (`drawOffer` / `openOptions`) can be reused for one random trial.
-- UI: the intro card (`src/config/introCards.ts` and its DOM card) is the closest model; the new
-  card is a smaller variant with the ? button. DOM + CSS only, in `src/ui/`.
+- UI: the intro card (`src/config/introCards.ts` and its DOM card) is the model for the
+  first-time card (clip and Got it); the later card is a smaller variant with no buttons that goes
+  after 3 s. DOM + CSS only, in `src/ui/`.
 - Save: a saved run waiting on a trial pick (old version) must still load: apply the automatic
   trial instead. Never break saves; add a migration test.
 - Debug panel and `window.__game`: a hook to force the next automatic trial, for Playwright.
