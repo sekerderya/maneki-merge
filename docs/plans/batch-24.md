@@ -164,11 +164,11 @@ trials.
     change; **no buttons, no question mark, no clip**. It goes by itself after **3 s**
     (`TRIAL_TOAST_MS` in `src/config/view.ts`). It shows over the empty jar as the doors open,
     and time doesn't stop for it (the jar is empty then; ask the owner if unsure).
-  - **What counts as new:** each trial id is new once, and a trial's **upgrade** too. Read "upgrade"
-    as the follow-up trials (Quick Curse and More Curses after Cursed Bell) **and** a trial's next
-    level (Big Boulders level 2 after level 1)? That changes how often the full card shows: confirm
-    with the owner before building (the default if unanswered: each trial id once, the follow-ups
-    being ids of their own).
+  - **What counts as new (the owner's call, 2026-10-17):** the full card with the clip shows only
+    the first time a trial comes in the profile (its level 1). **Every upgrade of a trial** (its
+    next level: Big Boulders 1 → 2, Wind 2 → 3, …) and every trial seen before take the small
+    card that goes by itself. The follow-ups (Quick Curse, More Curses) are trials of their own:
+    the first time each comes, its full card.
   - **No HUD icons** for the trials (the owner turned them down).
 - The hazards' intro-card lines say "A trial can …" today (`src/config/introCards.ts`); they must
   be reworded now that trials come by themselves (propose new lines to the owner).
@@ -189,10 +189,8 @@ trials.
 3. **The card's look and place:** size (half the screen width?), position over the jar, the
    doors (no doors for the trial card, recommended, since there is nothing to choose), and
    whether it comes before or after the blessing pick's doors.
-4. **What counts as a trial's "upgrade"** for the first-time card (§4.3): the follow-ups only,
-   or every next level too?
-5. **The rule pick** at the jar-growth clears: stays a choice (recommended, as written in §4.2)?
-6. **Balance:** the player could steer around the trials before; random trials may make runs
+4. **The rule pick** at the jar-growth clears: stays a choice (recommended, as written in §4.2)?
+5. **Balance:** the player could steer around the trials before; random trials may make runs
    harder. Measure with the smart bot (fresh profile `--meta 30`, maxed
    `base --aim smart --upgrades max --stages 40 --cap 3600 --seeds 60`) before and after and show
    the owner the numbers; retune only with their call.
