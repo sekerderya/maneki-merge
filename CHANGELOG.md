@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.56.9] - 2026-10-17
+
+### Changed
+
+- **A locked shop card's clip button is bright** (GAME_DESIGN §2.2, the owner's call): the play button on a locked card's icon now has the same full colour as on an open card; only the card's picture, its medallion and its value stay faded.
+
+### Technical
+
+- The locked fade moved from `.shop-icon` to its pieces other than `.clip-btn` (a parent's filter can't be undone on a child); the medallion frames drawn in CSS take the same fade as fixed colours (grayscale(0.7) at 70%).
+
 ## [0.56.8] - 2026-10-17
 
 ### Added

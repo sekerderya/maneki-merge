@@ -286,11 +286,25 @@
   filter: drop-shadow(0 0 6px #ffc93c);
 }
 
-/* A card the best stage hasn't opened: faded, with the stage that opens it on its button. */
-.shop-card[data-state='locked'] .shop-icon,
+/*
+ * A card the best stage hasn't opened: faded, with the stage that opens it on its button. Its clip
+ * button stays bright, so the fade goes on the icon's pieces, not the icon: a filter on the icon
+ * would grey the button too. The medallion's own frame takes the same fade as colours
+ * (grayscale(0.7) at 70%).
+ */
+.shop-card[data-state='locked'] .shop-icon > :not(.clip-btn),
 .shop-card[data-state='locked'] .shop-value {
   filter: grayscale(0.7);
   opacity: 0.7;
+}
+
+.shop-card[data-state='locked'] .shop-icon {
+  border-color: rgb(58 50 47 / 70%);
+  background: rgb(237 230 223 / 70%);
+}
+
+.shop-card[data-state='locked'] .shop-icon.is-blessing {
+  background: rgb(245 241 227 / 70%);
 }
 
 .shop-buy[data-state='locked'] {

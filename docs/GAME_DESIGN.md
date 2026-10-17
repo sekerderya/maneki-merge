@@ -62,7 +62,7 @@ Layout: everything sits where it is in the mockup, on a stage of the mockup's si
 
   Lucky Paw shows one decimal, the blessings' chances up to two (v0.39).
 
-- The price button has four states: affordable (gold, "Buy" over the coin and the price), not enough coins (faded grey and disabled, "Need N more" in red where "Buy" was), MAX (faded, a check and "MAX"), and **locked** (v0.36: faded and disabled, "Reach" over a small torii and "Stage N", the stage that opens the card; the card's icon and value are faded too). With `?skin=vector` the shop keeps the code-drawn sheet of v0.14 (no pips either).
+- The price button has four states: affordable (gold, "Buy" over the coin and the price), not enough coins (faded grey and disabled, "Need N more" in red where "Buy" was), MAX (faded, a check and "MAX"), and **locked** (v0.36: faded and disabled, "Reach" over a small torii and "Stage N", the stage that opens the card; the card's icon and value are faded too, but not its clip button, which stays bright, v0.56.9). With `?skin=vector` the shop keeps the code-drawn sheet of v0.14 (no pips either).
 - Buying gives feedback: a sound (from M9), a card pulse, and the balance counting down. The purchase is saved at once. The panel scrolls vertically if needed.
 - The UPGRADES dot on the menu shows only for a card that is open and affordable.
 - Combo Charm, Second Chance and the Golden Cats, More Magnets, Hanabi, Joker Cat, Lightning, Katana and Frog cards have a clip button on their icon that shows what they do (§2.5, v0.38; the Katana's and the Frog's since v0.56.8).
